@@ -1,4 +1,4 @@
-# zeroCUTS
+# zeroCUTS - Wo liegt was?
 Gitlab nutzen wir neben dem code auch für die Issues.
 Dokumente und Input-Dateien werden in der TubCloud (schared/vsp-zeroCUTS) abgelegt.
 
@@ -7,6 +7,12 @@ Die TubCloud sollte parallel zum git-Checkpout des Codes sein. Beispiel:
 * ..../workspace (Ein belibieger Ordner auf der Festplatte, individuell verschieden)
     * /zeroCuts (git checkout dieses gitlab-repository mit dem Quellcode)
     * /tubcloud/shared/vsp-zerocuts (Projektverzeichnis aus tubcloud)
+
+# Wir werden Events analysiert?
+Ein guter Einstieg findet sich hier:
+https://github.com/matsim-org/matsim-code-examples/tree/0.10.x/src/main/java/tutorial/events 
+(Das gesamte Repository https://github.com/matsim-org/matsim-code-examples/ ist als Einstieg gedacht und kann daher auch gerne geclont, kopiert werden. Hier von Interesse für MPM sind v.a. die Events, weil es das ist, was VSP als Ergebnis der Verkehrssimultion liefert.)
+
 
 ------------
 
