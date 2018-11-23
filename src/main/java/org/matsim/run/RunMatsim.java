@@ -23,7 +23,10 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.examples.ExamplesUtils;
+
+import java.net.URL;
 
 /**
  * @author nagel
@@ -46,7 +49,7 @@ public class RunMatsim {
 	Config prepareConfig() {
 		hasPreparedConfig = true ;
 
-		ExamplesUtils.getTestScenarioURL(  )
+		URL url = IOUtils.newUrl( ExamplesUtils.getTestScenarioURL( "equil" ), "config.xml" ) ;
 
 		config = ConfigUtils.loadConfig( url ) ;
 

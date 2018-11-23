@@ -22,17 +22,15 @@ import java.io.File;
 import java.util.TreeMap;
 
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.events.LinkEnterEvent;
-import org.matsim.api.core.v01.events.PersonArrivalEvent;
-import org.matsim.api.core.v01.events.PersonDepartureEvent;
-import org.matsim.api.core.v01.events.VehicleEntersTrafficEvent;
-import org.matsim.api.core.v01.events.VehicleLeavesTrafficEvent;
+import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.events.handler.VehicleEntersTrafficEventHandler;
 import org.matsim.api.core.v01.events.handler.VehicleLeavesTrafficEventHandler;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.contrib.emissions.events.WarmEmissionEvent;
+import org.matsim.core.events.handler.BasicEventHandler;
 
 /**
  * @author kturner
@@ -41,8 +39,8 @@ import org.matsim.api.core.v01.population.Person;
  * TODO: other trajectories
  * TODO: write data to file (kind of file?) instead of console;
  */
-class EventHandlerTrajAgents implements 	PersonArrivalEventHandler,
-PersonDepartureEventHandler, VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler, LinkEnterEventHandler {
+class EventHandlerTrajAgents implements
+PersonDepartureEventHandler, VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler, LinkEnterEventHandler, BasicEventHandler{
 
 	private TreeMap<Id<Person>, TrajectoriesData > persons2trajectorities= new TreeMap<Id<Person>, TrajectoriesData>();
 
@@ -62,13 +60,23 @@ PersonDepartureEventHandler, VehicleEntersTrafficEventHandler, VehicleLeavesTraf
 	}
 
 	@Override
-	public void handleEvent(PersonArrivalEvent event) {
-		if (persons2trajectorities.containsKey(event.getPersonId())) {
-			double newTimeOnTravel = persons2trajectorities.get(event.getPersonId()).getTimeOnTravel() + event.getTime();
-			persons2trajectorities.get(event.getPersonId()).setTimeOnTravel(newTimeOnTravel);
+	public void handleEvent( Event event ) {
+		if ( event instanceof PersonArrivalEvent ){
+			PersonArrivalEvent de = (PersonArrivalEvent) event;
+			if( persons2trajectorities.containsKey( de.getPersonId() ) ){
+				double newTimeOnTravel = persons2trajectorities.get( de.getPersonId() ).getTimeOnTravel() + de.getTime();
+				persons2trajectorities.get( de.getPersonId() ).setTimeOnTravel( newTimeOnTravel );
+			} else{
+				persons2trajectorities.put( de.getPersonId(), new TrajectoriesData() );
+				persons2trajectorities.get( de.getPersonId() ).setTimeOnTravel( de.getTime() );
+			}
+		} else if ( event instanceof WarmEmissionEvent ) {
+			// I think that this will not work!!!!!  kn
 		} else {
-			persons2trajectorities.put(event.getPersonId(), new TrajectoriesData());
-			persons2trajectorities.get(event.getPersonId()).setTimeOnTravel(event.getTime());
+			if ( WarmEmissionEvent.EVENT_TYPE.equals( event.getEventType() ) ) {
+				WarmEmissionEvent ev = (WarmEmissionEvent) event ; // will still not work (I think)
+				double nox = Double.parseDouble( ev.getAttributes().get("NOx") ) ;  // will work (I hope) as long as key is spelled correctly.
+			}
 		}
 	}
 
