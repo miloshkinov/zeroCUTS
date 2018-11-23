@@ -19,7 +19,7 @@
 package org.matsim.trajectories;
   
 class TrajectoriesData {
-	
+
 	double timeOnTravel;
 	double timeVehicleInTraffic;
 	double distanceTravelled;
@@ -32,4 +32,44 @@ class TrajectoriesData {
 		this.distanceTravelled = 0.0;
 		this.numOfActities = 0;
 	}
+
+	double getTimeOnTravel() {
+		return timeOnTravel;
+	}
+
+	void setTimeOnTravel(double timeOnTravel) {
+		this.timeOnTravel = timeOnTravel;
+	}
+
+	double getTimeVehicleInTraffic() {
+		return timeVehicleInTraffic;
+	}
+
+	void setTimeVehicleInTraffic(double timeVehicleInTraffic) {
+		this.timeVehicleInTraffic = timeVehicleInTraffic;
+	}
+
+	double getDistanceTravelled() {
+		return distanceTravelled;
+	}
+
+	void setDistanceTravelled(double distanceTravelled) {
+		this.distanceTravelled = distanceTravelled;
+	}
+
+	int getNumOfActities() {
+		return numOfActities;
+	}
+
+	void setNumOfActities(int numOfActities) {
+		this.numOfActities = numOfActities;
+	}
+
+	@Override
+	public String toString() {
+		return "TrajectoriesData [timeOnTravel=" + timeOnTravel + ", timeVehicleInTraffic=" + timeVehicleInTraffic
+				+ ", distanceTravelled=" + distanceTravelled + ", numOfActities=" + numOfActities + "]";
+	}
+	
+	
 }

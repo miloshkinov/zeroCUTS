@@ -34,15 +34,17 @@ import org.matsim.api.core.v01.population.Person;
 class EventHandlerTrajAgents implements 	PersonArrivalEventHandler,
 PersonDepartureEventHandler, VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler {
 
-	TreeMap<Id<Person>, TrajectoriesData > persons2trajectorities= new TreeMap<Id<Person>, TrajectoriesData>();
+	private TreeMap<Id<Person>, TrajectoriesData > persons2trajectorities= new TreeMap<Id<Person>, TrajectoriesData>();
 	//	private double timePersonOnTravel = 0.0;
 	//	private double timeVehicleInTraffic = 0.0 ;
 	//	// NOTE: drivers depart, enter vehicles, eventually enter traffic, drive to destination, leave traffic, leave vehicle, arrive.
 	//	// In consequence, the time between departure and arrival of the person may be longer than the time
 	//	// between the vehicle entering and leaving the traffic (network).
 
-	TreeMap<Id<Person>, TrajectoriesData> getDriversData() {
-		return this.persons2trajectorities;
+	void writeDriversData() {
+		for (Id<Person> personId: persons2trajectorities.keySet()) {
+			System.out.println("Person: " + personId.toString() + " : " + persons2trajectorities.get(personId).toString());
+		}
 	}
 
 	@Override
@@ -52,22 +54,46 @@ PersonDepartureEventHandler, VehicleEntersTrafficEventHandler, VehicleLeavesTraf
 
 	@Override
 	public void handleEvent(PersonArrivalEvent event) {
-		//		this.timePersonOnTravel += event.getTime();
+		if (persons2trajectorities.containsKey(event.getPersonId())) {
+			double newTimeOnTravel = persons2trajectorities.get(event.getPersonId()).getTimeOnTravel() + event.getTime();
+			persons2trajectorities.get(event.getPersonId()).setTimeOnTravel(newTimeOnTravel);
+		} else {
+			persons2trajectorities.put(event.getPersonId(), new TrajectoriesData());
+			persons2trajectorities.get(event.getPersonId()).setTimeOnTravel(event.getTime());
+		}
 	}
 
 	@Override
 	public void handleEvent(PersonDepartureEvent event) {
-		//		this.timePersonOnTravel -= event.getTime();
+		if (persons2trajectorities.containsKey(event.getPersonId())) {
+			double newTimeOnTravel = persons2trajectorities.get(event.getPersonId()).getTimeOnTravel() - event.getTime();
+			persons2trajectorities.get(event.getPersonId()).setTimeOnTravel(newTimeOnTravel);
+		} else {
+			persons2trajectorities.put(event.getPersonId(), new TrajectoriesData());
+			persons2trajectorities.get(event.getPersonId()).setTimeOnTravel(-event.getTime());
+		}
 	}
 
 	@Override
 	public void handleEvent(VehicleLeavesTrafficEvent event) {
-		//		this.timeVehicleInTraffic += event.getTime() ;
+		if (persons2trajectorities.containsKey(event.getPersonId())) {
+			double newTimeVehicleInTraffic = persons2trajectorities.get(event.getPersonId()).getTimeVehicleInTraffic() + event.getTime();
+			persons2trajectorities.get(event.getPersonId()).setTimeVehicleInTraffic(newTimeVehicleInTraffic);
+		} else {
+			persons2trajectorities.put(event.getPersonId(), new TrajectoriesData());
+			persons2trajectorities.get(event.getPersonId()).setTimeVehicleInTraffic(event.getTime());
+		}
 	}
 
 	@Override
 	public void handleEvent(VehicleEntersTrafficEvent event) {
-		//		this.timeVehicleInTraffic -= event.getTime() ;
+		if (persons2trajectorities.containsKey(event.getPersonId())) {
+			double newTimeVehicleInTraffic = persons2trajectorities.get(event.getPersonId()).getTimeVehicleInTraffic() - event.getTime();
+			persons2trajectorities.get(event.getPersonId()).setTimeVehicleInTraffic(newTimeVehicleInTraffic);
+		} else {
+			persons2trajectorities.put(event.getPersonId(), new TrajectoriesData());
+			persons2trajectorities.get(event.getPersonId()).setTimeVehicleInTraffic(-event.getTime());
+		}
 	}
 
 }

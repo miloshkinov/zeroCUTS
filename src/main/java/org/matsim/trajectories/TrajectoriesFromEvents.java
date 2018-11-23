@@ -52,7 +52,12 @@ public class TrajectoriesFromEvents {
 		eventsManager.addHandler(handlerTrajAgents);
 		
 		MatsimEventsReader eventsReader = new MatsimEventsReader(eventsManager);
-		eventsReader.readFile(inputFileEvents); 	
+		eventsReader.readFile(inputFileEvents); 
+		
+		handlerTrajAgents.writeDriversData();
+		
+		System.out.println("### Done");
+		
 	}
 	
 }
