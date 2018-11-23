@@ -19,8 +19,6 @@
 package org.matsim.trajectories;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -28,8 +26,7 @@ import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
-import org.matsim.core.network.io.NetworkReaderMatsimV2;
-import org.matsim.core.utils.io.IOUtils;
+
 
 public class TrajectoriesFromEvents {
 	
