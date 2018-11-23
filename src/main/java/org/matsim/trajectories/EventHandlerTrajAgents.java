@@ -18,6 +18,7 @@
 
 package org.matsim.trajectories;
 
+import java.io.File;
 import java.util.TreeMap;
 
 import org.matsim.api.core.v01.Id;
@@ -31,20 +32,26 @@ import org.matsim.api.core.v01.events.handler.VehicleEntersTrafficEventHandler;
 import org.matsim.api.core.v01.events.handler.VehicleLeavesTrafficEventHandler;
 import org.matsim.api.core.v01.population.Person;
 
+/**
+ * @author kturner
+ *
+ * TODO: distances -> need network available
+ * TODO: other trajectories
+ * TODO: write data to file (kind of file?) instead of console;
+ */
 class EventHandlerTrajAgents implements 	PersonArrivalEventHandler,
 PersonDepartureEventHandler, VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler {
 
 	private TreeMap<Id<Person>, TrajectoriesData > persons2trajectorities= new TreeMap<Id<Person>, TrajectoriesData>();
-	//	private double timePersonOnTravel = 0.0;
-	//	private double timeVehicleInTraffic = 0.0 ;
-	//	// NOTE: drivers depart, enter vehicles, eventually enter traffic, drive to destination, leave traffic, leave vehicle, arrive.
-	//	// In consequence, the time between departure and arrival of the person may be longer than the time
-	//	// between the vehicle entering and leaving the traffic (network).
 
-	void writeDriversData() {
+	void writeDriversDataToConsole() {
 		for (Id<Person> personId: persons2trajectorities.keySet()) {
-			System.out.println("Person: " + personId.toString() + " : " + persons2trajectorities.get(personId).toString());
+			System.out.println("Agent: " + personId.toString() + " : " + persons2trajectorities.get(personId).toString());
 		}
+	}
+	
+	void writeDriversDataToFile(File filename) throws Exception {
+		throw new Exception("Not implemented");
 	}
 
 	@Override

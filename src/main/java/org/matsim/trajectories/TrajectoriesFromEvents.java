@@ -40,7 +40,7 @@ public class TrajectoriesFromEvents {
 //	public static final String inputFileNetwork = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.2-1pct/output-berlin-v5.2-1pct/berlin-v5.2-1pct.output_network.xml.gz";
 	public static final String inputFileNetwork = "../tubCloud/Shared/vsp_zerocuts/scenarios/berlin-v5.2-1pct/berlin-v5.2-1pct.output_network.xml.gz";
 	
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Exception {
 		
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 
@@ -54,8 +54,8 @@ public class TrajectoriesFromEvents {
 		MatsimEventsReader eventsReader = new MatsimEventsReader(eventsManager);
 		eventsReader.readFile(inputFileEvents); 
 		
-		handlerTrajAgents.writeDriversData();
-		
+		handlerTrajAgents.writeDriversDataToConsole();
+//		handlerTrajAgents.writeDriversDataToFile(new File("Dummy"));
 		System.out.println("### Done");
 		
 	}
