@@ -26,6 +26,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
+import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.network.io.NetworkReaderMatsimV2;
 import org.matsim.core.utils.io.IOUtils;
@@ -44,9 +45,9 @@ public class TrajectoriesFromEvents {
 		
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 
-//		Network network = null;
-//		MatsimNetworkReader networkReader = new MatsimNetworkReader(network);		//Warum NullPointer bei einem OutputNetzwerk?
-//		networkReader.readFile(inputFileNetwork);
+		Network network = NetworkUtils.createNetwork() ;
+		MatsimNetworkReader networkReader = new MatsimNetworkReader(network);
+		networkReader.readFile(inputFileNetwork);
 		
 		EventHandlerTrajAgents handlerTrajAgents = new EventHandlerTrajAgents();
 		eventsManager.addHandler(handlerTrajAgents);
