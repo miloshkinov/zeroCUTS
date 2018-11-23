@@ -22,14 +22,14 @@ class TrajectoriesData {
 
 	double timeOnTravel;
 	double timeVehicleInTraffic;
-	double distanceTravelled;
+	double distanceRouteTravelled;
 	int numOfActities;
 	//TODO: Continue
 	
 	void reset(){
 		this.timeOnTravel = 0.0;
 		this.timeVehicleInTraffic = 0.0;
-		this.distanceTravelled = 0.0;
+		this.distanceRouteTravelled = 0.0;
 		this.numOfActities = 0;
 	}
 
@@ -49,12 +49,12 @@ class TrajectoriesData {
 		this.timeVehicleInTraffic = timeVehicleInTraffic;
 	}
 
-	double getDistanceTravelled() {
-		return distanceTravelled;
+	double getDistanceRouteTravelled() {
+		return distanceRouteTravelled;
 	}
 
-	void setDistanceTravelled(double distanceTravelled) {
-		this.distanceTravelled = distanceTravelled;
+	void setDistanceRouteTravelled(double distanceTravelled) {
+		this.distanceRouteTravelled = distanceTravelled;
 	}
 
 	int getNumOfActities() {
@@ -68,7 +68,7 @@ class TrajectoriesData {
 	@Override
 	public String toString() {
 		return "TrajectoriesData [timeOnTravel=" + timeOnTravel + ", timeVehicleInTraffic=" + timeVehicleInTraffic
-				+ ", distanceTravelled=" + distanceTravelled + ", numOfActities=" + numOfActities + "]";
+				+ ", distanceTravelled=" + distanceRouteTravelled + ", numOfActities=" + numOfActities + "]";
 	}
 	
 	

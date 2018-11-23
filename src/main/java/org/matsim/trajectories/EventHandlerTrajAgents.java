@@ -22,10 +22,12 @@ import java.io.File;
 import java.util.TreeMap;
 
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.PersonArrivalEvent;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
 import org.matsim.api.core.v01.events.VehicleEntersTrafficEvent;
 import org.matsim.api.core.v01.events.VehicleLeavesTrafficEvent;
+import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.events.handler.VehicleEntersTrafficEventHandler;
@@ -40,7 +42,7 @@ import org.matsim.api.core.v01.population.Person;
  * TODO: write data to file (kind of file?) instead of console;
  */
 class EventHandlerTrajAgents implements 	PersonArrivalEventHandler,
-PersonDepartureEventHandler, VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler {
+PersonDepartureEventHandler, VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler, LinkEnterEventHandler {
 
 	private TreeMap<Id<Person>, TrajectoriesData > persons2trajectorities= new TreeMap<Id<Person>, TrajectoriesData>();
 
@@ -102,5 +104,21 @@ PersonDepartureEventHandler, VehicleEntersTrafficEventHandler, VehicleLeavesTraf
 			persons2trajectorities.get(event.getPersonId()).setTimeVehicleInTraffic(-event.getTime());
 		}
 	}
+
+	//TODO: Warum hier Cast und bei den anderen Nicht?
+	//TODO: Inhalt implementieren.
+	@Override
+	public void handleEvent(LinkEnterEvent event) {
+//		if (persons2trajectorities.containsKey(event.getPersonId())) {
+//			double newTimeVehicleInTraffic = persons2trajectorities.get(event.getPersonId()).getTimeVehicleInTraffic() - event.getTime();
+//			persons2trajectorities.get(event.getPersonId()).setTimeVehicleInTraffic(newTimeVehicleInTraffic);
+//		} else {
+//			persons2trajectorities.put(event.getPersonId(), new TrajectoriesData());
+//			persons2trajectorities.get(event.getPersonId()).setTimeVehicleInTraffic(-event.getTime());
+//		}
+		
+	}
+
+	
 
 }
