@@ -26,6 +26,10 @@ import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.events.VehicleAbortsEvent;
 import org.matsim.api.core.v01.events.VehicleEntersTrafficEvent;
 import org.matsim.api.core.v01.events.VehicleLeavesTrafficEvent;
+import org.matsim.contrib.emissions.events.ColdEmissionEvent;
+import org.matsim.contrib.emissions.events.WarmEmissionEvent;
+import org.matsim.contrib.emissions.types.ColdPollutant;
+import org.matsim.contrib.emissions.types.WarmPollutant;
 import org.matsim.core.events.handler.BasicEventHandler;
 import org.matsim.core.events.handler.EventHandler;
 import org.matsim.vehicles.Vehicle;
@@ -92,6 +96,19 @@ class EventHandlerTrajAgents implements BasicEventHandler {
 			}
 		}
 
+		if (event instanceof ColdEmissionEvent) {
+			System.out.println("ColdEmissionEvent found.");
+			//TODO: Add all Values ;)
+			Id<Vehicle> vehicleId = ((VehicleLeavesTrafficEvent) event).getVehicleId();
+			vehicles2trajectorities.get(vehicleId).setHC(vehicles2trajectorities.get(vehicleId).getHC() + ((ColdEmissionEvent) event).getColdEmissions().get(ColdPollutant.HC));
+			
+		}
+		
+		if (event instanceof WarmEmissionEvent) {
+			Id<Vehicle> vehicleId = ((VehicleLeavesTrafficEvent) event).getVehicleId();
+			vehicles2trajectorities.get(vehicleId).setHC(vehicles2trajectorities.get(vehicleId).getHC() + ((WarmEmissionEvent) event).getWarmEmissions().get(WarmPollutant.HC));
+			//TODO: Add all Values ;)
+		}
 
 		if (event instanceof VehicleAbortsEvent) {
 			vehicles2trajectorities.get(((VehicleAbortsEvent) event).getVehicleId()).setAborted(true);
