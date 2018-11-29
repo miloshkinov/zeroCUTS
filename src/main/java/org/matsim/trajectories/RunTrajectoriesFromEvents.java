@@ -66,12 +66,13 @@ class RunTrajectoriesFromEvents{
 
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 
-//		// if network is needed for analysis:
-// 		final Config config = ConfigUtils.createConfig();
-//		config.network().setInputFile( inputFileNetwork );
-//		config.global().setCoordinateSystem( "GK4" );
-//		Scenario scenario = ScenarioUtils.loadScenario( config ) ;
-//		Network network = scenario.getNetwork() ;
+		// if network is needed for analysis:
+ 		final Config config = ConfigUtils.createConfig();
+		config.network().setInputFile( inputFileNetwork );
+//		config.global().setCoordinateSystem( "GK4" );		//Derzeit Transformation von Atlantis (test-Daten) auf WGS84 nicht möglich, daher nutze WGS84
+		config.global().setCoordinateSystem( "WGS84" ); 
+		Scenario scenario = ScenarioUtils.loadScenario( config ) ;
+		Network network = scenario.getNetwork() ;
 
 		EventHandlerTrajAgents handlerTrajAgents = new EventHandlerTrajAgents();
 		eventsManager.addHandler(handlerTrajAgents);
