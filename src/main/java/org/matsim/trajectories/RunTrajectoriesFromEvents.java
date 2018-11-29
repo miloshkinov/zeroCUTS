@@ -41,19 +41,24 @@ class RunTrajectoriesFromEvents{
 
 	private static final AnalysisType analysisType = AnalysisType.test ;
 
-
 	public static void main(String[] args) throws Exception {
 
-
+		final String inputFileEvents  ;
+		final String inputFileNetwork ;
+		final String outputDirectory  ;
+		
 		switch ( analysisType ) {
 			case test:
+				inputFileEvents  = "scenarios/emissionsExample/output_events.xml.gz";
+				inputFileNetwork = "scenarios/emissionsExample/output_network.xml.gz";
+				outputDirectory  = "output/trajectories" ;
 				break;
 			case onePercent:
-				public static final String inputFileEvents  = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.2-1pct/output-berlin-v5.2-1pct/berlin-v5.2-1pct.output_events.xml.gz";
-				public static final String inputFileNetwork = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.2-1pct/output-berlin-v5.2-1pct/berlin-v5.2-1pct.output_network.xml.gz";
-				public static final String outputDirectory = "output/trajectories" ;
+				inputFileEvents  = "../tubCloud/Shared/vsp_zerocuts/scenarios/berlin-v5.2-1pct/berlin-v5.2-1pct.output_events.xml.gz";
+				inputFileNetwork = "../tubCloud/Shared/vsp_zerocuts/scenarios/berlin-v5.2-1pct/berlin-v5.2-1pct.output_network.xml.gz";
+				outputDirectory  = "output/trajectories/1pct" ;
 				break;
-			case default:
+			default:
 					throw new RuntimeException("undefined") ;
 		}
 
@@ -61,7 +66,7 @@ class RunTrajectoriesFromEvents{
 
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 
-		// if network is needed for analysis:
+//		// if network is needed for analysis:
 // 		final Config config = ConfigUtils.createConfig();
 //		config.network().setInputFile( inputFileNetwork );
 //		config.global().setCoordinateSystem( "GK4" );
@@ -73,6 +78,8 @@ class RunTrajectoriesFromEvents{
 		
 		MatsimEventsReader eventsReader = new MatsimEventsReader(eventsManager);
 		eventsReader.readURL( IOUtils.newUrl( null, inputFileEvents ) );
+		
+		eventsManager.finishProcessing();
 
 		handlerTrajAgents.writeDriversDataToConsole();
 //		handlerTrajAgents.writeDriversDataToFile(new File("Dummy"));

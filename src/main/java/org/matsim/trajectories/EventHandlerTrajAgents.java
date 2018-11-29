@@ -22,15 +22,13 @@ import java.io.File;
 import java.util.TreeMap;
 
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.events.*;
-import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
-import org.matsim.api.core.v01.events.handler.VehicleEntersTrafficEventHandler;
-import org.matsim.api.core.v01.events.handler.VehicleLeavesTrafficEventHandler;
-import org.matsim.api.core.v01.population.Person;
-import org.matsim.contrib.emissions.events.WarmEmissionEvent;
+import org.matsim.api.core.v01.events.Event;
+import org.matsim.api.core.v01.events.VehicleAbortsEvent;
+import org.matsim.api.core.v01.events.VehicleEntersTrafficEvent;
+import org.matsim.api.core.v01.events.VehicleLeavesTrafficEvent;
 import org.matsim.core.events.handler.BasicEventHandler;
+import org.matsim.core.events.handler.EventHandler;
+import org.matsim.vehicles.Vehicle;
 
 /**
  * @author kturner
@@ -39,94 +37,69 @@ import org.matsim.core.events.handler.BasicEventHandler;
  * TODO: other trajectories
  * TODO: write data to file (kind of file?) instead of console;
  */
-class EventHandlerTrajAgents implements
-PersonDepartureEventHandler, VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler, LinkEnterEventHandler, BasicEventHandler{
+class EventHandlerTrajAgents implements BasicEventHandler {
 
-	private TreeMap<Id<Person>, TrajectoriesData > persons2trajectorities= new TreeMap<Id<Person>, TrajectoriesData>();
+	private TreeMap<Id<Vehicle>, TrajectoriesData > vehicles2trajectorities= new TreeMap<Id<Vehicle>, TrajectoriesData>();
+	private TreeMap<Id<Vehicle>, Double > vehicle2StartingTime = new TreeMap<Id<Vehicle>, Double>();
 
 	void writeDriversDataToConsole() {
-		for (Id<Person> personId: persons2trajectorities.keySet()) {
-			System.out.println("Agent: " + personId.toString() + " : " + persons2trajectorities.get(personId).toString());
+		for (Id<Vehicle> vehicleId: vehicles2trajectorities.keySet()) {
+			System.out.println("Agent: " + vehicleId.toString() + " : " + vehicles2trajectorities.get(vehicleId).toString());
 		}
 	}
-	
+
 	void writeDriversDataToFile(File filename) throws Exception {
 		throw new Exception("Not implemented");
 	}
 
-	@Override
 	public void reset(int iteration) {
-		this.persons2trajectorities.clear();
-	}
-
-	@Override
-	public void handleEvent( Event event ) {
-		if ( event instanceof PersonArrivalEvent ){
-			PersonArrivalEvent de = (PersonArrivalEvent) event;
-			if( persons2trajectorities.containsKey( de.getPersonId() ) ){
-				double newTimeOnTravel = persons2trajectorities.get( de.getPersonId() ).getTimeOnTravel() + de.getTime();
-				persons2trajectorities.get( de.getPersonId() ).setTimeOnTravel( newTimeOnTravel );
-			} else{
-				persons2trajectorities.put( de.getPersonId(), new TrajectoriesData() );
-				persons2trajectorities.get( de.getPersonId() ).setTimeOnTravel( de.getTime() );
-			}
-		} else if ( event instanceof WarmEmissionEvent ) {
-			// I think that this will not work!!!!!  kn
-		} else {
-			if ( WarmEmissionEvent.EVENT_TYPE.equals( event.getEventType() ) ) {
-				WarmEmissionEvent ev = (WarmEmissionEvent) event ; // will still not work (I think)
-				double nox = Double.parseDouble( ev.getAttributes().get("NOx") ) ;  // will work (I hope) as long as key is spelled correctly.
-			}
-		}
-	}
-
-	@Override
-	public void handleEvent(PersonDepartureEvent event) {
-		if (persons2trajectorities.containsKey(event.getPersonId())) {
-			double newTimeOnTravel = persons2trajectorities.get(event.getPersonId()).getTimeOnTravel() - event.getTime();
-			persons2trajectorities.get(event.getPersonId()).setTimeOnTravel(newTimeOnTravel);
-		} else {
-			persons2trajectorities.put(event.getPersonId(), new TrajectoriesData());
-			persons2trajectorities.get(event.getPersonId()).setTimeOnTravel(-event.getTime());
-		}
-	}
-
-	@Override
-	public void handleEvent(VehicleLeavesTrafficEvent event) {
-		if (persons2trajectorities.containsKey(event.getPersonId())) {
-			double newTimeVehicleInTraffic = persons2trajectorities.get(event.getPersonId()).getTimeVehicleInTraffic() + event.getTime();
-			persons2trajectorities.get(event.getPersonId()).setTimeVehicleInTraffic(newTimeVehicleInTraffic);
-		} else {
-			persons2trajectorities.put(event.getPersonId(), new TrajectoriesData());
-			persons2trajectorities.get(event.getPersonId()).setTimeVehicleInTraffic(event.getTime());
-		}
-	}
-
-	@Override
-	public void handleEvent(VehicleEntersTrafficEvent event) {
-		if (persons2trajectorities.containsKey(event.getPersonId())) {
-			double newTimeVehicleInTraffic = persons2trajectorities.get(event.getPersonId()).getTimeVehicleInTraffic() - event.getTime();
-			persons2trajectorities.get(event.getPersonId()).setTimeVehicleInTraffic(newTimeVehicleInTraffic);
-		} else {
-			persons2trajectorities.put(event.getPersonId(), new TrajectoriesData());
-			persons2trajectorities.get(event.getPersonId()).setTimeVehicleInTraffic(-event.getTime());
-		}
-	}
-
-	//TODO: Warum hier Cast und bei den anderen Nicht?
-	//TODO: Inhalt implementieren.
-	@Override
-	public void handleEvent(LinkEnterEvent event) {
-//		if (persons2trajectorities.containsKey(event.getPersonId())) {
-//			double newTimeVehicleInTraffic = persons2trajectorities.get(event.getPersonId()).getTimeVehicleInTraffic() - event.getTime();
-//			persons2trajectorities.get(event.getPersonId()).setTimeVehicleInTraffic(newTimeVehicleInTraffic);
-//		} else {
-//			persons2trajectorities.put(event.getPersonId(), new TrajectoriesData());
-//			persons2trajectorities.get(event.getPersonId()).setTimeVehicleInTraffic(-event.getTime());
-//		}
-		
+		this.vehicles2trajectorities.clear();
 	}
 
 	
+	public void handleEvent(Event event) {
+		if (event instanceof VehicleEntersTrafficEvent) { 
+			Id<Vehicle> vehicleId = ((VehicleEntersTrafficEvent) event).getVehicleId();
+			if (! vehicles2trajectorities.containsKey(vehicleId )){
+				vehicles2trajectorities.put(vehicleId, new TrajectoriesData());
+			}
+			double newTimeVehicleInTraffic = vehicles2trajectorities.get(vehicleId).getTimeVehicleInTraffic() - event.getTime();
+			vehicles2trajectorities.get(vehicleId).setTimeVehicleInTraffic(newTimeVehicleInTraffic);
+			
+			//Merke früheste Startzeit
+			if (! vehicle2StartingTime.containsKey(vehicleId)){
+				vehicle2StartingTime.put(vehicleId, event.getTime());
+			} else {	//Sollte eigentlich nicht passieren, da eventsfile chronologisch ist.
+				if (event.getTime() < vehicle2StartingTime.get(vehicleId)) {
+					vehicle2StartingTime.put(vehicleId, event.getTime());
+				}
+			}
+
+		}
+
+		if (event instanceof VehicleLeavesTrafficEvent) { 
+			Id<Vehicle> vehicleId = ((VehicleLeavesTrafficEvent) event).getVehicleId();
+			//			if (! vehicles2trajectorities.containsKey(vehicleId )){			//Not necessary, because vehicle must enter traffic first! 
+			//				vehicles2trajectorities.put(vehicleId, new TrajectoriesData());
+			//			}
+			double newTimeVehicleInTraffic = vehicles2trajectorities.get(vehicleId).getTimeVehicleInTraffic() + event.getTime();
+			vehicles2trajectorities.get(vehicleId).setTimeVehicleInTraffic(newTimeVehicleInTraffic);
+
+
+			double newTimeVehicleOnTravel = ((VehicleLeavesTrafficEvent) event).getTime() - vehicle2StartingTime.get(vehicleId);
+			if (newTimeVehicleOnTravel > vehicles2trajectorities.get(vehicleId).getTimeVehicleInTraffic()){
+				vehicles2trajectorities.get(vehicleId).setTimeOnTravel(newTimeVehicleOnTravel);
+			}
+		}
+
+
+		if (event instanceof VehicleAbortsEvent) {
+			vehicles2trajectorities.get(((VehicleAbortsEvent) event).getVehicleId()).setAborted(true);
+		}
+
+
+	}
+
+	//TODO: Assign vehicleTypes to vehicleTajectories
 
 }

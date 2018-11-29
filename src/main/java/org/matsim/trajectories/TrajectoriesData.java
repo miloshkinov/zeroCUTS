@@ -17,22 +17,36 @@
  * *********************************************************************** */
   
 package org.matsim.trajectories;
-  
+
+import org.matsim.api.core.v01.Id;
+import org.matsim.vehicles.VehicleType;
+
 class TrajectoriesData {
 
-	double timeOnTravel;
-	double timeVehicleInTraffic;
-	double distanceRouteTravelled;
-	int numOfActities;
+	private Id<VehicleType> vehicleTypeId; 
+	private double timeOnTravel;
+	private double timeVehicleInTraffic;
+	private double distanceRouteTravelled;
+	private int numOfActities;
+	private boolean aborted = false;
 	//TODO: Continue
 	
 	void reset(){
+		this.vehicleTypeId = null;
 		this.timeOnTravel = 0.0;
 		this.timeVehicleInTraffic = 0.0;
 		this.distanceRouteTravelled = 0.0;
 		this.numOfActities = 0;
+		this.aborted = false;
 	}
 
+	Id<VehicleType> getVehicleTypeId() {
+		return vehicleTypeId;
+	}
+
+	void setVehicleTypeId(Id<VehicleType> vehicleTypeId) {
+		this.vehicleTypeId = vehicleTypeId;
+	}
 	double getTimeOnTravel() {
 		return timeOnTravel;
 	}
@@ -65,10 +79,19 @@ class TrajectoriesData {
 		this.numOfActities = numOfActities;
 	}
 
+	boolean isAborted() {
+		return aborted;
+	}
+
+	void setAborted(boolean aborted) {
+		this.aborted = aborted;
+	}
+
 	@Override
 	public String toString() {
-		return "TrajectoriesData [timeOnTravel=" + timeOnTravel + ", timeVehicleInTraffic=" + timeVehicleInTraffic
-				+ ", distanceTravelled=" + distanceRouteTravelled + ", numOfActities=" + numOfActities + "]";
+		return "TrajectoriesData [vehicleTypeId=" + vehicleTypeId + ", timeOnTravel=" + timeOnTravel
+				+ ", timeVehicleInTraffic=" + timeVehicleInTraffic + ", distanceRouteTravelled="
+				+ distanceRouteTravelled + ", numOfActities=" + numOfActities + ", aborted=" + aborted + "]";
 	}
 	
 	
