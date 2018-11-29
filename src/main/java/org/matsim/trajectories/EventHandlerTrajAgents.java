@@ -24,9 +24,11 @@ import java.util.TreeMap;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.Event;
+import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.VehicleAbortsEvent;
 import org.matsim.api.core.v01.events.VehicleEntersTrafficEvent;
 import org.matsim.api.core.v01.events.VehicleLeavesTrafficEvent;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.emissions.events.ColdEmissionEvent;
 import org.matsim.contrib.emissions.events.WarmEmissionEvent;
 import org.matsim.contrib.emissions.types.ColdPollutant;
@@ -38,7 +40,6 @@ import org.matsim.vehicles.Vehicle;
  * @author kturner
  *
  * TODO: setVehicleType
- * TODO: distances -> need network available //via LinkEnterEvents
  * TODO: other trajectories
  * TODO: write data to file (kind of file?) instead of console;
  */
@@ -48,6 +49,12 @@ class EventHandlerTrajAgents implements BasicEventHandler {
 	
 	private TreeMap<Id<Vehicle>, TrajectoriesData > vehicles2trajectorities= new TreeMap<Id<Vehicle>, TrajectoriesData>();
 	private TreeMap<Id<Vehicle>, Double > vehicle2StartingTime = new TreeMap<Id<Vehicle>, Double>();
+	
+	private Network network;
+
+	public EventHandlerTrajAgents(Network network) {
+		this.network = network;
+	}
 
 	void writeDriversDataToConsole() {
 		for (Id<Vehicle> vehicleId: vehicles2trajectorities.keySet()) {
@@ -99,6 +106,12 @@ class EventHandlerTrajAgents implements BasicEventHandler {
 			if (newTimeVehicleOnTravel > vehicles2trajectorities.get(vehicleId).getTimeVehicleInTraffic()){
 				vehicles2trajectorities.get(vehicleId).setTimeOnTravel(newTimeVehicleOnTravel);
 			}
+		}
+		
+		if (event instanceof LinkEnterEvent) {
+			LinkEnterEvent le = (LinkEnterEvent) event;
+			double newDistanceRoute = vehicles2trajectorities.get(le.getVehicleId()).getDistanceRouteTravelled() + network.getLinks().get(le.getLinkId()).getLength();
+			vehicles2trajectorities.get(le.getVehicleId()).setDistanceRouteTravelled(newDistanceRoute);
 		}
 
 		//Note: coldEmissionEvent are instanceof: org.matsim.api.core.v01.events.GenericEvent , kmt nov'18

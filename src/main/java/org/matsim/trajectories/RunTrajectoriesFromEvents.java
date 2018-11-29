@@ -80,7 +80,7 @@ class RunTrajectoriesFromEvents{
 		Scenario scenario = ScenarioUtils.loadScenario( config ) ;
 		Network network = scenario.getNetwork() ;
 
-		EventHandlerTrajAgents handlerTrajAgents = new EventHandlerTrajAgents();
+		EventHandlerTrajAgents handlerTrajAgents = new EventHandlerTrajAgents(network);
 		eventsManager.addHandler(handlerTrajAgents);
 		
 		MatsimEventsReader eventsReader = new MatsimEventsReader(eventsManager);
