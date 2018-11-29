@@ -27,21 +27,24 @@ import org.matsim.api.core.v01.events.VehicleAbortsEvent;
 import org.matsim.api.core.v01.events.VehicleEntersTrafficEvent;
 import org.matsim.api.core.v01.events.VehicleLeavesTrafficEvent;
 import org.matsim.contrib.emissions.events.ColdEmissionEvent;
+import org.matsim.contrib.emissions.events.ColdEmissionEventHandler;
 import org.matsim.contrib.emissions.events.WarmEmissionEvent;
+import org.matsim.contrib.emissions.events.WarmEmissionEventHandler;
 import org.matsim.contrib.emissions.types.ColdPollutant;
 import org.matsim.contrib.emissions.types.WarmPollutant;
 import org.matsim.core.events.handler.BasicEventHandler;
-import org.matsim.core.events.handler.EventHandler;
 import org.matsim.vehicles.Vehicle;
 
 /**
  * @author kturner
  *
- * TODO: distances -> need network available
+ * TODO: setVehicleTyoe
+ * TODO: distances -> need network available //via LinkEnterEvents
  * TODO: other trajectories
+ * TODO: fix Emissions
  * TODO: write data to file (kind of file?) instead of console;
  */
-class EventHandlerTrajAgents implements BasicEventHandler {
+class EventHandlerTrajAgents implements BasicEventHandler, ColdEmissionEventHandler, WarmEmissionEventHandler {
 
 	private TreeMap<Id<Vehicle>, TrajectoriesData > vehicles2trajectorities= new TreeMap<Id<Vehicle>, TrajectoriesData>();
 	private TreeMap<Id<Vehicle>, Double > vehicle2StartingTime = new TreeMap<Id<Vehicle>, Double>();
@@ -97,15 +100,15 @@ class EventHandlerTrajAgents implements BasicEventHandler {
 		}
 
 		if (event instanceof ColdEmissionEvent) {
-			System.out.println("ColdEmissionEvent found.");
+			System.out.println("ColdEmissionEvent found via handleEvent(Event) ");
 			//TODO: Add all Values ;)
-			Id<Vehicle> vehicleId = ((VehicleLeavesTrafficEvent) event).getVehicleId();
+			Id<Vehicle> vehicleId = ((ColdEmissionEvent) event).getVehicleId();
 			vehicles2trajectorities.get(vehicleId).setHC(vehicles2trajectorities.get(vehicleId).getHC() + ((ColdEmissionEvent) event).getColdEmissions().get(ColdPollutant.HC));
 			
 		}
 		
 		if (event instanceof WarmEmissionEvent) {
-			Id<Vehicle> vehicleId = ((VehicleLeavesTrafficEvent) event).getVehicleId();
+			Id<Vehicle> vehicleId = ((WarmEmissionEvent) event).getVehicleId();
 			vehicles2trajectorities.get(vehicleId).setHC(vehicles2trajectorities.get(vehicleId).getHC() + ((WarmEmissionEvent) event).getWarmEmissions().get(WarmPollutant.HC));
 			//TODO: Add all Values ;)
 		}
@@ -116,6 +119,24 @@ class EventHandlerTrajAgents implements BasicEventHandler {
 
 
 	}
+
+	@Override
+	public void handleEvent(ColdEmissionEvent event) {
+		System.out.println("ColdEmissionEvent found via handleEvent(ColdEmissionEvent)");
+		//TODO: Add all Values ;)
+		Id<Vehicle> vehicleId = ((ColdEmissionEvent) event).getVehicleId();
+		vehicles2trajectorities.get(vehicleId).setHC(vehicles2trajectorities.get(vehicleId).getHC() + ((ColdEmissionEvent) event).getColdEmissions().get(ColdPollutant.HC));
+	}
+	
+	@Override
+	public void handleEvent(WarmEmissionEvent event) {
+		Id<Vehicle> vehicleId = ((WarmEmissionEvent) event).getVehicleId();
+		vehicles2trajectorities.get(vehicleId).setHC(vehicles2trajectorities.get(vehicleId).getHC() + ((WarmEmissionEvent) event).getWarmEmissions().get(WarmPollutant.HC));
+		//TODO: Add all Values ;)
+		
+	}
+
+
 
 	//TODO: Assign vehicleTypes to vehicleTajectories
 
