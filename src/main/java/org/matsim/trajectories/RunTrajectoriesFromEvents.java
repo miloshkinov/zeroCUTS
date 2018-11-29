@@ -22,6 +22,9 @@ import java.io.File;
 import java.net.URL;
 
 import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
+
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -36,12 +39,15 @@ import org.matsim.core.utils.io.IOUtils;
 
 
 class RunTrajectoriesFromEvents{
-
-	enum AnalysisType { test, onePercent }
-
+	
+	private static enum AnalysisType { test, onePercent }
 	private static final AnalysisType analysisType = AnalysisType.test ;
+	
+	static Logger log = Logger.getLogger(RunTrajectoriesFromEvents.class);
+
 
 	public static void main(String[] args) throws Exception {
+		log.setLevel(Level.DEBUG);
 
 		final String inputFileEvents  ;
 		final String inputFileNetwork ;
