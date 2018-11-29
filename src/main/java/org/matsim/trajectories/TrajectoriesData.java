@@ -19,15 +19,16 @@
 package org.matsim.trajectories;
 
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.population.Plan;
 import org.matsim.vehicles.VehicleType;
 
 class TrajectoriesData {
 
 	private Id<VehicleType> vehicleTypeId; 
-	private double timeOnTravel = 0;
-	private double timeVehicleInTraffic = 0;
-	private double distanceRouteTravelled = 0;
-	private int numOfActivities  = 0;;
+	private double timeOnTravel = 0.0;
+	private double timeVehicleInTraffic = 0.0;
+	private double distanceRouteTravelled = 0.0;
+	private int numOfActivities  = 0; //Activities are NOT part of the vehicle information
 	private boolean aborted = false;
 	private double HC = 0;
 	private double PM = 0;

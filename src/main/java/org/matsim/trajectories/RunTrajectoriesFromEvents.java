@@ -18,11 +18,6 @@
   
 package org.matsim.trajectories;
 
-import java.io.File;
-import java.net.URL;
-
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
@@ -32,9 +27,8 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
-import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.scoring.EventsToLegs;
 import org.matsim.core.utils.io.IOUtils;
 
 
@@ -47,11 +41,12 @@ class RunTrajectoriesFromEvents{
 
 
 	public static void main(String[] args) throws Exception {
-		log.setLevel(Level.DEBUG);
+		log.setLevel(Level.INFO);
 
 		final String inputFileEvents  ;
 		final String inputFileNetwork ;
 		final String outputDirectory  ;
+//		final String outputExperiancedPlansFileName = "/expericedPlans.xml.gz";
 		
 		switch ( analysisType ) {
 			case test:
@@ -68,8 +63,6 @@ class RunTrajectoriesFromEvents{
 					throw new RuntimeException("undefined") ;
 		}
 
-
-
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 
 		// if network is needed for analysis:
@@ -79,7 +72,15 @@ class RunTrajectoriesFromEvents{
 		config.global().setCoordinateSystem( "WGS84" ); 
 		Scenario scenario = ScenarioUtils.loadScenario( config ) ;
 		Network network = scenario.getNetwork() ;
-
+		
+		//Erster Schritt um Legs zu bekommen. TODO:  Noch weiterverarbeiten zu Fahrzeugen und mit denen zusammenbringen
+		EventsToLegs eventsToLegs = new EventsToLegs(scenario);
+		MyLegHandler myLegHandler = new MyLegHandler();
+		eventsToLegs.addLegHandler(myLegHandler);
+		eventsManager.addHandler(eventsToLegs);
+		
+		
+		
 		EventHandlerTrajAgents handlerTrajAgents = new EventHandlerTrajAgents(network);
 		eventsManager.addHandler(handlerTrajAgents);
 		
@@ -88,7 +89,8 @@ class RunTrajectoriesFromEvents{
 		
 		eventsManager.finishProcessing();
 
-		handlerTrajAgents.writeDriversDataToConsole();
+		handlerTrajAgents.writeVehiclesDataToConsole();
+		myLegHandler.writeLegsToConsole();
 //		handlerTrajAgents.writeDriversDataToFile(new File("Dummy"));
 		System.out.println("### Done");
 		

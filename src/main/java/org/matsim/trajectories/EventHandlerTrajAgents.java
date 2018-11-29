@@ -29,11 +29,13 @@ import org.matsim.api.core.v01.events.VehicleAbortsEvent;
 import org.matsim.api.core.v01.events.VehicleEntersTrafficEvent;
 import org.matsim.api.core.v01.events.VehicleLeavesTrafficEvent;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Leg;
 import org.matsim.contrib.emissions.events.ColdEmissionEvent;
 import org.matsim.contrib.emissions.events.WarmEmissionEvent;
 import org.matsim.contrib.emissions.types.ColdPollutant;
 import org.matsim.contrib.emissions.types.WarmPollutant;
 import org.matsim.core.events.handler.BasicEventHandler;
+import org.matsim.core.population.PopulationUtils;
 import org.matsim.vehicles.Vehicle;
 
 /**
@@ -56,9 +58,9 @@ class EventHandlerTrajAgents implements BasicEventHandler {
 		this.network = network;
 	}
 
-	void writeDriversDataToConsole() {
+	void writeVehiclesDataToConsole() {
 		for (Id<Vehicle> vehicleId: vehicles2trajectorities.keySet()) {
-			System.out.println("Agent: " + vehicleId.toString() + " : " + vehicles2trajectorities.get(vehicleId).toString());
+			System.out.println("VehicleId: " + vehicleId.toString() + " : " + vehicles2trajectorities.get(vehicleId).toString());
 		}
 	}
 
@@ -72,7 +74,7 @@ class EventHandlerTrajAgents implements BasicEventHandler {
 
 	
 	public void handleEvent(Event event) {
-		log.debug("handle Event: " + event.getEventType() +", Instanceof: " + event.getClass().getName() + ", Event: " + event.toString());
+//		log.debug("handle Event: " + event.getEventType() +", Instanceof: " + event.getClass().getName() + ", Event: " + event.toString());
 		
 		if (event instanceof VehicleEntersTrafficEvent) { 
 			Id<Vehicle> vehicleId = ((VehicleEntersTrafficEvent) event).getVehicleId();
