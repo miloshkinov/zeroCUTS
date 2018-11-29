@@ -27,7 +27,7 @@ class TrajectoriesData {
 	private double timeOnTravel = 0;
 	private double timeVehicleInTraffic = 0;
 	private double distanceRouteTravelled = 0;
-	private int numOfActities  = 0;;
+	private int numOfActivities  = 0;;
 	private boolean aborted = false;
 	private double HC = 0;
 	private double PM = 0;
@@ -45,7 +45,7 @@ class TrajectoriesData {
 		this.timeOnTravel = 0.0;
 		this.timeVehicleInTraffic = 0.0;
 		this.distanceRouteTravelled = 0.0;
-		this.numOfActities = 0;
+		this.numOfActivities = 0;
 		this.aborted = false;
 	}
 
@@ -80,12 +80,12 @@ class TrajectoriesData {
 		this.distanceRouteTravelled = distanceTravelled;
 	}
 
-	int getNumOfActities() {
-		return numOfActities;
+	int getNumOfActivities() {
+		return numOfActivities;
 	}
 
-	void setNumOfActities(int numOfActities) {
-		this.numOfActities = numOfActities;
+	void setNumOfActivities(int numOfActities) {
+		this.numOfActivities = numOfActities;
 	}
 
 	boolean isAborted() {
@@ -172,7 +172,7 @@ class TrajectoriesData {
 	public String toString() {
 		return "TrajectoriesData [vehicleTypeId=" + vehicleTypeId + ", timeOnTravel=" + timeOnTravel
 				+ ", timeVehicleInTraffic=" + timeVehicleInTraffic + ", distanceRouteTravelled="
-				+ distanceRouteTravelled + ", numOfActities=" + numOfActities + ", aborted=" + aborted + ", HC=" + HC
+				+ distanceRouteTravelled + ", numOfActivities=" + numOfActivities + ", aborted=" + aborted + ", HC=" + HC
 				+ ", PM=" + PM + ", NO2=" + NO2 + ", NMHC=" + NMHC + ", NOX=" + NOX + ", XO=" + XO + ", FC=" + FC
 				+ ", CO2_TOTAL=" + CO2_TOTAL + ", SO2=" + SO2 + "]";
 	}
