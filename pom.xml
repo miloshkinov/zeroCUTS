@@ -11,6 +11,13 @@
 
 	<repositories>
 
+		<!-- Geotools is not on Maven central -->
+		<repository>
+			<id>osgeo</id>
+			<name>Geotools repository</name>
+			<url>http://download.osgeo.org/webdav/geotools</url>
+		</repository>
+
 		<!-- Repository for MATSim releases (MATSim is not on Maven central) -->
 		<repository>
 			<id>matsim</id>
