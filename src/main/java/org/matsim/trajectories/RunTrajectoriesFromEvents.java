@@ -35,7 +35,7 @@ import org.matsim.core.utils.io.IOUtils;
 class RunTrajectoriesFromEvents{
 	
 	private static enum AnalysisType { test, onePercent }
-	private static final AnalysisType analysisType = AnalysisType.onePercent;
+	private static final AnalysisType analysisType = AnalysisType.onePercent ;
 	
 	static Logger log = Logger.getLogger(RunTrajectoriesFromEvents.class);
 
