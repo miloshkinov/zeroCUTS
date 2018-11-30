@@ -102,7 +102,8 @@ class EventHandlerTrajAgents implements BasicEventHandler {
 
 
 		if (event instanceof VehicleAbortsEvent) {
-			throw new RuntimeException("have an aborted vehicle; don't know what to do") ;
+			log.warn("aborted vehicle; vehicleId=" + ((VehicleAbortsEvent) event).getVehicleId() ) ;
+			this.vehicles2trajectorities.remove( ((VehicleAbortsEvent) event).getVehicleId() ) ;
 		}
 	}
 }
