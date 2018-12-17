@@ -18,29 +18,20 @@
 
 package org.matsim.trajectories;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.Writer;
-import java.util.Map;
-import java.util.TreeMap;
-
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.VehicleAbortsEvent;
 import org.matsim.api.core.v01.events.VehicleEntersTrafficEvent;
-import org.matsim.api.core.v01.events.VehicleLeavesTrafficEvent;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.population.Leg;
-import org.matsim.contrib.emissions.events.ColdEmissionEvent;
-import org.matsim.contrib.emissions.events.WarmEmissionEvent;
-import org.matsim.contrib.emissions.types.ColdPollutant;
-import org.matsim.contrib.emissions.types.WarmPollutant;
 import org.matsim.core.events.handler.BasicEventHandler;
-import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.vehicles.Vehicle;
+
+import java.io.BufferedWriter;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author kturner
