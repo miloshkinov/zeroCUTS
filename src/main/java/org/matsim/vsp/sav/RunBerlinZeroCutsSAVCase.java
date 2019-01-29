@@ -24,12 +24,11 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.contrib.dvrp.run.DvrpModule;
+import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.contrib.otfvis.OTFVisLiveModule;
-import org.matsim.contrib.taxi.optimizer.TaxiOptimizer;
 import org.matsim.contrib.taxi.run.TaxiConfigConsistencyChecker;
 import org.matsim.contrib.taxi.run.TaxiConfigGroup;
 import org.matsim.contrib.taxi.run.TaxiModule;
-import org.matsim.contrib.taxi.run.TaxiQSimModule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
@@ -38,8 +37,6 @@ import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.vis.otfvis.OTFVisConfigGroup;
-
-import java.util.Collections;
 
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
@@ -71,10 +68,9 @@ public class RunBerlinZeroCutsSAVCase {
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
         Controler controler = new Controler(scenario);
-        controler.addQSimModule(new TaxiQSimModule());
-        controler.addOverridingModule(DvrpModule.createModule(mode,
-                Collections.singleton(TaxiOptimizer.class)));
+        controler.addOverridingModule(new DvrpModule());
         controler.addOverridingModule(new TaxiModule());
+        controler.configureQSimComponents(DvrpQSimComponents.activateModes(mode));
 
         if (otfvis) {
             controler.addOverridingModule(new OTFVisLiveModule());
