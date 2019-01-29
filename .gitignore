@@ -15,6 +15,7 @@ hs_err_pid*
 /.classpath
 /target/
 /output/
+/scenarios/avscenario/output*
 /bin/
 
 /.idea/
