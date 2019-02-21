@@ -89,37 +89,37 @@ public class RunFreight {
 	private static final Logger log = Logger.getLogger(RunFreight.class);
 	private static final Level loggingLevel = Level.INFO; 		//Set to info to avoid all Debug-Messages, e.g. from VehicleRountingAlgorithm, but can be set to other values if needed. KMT feb/18. 
 
-	 enum CostsModififier {av, avFix110pct, avDist110pct, avVehCapUp}
-	 final static CostsModififier costsModififier = CostsModififier.avVehCapUp ;
+	private enum CostsModififier {av, avFix110pct, avDist110pct, avVehCapUp}
+	private final static CostsModififier costsModififier = null;
 
 	//Beginn Namesdefinition KT Für Berlin-Szenario 
 	private static final String INPUT_DIR = "scenarios/BerlinFood/";
-	
+
 	private static final String OUTPUT_DIR = "scenarios/BerlinFood/output/Base_ServiceBased/" ;
 	private static final String LOG_DIR = OUTPUT_DIR + "Logs/";
 
 	//Dateinamen
 	private static final String NETFILE_NAME = "network.xml.gz" ;
 	private static final String CARRIERFILE_NAME = "carrierLEH_v2_withFleet_depot.xml";
-//	private static final String ALGORITHMFILE_NAME = "mdvrp_algorithmConfig_2.xml" ;
+	//	private static final String ALGORITHMFILE_NAME = "mdvrp_algorithmConfig_2.xml" ;
 	private static final String VEHTYPEFILE_NAME = "vehicleTypes.xml" ;
 
 	private static final String NETFILE = INPUT_DIR + NETFILE_NAME ;
 	private static final String VEHTYPEFILE = INPUT_DIR + VEHTYPEFILE_NAME;
 	private static final String CARRIERFILE = INPUT_DIR + CARRIERFILE_NAME;
-//	private static final String ALGORITHMFILE = INPUT_DIR + ALGORITHMFILE_NAME;
+	//	private static final String ALGORITHMFILE = INPUT_DIR + ALGORITHMFILE_NAME;
 
 	// Einstellungen für den Run	
 	private static final boolean runMatsim = true;	 //when false only jsprit run will be performed
 	private static final int LAST_MATSIM_ITERATION = 0;  //only one iteration for writing events.
 	private static final int MAX_JSPRIT_ITERATION = 1;
-	
+
 	private static Config config;
 
 	public static void main(String[] args) throws IOException, InvalidAttributeValueException {
 		Logger.getRootLogger().setLevel(loggingLevel);
 		OutputDirectoryLogging.initLoggingWithOutputDirectory(LOG_DIR);
-			
+
 		log.info("#### Starting Run: ");
 
 		// ### config stuff: ###	
@@ -135,12 +135,12 @@ public class RunFreight {
 			matsimRun(scenario, carriers);	//final MATSim configurations and start of the MATSim-Run
 		}
 		writeAdditionalRunOutput(config, carriers);	//write some final Output
-		
+
 		writeRunInfo();	
 
 		log.info("#### End of all runs ####");
 		OutputDirectoryLogging.closeOutputDirLogging(); 
-		
+
 		System.out.println("#### Finished ####");
 	}
 
@@ -148,7 +148,7 @@ public class RunFreight {
 		Config config = ConfigUtils.createConfig() ;
 
 		config.controler().setOutputDirectory(OUTPUT_DIR);
-		
+
 		// (the directory structure is needed for jsprit output, which is before the
 		// controler starts. Maybe there is a better alternative ...)
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
@@ -160,31 +160,31 @@ public class RunFreight {
 
 		//Damit nicht alle um Mitternacht losfahren
 		config.plans().setActivityDurationInterpretation(PlansConfigGroup.ActivityDurationInterpretation.tryEndTimeThenDuration ); 
-				
+
 		//Some config stuff to comply to vsp-defaults even there is currently only 1 MATSim iteration and 
 		//therefore no need for e.g. a strategy! KMT jan/18
 		config.planCalcScore().setFractionOfIterationsToStartScoreMSA(0.8);
 		config.plans().setRemovingUnneccessaryPlanAttributes(true);
 		config.plansCalcRoute().setInsertingAccessEgressWalk(true);
-//		config.qsim().setUsePersonIdForMissingVehicleId(false);		//TODO: Doesn't work here yet: "java.lang.IllegalStateException: NetworkRoute without a specified vehicle id." KMT jan/18
+		//		config.qsim().setUsePersonIdForMissingVehicleId(false);		//TODO: Doesn't work here yet: "java.lang.IllegalStateException: NetworkRoute without a specified vehicle id." KMT jan/18
 		config.qsim().setUsingTravelTimeCheckInTeleportation(true);
 		config.qsim().setTrafficDynamics(TrafficDynamics.kinematicWaves);
 		config.strategy().setFractionOfIterationsToDisableInnovation(0.8);
-		
+
 		StrategySettings stratSettings1 = new StrategySettings();
 		stratSettings1.setStrategyName("ChangeExpBeta");
 		stratSettings1.setWeight(0.1);
 		config.strategy().addStrategySettings(stratSettings1);
-		
+
 		StrategySettings stratSettings2 = new StrategySettings();
 		stratSettings2.setStrategyName("BestScore");
 		stratSettings2.setWeight(0.9);
 		config.strategy().addStrategySettings(stratSettings2);
-		
+
 		config.vspExperimental().setVspDefaultsCheckingLevel(VspDefaultsCheckingLevel.warn);
 		config.addConfigConsistencyChecker(new VspConfigConsistencyCheckerImpl());
 		ControlerUtils.checkConfigConsistencyAndWriteToLog(config, "dump");
-		
+
 		return config;
 	}  //End createConfig
 
@@ -210,8 +210,8 @@ public class RunFreight {
 			switch (costsModififier) {
 			case av:
 				vt = CarrierVehicleType.Builder.newInstance(vt.getId(), vt)
-					.setCostPerTimeUnit(0.0)
-					.build();
+				.setCostPerTimeUnit(0.0)
+				.build();
 				break;
 			case avDist110pct:
 				vt = CarrierVehicleType.Builder.newInstance(vt.getId(), vt)
@@ -279,18 +279,18 @@ public class RunFreight {
 			VehicleRoutingProblem.Builder vrpBuilder = MatsimJspritFactory.createRoutingProblemBuilder( carrier, network ) ;
 			vrpBuilder.setRoutingCost(netBasedCosts) ;
 			VehicleRoutingProblem vrp = vrpBuilder.build() ;
-			
-			
+
+
 			VehicleRoutingAlgorithm vra = Jsprit.Builder.newInstance(vrp).setProperty(Jsprit.Parameter.THREADS, "5").buildAlgorithm();
-	        vra.getAlgorithmListeners().addListener(new StopWatch(), Priority.HIGH);
-//	        vra.getAlgorithmListeners().addListener(new AlgorithmSearchProgressChartListener(TEMP_DIR +  RUN + runIndex + "jsprit_progress.png"));
-	        vra.setMaxIterations(MAX_JSPRIT_ITERATION);
-	        VehicleRoutingProblemSolution solution = Solutions.bestOf(vra.searchSolutions());
-			
-	      //TODO: Auch option für Einlesen des Algorithmus, wenn vorhanden?
-//			VehicleRoutingAlgorithm algorithm = VehicleRoutingAlgorithms.readAndCreateAlgorithm(vrp, IOUtils.getUrlFromFileOrResource(ALGORITHMFILE));
-//			algorithm.setMaxIterations(MAX_JSPRIT_ITERATION);
-//			VehicleRoutingProblemSolution solution = Solutions.bestOf(algorithm.searchSolutions());
+			vra.getAlgorithmListeners().addListener(new StopWatch(), Priority.HIGH);
+			//	        vra.getAlgorithmListeners().addListener(new AlgorithmSearchProgressChartListener(TEMP_DIR +  RUN + runIndex + "jsprit_progress.png"));
+			vra.setMaxIterations(MAX_JSPRIT_ITERATION);
+			VehicleRoutingProblemSolution solution = Solutions.bestOf(vra.searchSolutions());
+
+			//TODO: Auch option für Einlesen des Algorithmus, wenn vorhanden?
+			//			VehicleRoutingAlgorithm algorithm = VehicleRoutingAlgorithms.readAndCreateAlgorithm(vrp, IOUtils.getUrlFromFileOrResource(ALGORITHMFILE));
+			//			algorithm.setMaxIterations(MAX_JSPRIT_ITERATION);
+			//			VehicleRoutingProblemSolution solution = Solutions.bestOf(algorithm.searchSolutions());
 			CarrierPlan newPlan = MatsimJspritFactory.createPlan(carrier, solution) ;
 
 			NetworkRouter.routePlan(newPlan,netBasedCosts) ;
@@ -298,8 +298,8 @@ public class RunFreight {
 			carrier.setSelectedPlan(newPlan) ;
 
 			//Plot der Jsprit-Lösung
-//			Plotter plotter = new Plotter(vrp,solution);
-//			plotter.plot(config.controler().getOutputDirectory() + "/jsprit_solution_" + carrier.getId().toString() +".png", carrier.getId().toString());
+			//			Plotter plotter = new Plotter(vrp,solution);
+			//			plotter.plot(config.controler().getOutputDirectory() + "/jsprit_solution_" + carrier.getId().toString() +".png", carrier.getId().toString());
 
 			//Ausgabe der Ergebnisse auf der Console
 			//SolutionPrinter.print(vrp,solution,Print.VERBOSE);
@@ -363,7 +363,7 @@ public class RunFreight {
 			} else {
 				log.info("No service(s)of " + c.getId().toString() +" were assigned to a tour more then one times.");
 			}
-				
+
 
 			//Schreibe die nicht eingeplanten Services in Datei
 			if (!unassignedServices.isEmpty()){
@@ -395,8 +395,8 @@ public class RunFreight {
 	 */
 	private static void matsimRun(Scenario scenario, Carriers carriers) {
 		final Controler controler = new Controler( scenario ) ;
-	
-        
+
+
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2(scenario);
 		CarrierPlanStrategyManagerFactory planStrategyManagerFactory =  createMyStrategymanager(); //Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
 
@@ -418,10 +418,10 @@ public class RunFreight {
 		};
 	}
 
-    
 
-	
-	
+
+
+
 	/**
 	 * TODO:  Activity: Kostensatz mitgeben, damit klar ist, wo er herkommt... oder vlt geht es in dem Konstrukt doch aus den Veh-Eigenschaften?? (KT, 17.04.15)
 	 * TODO: Default CarrierScoringFunctionFactoryImpl in Freight contrib hinterlegen
@@ -472,20 +472,20 @@ public class RunFreight {
 		try {
 			FileWriter writer = new FileWriter(file);  //Neuer File (überschreibt im Zweifel den alten - der jedoch nicht existieren dürfte!
 			writer.write("System date and time writing this file: " + LocalDateTime.now() + System.getProperty("line.separator") + System.getProperty("line.separator"));
-			
+
 			writer.write("##Inputfiles:" +System.getProperty("line.separator"));
 			writer.write("Input-Directory: " + INPUT_DIR);
 			writer.write("Net: \t \t" + NETFILE_NAME +System.getProperty("line.separator"));
 			writer.write("Carrier:  \t" + CARRIERFILE_NAME +System.getProperty("line.separator"));
 			writer.write("VehType: \t" + VEHTYPEFILE_NAME +System.getProperty("line.separator"));
-//			writer.write("Algorithm: \t" + ALGORITHMFILE_NAME +System.getProperty("line.separator"));
+			//			writer.write("Algorithm: \t" + ALGORITHMFILE_NAME +System.getProperty("line.separator"));
 
 			writer.write(System.getProperty("line.separator"));
 			writer.write("##Run Settings:" +System.getProperty("line.separator"));
 			writer.write("runMatsim: \t \t" + runMatsim +System.getProperty("line.separator"));
 			writer.write("Last Matsim Iteration: \t" + LAST_MATSIM_ITERATION +System.getProperty("line.separator"));
 			writer.write("Max jsprit Iteration: \t" + MAX_JSPRIT_ITERATION +System.getProperty("line.separator"));
-			
+
 			writer.flush();
 			writer.close();
 		} catch (IOException e) {
@@ -493,6 +493,6 @@ public class RunFreight {
 		}
 		System.out.println("Datei: " + file + " geschrieben.");
 	}
-	
+
 }
 
