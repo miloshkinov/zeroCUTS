@@ -95,12 +95,12 @@ public class RunFreight {
 	//Beginn Namesdefinition KT Für Berlin-Szenario 
 	private static final String INPUT_DIR = "scenarios/BerlinFood/";
 	
-	private static final String OUTPUT_DIR = "BerlinFood/output/AV_Single_500it/Demo_IV_VehCaptUp_Shipments/" ;
+	private static final String OUTPUT_DIR = "scenarios/BerlinFood/output/Base_ServiceBased/" ;
 	private static final String LOG_DIR = OUTPUT_DIR + "Logs/";
 
 	//Dateinamen
 	private static final String NETFILE_NAME = "network.xml.gz" ;
-	private static final String CARRIERFILE_NAME = "CarriersWShipmentsOneTW/I-Base_carrierLEH_v2_withFleet_Shipment_OneTW.xml";
+	private static final String CARRIERFILE_NAME = "carrierLEH_v2_withFleet_depot.xml";
 //	private static final String ALGORITHMFILE_NAME = "mdvrp_algorithmConfig_2.xml" ;
 	private static final String VEHTYPEFILE_NAME = "vehicleTypes.xml" ;
 
@@ -152,8 +152,7 @@ public class RunFreight {
 		// (the directory structure is needed for jsprit output, which is before the
 		// controler starts. Maybe there is a better alternative ...)
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
-		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
-				config.controler().getOverwriteFileSetting());
+		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(), config.controler().getOverwriteFileSetting());
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 
 		config.controler().setLastIteration(LAST_MATSIM_ITERATION);	
@@ -183,9 +182,7 @@ public class RunFreight {
 		config.strategy().addStrategySettings(stratSettings2);
 		
 		config.vspExperimental().setVspDefaultsCheckingLevel(VspDefaultsCheckingLevel.warn);
-		
 		config.addConfigConsistencyChecker(new VspConfigConsistencyCheckerImpl());
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.failIfDirectoryExists);
 		ControlerUtils.checkConfigConsistencyAndWriteToLog(config, "dump");
 		
 		return config;
@@ -301,8 +298,8 @@ public class RunFreight {
 			carrier.setSelectedPlan(newPlan) ;
 
 			//Plot der Jsprit-Lösung
-			Plotter plotter = new Plotter(vrp,solution);
-			plotter.plot(config.controler().getOutputDirectory() + "/jsprit_solution_" + carrier.getId().toString() +".png", carrier.getId().toString());
+//			Plotter plotter = new Plotter(vrp,solution);
+//			plotter.plot(config.controler().getOutputDirectory() + "/jsprit_solution_" + carrier.getId().toString() +".png", carrier.getId().toString());
 
 			//Ausgabe der Ergebnisse auf der Console
 			//SolutionPrinter.print(vrp,solution,Print.VERBOSE);
@@ -424,9 +421,10 @@ public class RunFreight {
     
 
 	
-	//TODO: Default CarrierScoringFunctionFactoryImpl in Freight contrib hinterlegen
-	/*
+	
+	/**
 	 * TODO:  Activity: Kostensatz mitgeben, damit klar ist, wo er herkommt... oder vlt geht es in dem Konstrukt doch aus den Veh-Eigenschaften?? (KT, 17.04.15)
+	 * TODO: Default CarrierScoringFunctionFactoryImpl in Freight contrib hinterlegen
 	 */
 	private static CarrierScoringFunctionFactoryImpl_KT createMyScoringFunction2 (final Scenario scenario) {
 
@@ -467,7 +465,7 @@ public class RunFreight {
 	}
 
 	/**
-	 * Schreibe die Informationen über die der Simulation zu Grunde liegenden Daten zusammen.
+	 * Write out the information about the datas provided for the simulation run.
 	 */
 	private static void writeRunInfo() {
 		File file = new File(OUTPUT_DIR + "#RunInformation.txt");
