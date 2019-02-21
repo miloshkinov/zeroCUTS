@@ -35,7 +35,7 @@ import org.matsim.core.utils.io.IOUtils;
 class RunTrajectoriesFromEvents{
 	
 	private static enum AnalysisType { test, onePercent }
-	private static final AnalysisType analysisType = AnalysisType.test ;
+	private static final AnalysisType analysisType = AnalysisType.onePercent ;
 	
 	static Logger log = Logger.getLogger(RunTrajectoriesFromEvents.class);
 
@@ -55,8 +55,12 @@ class RunTrajectoriesFromEvents{
 				outputDirectory  = "output/trajectories" ;
 				break;
 			case onePercent:
-				inputFileEvents  = "../tubCloud/Shared/vsp_zerocuts/scenarios/berlin-v5.2-1pct/berlin-v5.2-1pct.output_events.xml.gz";
-				inputFileNetwork = "../tubCloud/Shared/vsp_zerocuts/scenarios/berlin-v5.2-1pct/berlin-v5.2-1pct.output_network.xml.gz";
+//				inputFileEvents  = "../tubCloud/Shared/vsp_zerocuts/scenarios/berlin-v5.2-1pct/berlin-v5.2-1pct.output_events.xml.gz";
+//				inputFileNetwork = "../tubCloud/Shared/vsp_zerocuts/scenarios/berlin-v5.2-1pct/berlin-v5.2-1pct.output_network.xml.gz";
+				inputFileEvents  = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.2-1pct/"
+								   + "output-berlin-v5.2-1pct/berlin-v5.2-1pct.output_events.xml.gz" ;
+				inputFileNetwork = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.2-1pct/"
+								   + "output-berlin-v5.2-1pct/berlin-v5.2-1pct.output_network.xml.gz" ;
 				outputDirectory  = "output/trajectories/1pct" ;
 				break;
 			default:
@@ -73,14 +77,6 @@ class RunTrajectoriesFromEvents{
 		Scenario scenario = ScenarioUtils.loadScenario( config ) ;
 		Network network = scenario.getNetwork() ;
 		
-//		//Erster Schritt um Legs zu bekommen. TODO:  Noch weiterverarbeiten zu Fahrzeugen und mit denen zusammenbringen
-//		EventsToLegs eventsToLegs = new EventsToLegs(scenario);
-//		MyLegHandler myLegHandler = new MyLegHandler();
-//		eventsToLegs.addLegHandler(myLegHandler);
-//		eventsManager.addHandler(eventsToLegs);
-		
-		
-		
 		EventHandlerTrajAgents handlerTrajAgents = new EventHandlerTrajAgents(network);
 		eventsManager.addHandler(handlerTrajAgents);
 		
@@ -90,8 +86,7 @@ class RunTrajectoriesFromEvents{
 		eventsManager.finishProcessing();
 
 		handlerTrajAgents.writeVehiclesDataToConsole();
-//		myLegHandler.writeLegsToConsole();
-//		handlerTrajAgents.writeDriversDataToFile(new File("Dummy"));
+		handlerTrajAgents.writeDriversDataToFile( "out.txt" );
 		System.out.println("### Done");
 		
 	}

@@ -15,8 +15,12 @@ hs_err_pid*
 /.project
 /.classpath
 /target/
-**/output/
 /bin/
 
 /.idea/
 *.iml
+
+#Ignore all output (sub)directories
+**/output/
+
+out.*
