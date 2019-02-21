@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<vehicleTypes>
+		<vehicleType id="heavy40t">
+			<description>Heavy Vehicle 40t</description>
+			<allowableWeight weight="40"/>
+			<engineInformation fuelType="diesel" gasConsumption="0.035"/>  <!-- gasConsumption in liter per meter -->
+			<costInformation fix="140" perMeter="0.00086" perSecond="0.008" emissionsPerMeter="0.917"/>
+			<capacity>33</capacity>
+		</vehicleType>
+		<vehicleType id="heavy26t">
+			<description>Heavy Vehicle 26t</description>
+			<allowableWeight weight="26"/>
+			<engineInformation fuelType="diesel" gasConsumption="0.03"/>  <!-- gasConsumption in liter per meter -->
+			<costInformation fix="130" perMeter="0.00077" perSecond="0.008" emissionsPerMeter="0.786"/>
+			<capacity>24</capacity>
+		</vehicleType>
+		<vehicleType id="heavy26t_frozen">
+			<description>Heavy Vehicle 26t</description>
+			<allowableWeight weight="26"/>
+			<engineInformation fuelType="diesel" gasConsumption="0.03"/>  <!-- gasConsumption in liter per meter -->
+			<costInformation fix="130" perMeter="0.00077" perSecond="0.008" emissionsPerMeter="0.786"/>
+			<capacity>160</capacity>
+		</vehicleType>
+		<vehicleType id="medium18t">
+			<description>Medium Vehicle 18t</description>
+			<allowableWeight weight="18"/>
+			<engineInformation fuelType="diesel" gasConsumption="0.025"/>  <!-- gasConsumption in liter per meter -->
+			<costInformation fix="107" perMeter="0.00061" perSecond="0.008" emissionsPerMeter="0.655"/>
+			<capacity>16</capacity>
+		</vehicleType>
+		<vehicleType id="medium18telectro">
+			<description>Medium Vehicle 18t electro</description>
+			<allowableWeight weight="18"/>
+			<engineInformation fuelType="gasoline" gasConsumption="0.00"/>  <!-- gasConsumption in liter per meter -->
+			<costInformation fix="112" perMeter="0.00055" perSecond="0.008" emissionsPerMeter="0.433"/>
+			<capacity>16</capacity>
+		</vehicleType>
+		<vehicleType id="light8t">
+			<description>Light Vehicle 7.5t</description>
+			<allowableWeight weight="12"/>
+			<engineInformation fuelType="gasoline" gasConsumption="0.02"/>  <!-- gasConsumption in liter per meter -->
+			<costInformation fix="80" perMeter="0.00047" perSecond="0.008" emissionsPerMeter="0.524"/>
+			<capacity>10</capacity>
+		</vehicleType>
+		<vehicleType id="light8telectro">
+			<description>Light Vehicle 7.5t electro</description>
+			<allowableWeight weight="12"/>
+			<engineInformation fuelType="gasoline" gasConsumption="0.00"/>  <!-- gasConsumption in liter per meter -->
+			<costInformation fix="89" perMeter="0.0005" perSecond="0.008" emissionsPerMeter="0.346"/>
+			<capacity>10</capacity>
+		</vehicleType>
+		<vehicleType id="light8t_frozen">
+			<description>Light Vehicle 7.5t</description>
+			<allowableWeight weight="7.5"/>
+			<engineInformation fuelType="gasoline" gasConsumption="0.02"/>  <!-- gasConsumption in liter per meter -->
+			<costInformation fix="80" perMeter="0.00047" perSecond="0.008" emissionsPerMeter="0.524"/>
+			<capacity>70</capacity>
+		</vehicleType>
+		<vehicleType id="light8telectro_frozen">
+			<description>Light Vehicle 7.5t electro</description>
+			<allowableWeight weight="7.5"/>
+			<engineInformation fuelType="gasoline" gasConsumption="0.00"/>  <!-- gasConsumption in liter per meter -->
+			<costInformation fix="89" perMeter="0.0005" perSecond="0.008" emissionsPerMeter="0.346"/>
+			<capacity>70</capacity>
+		</vehicleType>
+	</vehicleTypes>

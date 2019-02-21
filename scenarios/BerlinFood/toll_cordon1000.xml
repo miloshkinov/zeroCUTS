@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE roadpricing SYSTEM "http://www.matsim.org/files/dtd/roadpricing_v1.dtd">
+
+<roadpricing type="cordon" name="Environmental Zone Berlin">
+
+        <description>Cordon toll for the low emmission zone of Berlin. High amount to close this city for the assigned vehicle types.</description>
+
+        <links>
+			<link id= "28675" />
+			<link id= "28433" />
+			<link id= "28420" />
+			<link id= "28415" />
+			<link id= "8179" />
+			<link id= "7682" />
+			<link id= "7396" />
+			<link id= "6888" />
+			<link id= "6856" />
+			<link id= "6846" />
+			<link id= "6770" />
+			<link id= "5386" />
+			<link id= "5367" />
+			<link id= "5351" />
+			<link id= "5300" />
+			<link id= "5131" />
+			<link id= "5122" />
+			<link id= "5109" />
+			<link id= "5098" />
+			<link id= "5094" />
+			<link id= "5083" />
+			<link id= "5019" />
+			<link id= "4521" />
+			<link id= "3958" />
+			<link id= "3906" />
+			<link id= "3806" />
+			<link id= "3791" />
+			<link id= "3778" />
+			<link id= "3697" />
+			<link id= "3682" />
+			<link id= "3604" />
+			<link id= "3435" />
+			<link id= "3345" />
+			<link id= "3069" />
+			<link id= "2988" />
+			<link id= "2975" />
+			<link id= "2903" />
+			<link id= "2902" />
+			<link id= "1926" />
+			<link id= "1764" />
+			<link id= "1752" />
+			<link id= "1589" />
+			<link id= "1585" />
+			<link id= "1347" />
+			<link id= "1333" />
+			<link id= "1332" />
+			<link id= "1233" />
+			<link id= "1230" />
+			<link id= "1105" />
+			<link id= "1095" />
+			<link id= "246" />
+			<link id= "79" />
+			<link id= "64" />
+
+        </links>
+
+        <!-- amount: [monetary unit] -->
+        <cost amount="1000.00" />
+
+</roadpricing>

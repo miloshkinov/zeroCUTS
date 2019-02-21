@@ -73,11 +73,11 @@ class RunTrajectoriesFromEvents{
 		Scenario scenario = ScenarioUtils.loadScenario( config ) ;
 		Network network = scenario.getNetwork() ;
 		
-		//Erster Schritt um Legs zu bekommen. TODO:  Noch weiterverarbeiten zu Fahrzeugen und mit denen zusammenbringen
-		EventsToLegs eventsToLegs = new EventsToLegs(scenario);
-		MyLegHandler myLegHandler = new MyLegHandler();
-		eventsToLegs.addLegHandler(myLegHandler);
-		eventsManager.addHandler(eventsToLegs);
+//		//Erster Schritt um Legs zu bekommen. TODO:  Noch weiterverarbeiten zu Fahrzeugen und mit denen zusammenbringen
+//		EventsToLegs eventsToLegs = new EventsToLegs(scenario);
+//		MyLegHandler myLegHandler = new MyLegHandler();
+//		eventsToLegs.addLegHandler(myLegHandler);
+//		eventsManager.addHandler(eventsToLegs);
 		
 		
 		
@@ -90,7 +90,7 @@ class RunTrajectoriesFromEvents{
 		eventsManager.finishProcessing();
 
 		handlerTrajAgents.writeVehiclesDataToConsole();
-		myLegHandler.writeLegsToConsole();
+//		myLegHandler.writeLegsToConsole();
 //		handlerTrajAgents.writeDriversDataToFile(new File("Dummy"));
 		System.out.println("### Done");
 		

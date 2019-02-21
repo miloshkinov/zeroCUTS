@@ -93,66 +93,37 @@ public class RunFreight {
 	 final static CostsModififier costsModififier = CostsModififier.avVehCapUp ;
 
 	//Beginn Namesdefinition KT Für Berlin-Szenario 
-//	private static final String INPUT_DIR = "../../freight-dfg17/scenarios/CEP/" ;
-	private static final String INPUT_DIR = "../../shared-svn/projects/freight/studies/MA_Turner-Kai/input/Berlin_Szenario/";
+	private static final String INPUT_DIR = "scenarios/BerlinFood/";
 	
-	private static final String OUTPUT_DIR = "../../OutputKMT/projects/freight/studies/reAnalysing_MA/MATSim/Berlin/AV_Single_500it/Demo_IV_VehCaptUp_Shipments/" ;
-	private static final String TEMP_DIR = "../../OutputKMT/projects/freight/studies/reAnalysing_MA/Temp/";
+	private static final String OUTPUT_DIR = "BerlinFood/output/AV_Single_500it/Demo_IV_VehCaptUp_Shipments/" ;
 	private static final String LOG_DIR = OUTPUT_DIR + "Logs/";
 
 	//Dateinamen
-	private static final String NETFILE_NAME = "network.xml" ;
-//	private static final String VEHTYPEFILE_NAME = "vehicleTypes_AVFC.xml" ;
+	private static final String NETFILE_NAME = "network.xml.gz" ;
 	private static final String CARRIERFILE_NAME = "CarriersWShipmentsOneTW/I-Base_carrierLEH_v2_withFleet_Shipment_OneTW.xml";
-	private static final String ALGORITHMFILE_NAME = "mdvrp_algorithmConfig_2.xml" ;
-	
-//	private static final String NETFILE_NAME = "network.xml.gz" ;
+//	private static final String ALGORITHMFILE_NAME = "mdvrp_algorithmConfig_2.xml" ;
 	private static final String VEHTYPEFILE_NAME = "vehicleTypes.xml" ;
-//	private static final String CARRIERFILE_NAME = "DHL_carriers_Wilmersdorf_wihtBicycle.xml"; //Based on services
-//	private static final String CARRIERFILE_NAME = "DHL_carriers_Wilmersdorf_withBicycle_Shipment.xml"; //Based on shipments for multiple tours
-//	private static final String ALGORITHMFILE_NAME = "initialPlanAlgorithm.xml" ;
-
-
-
-	private static final String RUN = "Run_" ;
-	private static int runIndex = 0;
 
 	private static final String NETFILE = INPUT_DIR + NETFILE_NAME ;
 	private static final String VEHTYPEFILE = INPUT_DIR + VEHTYPEFILE_NAME;
 	private static final String CARRIERFILE = INPUT_DIR + CARRIERFILE_NAME;
-	private static final String ALGORITHMFILE = INPUT_DIR + ALGORITHMFILE_NAME;
+//	private static final String ALGORITHMFILE = INPUT_DIR + ALGORITHMFILE_NAME;
 
 	// Einstellungen für den Run	
 	private static final boolean runMatsim = true;	 //when false only jsprit run will be performed
 	private static final int LAST_MATSIM_ITERATION = 0;  //only one iteration for writing events.
 	private static final int MAX_JSPRIT_ITERATION = 1;
-	private static final int NU_OF_TOTAL_RUNS = 1;	
+	
+	private static Config config;
 
 	public static void main(String[] args) throws IOException, InvalidAttributeValueException {
 		Logger.getRootLogger().setLevel(loggingLevel);
 		OutputDirectoryLogging.initLoggingWithOutputDirectory(LOG_DIR);
-		for (int i = 1; i<=NU_OF_TOTAL_RUNS; i++) {
-			runIndex = i;	
-			multipleRun(args);	
-		}
-		writeRunInfo();	
-
-		log.info("#### End of all runs ####");
-		OutputDirectoryLogging.closeOutputDirLogging(); 
-		
-		System.out.println("#### Finished ####");
-	}
-
-	//### KT 03.12.2014 multiple run for testing the variaty of the jsprit solutions (especially in terms of costs). 
-	private static void multipleRun (String[] args) throws IOException, InvalidAttributeValueException{	
-		OutputDirectoryLogging.closeOutputDirLogging();	//close old Log
-		OutputDirectoryLogging.initLoggingWithOutputDirectory(LOG_DIR + "log_" + runIndex);	//create new log
-		log.info("#### Starting Run: " + runIndex + " of: "+ NU_OF_TOTAL_RUNS);
-		createDir(new File(OUTPUT_DIR + RUN + runIndex));
-		createDir(new File(TEMP_DIR + RUN + runIndex));	
+			
+		log.info("#### Starting Run: ");
 
 		// ### config stuff: ###	
-		Config config = createConfig();
+		config = createConfig();
 
 		// ### scenario stuff: ###
 		Scenario scenario = ScenarioUtils.loadScenario(config);
@@ -162,15 +133,21 @@ public class RunFreight {
 
 		if (runMatsim){
 			matsimRun(scenario, carriers);	//final MATSim configurations and start of the MATSim-Run
-			OutputDirectoryLogging.initLoggingWithOutputDirectory(LOG_DIR + "/log_" + runIndex +"a");	//MATSim closes log at the end. therefore we need a new one to log the rest of this iteration
 		}
 		writeAdditionalRunOutput(config, carriers);	//write some final Output
-	} 
+		
+		writeRunInfo();	
+
+		log.info("#### End of all runs ####");
+		OutputDirectoryLogging.closeOutputDirLogging(); 
+		
+		System.out.println("#### Finished ####");
+	}
 
 	private static Config createConfig() {
 		Config config = ConfigUtils.createConfig() ;
 
-		config.controler().setOutputDirectory(OUTPUT_DIR + RUN + runIndex);
+		config.controler().setOutputDirectory(OUTPUT_DIR);
 		
 		// (the directory structure is needed for jsprit output, which is before the
 		// controler starts. Maybe there is a better alternative ...)
@@ -224,9 +201,9 @@ public class RunFreight {
 		checkServiceAssignment(carriers);
 
 		//### Output nach Jsprit Iteration
-		new CarrierPlanXmlWriterV2(carriers).write( TEMP_DIR +  RUN + runIndex + "/jsprit_plannedCarriers.xml") ; //Muss in Temp, da OutputDir leer sein muss // setOverwriteFiles gibt es nicht mehr; kt 05.11.2014
+		new CarrierPlanXmlWriterV2(carriers).write( config.controler().getOutputDirectory() + "/jsprit_plannedCarriers.xml") ; //Muss in Temp, da OutputDir leer sein muss // setOverwriteFiles gibt es nicht mehr; kt 05.11.2014
 
-		new WriteCarrierScoreInfos(carriers, new File(TEMP_DIR +  "#JspritCarrierScoreInformation.txt"), runIndex);
+		new WriteCarrierScoreInfos(carriers, new File(config.controler().getOutputDirectory() +  "/#JspritCarrierScoreInformation.txt"));
 
 		return carriers;
 	}
@@ -325,7 +302,7 @@ public class RunFreight {
 
 			//Plot der Jsprit-Lösung
 			Plotter plotter = new Plotter(vrp,solution);
-			plotter.plot(TEMP_DIR + RUN + runIndex + "/jsprit_solution_" + carrier.getId().toString() +".png", carrier.getId().toString());
+			plotter.plot(config.controler().getOutputDirectory() + "/jsprit_solution_" + carrier.getId().toString() +".png", carrier.getId().toString());
 
 			//Ausgabe der Ergebnisse auf der Console
 			//SolutionPrinter.print(vrp,solution,Print.VERBOSE);
@@ -333,13 +310,11 @@ public class RunFreight {
 		}
 	}
 
-
 	/**
 	 * Prüft für die Carriers, ob alle Services auch in den geplanten Touren vorkommen, d.h., ob sie auch tatsächlich geplant wurden.
 	 * Falls nicht: log.warn und Ausgabe einer Datei: "#UnassignedServices.txt" mit den Service-Ids.
 	 * @param carriers
 	 */
-	//TODO: multiassigned analog.
 	//TODO: Auch für Shipments auslegen und umbennnen. KMT feb'19
 	//TODO: Funktionaltität in contrib vorsehen -> FreightUtils? KMT feb'19
 	private static void checkServiceAssignment(Carriers carriers) {
@@ -378,7 +353,7 @@ public class RunFreight {
 			//Schreibe die mehrfach eingeplanten Services in Datei
 			if (!multiassignedServices.isEmpty()){
 				try {
-					FileWriter writer = new FileWriter(new File(TEMP_DIR + "#MultiAssignedServices.txt"), true);
+					FileWriter writer = new FileWriter(new File(config.controler().getOutputDirectory() + "#MultiAssignedServices.txt"), true);
 					writer.write("#### Multi-assigned Services of Carrier: " + c.getId().toString() + System.getProperty("line.separator"));
 					for (CarrierService s : multiassignedServices){
 						writer.write(s.getId().toString() + System.getProperty("line.separator"));
@@ -396,7 +371,7 @@ public class RunFreight {
 			//Schreibe die nicht eingeplanten Services in Datei
 			if (!unassignedServices.isEmpty()){
 				try {
-					FileWriter writer = new FileWriter(new File(TEMP_DIR + "#UnassignedServices.txt"), true);
+					FileWriter writer = new FileWriter(new File(config.controler().getOutputDirectory() + "#UnassignedServices.txt"), true);
 					writer.write("#### Unassigned Services of Carrier: " + c.getId().toString() + System.getProperty("line.separator"));
 					for (CarrierService s : unassignedServices){
 						writer.write(s.getId().toString() + System.getProperty("line.separator"));
@@ -482,16 +457,13 @@ public class RunFreight {
 
 	private static void writeAdditionalRunOutput(Config config, Carriers carriers) {
 		// ### some final output: ###
-		if (runMatsim){		//makes only sence, when MATSimrRun was performed KT 06.04.15
-			new WriteCarrierScoreInfos(carriers, new File(OUTPUT_DIR + "#MatsimCarrierScoreInformation.txt"), runIndex);
+		if (runMatsim){		//makes only sense, when MATSimrRun was performed KT 06.04.15
+			new WriteCarrierScoreInfos(carriers, new File(OUTPUT_DIR + "#MatsimCarrierScoreInformation.txt"));
 		}		
 		new CarrierPlanXmlWriterV2(carriers).write( config.controler().getOutputDirectory() + "/output_carriers.xml") ;
 		new CarrierPlanXmlWriterV2(carriers).write( config.controler().getOutputDirectory() + "/output_carriers.xml.gz") ;
 		new CarrierVehicleTypeWriter(CarrierVehicleTypes.getVehicleTypes(carriers)).write(config.controler().getOutputDirectory() + "/output_vehicleTypes.xml");
 		new CarrierVehicleTypeWriter(CarrierVehicleTypes.getVehicleTypes(carriers)).write(config.controler().getOutputDirectory() + "/output_vehicleTypes.xml.gz");
-		
-		
-		//TODO: Wirte all InputFiles in an "Input"-Directory with the Run-dir?
 	}
 
 	/**
@@ -508,14 +480,13 @@ public class RunFreight {
 			writer.write("Net: \t \t" + NETFILE_NAME +System.getProperty("line.separator"));
 			writer.write("Carrier:  \t" + CARRIERFILE_NAME +System.getProperty("line.separator"));
 			writer.write("VehType: \t" + VEHTYPEFILE_NAME +System.getProperty("line.separator"));
-			writer.write("Algorithm: \t" + ALGORITHMFILE_NAME +System.getProperty("line.separator"));
+//			writer.write("Algorithm: \t" + ALGORITHMFILE_NAME +System.getProperty("line.separator"));
 
 			writer.write(System.getProperty("line.separator"));
 			writer.write("##Run Settings:" +System.getProperty("line.separator"));
 			writer.write("runMatsim: \t \t" + runMatsim +System.getProperty("line.separator"));
 			writer.write("Last Matsim Iteration: \t" + LAST_MATSIM_ITERATION +System.getProperty("line.separator"));
-			writer.write("Max Jsprit Iteration: \t" + MAX_JSPRIT_ITERATION +System.getProperty("line.separator"));
-			writer.write("Number of Runs: \t" + NU_OF_TOTAL_RUNS +System.getProperty("line.separator"));
+			writer.write("Max jsprit Iteration: \t" + MAX_JSPRIT_ITERATION +System.getProperty("line.separator"));
 			
 			writer.flush();
 			writer.close();
@@ -524,16 +495,6 @@ public class RunFreight {
 		}
 		System.out.println("Datei: " + file + " geschrieben.");
 	}
-
-	//Ergänzung kt: 1.8.2014 Erstellt das angegebene Verzeichnis. Falls es bereits exisitert, geschieht nichts
-	//TODO: Nutze MATSim defaults...
-	private static void createDir(File file) {
-		if (!file.exists()){
-			log.debug("Create directory: " + file + " : " + file.mkdirs());
-		} else
-			log.warn("Directory already exists! Check for older stuff: " + file.toString());
-	}
-	
 	
 }
 

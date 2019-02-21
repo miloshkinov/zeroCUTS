@@ -1,0 +1,22 @@
+Info (kturner, May 18):
+The input files of this scenario were provided by Schroeder/Liedtke --> see
+Schröder, S. & Liedtke, G. Modeling and analyzing the effects of differentiated urban freight measures -- a case study of the food retailing industry Transportation Research Board, Transportation Research Board, 2014
+
+Available Carrier files (use one of these 3) with information of the fleet and Services for each carrier:
+carrierLEH_v2_withFleet.xml -> Given Carriers from Schroeder/Liedtke
+carrierLEH_v2_withFleet_depot.xml -> added Depot to the vehicleIds (now other Changes)
+carrierLEH_v2_withFleet_withElectro.xml -> Added electro trucks (corresponding to the depots and TimeWindows) for all Carriers
+
+vehicleTypes.xml -> Definition of the VehcileTypes (e.g. costs, capacity)
+
+mdvrp_algorithmConfig_2.xml -> Definition of jsprit algorithm
+
+network.xml.gz -> the Network (used in jsprit and MATSim)
+
+---
+The following files were created later by kturner
+
+toll_cordon20.xml -> Cordon toll of 20 EUR for entering the Berlin LEZ (Low Emission Zone)
+toll_cordon1000.xml -> Cordon toll of 1000 EUR for entering the Berlin LEZ (Low Emission Zone) - can be used for closing the LEZ for Diesel trucks
+
+lez_area.xml -> Contains all links of the LEZ and is used for decision if Service in UCC Case will be served via UCC (Yes if in LEZ) or not. Technically it is a toll-file without toll (0.0) that will be used in an other context.

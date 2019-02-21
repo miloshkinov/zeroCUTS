@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<events version="1.0">
+	<event time="10998.0" type="actend" person="pv_car_5315_9162_1" link="link36" actType="home"  />
+	<event time="10998.0" type="departure" person="pv_car_5315_9162_1" link="link36" legMode="car"  />
+	<event time="10998.0" type="PersonEntersVehicle" person="pv_car_5315_9162_1" vehicle="pv_car_5315_9162_1"  />
+	<event time="10998.0" type="vehicle enters traffic" person="pv_car_5315_9162_1" link="link36" vehicle="pv_car_5315_9162_1" networkMode="car" relativePosition="1.0"  />
+	<event time="10998.0" type="coldEmissionEvent" linkId="link36" vehicleId="pv_car_5315_9162_1" HC="3.78" NO2="0.00273337378166616" PM="0.00789998099207878" NMHC="3.57" NOX="0.33" CO="19.99" FC="23.79"  />
+	<event time="10999.0" type="left link" vehicle="pv_car_5315_9162_1" link="link36"  />
+	<event time="10999.0" type="entered link" vehicle="pv_car_5315_9162_1" link="link65"  />
+	<event time="11021.0" type="left link" vehicle="pv_car_5315_9162_1" link="link65"  />
+	<event time="11021.0" type="entered link" vehicle="pv_car_5315_9162_1" link="link52"  />
+	<event time="11021.0" type="warmEmissionEvent" linkId="link65" vehicleId="pv_car_5315_9162_1" CO2_TOTAL="65.58645338596195" CO="0.36878074213979445" FC="20.825753479050242" HC="0.028191202156684345" NO2="0.02407966756528514" NMHC="0.028175268643627318" NOX="0.14854173944393897" SO2="3.3327300617054815E-4" PM="0.004031867026114057"  />
+	<event time="11036.0" type="left link" vehicle="pv_car_5315_9162_1" link="link52"  />
+	<event time="11036.0" type="entered link" vehicle="pv_car_5315_9162_1" link="link25"  />
+	<event time="11036.0" type="warmEmissionEvent" linkId="link52" vehicleId="pv_car_5315_9162_1" CO2_TOTAL="33.1560402360515" CO="0.18539324034334764" FC="10.528165772532189" HC="0.014341201716738198" NO2="0.012142167381974248" NMHC="0.014312768240343348" NOX="0.0749667381974249" SO2="1.6848108276041305E-4" PM="0.0020568669527896996"  />
+	<event time="11046.0" type="vehicle leaves traffic" person="pv_car_5315_9162_1" link="link25" vehicle="pv_car_5315_9162_1" networkMode="car" relativePosition="1.0"  />
+	<event time="11046.0" type="PersonLeavesVehicle" person="pv_car_5315_9162_1" vehicle="pv_car_5315_9162_1"  />
+	<event time="11046.0" type="arrival" person="pv_car_5315_9162_1" link="link25" legMode="car"  />
+	<event time="11046.0" type="actstart" person="pv_car_5315_9162_1" link="link25" actType="work"  />
+	<event time="23581.0" type="actend" person="gv_4499" link="link58" actType="home"  />
+	<event time="23581.0" type="departure" person="gv_4499" link="link58" legMode="car"  />
+	<event time="23581.0" type="PersonEntersVehicle" person="gv_4499" vehicle="gv_4499"  />
+	<event time="23581.0" type="vehicle enters traffic" person="gv_4499" link="link58" vehicle="gv_4499" networkMode="car" relativePosition="1.0"  />
+	<event time="23581.0" type="coldEmissionEvent" linkId="link58" vehicleId="gv_4499" HC="3.78" NO2="0.00273337378166616" PM="0.00789998099207878" NMHC="3.57" NOX="0.33" CO="19.99" FC="23.79"  />
+	<event time="23582.0" type="left link" vehicle="gv_4499" link="link58"  />
+	<event time="23582.0" type="entered link" vehicle="gv_4499" link="link89"  />
+	<event time="23602.0" type="vehicle leaves traffic" person="gv_4499" link="link89" vehicle="gv_4499" networkMode="car" relativePosition="1.0"  />
+	<event time="23602.0" type="PersonLeavesVehicle" person="gv_4499" vehicle="gv_4499"  />
+	<event time="23602.0" type="arrival" person="gv_4499" link="link89" legMode="car"  />
+	<event time="23602.0" type="actstart" person="gv_4499" link="link89" actType="home"  />
+	<event time="24877.0" type="actend" person="pv_car_10041_9162_1" link="link89" actType="home"  />
+	<event time="24877.0" type="departure" person="pv_car_10041_9162_1" link="link89" legMode="car"  />
+	<event time="24877.0" type="PersonEntersVehicle" person="pv_car_10041_9162_1" vehicle="pv_car_10041_9162_1"  />
+	<event time="24877.0" type="vehicle enters traffic" person="pv_car_10041_9162_1" link="link89" vehicle="pv_car_10041_9162_1" networkMode="car" relativePosition="1.0"  />
+	<event time="24877.0" type="coldEmissionEvent" linkId="link89" vehicleId="pv_car_10041_9162_1" HC="3.78" NO2="0.00273337378166616" PM="0.00789998099207878" NMHC="3.57" NOX="0.33" CO="19.99" FC="23.79"  />
+	<event time="24878.0" type="left link" vehicle="pv_car_10041_9162_1" link="link89"  />
+	<event time="24878.0" type="entered link" vehicle="pv_car_10041_9162_1" link="link98"  />
+	<event time="24899.0" type="left link" vehicle="pv_car_10041_9162_1" link="link98"  />
+	<event time="24899.0" type="entered link" vehicle="pv_car_10041_9162_1" link="link85"  />
+	<event time="24899.0" type="warmEmissionEvent" linkId="link98" vehicleId="pv_car_10041_9162_1" CO2_TOTAL="65.63204853351955" CO="0.3689067737430168" FC="20.840241969273745" HC="0.02822206703910615" NO2="0.02409252793296089" NMHC="0.02820356145251397" NOX="0.14862918994413407" SO2="3.3350481637740517E-4" PM="0.0040370111731843576"  />
+	<event time="24910.0" type="left link" vehicle="pv_car_10041_9162_1" link="link85"  />
+	<event time="24910.0" type="entered link" vehicle="pv_car_10041_9162_1" link="link54"  />
+	<event time="24910.0" type="warmEmissionEvent" linkId="link85" vehicleId="pv_car_10041_9162_1" CO2_TOTAL="33.13021547725374" CO="0.18532185696313158" FC="10.519959597414697" HC="0.01432372007260365" NO2="0.012134883363584854" NMHC="0.01429674339988668" NOX="0.074917206872377" SO2="1.6834978715112963E-4" PM="0.0020539533454339417"  />
+	<event time="24923.0" type="left link" vehicle="pv_car_10041_9162_1" link="link54"  />
+	<event time="24923.0" type="entered link" vehicle="pv_car_10041_9162_1" link="link47"  />
+	<event time="24923.0" type="warmEmissionEvent" linkId="link54" vehicleId="pv_car_10041_9162_1" CO2_TOTAL="33.446865482233505" CO="0.18619712351945858" FC="10.620579526226738" HC="0.01453807106598985" NO2="0.01222419627749577" NMHC="0.014493231810490698" NOX="0.07552453468697125" SO2="1.699596668661346E-4" PM="0.0020896785109983085"  />
+	<event time="24923.0" type="coldEmissionEvent" linkId="link89" vehicleId="pv_car_10041_9162_1" HC="0.2900000000000005" NO2="0.00464792572893202" PM="0.012100019007921221" NMHC="0.26000000000000023" NOX="0.22000000000000003" CO="2.5700000000000003" FC="32.33"  />
+	<event time="24937.0" type="vehicle leaves traffic" person="pv_car_10041_9162_1" link="link47" vehicle="pv_car_10041_9162_1" networkMode="car" relativePosition="1.0"  />
+	<event time="24937.0" type="PersonLeavesVehicle" person="pv_car_10041_9162_1" vehicle="pv_car_10041_9162_1"  />
+	<event time="24937.0" type="arrival" person="pv_car_10041_9162_1" link="link47" legMode="car"  />
+	<event time="24937.0" type="actstart" person="pv_car_10041_9162_1" link="link47" actType="work"  />
+	<event time="29185.0" type="actend" person="555928.1#7278" link="link23" actType="home"  />
+	<event time="29185.0" type="departure" person="555928.1#7278" link="link23" legMode="car"  />
+	<event time="29185.0" type="PersonEntersVehicle" person="555928.1#7278" vehicle="555928.1#7278"  />
+	<event time="29185.0" type="vehicle enters traffic" person="555928.1#7278" link="link23" vehicle="555928.1#7278" networkMode="car" relativePosition="1.0"  />
+	<event time="29185.0" type="coldEmissionEvent" linkId="link23" vehicleId="555928.1#7278" HC="0.19" NO2="-0.01" PM="0.02" NMHC="0.18" NOX="-0.00108987872954458" CO="1.47" FC="12.6"  />
+	<event time="29186.0" type="left link" vehicle="555928.1#7278" link="link23"  />
+	<event time="29186.0" type="entered link" vehicle="555928.1#7278" link="link36"  />
+	<event time="29200.0" type="vehicle leaves traffic" person="555928.1#7278" link="link36" vehicle="555928.1#7278" networkMode="car" relativePosition="1.0"  />
+	<event time="29200.0" type="PersonLeavesVehicle" person="555928.1#7278" vehicle="555928.1#7278"  />
+	<event time="29200.0" type="arrival" person="555928.1#7278" link="link36" legMode="car"  />
+	<event time="29200.0" type="actstart" person="555928.1#7278" link="link36" actType="work"  />
+	<event time="36525.0" type="actend" person="570902.2#2983" link="link23" actType="home"  />
+	<event time="36525.0" type="departure" person="570902.2#2983" link="link23" legMode="car"  />
+	<event time="36525.0" type="PersonEntersVehicle" person="570902.2#2983" vehicle="570902.2#2983"  />
+	<event time="36525.0" type="vehicle enters traffic" person="570902.2#2983" link="link23" vehicle="570902.2#2983" networkMode="car" relativePosition="1.0"  />
+	<event time="36525.0" type="coldEmissionEvent" linkId="link23" vehicleId="570902.2#2983" HC="8.24" NO2="0.02" PM="0.0" NMHC="7.79" NOX="0.98" CO="36.53" FC="18.25"  />
+	<event time="36526.0" type="left link" vehicle="570902.2#2983" link="link23"  />
+	<event time="36526.0" type="entered link" vehicle="570902.2#2983" link="link32"  />
+	<event time="36549.0" type="left link" vehicle="570902.2#2983" link="link32"  />
+	<event time="36549.0" type="entered link" vehicle="570902.2#2983" link="link25"  />
+	<event time="36549.0" type="warmEmissionEvent" linkId="link32" vehicleId="570902.2#2983" CO2_TOTAL="98.76063950477253" CO="0.4954147002757349" FC="31.498731312724413" HC="0.04428094386764726" NO2="0.0040468239779412095" NMHC="0.04025753187867666" NOX="0.12070235966911814" SO2="5.040306178973289E-4" PM="0.0012593010622325147"  />
+	<event time="36560.0" type="left link" vehicle="570902.2#2983" link="link25"  />
+	<event time="36560.0" type="entered link" vehicle="570902.2#2983" link="link58"  />
+	<event time="36560.0" type="warmEmissionEvent" linkId="link25" vehicleId="570902.2#2983" CO2_TOTAL="49.92031773743017" CO="0.24722893389199257" FC="15.921614641527002" HC="0.022370111731843577" NO2="0.0020616852886405964" NMHC="0.02033926908752328" NOX="0.060925279329608936" SO2="2.5477126882884443E-4" PM="6.323487992387393E-4"  />
+	<event time="36571.0" type="left link" vehicle="570902.2#2983" link="link58"  />
+	<event time="36571.0" type="entered link" vehicle="570902.2#2983" link="link89"  />
+	<event time="36571.0" type="warmEmissionEvent" linkId="link58" vehicleId="570902.2#2983" CO2_TOTAL="49.92031773743017" CO="0.24722893389199257" FC="15.921614641527002" HC="0.022370111731843577" NO2="0.0020616852886405964" NMHC="0.02033926908752328" NOX="0.060925279329608936" SO2="2.5477126882884443E-4" PM="6.323487992387393E-4"  />
+	<event time="36571.0" type="coldEmissionEvent" linkId="link23" vehicleId="570902.2#2983" HC="0.019999999999999574" NO2="0.05" PM="0.0" NMHC="0.019999999999999574" NOX="0.81" CO="5.850000000000001" FC="29.28"  />
+	<event time="36588.0" type="actend" person="570902.2#10897" link="link78" actType="home"  />
+	<event time="36588.0" type="departure" person="570902.2#10897" link="link78" legMode="car"  />
+	<event time="36588.0" type="PersonEntersVehicle" person="570902.2#10897" vehicle="570902.2#10897"  />
+	<event time="36588.0" type="vehicle enters traffic" person="570902.2#10897" link="link78" vehicle="570902.2#10897" networkMode="car" relativePosition="1.0"  />
+	<event time="36588.0" type="coldEmissionEvent" linkId="link78" vehicleId="570902.2#10897" HC="8.24" NO2="0.02" PM="0.0" NMHC="7.79" NOX="0.98" CO="36.53" FC="18.25"  />
+	<event time="36589.0" type="left link" vehicle="570902.2#10897" link="link78"  />
+	<event time="36589.0" type="entered link" vehicle="570902.2#10897" link="link85"  />
+	<event time="36591.0" type="vehicle leaves traffic" person="570902.2#2983" link="link89" vehicle="570902.2#2983" networkMode="car" relativePosition="1.0"  />
+	<event time="36591.0" type="PersonLeavesVehicle" person="570902.2#2983" vehicle="570902.2#2983"  />
+	<event time="36591.0" type="arrival" person="570902.2#2983" link="link89" legMode="car"  />
+	<event time="36591.0" type="actstart" person="570902.2#2983" link="link89" actType="work"  />
+	<event time="36600.0" type="left link" vehicle="570902.2#10897" link="link85"  />
+	<event time="36600.0" type="entered link" vehicle="570902.2#10897" link="link54"  />
+	<event time="36600.0" type="warmEmissionEvent" linkId="link85" vehicleId="570902.2#10897" CO2_TOTAL="49.81122775072748" CO="0.24732558318207573" FC="15.886817031125455" HC="0.02232372007260365" NO2="0.0020539533454339417" NMHC="0.020296743399886682" NOX="0.060809300181509124" SO2="2.542145118871356E-4" PM="6.318036971425197E-4"  />
+	<event time="36613.0" type="left link" vehicle="570902.2#10897" link="link54"  />
+	<event time="36613.0" type="entered link" vehicle="570902.2#10897" link="link47"  />
+	<event time="36613.0" type="warmEmissionEvent" linkId="link54" vehicleId="570902.2#10897" CO2_TOTAL="50.31527411167513" CO="0.24687901861252118" FC="16.047598138747887" HC="0.022538071065989852" NO2="0.0020896785109983085" NMHC="0.020493231810490696" NOX="0.061345177664974625" SO2="2.5678698731666793E-4" PM="6.343223217775497E-4"  />
+	<event time="36627.0" type="vehicle leaves traffic" person="570902.2#10897" link="link47" vehicle="570902.2#10897" networkMode="car" relativePosition="1.0"  />
+	<event time="36627.0" type="PersonLeavesVehicle" person="570902.2#10897" vehicle="570902.2#10897"  />
+	<event time="36627.0" type="arrival" person="570902.2#10897" link="link47" legMode="car"  />
+	<event time="36627.0" type="actstart" person="570902.2#10897" link="link47" actType="work"  />
+	<event time="36729.0" type="actend" person="570902.2#14854" link="link23" actType="home"  />
+	<event time="36729.0" type="departure" person="570902.2#14854" link="link23" legMode="car"  />
+	<event time="36729.0" type="PersonEntersVehicle" person="570902.2#14854" vehicle="570902.2#14854"  />
+	<event time="36729.0" type="vehicle enters traffic" person="570902.2#14854" link="link23" vehicle="570902.2#14854" networkMode="car" relativePosition="1.0"  />
+	<event time="36729.0" type="coldEmissionEvent" linkId="link23" vehicleId="570902.2#14854" HC="8.24" NO2="0.02" PM="0.0" NMHC="7.79" NOX="0.98" CO="36.53" FC="18.25"  />
+	<event time="36730.0" type="left link" vehicle="570902.2#14854" link="link23"  />
+	<event time="36730.0" type="entered link" vehicle="570902.2#14854" link="link32"  />
+	<event time="36753.0" type="left link" vehicle="570902.2#14854" link="link32"  />
+	<event time="36753.0" type="entered link" vehicle="570902.2#14854" link="link25"  />
+	<event time="36753.0" type="warmEmissionEvent" linkId="link32" vehicleId="570902.2#14854" CO2_TOTAL="98.76063950477253" CO="0.4954147002757349" FC="31.498731312724413" HC="0.04428094386764726" NO2="0.0040468239779412095" NMHC="0.04025753187867666" NOX="0.12070235966911814" SO2="5.040306178973289E-4" PM="0.0012593010622325147"  />
+	<event time="36764.0" type="left link" vehicle="570902.2#14854" link="link25"  />
+	<event time="36764.0" type="entered link" vehicle="570902.2#14854" link="link58"  />
+	<event time="36764.0" type="warmEmissionEvent" linkId="link25" vehicleId="570902.2#14854" CO2_TOTAL="49.92031773743017" CO="0.24722893389199257" FC="15.921614641527002" HC="0.022370111731843577" NO2="0.0020616852886405964" NMHC="0.02033926908752328" NOX="0.060925279329608936" SO2="2.5477126882884443E-4" PM="6.323487992387393E-4"  />
+	<event time="36774.0" type="vehicle leaves traffic" person="570902.2#14854" link="link58" vehicle="570902.2#14854" networkMode="car" relativePosition="1.0"  />
+	<event time="36774.0" type="PersonLeavesVehicle" person="570902.2#14854" vehicle="570902.2#14854"  />
+	<event time="36774.0" type="arrival" person="570902.2#14854" link="link58" legMode="car"  />
+	<event time="36774.0" type="actstart" person="570902.2#14854" link="link58" actType="work"  />
+	<event time="39820.0" type="actend" person="570902.2#2983" link="link89" actType="work"  />
+	<event time="39820.0" type="departure" person="570902.2#2983" link="link89" legMode="car"  />
+	<event time="39820.0" type="PersonEntersVehicle" person="570902.2#2983" vehicle="570902.2#2983"  />
+	<event time="39820.0" type="vehicle enters traffic" person="570902.2#2983" link="link89" vehicle="570902.2#2983" networkMode="car" relativePosition="1.0"  />
+	<event time="39820.0" type="coldEmissionEvent" linkId="link89" vehicleId="570902.2#2983" HC="4.79" NO2="0.03" PM="0.0" NMHC="4.53" NOX="1.37" CO="17.66" FC="0.76"  />
+	<event time="39821.0" type="left link" vehicle="570902.2#2983" link="link89"  />
+	<event time="39821.0" type="entered link" vehicle="570902.2#2983" link="link98"  />
+	<event time="39821.0" type="warmEmissionEvent" linkId="link89" vehicleId="570902.2#2983" CO2_TOTAL="98.62219064245811" CO="0.4955373603351955" FC="31.454568784916198" HC="0.044222067039106146" NO2="0.0040370111731843576" NMHC="0.04020356145251397" NOX="0.12055516759776537" SO2="5.033240235755666E-4" PM="0.001258609259370053"  />
+	<event time="39842.0" type="left link" vehicle="570902.2#2983" link="link98"  />
+	<event time="39842.0" type="entered link" vehicle="570902.2#2983" link="link85"  />
+	<event time="39842.0" type="warmEmissionEvent" linkId="link98" vehicleId="570902.2#2983" CO2_TOTAL="98.62219064245811" CO="0.4955373603351955" FC="31.454568784916198" HC="0.044222067039106146" NO2="0.0040370111731843576" NMHC="0.04020356145251397" NOX="0.12055516759776537" SO2="5.033240235755666E-4" PM="0.001258609259370053"  />
+	<event time="39853.0" type="left link" vehicle="570902.2#2983" link="link85"  />
+	<event time="39853.0" type="entered link" vehicle="570902.2#2983" link="link52"  />
+	<event time="39853.0" type="warmEmissionEvent" linkId="link85" vehicleId="570902.2#2983" CO2_TOTAL="49.81122775072748" CO="0.24732558318207573" FC="15.886817031125455" HC="0.02232372007260365" NO2="0.0020539533454339417" NMHC="0.020296743399886682" NOX="0.060809300181509124" SO2="2.542145118871356E-4" PM="6.318036971425197E-4"  />
+	<event time="39868.0" type="left link" vehicle="570902.2#2983" link="link52"  />
+	<event time="39868.0" type="entered link" vehicle="570902.2#2983" link="link23"  />
+	<event time="39868.0" type="warmEmissionEvent" linkId="link52" vehicleId="570902.2#2983" CO2_TOTAL="49.85233583690987" CO="0.24728916309012874" FC="15.899929721030043" HC="0.022341201716738198" NO2="0.0020568669527896996" NMHC="0.02031276824034335" NOX="0.06085300429184549" SO2="2.5442431310752423E-4" PM="6.3200910649884E-4"  />
+	<event time="39868.0" type="coldEmissionEvent" linkId="link89" vehicleId="570902.2#2983" HC="0.009999999999999787" NO2="0.06" PM="0.0" NMHC="0.009999999999999787" NOX="1.2599999999999998" CO="2.8299999999999983" FC="1.22"  />
+	<event time="39884.0" type="vehicle leaves traffic" person="570902.2#2983" link="link23" vehicle="570902.2#2983" networkMode="car" relativePosition="1.0"  />
+	<event time="39884.0" type="PersonLeavesVehicle" person="570902.2#2983" vehicle="570902.2#2983"  />
+	<event time="39884.0" type="arrival" person="570902.2#2983" link="link23" legMode="car"  />
+	<event time="39884.0" type="actstart" person="570902.2#2983" link="link23" actType="home"  />
+	<event time="40435.0" type="actend" person="570902.2#10897" link="link47" actType="work"  />
+	<event time="40435.0" type="departure" person="570902.2#10897" link="link47" legMode="car"  />
+	<event time="40435.0" type="PersonEntersVehicle" person="570902.2#10897" vehicle="570902.2#10897"  />
+	<event time="40435.0" type="vehicle enters traffic" person="570902.2#10897" link="link47" vehicle="570902.2#10897" networkMode="car" relativePosition="1.0"  />
+	<event time="40435.0" type="coldEmissionEvent" linkId="link47" vehicleId="570902.2#10897" HC="4.79" NO2="0.03" PM="0.0" NMHC="4.53" NOX="1.37" CO="17.66" FC="0.76"  />
+	<event time="40436.0" type="left link" vehicle="570902.2#10897" link="link47"  />
+	<event time="40436.0" type="entered link" vehicle="570902.2#10897" link="link78"  />
+	<event time="40436.0" type="warmEmissionEvent" linkId="link47" vehicleId="570902.2#10897" CO2_TOTAL="49.85233583690987" CO="0.2472891630901288" FC="15.899929721030043" HC="0.022341201716738198" NO2="0.0020568669527896996" NMHC="0.020312768240343348" NOX="0.060853004291845494" SO2="2.544243131075243E-4" PM="6.320091064988401E-4"  />
+	<event time="40447.0" type="vehicle leaves traffic" person="570902.2#10897" link="link78" vehicle="570902.2#10897" networkMode="car" relativePosition="1.0"  />
+	<event time="40447.0" type="PersonLeavesVehicle" person="570902.2#10897" vehicle="570902.2#10897"  />
+	<event time="40447.0" type="arrival" person="570902.2#10897" link="link78" legMode="car"  />
+	<event time="40447.0" type="actstart" person="570902.2#10897" link="link78" actType="home"  />
+	<event time="40639.0" type="actend" person="570902.2#14854" link="link58" actType="work"  />
+	<event time="40639.0" type="departure" person="570902.2#14854" link="link58" legMode="car"  />
+	<event time="40639.0" type="PersonEntersVehicle" person="570902.2#14854" vehicle="570902.2#14854"  />
+	<event time="40639.0" type="vehicle enters traffic" person="570902.2#14854" link="link58" vehicle="570902.2#14854" networkMode="car" relativePosition="1.0"  />
+	<event time="40639.0" type="coldEmissionEvent" linkId="link58" vehicleId="570902.2#14854" HC="4.79" NO2="0.03" PM="0.0" NMHC="4.53" NOX="1.37" CO="17.66" FC="0.76"  />
+	<event time="40640.0" type="left link" vehicle="570902.2#14854" link="link58"  />
+	<event time="40640.0" type="entered link" vehicle="570902.2#14854" link="link85"  />
+	<event time="40640.0" type="warmEmissionEvent" linkId="link58" vehicleId="570902.2#14854" CO2_TOTAL="49.92031773743017" CO="0.24722893389199257" FC="15.921614641527002" HC="0.022370111731843577" NO2="0.0020616852886405964" NMHC="0.02033926908752328" NOX="0.060925279329608936" SO2="2.5477126882884443E-4" PM="6.323487992387393E-4"  />
+	<event time="40651.0" type="left link" vehicle="570902.2#14854" link="link85"  />
+	<event time="40651.0" type="entered link" vehicle="570902.2#14854" link="link52"  />
+	<event time="40651.0" type="warmEmissionEvent" linkId="link85" vehicleId="570902.2#14854" CO2_TOTAL="49.81122775072748" CO="0.24732558318207573" FC="15.886817031125455" HC="0.02232372007260365" NO2="0.0020539533454339417" NMHC="0.020296743399886682" NOX="0.060809300181509124" SO2="2.542145118871356E-4" PM="6.318036971425197E-4"  />
+	<event time="40666.0" type="left link" vehicle="570902.2#14854" link="link52"  />
+	<event time="40666.0" type="entered link" vehicle="570902.2#14854" link="link23"  />
+	<event time="40666.0" type="warmEmissionEvent" linkId="link52" vehicleId="570902.2#14854" CO2_TOTAL="49.85233583690987" CO="0.24728916309012874" FC="15.899929721030043" HC="0.022341201716738198" NO2="0.0020568669527896996" NMHC="0.02031276824034335" NOX="0.06085300429184549" SO2="2.5442431310752423E-4" PM="6.3200910649884E-4"  />
+	<event time="40683.0" type="left link" vehicle="570902.2#14854" link="link23"  />
+	<event time="40683.0" type="entered link" vehicle="570902.2#14854" link="link36"  />
+	<event time="40683.0" type="warmEmissionEvent" linkId="link23" vehicleId="570902.2#14854" CO2_TOTAL="98.10000000000001" CO="0.496" FC="31.288" HC="0.044000000000000004" NO2="0.004" NMHC="0.04000000000000001" NOX="0.12" SO2="5.006589461118001E-4" PM="0.0012559999711811562"  />
+	<event time="40697.0" type="vehicle leaves traffic" person="570902.2#14854" link="link36" vehicle="570902.2#14854" networkMode="car" relativePosition="1.0"  />
+	<event time="40697.0" type="PersonLeavesVehicle" person="570902.2#14854" vehicle="570902.2#14854"  />
+	<event time="40697.0" type="arrival" person="570902.2#14854" link="link36" legMode="car"  />
+	<event time="40697.0" type="actstart" person="570902.2#14854" link="link36" actType="home"  />
+	<event time="42533.0" type="actend" person="570902.2#10897" link="link78" actType="home"  />
+	<event time="42533.0" type="departure" person="570902.2#10897" link="link78" legMode="car"  />
+	<event time="42533.0" type="PersonEntersVehicle" person="570902.2#10897" vehicle="570902.2#10897"  />
+	<event time="42533.0" type="vehicle enters traffic" person="570902.2#10897" link="link78" vehicle="570902.2#10897" networkMode="car" relativePosition="1.0"  />
+	<event time="42533.0" type="coldEmissionEvent" linkId="link78" vehicleId="570902.2#10897" HC="4.79" NO2="0.03" PM="0.0" NMHC="4.53" NOX="1.37" CO="17.66" FC="0.76"  />
+	<event time="42534.0" type="left link" vehicle="570902.2#10897" link="link78"  />
+	<event time="42534.0" type="entered link" vehicle="570902.2#10897" link="link85"  />
+	<event time="42534.0" type="warmEmissionEvent" linkId="link78" vehicleId="570902.2#10897" CO2_TOTAL="49.99782793313793" CO="0.2471602630119623" FC="15.946338905173098" HC="0.022403073754258103" NO2="0.002067178959043017" NMHC="0.020369484274736595" NOX="0.06100768438564525" SO2="2.551668536191434E-4" PM="6.327361030732686E-4"  />
+	<event time="42545.0" type="left link" vehicle="570902.2#10897" link="link85"  />
+	<event time="42545.0" type="entered link" vehicle="570902.2#10897" link="link56"  />
+	<event time="42545.0" type="warmEmissionEvent" linkId="link85" vehicleId="570902.2#10897" CO2_TOTAL="49.81122775072748" CO="0.24732558318207573" FC="15.886817031125455" HC="0.02232372007260365" NO2="0.0020539533454339417" NMHC="0.020296743399886682" NOX="0.060809300181509124" SO2="2.542145118871356E-4" PM="6.318036971425197E-4"  />
+	<event time="42566.0" type="left link" vehicle="570902.2#10897" link="link56"  />
+	<event time="42566.0" type="entered link" vehicle="570902.2#10897" link="link69"  />
+	<event time="42566.0" type="warmEmissionEvent" linkId="link56" vehicleId="570902.2#10897" CO2_TOTAL="98.62219064245811" CO="0.4955373603351955" FC="31.454568784916198" HC="0.044222067039106146" NO2="0.0040370111731843576" NMHC="0.04020356145251397" NOX="0.12055516759776537" SO2="5.033240235755666E-4" PM="0.001258609259370053"  />
+	<event time="42579.0" type="vehicle leaves traffic" person="570902.2#10897" link="link69" vehicle="570902.2#10897" networkMode="car" relativePosition="1.0"  />
+	<event time="42579.0" type="PersonLeavesVehicle" person="570902.2#10897" vehicle="570902.2#10897"  />
+	<event time="42579.0" type="arrival" person="570902.2#10897" link="link69" legMode="car"  />
+	<event time="42579.0" type="actstart" person="570902.2#10897" link="link69" actType="work"  />
+	<event time="42944.0" type="actend" person="570902.2#2983" link="link23" actType="home"  />
+	<event time="42944.0" type="departure" person="570902.2#2983" link="link23" legMode="car"  />
+	<event time="42944.0" type="PersonEntersVehicle" person="570902.2#2983" vehicle="570902.2#2983"  />
+	<event time="42944.0" type="vehicle enters traffic" person="570902.2#2983" link="link23" vehicle="570902.2#2983" networkMode="car" relativePosition="1.0"  />
+	<event time="42944.0" type="coldEmissionEvent" linkId="link23" vehicleId="570902.2#2983" HC="4.79" NO2="0.03" PM="0.0" NMHC="4.53" NOX="1.37" CO="17.66" FC="0.76"  />
+	<event time="42945.0" type="left link" vehicle="570902.2#2983" link="link23"  />
+	<event time="42945.0" type="entered link" vehicle="570902.2#2983" link="link32"  />
+	<event time="42945.0" type="warmEmissionEvent" linkId="link23" vehicleId="570902.2#2983" CO2_TOTAL="98.10000000000001" CO="0.496" FC="31.288" HC="0.044000000000000004" NO2="0.004" NMHC="0.04000000000000001" NOX="0.12" SO2="5.006589461118001E-4" PM="0.0012559999711811562"  />
+	<event time="42968.0" type="left link" vehicle="570902.2#2983" link="link32"  />
+	<event time="42968.0" type="entered link" vehicle="570902.2#2983" link="link25"  />
+	<event time="42968.0" type="warmEmissionEvent" linkId="link32" vehicleId="570902.2#2983" CO2_TOTAL="98.76063950477253" CO="0.4954147002757349" FC="31.498731312724413" HC="0.04428094386764726" NO2="0.0040468239779412095" NMHC="0.04025753187867666" NOX="0.12070235966911814" SO2="5.040306178973289E-4" PM="0.0012593010622325147"  />
+	<event time="42979.0" type="left link" vehicle="570902.2#2983" link="link25"  />
+	<event time="42979.0" type="entered link" vehicle="570902.2#2983" link="link58"  />
+	<event time="42979.0" type="warmEmissionEvent" linkId="link25" vehicleId="570902.2#2983" CO2_TOTAL="49.92031773743017" CO="0.24722893389199257" FC="15.921614641527002" HC="0.022370111731843577" NO2="0.0020616852886405964" NMHC="0.02033926908752328" NOX="0.060925279329608936" SO2="2.5477126882884443E-4" PM="6.323487992387393E-4"  />
+	<event time="42990.0" type="left link" vehicle="570902.2#2983" link="link58"  />
+	<event time="42990.0" type="entered link" vehicle="570902.2#2983" link="link89"  />
+	<event time="42990.0" type="warmEmissionEvent" linkId="link58" vehicleId="570902.2#2983" CO2_TOTAL="49.92031773743017" CO="0.24722893389199257" FC="15.921614641527002" HC="0.022370111731843577" NO2="0.0020616852886405964" NMHC="0.02033926908752328" NOX="0.060925279329608936" SO2="2.5477126882884443E-4" PM="6.323487992387393E-4"  />
+	<event time="42990.0" type="coldEmissionEvent" linkId="link23" vehicleId="570902.2#2983" HC="0.009999999999999787" NO2="0.06" PM="0.0" NMHC="0.009999999999999787" NOX="1.2599999999999998" CO="2.8299999999999983" FC="1.22"  />
+	<event time="43010.0" type="vehicle leaves traffic" person="570902.2#2983" link="link89" vehicle="570902.2#2983" networkMode="car" relativePosition="1.0"  />
+	<event time="43010.0" type="PersonLeavesVehicle" person="570902.2#2983" vehicle="570902.2#2983"  />
+	<event time="43010.0" type="arrival" person="570902.2#2983" link="link89" legMode="car"  />
+	<event time="43010.0" type="actstart" person="570902.2#2983" link="link89" actType="work"  />
+	<event time="44095.0" type="actend" person="570902.2#14854" link="link36" actType="home"  />
+	<event time="44095.0" type="departure" person="570902.2#14854" link="link36" legMode="car"  />
+	<event time="44095.0" type="PersonEntersVehicle" person="570902.2#14854" vehicle="570902.2#14854"  />
+	<event time="44095.0" type="vehicle enters traffic" person="570902.2#14854" link="link36" vehicle="570902.2#14854" networkMode="car" relativePosition="1.0"  />
+	<event time="44095.0" type="coldEmissionEvent" linkId="link36" vehicleId="570902.2#14854" HC="4.79" NO2="0.03" PM="0.0" NMHC="4.53" NOX="1.37" CO="17.66" FC="0.76"  />
+	<event time="44096.0" type="left link" vehicle="570902.2#14854" link="link36"  />
+	<event time="44096.0" type="entered link" vehicle="570902.2#14854" link="link65"  />
+	<event time="44096.0" type="warmEmissionEvent" linkId="link36" vehicleId="570902.2#14854" CO2_TOTAL="49.85233583690987" CO="0.24728916309012874" FC="15.899929721030045" HC="0.022341201716738198" NO2="0.0020568669527897" NMHC="0.02031276824034335" NOX="0.060853004291845494" SO2="2.544243131075243E-4" PM="6.3200910649884E-4"  />
+	<event time="44118.0" type="left link" vehicle="570902.2#14854" link="link65"  />
+	<event time="44118.0" type="entered link" vehicle="570902.2#14854" link="link54"  />
+	<event time="44118.0" type="warmEmissionEvent" linkId="link65" vehicleId="570902.2#14854" CO2_TOTAL="98.54961187144322" CO="0.49560166217357426" FC="31.431417551026314" HC="0.044191202156684345" NO2="0.004031867026114057" NMHC="0.04017526864362732" NOX="0.12047800539171084" SO2="5.029536070432653E-4" PM="0.0012582465969349654"  />
+	<event time="44131.0" type="left link" vehicle="570902.2#14854" link="link54"  />
+	<event time="44131.0" type="entered link" vehicle="570902.2#14854" link="link45"  />
+	<event time="44131.0" type="warmEmissionEvent" linkId="link54" vehicleId="570902.2#14854" CO2_TOTAL="50.31527411167513" CO="0.24687901861252118" FC="16.047598138747887" HC="0.022538071065989852" NO2="0.0020896785109983085" NMHC="0.020493231810490696" NOX="0.061345177664974625" SO2="2.5678698731666793E-4" PM="6.343223217775497E-4"  />
+	<event time="44145.0" type="vehicle leaves traffic" person="570902.2#14854" link="link45" vehicle="570902.2#14854" networkMode="car" relativePosition="1.0"  />
+	<event time="44145.0" type="PersonLeavesVehicle" person="570902.2#14854" vehicle="570902.2#14854"  />
+	<event time="44145.0" type="arrival" person="570902.2#14854" link="link45" legMode="car"  />
+	<event time="44145.0" type="actstart" person="570902.2#14854" link="link45" actType="work"  />
+	<event time="44940.0" type="actend" person="570902.2#10897" link="link69" actType="work"  />
+	<event time="44940.0" type="departure" person="570902.2#10897" link="link69" legMode="car"  />
+	<event time="44940.0" type="PersonEntersVehicle" person="570902.2#10897" vehicle="570902.2#10897"  />
+	<event time="44940.0" type="vehicle enters traffic" person="570902.2#10897" link="link69" vehicle="570902.2#10897" networkMode="car" relativePosition="1.0"  />
+	<event time="44940.0" type="coldEmissionEvent" linkId="link69" vehicleId="570902.2#10897" HC="4.79" NO2="0.03" PM="0.0" NMHC="4.53" NOX="1.37" CO="17.66" FC="0.76"  />
+	<event time="44941.0" type="left link" vehicle="570902.2#10897" link="link69"  />
+	<event time="44941.0" type="entered link" vehicle="570902.2#10897" link="link98"  />
+	<event time="44941.0" type="warmEmissionEvent" linkId="link69" vehicleId="570902.2#10897" CO2_TOTAL="50.28940264024899" CO="0.24690193968366916" FC="16.039345636291767" HC="0.02252706895183882" NO2="0.00208784482530647" NMHC="0.020483146539185586" NOX="0.061317672379597045" SO2="2.5665494842158594E-4" PM="6.341930469125237E-4"  />
+	<event time="44962.0" type="left link" vehicle="570902.2#10897" link="link98"  />
+	<event time="44962.0" type="entered link" vehicle="570902.2#10897" link="link87"  />
+	<event time="44962.0" type="warmEmissionEvent" linkId="link98" vehicleId="570902.2#10897" CO2_TOTAL="98.62219064245811" CO="0.4955373603351955" FC="31.454568784916198" HC="0.044222067039106146" NO2="0.0040370111731843576" NMHC="0.04020356145251397" NOX="0.12055516759776537" SO2="5.033240235755666E-4" PM="0.001258609259370053"  />
+	<event time="44974.0" type="left link" vehicle="570902.2#10897" link="link87"  />
+	<event time="44974.0" type="entered link" vehicle="570902.2#10897" link="link78"  />
+	<event time="44974.0" type="warmEmissionEvent" linkId="link87" vehicleId="570902.2#10897" CO2_TOTAL="50.17057099197192" CO="0.24700721968958475" FC="16.001440622961912" HC="0.022476534548999328" NO2="0.002079422424833221" NMHC="0.02043682333658272" NOX="0.061191336372498316" SO2="2.560484734638681E-4" PM="6.335992675700656E-4"  />
+	<event time="44985.0" type="vehicle leaves traffic" person="570902.2#10897" link="link78" vehicle="570902.2#10897" networkMode="car" relativePosition="1.0"  />
+	<event time="44985.0" type="PersonLeavesVehicle" person="570902.2#10897" vehicle="570902.2#10897"  />
+	<event time="44985.0" type="arrival" person="570902.2#10897" link="link78" legMode="car"  />
+	<event time="44985.0" type="actstart" person="570902.2#10897" link="link78" actType="home"  />
+	<event time="45427.0" type="actend" person="570902.2#14854" link="link45" actType="work"  />
+	<event time="45427.0" type="departure" person="570902.2#14854" link="link45" legMode="car"  />
+	<event time="45427.0" type="PersonEntersVehicle" person="570902.2#14854" vehicle="570902.2#14854"  />
+	<event time="45427.0" type="vehicle enters traffic" person="570902.2#14854" link="link45" vehicle="570902.2#14854" networkMode="car" relativePosition="1.0"  />
+	<event time="45427.0" type="coldEmissionEvent" linkId="link45" vehicleId="570902.2#14854" HC="4.79" NO2="0.03" PM="0.0" NMHC="4.53" NOX="1.37" CO="17.66" FC="0.76"  />
+	<event time="45428.0" type="left link" vehicle="570902.2#14854" link="link45"  />
+	<event time="45428.0" type="entered link" vehicle="570902.2#14854" link="link52"  />
+	<event time="45428.0" type="warmEmissionEvent" linkId="link45" vehicleId="570902.2#14854" CO2_TOTAL="49.85233583690987" CO="0.24728916309012874" FC="15.899929721030043" HC="0.022341201716738198" NO2="0.0020568669527896996" NMHC="0.02031276824034335" NOX="0.06085300429184549" SO2="2.5442431310752423E-4" PM="6.3200910649884E-4"  />
+	<event time="45443.0" type="left link" vehicle="570902.2#14854" link="link52"  />
+	<event time="45443.0" type="entered link" vehicle="570902.2#14854" link="link23"  />
+	<event time="45443.0" type="warmEmissionEvent" linkId="link52" vehicleId="570902.2#14854" CO2_TOTAL="49.85233583690987" CO="0.24728916309012874" FC="15.899929721030043" HC="0.022341201716738198" NO2="0.0020568669527896996" NMHC="0.02031276824034335" NOX="0.06085300429184549" SO2="2.5442431310752423E-4" PM="6.3200910649884E-4"  />
+	<event time="45459.0" type="vehicle leaves traffic" person="570902.2#14854" link="link23" vehicle="570902.2#14854" networkMode="car" relativePosition="1.0"  />
+	<event time="45459.0" type="PersonLeavesVehicle" person="570902.2#14854" vehicle="570902.2#14854"  />
+	<event time="45459.0" type="arrival" person="570902.2#14854" link="link23" legMode="car"  />
+	<event time="45459.0" type="actstart" person="570902.2#14854" link="link23" actType="home"  />
+	<event time="46014.0" type="actend" person="570902.2#2983" link="link89" actType="work"  />
+	<event time="46014.0" type="departure" person="570902.2#2983" link="link89" legMode="car"  />
+	<event time="46014.0" type="PersonEntersVehicle" person="570902.2#2983" vehicle="570902.2#2983"  />
+	<event time="46014.0" type="vehicle enters traffic" person="570902.2#2983" link="link89" vehicle="570902.2#2983" networkMode="car" relativePosition="1.0"  />
+	<event time="46014.0" type="coldEmissionEvent" linkId="link89" vehicleId="570902.2#2983" HC="4.79" NO2="0.03" PM="0.0" NMHC="4.53" NOX="1.37" CO="17.66" FC="0.76"  />
+	<event time="46015.0" type="left link" vehicle="570902.2#2983" link="link89"  />
+	<event time="46015.0" type="entered link" vehicle="570902.2#2983" link="link98"  />
+	<event time="46015.0" type="warmEmissionEvent" linkId="link89" vehicleId="570902.2#2983" CO2_TOTAL="98.62219064245811" CO="0.4955373603351955" FC="31.454568784916198" HC="0.044222067039106146" NO2="0.0040370111731843576" NMHC="0.04020356145251397" NOX="0.12055516759776537" SO2="5.033240235755666E-4" PM="0.001258609259370053"  />
+	<event time="46036.0" type="left link" vehicle="570902.2#2983" link="link98"  />
+	<event time="46036.0" type="entered link" vehicle="570902.2#2983" link="link85"  />
+	<event time="46036.0" type="warmEmissionEvent" linkId="link98" vehicleId="570902.2#2983" CO2_TOTAL="98.62219064245811" CO="0.4955373603351955" FC="31.454568784916198" HC="0.044222067039106146" NO2="0.0040370111731843576" NMHC="0.04020356145251397" NOX="0.12055516759776537" SO2="5.033240235755666E-4" PM="0.001258609259370053"  />
+	<event time="46047.0" type="left link" vehicle="570902.2#2983" link="link85"  />
+	<event time="46047.0" type="entered link" vehicle="570902.2#2983" link="link52"  />
+	<event time="46047.0" type="warmEmissionEvent" linkId="link85" vehicleId="570902.2#2983" CO2_TOTAL="49.81122775072748" CO="0.24732558318207573" FC="15.886817031125455" HC="0.02232372007260365" NO2="0.0020539533454339417" NMHC="0.020296743399886682" NOX="0.060809300181509124" SO2="2.542145118871356E-4" PM="6.318036971425197E-4"  />
+	<event time="46062.0" type="left link" vehicle="570902.2#2983" link="link52"  />
+	<event time="46062.0" type="entered link" vehicle="570902.2#2983" link="link23"  />
+	<event time="46062.0" type="warmEmissionEvent" linkId="link52" vehicleId="570902.2#2983" CO2_TOTAL="49.85233583690987" CO="0.24728916309012874" FC="15.899929721030043" HC="0.022341201716738198" NO2="0.0020568669527896996" NMHC="0.02031276824034335" NOX="0.06085300429184549" SO2="2.5442431310752423E-4" PM="6.3200910649884E-4"  />
+	<event time="46062.0" type="coldEmissionEvent" linkId="link89" vehicleId="570902.2#2983" HC="0.009999999999999787" NO2="0.06" PM="0.0" NMHC="0.009999999999999787" NOX="1.2599999999999998" CO="2.8299999999999983" FC="1.22"  />
+	<event time="46078.0" type="vehicle leaves traffic" person="570902.2#2983" link="link23" vehicle="570902.2#2983" networkMode="car" relativePosition="1.0"  />
+	<event time="46078.0" type="PersonLeavesVehicle" person="570902.2#2983" vehicle="570902.2#2983"  />
+	<event time="46078.0" type="arrival" person="570902.2#2983" link="link23" legMode="car"  />
+	<event time="46078.0" type="actstart" person="570902.2#2983" link="link23" actType="home"  />
+	<event time="58132.0" type="actend" person="pv_car_5315_9162_1" link="link25" actType="work"  />
+	<event time="58132.0" type="departure" person="pv_car_5315_9162_1" link="link25" legMode="car"  />
+	<event time="58132.0" type="PersonEntersVehicle" person="pv_car_5315_9162_1" vehicle="pv_car_5315_9162_1"  />
+	<event time="58132.0" type="vehicle enters traffic" person="pv_car_5315_9162_1" link="link25" vehicle="pv_car_5315_9162_1" networkMode="car" relativePosition="1.0"  />
+	<event time="58132.0" type="coldEmissionEvent" linkId="link25" vehicleId="pv_car_5315_9162_1" HC="3.78" NO2="0.00273337378166616" PM="0.00789998099207878" NMHC="3.57" NOX="0.33" CO="19.99" FC="23.79"  />
+	<event time="58133.0" type="left link" vehicle="pv_car_5315_9162_1" link="link25"  />
+	<event time="58133.0" type="entered link" vehicle="pv_car_5315_9162_1" link="link52"  />
+	<event time="58133.0" type="warmEmissionEvent" linkId="link25" vehicleId="pv_car_5315_9162_1" CO2_TOTAL="33.19874755586592" CO="0.18551128957169463" FC="10.541736615456239" HC="0.014370111731843578" NO2="0.01215421322160149" NMHC="0.01433926908752328" NOX="0.07504864990689014" SO2="1.6869821096748776E-4" PM="0.0020616852886405964"  />
+	<event time="58148.0" type="left link" vehicle="pv_car_5315_9162_1" link="link52"  />
+	<event time="58148.0" type="entered link" vehicle="pv_car_5315_9162_1" link="link23"  />
+	<event time="58148.0" type="warmEmissionEvent" linkId="link52" vehicleId="pv_car_5315_9162_1" CO2_TOTAL="33.1560402360515" CO="0.18539324034334764" FC="10.528165772532189" HC="0.014341201716738198" NO2="0.012142167381974248" NMHC="0.014312768240343348" NOX="0.0749667381974249" SO2="1.6848108276041305E-4" PM="0.0020568669527896996"  />
+	<event time="58165.0" type="left link" vehicle="pv_car_5315_9162_1" link="link23"  />
+	<event time="58165.0" type="entered link" vehicle="pv_car_5315_9162_1" link="link36"  />
+	<event time="58165.0" type="warmEmissionEvent" linkId="link23" vehicleId="pv_car_5315_9162_1" CO2_TOTAL="65.304" CO="0.36800000000000005" FC="20.736000000000004" HC="0.028000000000000004" NO2="0.024" NMHC="0.028000000000000004" NOX="0.148" SO2="3.318369854241608E-4" PM="0.004"  />
+	<event time="58179.0" type="vehicle leaves traffic" person="pv_car_5315_9162_1" link="link36" vehicle="pv_car_5315_9162_1" networkMode="car" relativePosition="1.0"  />
+	<event time="58179.0" type="PersonLeavesVehicle" person="pv_car_5315_9162_1" vehicle="pv_car_5315_9162_1"  />
+	<event time="58179.0" type="arrival" person="pv_car_5315_9162_1" link="link36" legMode="car"  />
+	<event time="58179.0" type="actstart" person="pv_car_5315_9162_1" link="link36" actType="home"  />
+	<event time="59507.0" type="actend" person="555928.1#7278" link="link36" actType="work"  />
+	<event time="59507.0" type="departure" person="555928.1#7278" link="link36" legMode="car"  />
+	<event time="59507.0" type="PersonEntersVehicle" person="555928.1#7278" vehicle="555928.1#7278"  />
+	<event time="59507.0" type="vehicle enters traffic" person="555928.1#7278" link="link36" vehicle="555928.1#7278" networkMode="car" relativePosition="1.0"  />
+	<event time="59507.0" type="coldEmissionEvent" linkId="link36" vehicleId="555928.1#7278" HC="0.16" NO2="-0.01" PM="0.01" NMHC="0.15" NOX="-0.00105094257742167" CO="1.17" FC="7.87"  />
+	<event time="59508.0" type="left link" vehicle="555928.1#7278" link="link36"  />
+	<event time="59508.0" type="entered link" vehicle="555928.1#7278" link="link65"  />
+	<event time="59508.0" type="warmEmissionEvent" linkId="link36" vehicleId="555928.1#7278" CO2_TOTAL="18.414357296137343" CO="0.012398068669527898" FC="5.790884120171674" HC="0.00408530042918455" NO2="0.042369635193133054" NMHC="0.00408530042918455" NOX="0.1230236051502146" SO2="9.26853352172732E-5" PM="0.0060568669527897"  />
+	<event time="59530.0" type="left link" vehicle="555928.1#7278" link="link65"  />
+	<event time="59530.0" type="entered link" vehicle="555928.1#7278" link="link52"  />
+	<event time="59530.0" type="warmEmissionEvent" linkId="link65" vehicleId="555928.1#7278" CO2_TOTAL="36.476932611212106" CO="0.024223069182798398" FC="11.471084219306205" HC="0.008047800539171085" NO2="0.08420713566974136" NMHC="0.008047800539171085" NOX="0.24457360647005302" SO2="1.8360012092608728E-4" PM="0.012031867026114055"  />
+	<event time="59545.0" type="left link" vehicle="555928.1#7278" link="link52"  />
+	<event time="59545.0" type="entered link" vehicle="555928.1#7278" link="link23"  />
+	<event time="59545.0" type="warmEmissionEvent" linkId="link52" vehicleId="555928.1#7278" CO2_TOTAL="18.41435729613734" CO="0.012398068669527897" FC="5.790884120171674" HC="0.004085300429184549" NO2="0.04236963519313305" NMHC="0.004085300429184549" NOX="0.12302360515021458" SO2="9.26853352172732E-5" PM="0.006056866952789699"  />
+	<event time="59561.0" type="vehicle leaves traffic" person="555928.1#7278" link="link23" vehicle="555928.1#7278" networkMode="car" relativePosition="1.0"  />
+	<event time="59561.0" type="PersonLeavesVehicle" person="555928.1#7278" vehicle="555928.1#7278"  />
+	<event time="59561.0" type="arrival" person="555928.1#7278" link="link23" legMode="car"  />
+	<event time="59561.0" type="actstart" person="555928.1#7278" link="link23" actType="home"  />
+	<event time="69165.0" type="actend" person="pv_car_10041_9162_1" link="link47" actType="work"  />
+	<event time="69165.0" type="departure" person="pv_car_10041_9162_1" link="link47" legMode="car"  />
+	<event time="69165.0" type="PersonEntersVehicle" person="pv_car_10041_9162_1" vehicle="pv_car_10041_9162_1"  />
+	<event time="69165.0" type="vehicle enters traffic" person="pv_car_10041_9162_1" link="link47" vehicle="pv_car_10041_9162_1" networkMode="car" relativePosition="1.0"  />
+	<event time="69165.0" type="coldEmissionEvent" linkId="link47" vehicleId="pv_car_10041_9162_1" HC="3.78" NO2="0.00273337378166616" PM="0.00789998099207878" NMHC="3.57" NOX="0.33" CO="19.99" FC="23.79"  />
+	<event time="69166.0" type="left link" vehicle="pv_car_10041_9162_1" link="link47"  />
+	<event time="69166.0" type="entered link" vehicle="pv_car_10041_9162_1" link="link78"  />
+	<event time="69166.0" type="warmEmissionEvent" linkId="link47" vehicleId="pv_car_10041_9162_1" CO2_TOTAL="33.1560402360515" CO="0.18539324034334767" FC="10.52816577253219" HC="0.0143412017167382" NO2="0.01214216738197425" NMHC="0.01431276824034335" NOX="0.0749667381974249" SO2="1.6848108276041303E-4" PM="0.0020568669527896996"  />
+	<event time="69178.0" type="left link" vehicle="pv_car_10041_9162_1" link="link78"  />
+	<event time="69178.0" type="entered link" vehicle="pv_car_10041_9162_1" link="link89"  />
+	<event time="69178.0" type="warmEmissionEvent" linkId="link78" vehicleId="pv_car_10041_9162_1" CO2_TOTAL="33.247440703477785" CO="0.18564588449655392" FC="10.557209538144658" HC="0.014403073754258103" NO2="0.012167947397607543" NMHC="0.014369484274736595" NOX="0.07514204230373128" SO2="1.6894577171079202E-4" PM="0.002067178959043017"  />
+	<event time="69198.0" type="vehicle leaves traffic" person="pv_car_10041_9162_1" link="link89" vehicle="pv_car_10041_9162_1" networkMode="car" relativePosition="1.0"  />
+	<event time="69198.0" type="PersonLeavesVehicle" person="pv_car_10041_9162_1" vehicle="pv_car_10041_9162_1"  />
+	<event time="69198.0" type="arrival" person="pv_car_10041_9162_1" link="link89" legMode="car"  />
+	<event time="69198.0" type="actstart" person="pv_car_10041_9162_1" link="link89" actType="home"  />
+	<event time="85090.0" type="actend" person="gv_4500" link="link78" actType="home"  />
+	<event time="85090.0" type="departure" person="gv_4500" link="link78" legMode="car"  />
+	<event time="85090.0" type="PersonEntersVehicle" person="gv_4500" vehicle="gv_4500"  />
+	<event time="85090.0" type="vehicle enters traffic" person="gv_4500" link="link78" vehicle="gv_4500" networkMode="car" relativePosition="1.0"  />
+	<event time="85090.0" type="coldEmissionEvent" linkId="link78" vehicleId="gv_4500" HC="3.78" NO2="0.00273337378166616" PM="0.00789998099207878" NMHC="3.57" NOX="0.33" CO="19.99" FC="23.79"  />
+	<event time="85091.0" type="left link" vehicle="gv_4500" link="link78"  />
+	<event time="85091.0" type="entered link" vehicle="gv_4500" link="link89"  />
+	<event time="85111.0" type="vehicle leaves traffic" person="gv_4500" link="link89" vehicle="gv_4500" networkMode="car" relativePosition="1.0"  />
+	<event time="85111.0" type="PersonLeavesVehicle" person="gv_4500" vehicle="gv_4500"  />
+	<event time="85111.0" type="arrival" person="gv_4500" link="link89" legMode="car"  />
+	<event time="85111.0" type="actstart" person="gv_4500" link="link89" actType="home"  />
+</events>

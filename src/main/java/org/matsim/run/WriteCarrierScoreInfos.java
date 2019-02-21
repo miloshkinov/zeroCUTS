@@ -37,7 +37,7 @@ class WriteCarrierScoreInfos {
 		this.carriers = carriers.getCarriers().values();
 		this.run = run;
 		
-		werteBestimmen();
+		calcValues();
 		
 		if (file.exists()){
 			writeLinetoFile(file);
@@ -46,12 +46,12 @@ class WriteCarrierScoreInfos {
 		    writeLinetoFile(file);
 		}
 	}
-
 	
+	WriteCarrierScoreInfos(Carriers carriers, File file) {
+		new WriteCarrierScoreInfos(carriers, file, 1);
+	}
 
-
-
-	void werteBestimmen() {
+	void calcValues() {
 		for (Carrier carrier : carriers){
 			if (carrier.getSelectedPlan() == null) {
 				return;
