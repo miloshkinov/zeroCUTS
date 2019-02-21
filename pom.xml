@@ -60,6 +60,14 @@
 			<version>0.11.0-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
+		
+		<!-- This is the matsim dvrp contrib: -->
+		<dependency>
+			<groupId>org.matsim.contrib</groupId>
+			<artifactId>dvrp</artifactId>
+			<version>0.11.0-SNAPSHOT</version>
+			<scope>compile</scope>
+		</dependency>
 
 		<!--MATSim examples. Not transitive. (Why not?) -->
 		<dependency>
