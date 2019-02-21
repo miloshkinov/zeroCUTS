@@ -1,4 +1,4 @@
-package org.matsim.run;
+package org.matsim.vsp.freight;
 
 import java.io.File;
 import java.util.ArrayList;

@@ -16,7 +16,7 @@
  *   See also COPYING, LICENSE and WARRANTY file                           *
  *                                                                         *
  * *********************************************************************** */
-package org.matsim.run;
+package org.matsim.vsp.freight;
 
 import java.io.File;
 import java.io.FileWriter;

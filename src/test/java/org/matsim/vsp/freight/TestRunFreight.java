@@ -19,14 +19,14 @@
 /**
  * 
  */
-package org.matsim.run;
+package org.matsim.vsp.freight;
 
 import org.apache.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.matsim.run.RunFreight;
 import org.matsim.testcases.MatsimTestUtils;
+import org.matsim.vsp.freight.RunFreight;
 
 /**
  * @author kturner
@@ -37,7 +37,7 @@ public class TestRunFreight {
 	@Rule public MatsimTestUtils utils = new MatsimTestUtils() ;
 
 	/**
-	 * First very simple Test method for {@link org.matsim.run.RunFreight#main(java.lang.String[])}.
+	 * First very simple Test method for {@link org.matsim.vsp.freight.RunFreight#main(java.lang.String[])}.
 	 * Only checks if it runs without exception.
 	 * TODO: Make possible to set max jsprit iteration to 1 -> make sure that test can run in acceptable test
 	 * TODO: Change InputFiles to small chessboard scenario.
