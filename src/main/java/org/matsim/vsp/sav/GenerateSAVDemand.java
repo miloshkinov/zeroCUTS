@@ -22,10 +22,17 @@ package org.matsim.vsp.sav;/*
  * This script transform all inner city Berlin car trips to SAV.
  */
 
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
+import static org.matsim.core.config.ConfigUtils.createConfig;
+import static org.matsim.core.scenario.ScenarioUtils.createScenario;
+
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Plan;
@@ -34,16 +41,13 @@ import org.matsim.api.core.v01.population.PopulationWriter;
 import org.matsim.core.config.Config;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.io.PopulationReader;
-import org.matsim.core.router.*;
+import org.matsim.core.router.MainModeIdentifier;
+import org.matsim.core.router.MainModeIdentifierImpl;
+import org.matsim.core.router.StageActivityTypes;
+import org.matsim.core.router.StageActivityTypesImpl;
+import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.opengis.feature.simple.SimpleFeature;
-
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import static org.matsim.core.config.ConfigUtils.createConfig;
-import static org.matsim.core.scenario.ScenarioUtils.createScenario;
 
 public class GenerateSAVDemand {
 
