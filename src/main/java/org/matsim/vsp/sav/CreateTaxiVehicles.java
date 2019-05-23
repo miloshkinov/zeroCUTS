@@ -33,9 +33,7 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.dvrp.fleet.DvrpVehicle;
-import org.matsim.contrib.dvrp.fleet.DvrpVehicleSpecification;
-import org.matsim.contrib.dvrp.fleet.FleetWriter;
-import org.matsim.contrib.dvrp.fleet.ImmutableDvrpVehicleSpecification;
+import org.matsim.contrib.dvrp.fleet.DvrpVehicleImpl;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.network.io.MatsimNetworkReader;
@@ -47,37 +45,32 @@ import org.matsim.core.scenario.ScenarioUtils;
  */
 public class CreateTaxiVehicles {
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) throws MalformedURLException {
-		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
-		int numberofVehicles = 1500;
-		double operationStartTime = 0.; //t0
-		double operationEndTime = 36 * 3600.;    //t1
-		int seats = 4;
-		String networkfile = "http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.2-10pct/input/berlin-v5-network.xml.gz";
-		String taxisFile = "scenarios/avscenario/taxis_" + numberofVehicles + ".xml";
-		List<DvrpVehicleSpecification> vehicles = new ArrayList<>();
-		Random random = MatsimRandom.getLocalInstance();
-		new MatsimNetworkReader(scenario.getNetwork()).readURL(new URL(networkfile));
-		List<Id<Link>> allLinks = new ArrayList<>();
-		allLinks.addAll(scenario.getNetwork().getLinks().keySet());
-		for (int i = 0; i < numberofVehicles; i++) {
-			Link startLink;
-			do {
-				Id<Link> linkId = allLinks.get(random.nextInt(allLinks.size()));
-				startLink = scenario.getNetwork().getLinks().get(linkId);
-			} while (!startLink.getAllowedModes().contains(TransportMode.car));
-			//for multi-modal networks: Only links where cars can ride should be used.
-			DvrpVehicleSpecification v = ImmutableDvrpVehicleSpecification.newBuilder()
-					.id(Id.create("taxi" + i, DvrpVehicle.class))
-					.startLinkId(startLink.getId())
-					.capacity(seats)
-					.serviceBeginTime(operationStartTime)
-					.serviceEndTime(operationEndTime)
-					.build();
-			vehicles.add(v);
+    /**
+     * @param args
+     */
+    public static void main(String[] args) throws MalformedURLException {
+        Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+        int numberofVehicles = 1500;
+        double operationStartTime = 0.; //t0
+        double operationEndTime = 36 * 3600.;    //t1
+        int seats = 4;
+        String networkfile = "http://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.2-10pct/input/berlin-v5-network.xml.gz";
+        String taxisFile = "scenarios/avscenario/taxis_" + numberofVehicles + ".xml";
+        List<DvrpVehicle> vehicles = new ArrayList<>();
+        Random random = MatsimRandom.getLocalInstance();
+        new MatsimNetworkReader(scenario.getNetwork()).readURL(new URL(networkfile));
+        List<Id<Link>> allLinks = new ArrayList<>();
+        allLinks.addAll(scenario.getNetwork().getLinks().keySet());
+        for (int i = 0; i < numberofVehicles; i++) {
+            Link startLink;
+            do {
+                Id<Link> linkId = allLinks.get(random.nextInt(allLinks.size()));
+                startLink = scenario.getNetwork().getLinks().get(linkId);
+            }
+            while (!startLink.getAllowedModes().contains(TransportMode.car));
+            //for multi-modal networks: Only links where cars can ride should be used.
+            DvrpVehicle v = new DvrpVehicleImpl(Id.create("taxi" + i, DvrpVehicle.class), startLink, seats, operationStartTime, operationEndTime);
+            vehicles.add(v);
 
 		}
 		new FleetWriter(vehicles.stream()).write(taxisFile);
