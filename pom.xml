@@ -9,6 +9,11 @@
 
 	<name>zeroCUTS project</name>
 	<description>zeroCUTS project</description>
+	
+	<properties>
+	  <matsim.version>12.0-SNAPSHOT</matsim.version>
+	  <matsim.version>0.11.0-SNAPSHOT</matsim.version>
+	</properties>
 
 	<repositories>
 
@@ -50,30 +55,30 @@
 		<dependency>
 			<groupId>org.matsim</groupId>
 			<artifactId>matsim</artifactId>
-			<version>0.11.0-SNAPSHOT</version>
+			<version>${matsim.version}</version>
 		</dependency>
 
 		<!-- This is the matsim freight contrib: -->
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>freight</artifactId>
-			<version>0.11.0-SNAPSHOT</version>
-			<scope>compile</scope>
+			<version>${matsim.version}</version>
+			<!--<scope>compile</scope>-->
 		</dependency>
 		
 		<!-- This is the matsim dvrp contrib: -->
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>dvrp</artifactId>
-			<version>0.11.0-SNAPSHOT</version>
-			<scope>compile</scope>
+			<version>${matsim.version}</version>
+			<!--<scope>compile</scope>-->
 		</dependency>
 
 		<!--MATSim examples. Not transitive. (Why not?) -->
 		<dependency>
 			<groupId>org.matsim</groupId>
 			<artifactId>matsim-examples</artifactId>
-			<version>0.11.0-SNAPSHOT</version>
+			<version>${matsim.version}</version>
 		</dependency>
 
 
@@ -90,18 +95,18 @@
 			<groupId>org.matsim</groupId>
 			<artifactId>matsim</artifactId>
 			<type>test-jar</type>
-			<version>0.11.0-SNAPSHOT</version>
+			<version>${matsim.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>emissions</artifactId>
-			<version>0.11.0-SNAPSHOT</version>
+			<version>${matsim.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>taxi</artifactId>
-			<version>0.11.0-SNAPSHOT</version>
+			<version>${matsim.version}</version>
 		</dependency>
 
 		<dependency>
