@@ -7,41 +7,43 @@
         <param name="networkMode" value="car"/>
     </module>
 
-    <module name="taxi">
+	<module name="multiModeTaxi">
+		<parameterset type="taxi">
 
-        <!-- Used in AStarEuclidean for shortest path search for occupied drives.
-            Values above 1.0 (typically, 1.5 to 3.0) speed up the search, but at the
-            cost of obtaining longer paths -->
-        <param name="AStarEuclideanOverdoFactor" value="1.0"/>
-        <param name="breakIfNotAllRequestsServed" value="false"/>
-        <param name="changeStartLinkToLastLinkInSchedule" value="true"/>
-        <param name="destinationKnown" value="false"/>
-        <param name="detailedStats" value="true"/>
-        <param name="dropoffDuration" value="60.0"/>
-        <param name="onlineVehicleTracker" value="false"/>
-        <param name="pickupDuration" value="120.0"/>
+			<!-- Used in AStarEuclidean for shortest path search for occupied drives.
+				Values above 1.0 (typically, 1.5 to 3.0) speed up the search, but at the
+				cost of obtaining longer paths -->
+			<param name="AStarEuclideanOverdoFactor" value="1.0"/>
+			<param name="breakIfNotAllRequestsServed" value="false"/>
+			<param name="changeStartLinkToLastLinkInSchedule" value="true"/>
+			<param name="destinationKnown" value="false"/>
+			<param name="detailedStats" value="true"/>
+			<param name="dropoffDuration" value="60.0"/>
+			<param name="onlineVehicleTracker" value="false"/>
+			<param name="pickupDuration" value="120.0"/>
 
-        <!-- An XML file specifying the taxi fleet. The file format according to
-            dvrp_vehicles_v1.dtd -->
-        <!-- To create your own vehicles, see org.matsim.contrib.av.vehicles.CreateTaxiVehicles  -->
-        <param name="taxisFile" value="taxis_1500.xml"/>
-        <!--  param name="taxisFile" value="taxis_2000.xml" /  -->
+			<!-- An XML file specifying the taxi fleet. The file format according to
+				dvrp_vehicles_v1.dtd -->
+			<!-- To create your own vehicles, see org.matsim.contrib.av.vehicles.CreateTaxiVehicles  -->
+			<param name="taxisFile" value="taxis_1500.xml"/>
+			<!--  param name="taxisFile" value="taxis_2000.xml" /  -->
 
-        <!-- If true, time profiles of vehicle statuses (i.e. current task type)
-            and the number of unplanned requests -->
-        <param name="timeProfiles" value="true"/>
+			<!-- If true, time profiles of vehicle statuses (i.e. current task type)
+				and the number of unplanned requests -->
+			<param name="timeProfiles" value="true"/>
 
-        <!-- If true, vehicles can be diverted during empty trips. Requires online
-            tracking. -->
-        <param name="vehicleDiversion" value="false"/>
+			<!-- If true, vehicles can be diverted during empty trips. Requires online
+				tracking. -->
+			<param name="vehicleDiversion" value="false"/>
 
-		<parameterset type="RuleBasedTaxiOptimizer">
-            <param name="cellSize" value="1000"/>
-            <param name="goal" value="DEMAND_SUPPLY_EQUIL"/>
-            <param name="nearestRequestsLimit" value="20"/>
-            <param name="nearestVehiclesLimit" value="20"/>
-        </parameterset>
-    </module>
+			<parameterset type="RuleBasedTaxiOptimizer">
+				<param name="cellSize" value="1000"/>
+				<param name="goal" value="DEMAND_SUPPLY_EQUIL"/>
+				<param name="nearestRequestsLimit" value="20"/>
+				<param name="nearestVehiclesLimit" value="20"/>
+			</parameterset>
+		</parameterset>
+	</module>
 
 
     <module name="controler">
