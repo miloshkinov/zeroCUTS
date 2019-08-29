@@ -19,16 +19,18 @@
 
 package org.matsim.vsp.sav;
 
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
+
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.contrib.dvrp.run.DvrpModule;
 import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.contrib.otfvis.OTFVisLiveModule;
+import org.matsim.contrib.taxi.run.MultiModeTaxiConfigGroup;
+import org.matsim.contrib.taxi.run.MultiModeTaxiModule;
 import org.matsim.contrib.taxi.run.TaxiConfigConsistencyChecker;
 import org.matsim.contrib.taxi.run.TaxiConfigGroup;
-import org.matsim.contrib.taxi.run.TaxiModule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
@@ -38,7 +40,7 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.vis.otfvis.OTFVisConfigGroup;
 
-import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
 /**
  * This class runs an example robotaxi scenario including fares. The simulation runs for 10 iterations, this takes
@@ -55,7 +57,8 @@ public class RunBerlinZeroCutsSAVCase {
     }
 
     public static void run(String configFile, boolean otfvis) {
-        Config config = ConfigUtils.loadConfig(configFile, new DvrpConfigGroup(), new OTFVisConfigGroup(), new TaxiConfigGroup());
+		Config config = ConfigUtils.loadConfig(configFile, new DvrpConfigGroup(), new OTFVisConfigGroup(),
+				new MultiModeTaxiConfigGroup());
         enrichConfig(config);
         createControler(config, otfvis).run();
     }
@@ -69,7 +72,7 @@ public class RunBerlinZeroCutsSAVCase {
 
         Controler controler = new Controler(scenario);
         controler.addOverridingModule(new DvrpModule());
-        controler.addOverridingModule(new TaxiModule());
+		controler.addOverridingModule(new MultiModeTaxiModule());
         controler.configureQSimComponents(DvrpQSimComponents.activateModes(mode));
 
         if (otfvis) {
