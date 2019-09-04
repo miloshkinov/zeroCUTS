@@ -13,7 +13,6 @@ Ein guter Einstieg findet sich hier:
 https://github.com/matsim-org/matsim-code-examples/tree/0.10.x/src/main/java/tutorial/events 
 (Das gesamte Repository https://github.com/matsim-org/matsim-code-examples/ ist als Einstieg gedacht und kann daher auch gerne geclont, kopiert werden. Hier von Interesse für MPM sind v.a. die Events, weil es das ist, was VSP als Ergebnis der Verkehrssimultion liefert.)
 
-
 ------------
 
 # Infos from matsim-example-project
