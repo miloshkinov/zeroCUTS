@@ -109,7 +109,7 @@ public class CarrierScoringFunctionFactoryImpl_KT implements CarrierScoringFunct
         }
 
         private CarrierVehicle getVehicle(Id<?> vehicleId) {
-            for(CarrierVehicle cv : carrier.getCarrierCapabilities().getCarrierVehicles()){
+            for(CarrierVehicle cv : carrier.getCarrierCapabilities().getCarrierVehicles().values()){
                 if(cv.getVehicleId().equals(vehicleId)){
                     return cv;
                 }
@@ -373,7 +373,7 @@ public class CarrierScoringFunctionFactoryImpl_KT implements CarrierScoringFunct
         }
 
         private CarrierVehicle getVehicle(Id<Vehicle> vehicleId) {
-            for(CarrierVehicle v : carrier.getCarrierCapabilities().getCarrierVehicles()){
+            for(CarrierVehicle v : carrier.getCarrierCapabilities().getCarrierVehicles().values()){
                 if(v.getVehicleId().equals(vehicleId)){
                     return v;
                 }

@@ -37,6 +37,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlReader;
@@ -329,7 +330,7 @@ public class RunFreight {
 			}
 
 			//Check, if all Services of the Carrier were assigned
-			for (CarrierService service : c.getServices()){
+			for (CarrierService service : c.getServices().values()){
 				if (!assignedServices.contains(service)){
 					unassignedServices.add(service);
 					log.warn("Service " + service.getId().toString() +" will NOT be served by Carrier " + c.getId().toString());
@@ -391,8 +392,10 @@ public class RunFreight {
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2(scenario);
 		CarrierPlanStrategyManagerFactory planStrategyManagerFactory =  createMyStrategymanager(); //Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
 
+		FreightConfigGroup freightConfig = ConfigUtils.addOrGetModule( scenario.getConfig(), FreightConfigGroup.class );
+		freightConfig.setPhysicallyEnforceTimeWindowBeginnings( true );
+		
 		CarrierModule listener = new CarrierModule(carriers, planStrategyManagerFactory, scoringFunctionFactory) ;
-		listener.setPhysicallyEnforceTimeWindowBeginnings(true);
 		controler.addOverridingModule(listener) ;
 		controler.run();
 	}

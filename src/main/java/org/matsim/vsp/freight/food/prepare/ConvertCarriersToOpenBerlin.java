@@ -64,14 +64,14 @@ class ConvertCarriersToOpenBerlin {
 			//Capabilities TODO: implement with all details
 			CarrierCapabilities cc = carrier.getCarrierCapabilities();
 			log.error("CarrierCapabilities are not implemented");
-			for (CarrierVehicle carrierVehicle: cc.getCarrierVehicles()) {
+			for (CarrierVehicle carrierVehicle: cc.getCarrierVehicles().values()) {
 				log.error("not implemented");
 			}
 			
 			//Services
 			//we only have services in this carriers file, no shipments
 			//TODO: look at this and work on it
-			for (CarrierService service : carrier.getServices()) {
+			for (CarrierService service : carrier.getServices().values()) {
 				Id<Link> newLink =handledOldLinksToNewLink.get(service.getLocationLinkId());
 				Coord oldLinkC = oldSchroederNet.getLinks().get(service.getLocationLinkId()).getCoord();
 				if(newLink == null) {
@@ -85,12 +85,12 @@ class ConvertCarriersToOpenBerlin {
 							.setServiceDuration(service.getServiceDuration())
 							.setServiceStartTimeWindow(service.getServiceStartTimeWindow())
 							.build();
-					newCarrier.getServices().add(newService);
+					newCarrier.getServices().put(newService.getId(), newService);
 					handledNewLinksToCarrier.put(newLink, newCarrier);
 				}
 			
 			//Shipments TODO: implement
-			for (CarrierShipment shipment : carrier.getShipments()) {
+			for (CarrierShipment shipment : carrier.getShipments().values()) {
 				log.error("not implemented");
 			}
 			
