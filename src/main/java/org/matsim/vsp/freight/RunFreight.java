@@ -25,7 +25,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import javax.management.InvalidAttributeValueException;
 
-import com.graphhopper.jsprit.analysis.toolbox.Plotter;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
 import com.graphhopper.jsprit.core.algorithm.listener.VehicleRoutingAlgorithmListeners.Priority;
@@ -40,10 +39,9 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
-import org.matsim.contrib.freight.carrier.CarrierPlanXmlReaderV2;
+import org.matsim.contrib.freight.carrier.CarrierPlanXmlReader;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
 import org.matsim.contrib.freight.carrier.CarrierService;
-import org.matsim.contrib.freight.carrier.CarrierVehicleType;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypeLoader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypeWriter;
@@ -62,6 +60,7 @@ import org.matsim.contrib.freight.scoring.CarrierScoringFunctionFactory;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.consistency.VspConfigConsistencyCheckerImpl;
+import org.matsim.core.config.groups.ControlerConfigGroup.CompressionType;
 import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.config.groups.StrategyConfigGroup.StrategySettings;
@@ -75,6 +74,7 @@ import org.matsim.core.replanning.GenericStrategyManager;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.SumScoringFunction;
+import org.matsim.vehicles.VehicleType;
 
 /**
  * This is a short an easy version to run MATSim freight scenarios .
@@ -152,7 +152,7 @@ public class RunFreight {
 		// (the directory structure is needed for jsprit output, which is before the
 		// controler starts. Maybe there is a better alternative ...)
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
-		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(), config.controler().getOverwriteFileSetting());
+		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(), config.controler().getOverwriteFileSetting(), CompressionType.gzip);
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 
 		config.controler().setLastIteration(LAST_MATSIM_ITERATION);	
@@ -206,36 +206,27 @@ public class RunFreight {
 	}
 
 	private static CarrierVehicleTypes modifyVehicleTypes(CarrierVehicleTypes vehicleTypes) {
-		for (CarrierVehicleType vt : vehicleTypes.getVehicleTypes().values()) {
+		for (VehicleType vt : vehicleTypes.getVehicleTypes().values()) {
 			switch (costsModififier) {
 			case av:
-				vt = CarrierVehicleType.Builder.newInstance(vt.getId(), vt)
-				.setCostPerTimeUnit(0.0)
-				.build();
+				vt.getCostInformation().setCostsPerSecond(0.0);
 				break;
 			case avDist110pct:
-				vt = CarrierVehicleType.Builder.newInstance(vt.getId(), vt)
-				.setCostPerTimeUnit(0.0)
-				.setCostPerDistanceUnit(vt.getVehicleCostInformation().getPerDistanceUnit() *1.1)
-				.build();
+				vt.getCostInformation().setCostsPerSecond(0.0);
+				vt.getCostInformation().setCostsPerMeter(vt.getCostInformation().getCostsPerMeter() *1.1);
 				break;
 			case avFix110pct:
-				vt = CarrierVehicleType.Builder.newInstance(vt.getId(), vt)
-				.setCostPerTimeUnit(0.0)
-				.setFixCost(vt.getVehicleCostInformation().getFix() *1.1)
-				.build();
+				vt.getCostInformation().setCostsPerSecond(0.0);
+				vt.getCostInformation().setFixedCost(vt.getCostInformation().getFixedCosts() *1.1);
 				break;
 			case avVehCapUp:
 				if (vt.getId().toString().endsWith("_frozen")) {
-					vt = CarrierVehicleType.Builder.newInstance(vt.getId(), vt)
-							.setCostPerTimeUnit(0.0)
-							.setCapacity(vt.getCarrierVehicleCapacity() + 14)			// two more trolleys instead of the drivers cabin
-							.build();
+					vt.getCostInformation().setCostsPerSecond(0.0);
+					vt.getCapacity().setOther(vt.getCapacity().getOther() + 14);		// more trolleys instead of the drivers cabin
+							
 				} else {
-					vt = CarrierVehicleType.Builder.newInstance(vt.getId(), vt)
-							.setCostPerTimeUnit(0.0)
-							.setCapacity(vt.getCarrierVehicleCapacity() + 2)			// two additional palates instead of the drivers cabin
-							.build();
+					vt.getCostInformation().setCostsPerSecond(0.0);
+					vt.getCapacity().setOther(vt.getCapacity().getOther() + 2);			// two additional palates instead of the drivers cabin
 				}
 			default:
 				log.info("No or unspecified modification for carrierVehicleTypeCosts selected" );
@@ -246,7 +237,7 @@ public class RunFreight {
 
 	private static Carriers createCarriers(CarrierVehicleTypes vehicleTypes) {
 		Carriers carriers = new Carriers() ;
-		new CarrierPlanXmlReaderV2(carriers).readFile(CARRIERFILE) ;
+		new CarrierPlanXmlReader(carriers).readFile(CARRIERFILE) ;
 
 		// assign vehicle types to the carriers
 		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(vehicleTypes) ;
