@@ -76,6 +76,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.SumScoringFunction;
 import org.matsim.vehicles.VehicleType;
+import org.osgeo.proj4j.UnsupportedParameterException;
 
 /**
  * This is a short an easy version to run MATSim freight scenarios .
@@ -208,30 +209,35 @@ public class RunFreight {
 
 	private static CarrierVehicleTypes modifyVehicleTypes(CarrierVehicleTypes vehicleTypes) {
 		for (VehicleType vt : vehicleTypes.getVehicleTypes().values()) {
-			switch (costsModififier) {
-			case av:
-				vt.getCostInformation().setCostsPerSecond(0.0);
-				break;
-			case avDist110pct:
-				vt.getCostInformation().setCostsPerSecond(0.0);
-				vt.getCostInformation().setCostsPerMeter(vt.getCostInformation().getCostsPerMeter() *1.1);
-				break;
-			case avFix110pct:
-				vt.getCostInformation().setCostsPerSecond(0.0);
-				vt.getCostInformation().setFixedCost(vt.getCostInformation().getFixedCosts() *1.1);
-				break;
-			case avVehCapUp:
-				if (vt.getId().toString().endsWith("_frozen")) {
+			if (costsModififier != null) {
+				switch (costsModififier) {
+				case av:
 					vt.getCostInformation().setCostsPerSecond(0.0);
-					vt.getCapacity().setOther(vt.getCapacity().getOther() + 14);		// more trolleys instead of the drivers cabin
-							
-				} else {
+					break;
+				case avDist110pct:
 					vt.getCostInformation().setCostsPerSecond(0.0);
-					vt.getCapacity().setOther(vt.getCapacity().getOther() + 2);			// two additional palates instead of the drivers cabin
-				}
-			default:
-				log.info("No or unspecified modification for carrierVehicleTypeCosts selected" );
+					vt.getCostInformation().setCostsPerMeter(vt.getCostInformation().getCostsPerMeter() *1.1);
+					break;
+				case avFix110pct:
+					vt.getCostInformation().setCostsPerSecond(0.0);
+					vt.getCostInformation().setFixedCost(vt.getCostInformation().getFixedCosts() *1.1);
+					break;
+				case avVehCapUp:
+					if (vt.getId().toString().endsWith("_frozen")) {
+						vt.getCostInformation().setCostsPerSecond(0.0);
+						vt.getCapacity().setOther(vt.getCapacity().getOther() + 14);		// more trolleys instead of the drivers cabin
+
+					} else {
+						vt.getCostInformation().setCostsPerSecond(0.0);
+						vt.getCapacity().setOther(vt.getCapacity().getOther() + 2);			// two additional palates instead of the drivers cabin
+					}
+				default:
+					log.error("Unspecified modification for carrierVehicleTypeCosts selected", new UnsupportedParameterException());
+				} 
+			} else {
+				log.info("No modification for carrierVehicleTypeCosts selected" );
 			}
+
 		}
 		return vehicleTypes;
 	}
@@ -394,7 +400,7 @@ public class RunFreight {
 
 		FreightConfigGroup freightConfig = ConfigUtils.addOrGetModule( scenario.getConfig(), FreightConfigGroup.class );
 		freightConfig.setPhysicallyEnforceTimeWindowBeginnings( true );
-		
+
 		CarrierModule listener = new CarrierModule(carriers, planStrategyManagerFactory, scoringFunctionFactory) ;
 		controler.addOverridingModule(listener) ;
 		controler.run();
