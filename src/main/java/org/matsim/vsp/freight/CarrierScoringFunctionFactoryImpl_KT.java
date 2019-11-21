@@ -17,9 +17,9 @@ import org.matsim.contrib.freight.carrier.CarrierVehicle;
 import org.matsim.contrib.freight.carrier.ScheduledTour;
 import org.matsim.contrib.freight.carrier.Tour.ServiceActivity;
 import org.matsim.contrib.freight.carrier.Tour.TourElement;
+import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
+import org.matsim.contrib.freight.controler.FreightActivity;
 import org.matsim.contrib.freight.jsprit.VehicleTypeDependentRoadPricingCalculator;
-import org.matsim.contrib.freight.scoring.CarrierScoringFunctionFactory;
-import org.matsim.contrib.freight.scoring.FreightActivity;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.scoring.ScoringFunction;
@@ -33,7 +33,7 @@ import org.matsim.vehicles.Vehicle;
  * from sschroeder: package org.matsim.contrib.freight.usecases.chessboard ;
  * 
  */
-public class CarrierScoringFunctionFactoryImpl_KT implements CarrierScoringFunctionFactory{
+public class CarrierScoringFunctionFactoryImpl_KT implements CarrierScoringFunctionFactory {
 	
 	@Override
 	public ScoringFunction createScoringFunction(Carrier carrier) {
