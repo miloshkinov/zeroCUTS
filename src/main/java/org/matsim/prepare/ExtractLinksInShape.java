@@ -37,6 +37,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.ControlerConfigGroup.CompressionType;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.network.NetworkUtils;
@@ -78,7 +79,7 @@ public class ExtractLinksInShape {
  		config.controler().setOutputDirectory("output/shape/");
  		// (the directory structure is needed for output, which is before the controler starts.  Maybe there is a better alternative ...)
  		config.controler().setOverwriteFileSetting( OverwriteFileSetting.deleteDirectoryIfExists );
-		new OutputDirectoryHierarchy( config.controler().getOutputDirectory(), config.controler().getOverwriteFileSetting() ) ;
+		new OutputDirectoryHierarchy( config.controler().getOutputDirectory(), config.controler().getOverwriteFileSetting(), CompressionType.gzip ) ;
 		config.controler().setOverwriteFileSetting( OverwriteFileSetting.overwriteExistingFiles );
 		
 		config.network().setInputFile( inputFileNetwork );

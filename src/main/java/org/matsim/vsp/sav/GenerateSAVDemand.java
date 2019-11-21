@@ -43,8 +43,8 @@ import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.MainModeIdentifierImpl;
-import org.matsim.core.router.StageActivityTypes;
-import org.matsim.core.router.StageActivityTypesImpl;
+//import org.matsim.core.router.StageActivityTypes;
+//import org.matsim.core.router.StageActivityTypesImpl;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.opengis.feature.simple.SimpleFeature;
@@ -131,11 +131,12 @@ public class GenerateSAVDemand {
 
     static void removeTaxiStages(final Plan plan) {
         MainModeIdentifier mainModeIdentifier = new MainModeIdentifierImpl();
-        StageActivityTypes stageActivityTypes = new StageActivityTypesImpl("car interaction", "taxi interaction", "pt interaction", "ride interaction", "freight interaction");
+//        StageActivityTypes stageActivityTypes = new StageActivityTypesImpl("car interaction", "taxi interaction", "pt interaction", "ride interaction", "freight interaction");
 
         final List<PlanElement> planElements = plan.getPlanElements();
-        final List<TripStructureUtils.Trip> trips = TripStructureUtils.getTrips(plan, stageActivityTypes);
-
+        final List<TripStructureUtils.Trip> trips = TripStructureUtils.getTrips(plan);
+//        final List<TripStructureUtils.Trip> trips = TripStructureUtils.getTrips(plan, stageActivityTypes);
+        
         for (TripStructureUtils.Trip trip : trips) {
             final List<PlanElement> fullTrip =
                     planElements.subList(

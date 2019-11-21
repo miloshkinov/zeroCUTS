@@ -11,8 +11,9 @@
 	<description>zeroCUTS project</description>
 	
 	<properties>
-	  <matsim.version>12.0-SNAPSHOT</matsim.version>
-	  <matsim.version>0.11.0-SNAPSHOT</matsim.version>
+	 <!--  <matsim.version>12.0-2019w45-SNAPSHOT</matsim.version>--> 
+	 <matsim.version>12.0-SNAPSHOT</matsim.version>
+		<!--  <matsim.version>0.11.0-SNAPSHOT</matsim.version>  -->	 
 	</properties>
 
 	<repositories>
@@ -75,11 +76,11 @@
 		</dependency>
 
 		<!--MATSim examples. Not transitive. (Why not?) -->
-		<dependency>
+<!--		<dependency>
 			<groupId>org.matsim</groupId>
 			<artifactId>matsim-examples</artifactId>
 			<version>${matsim.version}</version>
-		</dependency>
+		</dependency>-->
 
 
 		<!-- Include the JUnit testing library. Not transitive. -->
@@ -87,7 +88,7 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
-			<scope>test</scope>
+			<!--<scope>test</scope>-->
 		</dependency>
 
 		<!--MATSim test infrastructure. Not transitive. -->
@@ -109,11 +110,11 @@
 			<version>${matsim.version}</version>
 		</dependency>
 
-		<dependency>
+<!--		<dependency>
 			<groupId>com.github.simunto</groupId>
 			<artifactId>matsim-sbb-extensions</artifactId>
 			<version>0.11.0-2018w44</version>
-		</dependency>
+		</dependency>-->
 
 	</dependencies>
 
