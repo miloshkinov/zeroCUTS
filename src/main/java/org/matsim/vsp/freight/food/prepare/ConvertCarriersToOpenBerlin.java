@@ -10,6 +10,7 @@ import org.matsim.contrib.freight.carrier.*;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.filter.NetworkFilterManager;
 import org.matsim.utils.objectattributes.attributable.Attributes;
+import org.matsim.vehicles.Vehicle;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -81,7 +82,10 @@ class ConvertCarriersToOpenBerlin {
 		for (CarrierVehicle carrierVehicle: cc.getCarrierVehicles().values()) {
 			Id<Link> newLinkId;
 			newLinkId = getNewLinkId(oldNetwork, newNetworkFiltered, carrierVehicle.getLocation());
-			CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder.newInstance(carrierVehicle.getId(), newLinkId)
+			//Adapt VehicleId to new Location
+			String oldVehicleString = carrierVehicle.getId().toString();
+			Id<Vehicle> newVehicleId = Id.createVehicleId(oldVehicleString.substring(0,oldVehicleString.lastIndexOf("_")+1)+newLinkId.toString());
+			CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder.newInstance(newVehicleId, newLinkId)
 					.setTypeId(carrierVehicle.getVehicleTypeId())
 					.setEarliestStart(carrierVehicle.getEarliestStartTime())
 					.setLatestEnd(carrierVehicle.getLatestEndTime())
