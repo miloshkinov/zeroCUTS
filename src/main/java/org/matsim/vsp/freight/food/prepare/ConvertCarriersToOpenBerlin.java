@@ -10,6 +10,7 @@ import org.matsim.contrib.freight.carrier.*;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.filter.NetworkFilterManager;
 import org.matsim.utils.objectattributes.attributable.Attributes;
+import org.matsim.vehicles.Vehicle;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,8 +30,8 @@ class ConvertCarriersToOpenBerlin {
 		String inputNewNetwork = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz";
 		String inputOldNetwork = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH-Shipments-Berlin/Input/network.xml";
 
-		String inputOldCarriers = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH-Shipments-Berlin/Input/I-Base_carrierLEH_v2_withFleet_Shipment.xml";
-		String outputNewCarriers = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBerlin/Input/I-Base_carrierLEH_v2_withFleet_Shipment.xml";
+		String inputOldCarriers = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH-Shipments-Berlin_oneTW/input/I-Base_carrierLEH_v2_withFleet_Shipment_OneTW.xml";
+		String outputNewCarriers = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBerlin/Input/I-Base_carrierLEH_v2_withFleet_Shipment_OneTW.xml";
 
 		Network openBerlinNet = NetworkUtils.readNetwork(inputNewNetwork);
 		Network oldNetwork = NetworkUtils.readNetwork(inputOldNetwork); 		//should be referenced in GK 4 after having a look at the net in via
@@ -81,7 +82,10 @@ class ConvertCarriersToOpenBerlin {
 		for (CarrierVehicle carrierVehicle: cc.getCarrierVehicles().values()) {
 			Id<Link> newLinkId;
 			newLinkId = getNewLinkId(oldNetwork, newNetworkFiltered, carrierVehicle.getLocation());
-			CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder.newInstance(carrierVehicle.getId(), newLinkId)
+			//Adapt VehicleId to new Location
+			String oldVehicleString = carrierVehicle.getId().toString();
+			Id<Vehicle> newVehicleId = Id.createVehicleId(oldVehicleString.substring(0,oldVehicleString.lastIndexOf("_")+1)+newLinkId.toString());
+			CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder.newInstance(newVehicleId, newLinkId)
 					.setTypeId(carrierVehicle.getVehicleTypeId())
 					.setEarliestStart(carrierVehicle.getEarliestStartTime())
 					.setLatestEnd(carrierVehicle.getLatestEndTime())
