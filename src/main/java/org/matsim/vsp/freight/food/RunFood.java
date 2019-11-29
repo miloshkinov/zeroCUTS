@@ -61,11 +61,11 @@ class RunFood {
         }
 
         if ( args.length==0 ) {
-            String inputPath = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBerlin/Input/";
+            String inputPath = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH-Shipments-Berlin_oneTW/input/";
             args = new String[] {inputPath+"I-Base_carrierLEH_v2_withFleet_Shipment_OneTW.xml",
                     inputPath + "vehicleTypes.xml",
                     inputPath + "mdvrp_algorithmConfig_2.xml",
-                    "2000",
+                    "1",                                                    //only for demonstration.
                     "../OutputKMT/TestsOutput/FoodOpenBerlin"}  ;
         }
 
@@ -82,7 +82,7 @@ class RunFood {
         String carriersFileLocation = args[0];
         String vehicleTypesFileLocation = args[1];
         String algorithmFileLocation = args[2]; //TODO: Read in Algorithm -> Put into freightConfigGroup?
-        nuOfJspritIteration = Integer.getInteger(args[3]);
+        nuOfJspritIteration = Integer.parseInt(args[3]);
         String outputLocation = args[4];
 
 
@@ -142,11 +142,17 @@ class RunFood {
         for (Carrier carrier : carriers.getCarriers().values()){
         //Carrier carrier = carriers.getCarriers().get(Id.create("kaiser_VERBRAUCHERMARKT_FRISCHE", Carrier.class)); //only for tests
 
+            //currently with try/catch, because CarrierUtils.getJspritIterations will throw an exception if value is not present. Will fix it on MATSim.
             //TODO maybe a future CarrierUtils functionality: Overwrite/set all nuOfJspritIterations. maybe depending on enum (overwriteAll, setNotExisiting, none) ?, KMT Nov2019
-            if(CarrierUtils.getJspritIterations(carrier) <= 0){
-                CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
-            } else {
-                log.warn("Overwriting the number of jsprit iterations for carrier: " + carrier.getId() + ". Value was before " +CarrierUtils.getJspritIterations(carrier) + "and is now " + nuOfJspritIteration);
+            try {
+                if(CarrierUtils.getJspritIterations(carrier) <= 0){
+                    CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
+                } else {
+                    log.warn("Overwriting the number of jsprit iterations for carrier: " + carrier.getId() + ". Value was before " +CarrierUtils.getJspritIterations(carrier) + "and is now " + nuOfJspritIteration);
+                    CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
+                }
+            } catch (Exception e) {
+                log.warn("Setting (missing) number of jsprit iterations for carrier: " + carrier.getId() + " to " + nuOfJspritIteration);
                 CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
             }
 
@@ -154,7 +160,7 @@ class RunFood {
                    .setRoutingCost(netBasedCosts)
                    .build();
 
-            log.warn("Ignore the algorithms file for jsprit and use a Algorithm out of the box.");
+            log.warn("Ignore the algorithms file for jsprit and use an algorithm out of the box.");
             VehicleRoutingAlgorithm vra = Jsprit.Builder.newInstance(vrp).setProperty(Jsprit.Parameter.THREADS, "5").buildAlgorithm();
             vra.getAlgorithmListeners().addListener(new StopWatch(), VehicleRoutingAlgorithmListeners.Priority.HIGH);
             vra.setMaxIterations(CarrierUtils.getJspritIterations(carrier));
