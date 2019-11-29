@@ -52,6 +52,8 @@ class RunFood {
 
     static final Logger log = Logger.getLogger(RunFood.class);
 
+    private static int nuOfJspritIteration;
+
     public static void main(String[] args) {
 
         for (String arg : args) {
@@ -63,6 +65,7 @@ class RunFood {
             args = new String[] {inputPath+"I-Base_carrierLEH_v2_withFleet_Shipment_OneTW.xml",
                     inputPath + "vehicleTypes.xml",
                     inputPath + "mdvrp_algorithmConfig_2.xml",
+                    "2000",
                     "../OutputKMT/TestsOutput/FoodOpenBerlin"}  ;
         }
 
@@ -79,6 +82,7 @@ class RunFood {
         String carriersFileLocation = args[0];
         String vehicleTypesFileLocation = args[1];
         String algorithmFileLocation = args[2]; //TODO: Read in Algorithm -> Put into freightConfigGroup?
+        nuOfJspritIteration = Integer.getInteger(args[3]);
         String outputLocation = args[4];
 
 
@@ -138,7 +142,13 @@ class RunFood {
         for (Carrier carrier : carriers.getCarriers().values()){
         //Carrier carrier = carriers.getCarriers().get(Id.create("kaiser_VERBRAUCHERMARKT_FRISCHE", Carrier.class)); //only for tests
 
-            CarrierUtils.setJspritIterations(carrier, 2000); //TODO Adapt. //TODO2: only set if not already set in Carriers file
+            //TODO maybe a future CarrierUtils functionality: Overwrite/set all nuOfJspritIterations. maybe depending on enum (overwriteAll, setNotExisiting, none) ?, KMT Nov2019
+            if(CarrierUtils.getJspritIterations(carrier) <= 0){
+                CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
+            } else {
+                log.warn("Overwriting the number of jsprit iterations for carrier: " + carrier.getId() + ". Value was before " +CarrierUtils.getJspritIterations(carrier) + "and is now " + nuOfJspritIteration);
+                CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
+            }
 
             VehicleRoutingProblem vrp = MatsimJspritFactory.createRoutingProblemBuilder(carrier, controler.getScenario().getNetwork())
                    .setRoutingCost(netBasedCosts)
