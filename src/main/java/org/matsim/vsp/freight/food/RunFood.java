@@ -66,6 +66,7 @@ class RunFood {
                     inputPath + "vehicleTypes.xml",
                     inputPath + "mdvrp_algorithmConfig_2.xml",
                     "1",                                                    //only for demonstration.
+                    "",
                     "../OutputKMT/TestsOutput/FoodOpenBerlin"}  ;
         }
 
@@ -83,7 +84,8 @@ class RunFood {
         String vehicleTypesFileLocation = args[1];
         String algorithmFileLocation = args[2]; //TODO: Read in Algorithm -> Put into freightConfigGroup?
         nuOfJspritIteration = Integer.parseInt(args[3]);
-        String outputLocation = args[4];
+        String networkChangeEventsFileLocation = args[4];
+        String outputLocation = args[5];
 
 
         Config config = ConfigUtils.createConfig();
@@ -93,6 +95,11 @@ class RunFood {
         config.controler().setOutputDirectory(outputLocation);
 
         config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
+
+        if (networkChangeEventsFileLocation != ""){
+        log.info("Setting networkChangeEventsInput file: " + networkChangeEventsFileLocation);
+            config.network().setChangeEventsInputFile(networkChangeEventsFileLocation);
+        }
 
 //        config.addConfigConsistencyChecker(new VspConfigConsistencyCheckerImpl());
 //        config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn);
