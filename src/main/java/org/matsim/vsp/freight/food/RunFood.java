@@ -98,6 +98,7 @@ class RunFood {
 
         if (networkChangeEventsFileLocation != ""){
         log.info("Setting networkChangeEventsInput file: " + networkChangeEventsFileLocation);
+            config.network().setTimeVariantNetwork(true);
             config.network().setChangeEventsInputFile(networkChangeEventsFileLocation);
         }
 
