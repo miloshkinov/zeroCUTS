@@ -61,13 +61,13 @@ class RunFood {
         }
 
         if ( args.length==0 ) {
-            String inputPath = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH-Shipments-Berlin_oneTW/input/";
+            String inputPath = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBln_oneTW/input/";
             args = new String[] {inputPath+"I-Base_carrierLEH_v2_withFleet_Shipment_OneTW.xml",
                     inputPath + "vehicleTypes.xml",
                     inputPath + "mdvrp_algorithmConfig_2.xml",
                     "1",                                                    //only for demonstration.
-                    "",
-                    "../OutputKMT/TestsOutput/FoodOpenBerlin"}  ;
+                    inputPath + "networkChangeEvents.xml.gz",
+                    "../OutputKMT/TestsOutput/FoodOpenBerlin_NWCE"}  ;
         }
 
         Config config = prepareConfig( args ) ;
