@@ -43,12 +43,12 @@ import org.matsim.vehicles.VehicleType;
  * Copied from matsim-berlin 5.5.x
  */
 
-public class RunOfflineAirPollutionAnalysis {
-    final static String runDirectory = "public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/output-berlin-v5.4-10pct/";
-    final static String runId = "berlin-v5.4-10pct";
+class RunOfflineAirPollutionAnalysis {
+    private final static String runDirectory = "public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/output-berlin-v5.4-10pct/";
+    private final static String runId = "berlin-v5.4-10pct";
 
-    final static String hbefaFileCold = "shared-svn/projects/matsim-germany/hbefa/hbefa-files/v3.2/EFA_ColdStart_vehcat_2005average.txt";
-    final static String hbefaFileWarm = "shared-svn/projects/matsim-germany/hbefa/hbefa-files/v3.2/EFA_HOT_vehcat_2005average.txt";
+    private final static String hbefaFileCold = "shared-svn/projects/matsim-germany/hbefa/hbefa-files/v3.2/EFA_ColdStart_vehcat_2005average.txt";
+    private final static String hbefaFileWarm = "shared-svn/projects/matsim-germany/hbefa/hbefa-files/v3.2/EFA_HOT_vehcat_2005average.txt";
 
     public static void main(String[] args) {
 
