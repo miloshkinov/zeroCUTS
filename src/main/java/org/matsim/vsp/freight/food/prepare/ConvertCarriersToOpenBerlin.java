@@ -28,10 +28,10 @@ class ConvertCarriersToOpenBerlin {
 	private  void run(){
 		//should be referenced in GK 4 after having a look at the net in via
 		String inputNewNetwork = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz";
-		String inputOldNetwork = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH-Shipments-Berlin/Input/network.xml";
+		String inputOldNetwork = "../tubCloud/Shared/vsp_zerocuts/scenarios/archive/Fracht_LEH-Shipments-Berlin_oneTW/input/network.xml";
 
-		String inputOldCarriers = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH-Shipments-Berlin_oneTW/input/I-Base_carrierLEH_v2_withFleet_Shipment_OneTW.xml";
-		String outputNewCarriers = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBerlin/Input/I-Base_carrierLEH_v2_withFleet_Shipment_OneTW.xml";
+		String inputOldCarriers = "../tubCloud/Shared/vsp_zerocuts/scenarios/archive/Fracht_LEH-Shipments-Berlin_oneTW/input/I-Base_carrierLEH_v2_withFleet_Shipment_OneTW.xml";
+		String outputNewCarriers = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBln_oneTW/input/I-Base_carrierLEH_v2_withFleet_Shipment_OneTW_PickupTime.xml";
 
 		Network openBerlinNet = NetworkUtils.readNetwork(inputNewNetwork);
 		Network oldNetwork = NetworkUtils.readNetwork(inputOldNetwork); 		//should be referenced in GK 4 after having a look at the net in via
