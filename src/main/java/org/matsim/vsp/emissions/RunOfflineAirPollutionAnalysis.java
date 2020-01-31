@@ -47,8 +47,8 @@ class RunOfflineAirPollutionAnalysis {
     private final static String runDirectory = "public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/output-berlin-v5.4-10pct/";
     private final static String runId = "berlin-v5.4-10pct";
 
-    private final static String hbefaFileCold = "shared-svn/projects/matsim-germany/hbefa/hbefa-files/v3.2/EFA_ColdStart_vehcat_2005average.txt";
-    private final static String hbefaFileWarm = "shared-svn/projects/matsim-germany/hbefa/hbefa-files/v3.2/EFA_HOT_vehcat_2005average.txt";
+    private final static String hbefaFileCold = "../shared-svn/projects/matsim-germany/hbefa/hbefa-files/v3.2/EFA_ColdStart_vehcat_2005average.txt";
+    private final static String hbefaFileWarm = "../shared-svn/projects/matsim-germany/hbefa/hbefa-files/v3.2/EFA_HOT_vehcat_2005average.txt";
 
     public static void main(String[] args) {
 
@@ -63,14 +63,14 @@ class RunOfflineAirPollutionAnalysis {
         if (!rootDirectory.endsWith("/")) rootDirectory = rootDirectory + "/";
 
         Config config = ConfigUtils.loadConfig(rootDirectory + runDirectory + runId + ".output_config.xml");
-        config.vehicles().setVehiclesFile(rootDirectory + runDirectory + runId + ".output_vehicles.xml.gz");
+        config.vehicles().setVehiclesFile(rootDirectory + runDirectory + runId + ".output_allVehicles.xml.gz");         //Note: All Vehicles is necessary
         config.plans().setInputFile(null);
 
-        EmissionsConfigGroup eConfig = ConfigUtils.addOrGetModule(config, EmissionsConfigGroup.class);
-        eConfig.setAverageColdEmissionFactorsFile(rootDirectory + hbefaFileCold);
-        eConfig.setAverageWarmEmissionFactorsFile(rootDirectory + hbefaFileWarm);
-        eConfig.setHbefaRoadTypeSource(HbefaRoadTypeSource.fromLinkAttributes);
-        eConfig.setNonScenarioVehicles(NonScenarioVehicles.ignore);
+        EmissionsConfigGroup emissionsConfigGroup = ConfigUtils.addOrGetModule(config, EmissionsConfigGroup.class);
+        emissionsConfigGroup.setAverageColdEmissionFactorsFile(rootDirectory + hbefaFileCold);
+        emissionsConfigGroup.setAverageWarmEmissionFactorsFile(rootDirectory + hbefaFileWarm);
+        emissionsConfigGroup.setHbefaRoadTypeSource(HbefaRoadTypeSource.fromLinkAttributes);
+        emissionsConfigGroup.setNonScenarioVehicles(NonScenarioVehicles.ignore);
 
         final String emissionEventOutputFile = rootDirectory + runDirectory + runId + ".emission.events.offline.xml.gz";
         final String eventsFile = rootDirectory + runDirectory + runId + ".output_events.xml.gz";
@@ -127,12 +127,13 @@ class RunOfflineAirPollutionAnalysis {
             }
         }
 
-        Id<VehicleType> carVehicleTypeId = Id.create("car", VehicleType.class);
-        Id<VehicleType> freightVehicleTypeId = Id.create("freight", VehicleType.class);
-
-        // vehicles
-        scenario.getVehicles().getVehicleTypes().get(carVehicleTypeId).setDescription("BEGIN_EMISSIONSPASSENGER_CAR;average;average;averageEND_EMISSIONS");
-        scenario.getVehicles().getVehicleTypes().get(freightVehicleTypeId).setDescription("BEGIN_EMISSIONSHEAVY_GOODS_VEHICLE;average;average;averageEND_EMISSIONS");
+        // This we should not need, since it should be as attributes in the vehicles file
+//        Id<VehicleType> carVehicleTypeId = Id.create("car", VehicleType.class);
+//        Id<VehicleType> freightVehicleTypeId = Id.create("freight", VehicleType.class);
+//
+//        // vehicles
+//        scenario.getVehicles().getVehicleTypes().get(carVehicleTypeId).setDescription("BEGIN_EMISSIONSPASSENGER_CAR;average;average;averageEND_EMISSIONS");
+//        scenario.getVehicles().getVehicleTypes().get(freightVehicleTypeId).setDescription("BEGIN_EMISSIONSHEAVY_GOODS_VEHICLE;average;average;averageEND_EMISSIONS");
 
         // the following is copy paste from the example...
 
