@@ -20,9 +20,9 @@
 
 package org.matsim.vsp.emissions;
 
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.emissions.EmissionModule;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup.HbefaRoadTypeSource;
@@ -36,7 +36,6 @@ import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.events.algorithms.EventWriterXML;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.vehicles.VehicleType;
 
 /**
  * @author ikaddoura
@@ -77,8 +76,45 @@ class RunOfflineAirPollutionAnalysis {
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
-        // network
-        for (Link link : scenario.getNetwork().getLinks().values()) {
+        // network preparation
+        addHbefaRoadAttributeToNetwork(scenario.getNetwork());
+
+        // This we should not need, since it should be as attributes in the vehicles file
+//        Id<VehicleType> carVehicleTypeId = Id.create("car", VehicleType.class);
+//        Id<VehicleType> freightVehicleTypeId = Id.create("freight", VehicleType.class);
+//
+//        // vehicles
+//        scenario.getVehicles().getVehicleTypes().get(carVehicleTypeId).setDescription("BEGIN_EMISSIONSPASSENGER_CAR;average;average;averageEND_EMISSIONS");
+//        scenario.getVehicles().getVehicleTypes().get(freightVehicleTypeId).setDescription("BEGIN_EMISSIONSHEAVY_GOODS_VEHICLE;average;average;averageEND_EMISSIONS");
+
+        // the following is copy paste from the example...
+
+        EventsManager eventsManager = EventsUtils.createEventsManager();
+
+        AbstractModule module = new AbstractModule(){
+            @Override
+            public void install(){
+                bind( Scenario.class ).toInstance( scenario );
+                bind( EventsManager.class ).toInstance( eventsManager );
+                bind( EmissionModule.class ) ;
+            }
+        };
+
+        com.google.inject.Injector injector = Injector.createInjector(config, module);
+
+        EmissionModule emissionModule = injector.getInstance(EmissionModule.class);
+
+        EventWriterXML emissionEventWriter = new EventWriterXML(emissionEventOutputFile);
+        emissionModule.getEmissionEventsManager().addHandler(emissionEventWriter);
+
+        MatsimEventsReader matsimEventsReader = new MatsimEventsReader(eventsManager);
+        matsimEventsReader.readFile(eventsFile);
+
+        emissionEventWriter.closeFile();
+    }
+
+    private static void addHbefaRoadAttributeToNetwork(Network network) {
+        for (Link link : network.getLinks().values()) {
 
             double freespeed = Double.NaN;
 
@@ -126,39 +162,6 @@ class RunOfflineAirPollutionAnalysis {
                 throw new RuntimeException("Link not considered..." + link.getId());
             }
         }
-
-        // This we should not need, since it should be as attributes in the vehicles file
-//        Id<VehicleType> carVehicleTypeId = Id.create("car", VehicleType.class);
-//        Id<VehicleType> freightVehicleTypeId = Id.create("freight", VehicleType.class);
-//
-//        // vehicles
-//        scenario.getVehicles().getVehicleTypes().get(carVehicleTypeId).setDescription("BEGIN_EMISSIONSPASSENGER_CAR;average;average;averageEND_EMISSIONS");
-//        scenario.getVehicles().getVehicleTypes().get(freightVehicleTypeId).setDescription("BEGIN_EMISSIONSHEAVY_GOODS_VEHICLE;average;average;averageEND_EMISSIONS");
-
-        // the following is copy paste from the example...
-
-        EventsManager eventsManager = EventsUtils.createEventsManager();
-
-        AbstractModule module = new AbstractModule(){
-            @Override
-            public void install(){
-                bind( Scenario.class ).toInstance( scenario );
-                bind( EventsManager.class ).toInstance( eventsManager );
-                bind( EmissionModule.class ) ;
-            }
-        };
-
-        com.google.inject.Injector injector = Injector.createInjector(config, module);
-
-        EmissionModule emissionModule = injector.getInstance(EmissionModule.class);
-
-        EventWriterXML emissionEventWriter = new EventWriterXML(emissionEventOutputFile);
-        emissionModule.getEmissionEventsManager().addHandler(emissionEventWriter);
-
-        MatsimEventsReader matsimEventsReader = new MatsimEventsReader(eventsManager);
-        matsimEventsReader.readFile(eventsFile);
-
-        emissionEventWriter.closeFile();
     }
 
 }
