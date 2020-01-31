@@ -123,7 +123,7 @@ class RunOfflineAirPollutionAnalysis {
             } else if(freespeed > 22.222222222){ //faster
                 link.getAttributes().putAttribute("hbefa_road_type", "RUR/MW/>130");
             } else{
-                throw new RuntimeException("Link not considered...");
+                throw new RuntimeException("Link not considered..." + link.getId());
             }
         }
 
