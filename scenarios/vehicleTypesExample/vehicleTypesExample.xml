@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<vehicleTypes>
+		<!-- <vehicleType id="heavy40t"> -->
+			<!-- <description>Heavy Vehicle 40t</description> -->
+			<!-- <allowableWeight weight="40"/> -->
+			<!-- <engineInformation fuelType="diesel" gasConsumption="0.000337867"/>   gasConsumption in liter per meter --> 
+			<!-- <adBlueConsumption perMeter="0.000004527"  /> -->
+			<!-- <hcnox perMeter="0.0"  /> -->
+			<!-- <pm10 perMeter="0.0"  /> -->
+			<!-- <co perMeter="0.0"  /> -->
+			<!-- <costInformation fix="142.636821158" perMeter="0.000810996" perSecond="0" emissionsPerMeter="0"/> -->
+			<!-- <capacity>34</capacity> -->
+		<!-- </vehicleType> -->
+		<!-- <vehicleType id="heavy26t"> -->
+			<!-- <description>Heavy Vehicle 26t</description> -->
+			<!-- <allowableWeight weight="26"/> -->
+			<!-- <engineInformation fuelType="diesel" gasConsumption="0.00033"/>   gasConsumption in liter per meter --> 
+			<!-- <adBlueConsumption perMeter="0.000004422"  /> -->
+			<!-- <hcnox perMeter="0"  /> -->
+			<!-- <pm10 perMeter="0"  /> -->
+			<!-- <co perMeter="0"  /> -->
+			<!-- <costInformation fix="93.138209291" perMeter="0.000702103" perSecond="0" emissionsPerMeter="0"/> -->
+			<!-- <capacity>18</capacity> -->
+		<!-- </vehicleType> -->
+		<!-- <vehicleType id="heavy26t_frozen"> -->
+			<!-- <description>Heavy Vehicle 26t</description> -->
+			<!-- <allowableWeight weight="26"/> -->
+			<!-- <engineInformation fuelType="diesel" gasConsumption="0.00033"/>   gasConsumption in liter per meter --> 
+			<!-- <adBlueConsumption perMeter="0.000004422"  /> -->
+			<!-- <hcnox perMeter="0"  /> -->
+			<!-- <pm10 perMeter="0"  /> -->
+			<!-- <co perMeter="0"  /> -->
+			<!-- <costInformation fix="93.138209291" perMeter="0.000702103" perSecond="0" emissionsPerMeter="0"/> -->
+			<!-- <capacity>160</capacity> -->
+		<!-- </vehicleType> -->
+		<!-- <vehicleType id="medium18t"> -->
+			<!-- <description>Medium Vehicle 18t</description> -->
+			<!-- <allowableWeight weight="18"/> -->
+			<!-- <engineInformation fuelType="diesel" gasConsumption="0.000253"/>   gasConsumption in liter per meter --> 
+			<!-- <adBlueConsumption perMeter="0.00000339"  /> -->
+			<!-- <hcnox perMeter="0.0"  /> -->
+			<!-- <pm10 perMeter="0.0"  /> -->
+			<!-- <co perMeter="0.0"  /> -->
+			<!-- <costInformation fix="82.160413306" perMeter="0.000579283" perSecond="0" emissionsPerMeter="0"/> -->
+			<!-- <capacity>17</capacity> -->
+		<!-- </vehicleType> -->
+		<vehicleType id="18t-electro">
+			<description>Medium Vehicle 18t electro</description>
+			<allowableWeight weight="18"/>
+			<engineInformation fuelType="electricity" gasConsumption="0.00"/>  <!--gasConsumption in liter per meter -->
+			<adBlueConsumption perMeter="0.0"  />
+			<hcnox perMeter="0.0"  />
+			<pm10 perMeter="0.0"  />
+			<co perMeter="0.0"  />
+			<costInformation fix="100" perMeter="0.00055" perSecond="0.008" emissionsPerMeter="0.433"/>
+			<capacity>40</capacity>
+		</vehicleType>
+		<vehicleType id="light8t">
+			<description>Light Vehicle 7.5t</description>
+			<allowableWeight weight="7.5"/>
+			 <engineInformation fuelType="gasoline" gasConsumption="0.0001625"/>  <!-- gasConsumption in liter per meter -->  
+			 <adBlueConsumption perMeter="0.000002178"  />
+			<hcnox perMeter="0.0"  />
+			<pm10 perMeter="0.0"  />
+			<co perMeter="0.0"  />
+			<costInformation fix="200" perMeter="0.00055" perSecond="0.008" emissionsPerMeter="0"/>
+			<capacity>40</capacity>
+		</vehicleType>
+<!-- 		<vehicleType id="light8telectro"> -->
+<!-- 			<description>Light Vehicle 7.5t electro</description> -->
+<!-- 			<allowableWeight weight="12"/> -->
+<!-- 			<engineInformation fuelType="gasoline" gasConsumption="0.00"/>  gasConsumption in liter per meter -->
+<!-- 			<adBlueConsumption perMeter="0.0"  /> -->
+<!-- 			<hcnox perMeter="0.0"  /> -->
+<!-- 			<pm10 perMeter="0.0"  /> -->
+<!-- 			<co perMeter="0.0"  /> -->
+<!-- 			<costInformation fix="89" perMeter="0.0005" perSecond="0.008" emissionsPerMeter="0.346"/> -->
+<!-- 			<capacity>15</capacity> -->
+		<!-- </vehicleType> -->
+		<!-- <vehicleType id="light8t_frozen"> -->
+			<!-- <description>Light Vehicle 7.5t</description> -->
+			<!-- <allowableWeight weight="7.5"/> -->
+			<!-- <engineInformation fuelType="gasoline" gasConsumption="0.0001625"/>   gasConsumption in liter per meter --> 
+			<!-- <adBlueConsumption perMeter="0.000002178"  /> -->
+			<!-- <hcnox perMeter="0.0"  /> -->
+			<!-- <pm10 perMeter="0.0"  /> -->
+			<!-- <co perMeter="0.0"  /> -->
+			<!-- <costInformation fix="65.268767022" perMeter="0.000440626" perSecond="0" emissionsPerMeter="0"/> -->
+			<!-- <capacity>70</capacity> -->
+		<!-- </vehicleType> -->
+		<!-- <vehicleType id="light3.5t"> -->
+			<!-- <description>Light Vehicle 3.5t</description> -->
+			<!-- <allowableWeight weight="3.5"/> -->
+			<!-- <engineInformation fuelType="gasoline" gasConsumption="0.000112"/>   gasConsumption in liter per meter --> 
+			<!-- <adBlueConsumption perMeter="0.000001501"  /> -->
+			<!-- <hcnox perMeter="0.0"  /> -->
+			<!-- <pm10 perMeter="0.0"  /> -->
+			<!-- <co perMeter="0.0"  /> -->
+			<!-- <costInformation fix="50.54365514" perMeter="0.000351163" perSecond="0" emissionsPerMeter="0"/> -->
+			<!-- <capacity>4</capacity> -->
+		<!-- </vehicleType> -->
+		<!-- <vehicleType id="light3.5t_frozen"> -->
+			<!-- <description>Light Vehicle 3.5t</description> -->
+			<!-- <allowableWeight weight="3.5"/> -->
+			<!-- <engineInformation fuelType="gasoline" gasConsumption="0.000112"/>   gasConsumption in liter per meter --> 
+			<!-- <adBlueConsumption perMeter="0.000001501"  /> -->
+			<!-- <hcnox perMeter="0.0"  /> -->
+			<!-- <pm10 perMeter="0.0"  /> -->
+			<!-- <co perMeter="0.0"  /> -->
+			<!-- <costInformation fix="50.54365514" perMeter="0.000351163" perSecond="0" emissionsPerMeter="0"/> -->
+			<!-- <capacity>30</capacity> -->
+<!-- 		</vehicleType> -->
+<!-- 		<vehicleType id="light8telectro_frozen"> -->
+<!-- 			<description>Light Vehicle 7.5t electro</description> -->
+<!-- 			<allowableWeight weight="7.5"/> -->
+<!-- 			<engineInformation fuelType="gasoline" gasConsumption="0.00"/>  gasConsumption in liter per meter -->
+<!-- 			<adBlueConsumption perMeter="0.0"  /> -->
+<!-- 			<hcnox perMeter="0.0"  /> -->
+<!-- 			<pm10 perMeter="0.0"  /> -->
+<!-- 			<co perMeter="0.0"  /> -->
+<!-- 			<costInformation fix="89" perMeter="0.0005" perSecond="0.008" emissionsPerMeter="0.346"/> -->
+<!-- 			<capacity>70</capacity> -->
+		<!-- </vehicleType> -->
+	</vehicleTypes>
