@@ -53,7 +53,7 @@ import com.graphhopper.jsprit.core.util.Solutions;
 import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
 
 /**
- * @author Ricardo Ewert
+ * @author rewert
  * 
  *         Includes all classes and methods for the distance constraint of every
  *         electric vehicle based on the capacity and the consumption of the
@@ -70,30 +70,30 @@ class ConstraintUtilsTry {
 	/**
 	 * For every electric vehicle of the added vehicleTypes battery capacity and
 	 * consumption has to be set. Take care to use the same vehicleType ID.
-	 * electricProperties[0] is the consumption for 100km in kWh/100km
-	 * electricProperties[1] is the battery capacity in kWh
+	 * electricProperties[0] is the battery capacity in kWh
+	 * electricProperties[1] is the consumption for 1km in kWh/km
 	 * 
 	 * @param vehicleTypes
 	 * @return Map with the battery capacity and consumption of every electric
 	 *         vehicle
 	 */
-	static Multimap<String, Double[]> createBatteryConstraints(CarrierVehicleTypes vehicleTypes) {
+	static Multimap<String, Double[]> createVehilceTypeBatteryConstraints(CarrierVehicleTypes vehicleTypes) {
 		Multimap<String, Double[]> batteryConstraints = ArrayListMultimap.create();
 
 		int numberOfElectricVehilceTypes = 0;
 
 		for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
-			if (singleVehicleType.getEngineInformation().getFuelType() == FuelType.electricity) {
+			if (singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType") == FuelType.electricity) {
 				numberOfElectricVehilceTypes++;
 				if (singleVehicleType.getId().toString().equals("18t-electro")) {
 					Double[] electricityProperties = new Double[2];
-					electricityProperties[0] = 100.;
+					electricityProperties[0] = 450.;
 					electricityProperties[1] = 30.;
 					batteryConstraints.put(singleVehicleType.getId().toString(), electricityProperties);
 				}
 				if (singleVehicleType.getId().toString().equals("E-Force KSF")) {
 					Double[] electricityProperties = new Double[2];
-					electricityProperties[0] = 100.;
+					electricityProperties[0] = 225.;
 					electricityProperties[1] = 15.;
 					batteryConstraints.put(singleVehicleType.getId().toString(), electricityProperties);
 				}
@@ -130,24 +130,12 @@ class ConstraintUtilsTry {
 		int startTime = 10000000;
 		int endTime = 0;
 		int duration = 0;
-//		Location job1;
-//		Location job2;
-
-//		for ( CarrierShipment job : singleCarrier.getShipments()) {
-//			job1 = Location.newInstance(job.getFrom()., y)
-//					;
-//		}
-//		
+	
 		VehicleRoutingTransportCostsMatrix.Builder distanceMatrixBuilder = VehicleRoutingTransportCostsMatrix.Builder
 				.newInstance(false);
 
 		final NetworkBasedTransportCosts netBasedCostsMatrix = netBuilder.build();
-//		double departureTime;
-//		for (String from2 : vrpBuilder.getLocationMap().) {
-//			from2.
-//		}
-//		netBasedCostsMatrix.getTransportCost(job1, job2, departureTime, null, singleCarrier.getCarrierCapabilities().getCarrierVehicles().iterator().next());
-//		
+	
 
 		for (String from : vrpBuilder.getLocationMap().keySet()) {
 			for (String to : vrpBuilder.getLocationMap().keySet()) {
@@ -279,13 +267,13 @@ class DistanceConstraint implements HardActivityConstraint {
 			if (batteryConstraints.containsKey(context.getNewVehicle().getType().getTypeId().toString()) == true) {
 				vehicleTypeId = context.getNewVehicle().getType().getTypeId().toString();
 			}
-			Double electricityConsumptionPer100km = 0.;
+			Double electricityConsumptionPerkm = 0.;
 			Double electricityCapacityinkWh = 0.;
 			Double routeConsumption = null;
 
 			for (Double[] singleBatteryFeature : batteryConstraints.get(vehicleTypeId)) {
-				electricityConsumptionPer100km = singleBatteryFeature[0];
-				electricityCapacityinkWh = singleBatteryFeature[1];
+				electricityCapacityinkWh = singleBatteryFeature[0];
+				electricityConsumptionPerkm = singleBatteryFeature[1];			
 			}
 
 			Double routeDistance = stateManager.getRouteState(context.getRoute(), distanceStateId, Double.class);
@@ -295,9 +283,9 @@ class DistanceConstraint implements HardActivityConstraint {
 //						+ getDistance(context.getAssociatedActivities().get(1), nextAct)
 //						- getDistance(prevAct, nextAct);
 				routeDistance = 0.;
-				routeConsumption = routeDistance * (electricityConsumptionPer100km / 100000);
+				routeConsumption = 0.;
 			} else {
-				routeConsumption = routeDistance * (electricityConsumptionPer100km / 100000);
+				routeConsumption = routeDistance * (electricityConsumptionPerkm / 1000);
 			}
 			if (newAct.getName().contains("pickupShipment")) {
 				additionalDistance = getDistance(prevAct, newAct) + getDistance(newAct, nextAct)
@@ -307,7 +295,7 @@ class DistanceConstraint implements HardActivityConstraint {
 						- getDistance(prevAct, nextAct);
 		//		additionalDistance = 0;
 			}
-			double additionalConsumption = additionalDistance * (electricityConsumptionPer100km / 100000);
+			double additionalConsumption = additionalDistance * (electricityConsumptionPerkm / 1000);
 
 			// double newRouteDistance = routeDistance + additionalDistance;
 			double newRouteConsumption = routeConsumption + additionalConsumption;
