@@ -67,44 +67,45 @@ import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
 class DistanceConstraintUtils {
 	static final Logger log = Logger.getLogger(DistanceConstraintUtils.class);
 
-	/**
-	 * For every electric vehicle of the added vehicleTypes battery capacity and
-	 * consumption has to be set. Take care to use the same vehicleType ID.
-	 * electricProperties[0] is the battery capacity in kWh
-	 * electricProperties[1] is the consumption for 1km in kWh/km
-	 * 
-	 * @param vehicleTypes
-	 * @return Map with the battery capacity and consumption of every electric
-	 *         vehicle
-	 */
-	static Multimap<String, Double[]> createVehilceTypeBatteryConstraints(CarrierVehicleTypes vehicleTypes) {
-		Multimap<String, Double[]> batteryConstraints = ArrayListMultimap.create();
-
-		int numberOfElectricVehilceTypes = 0;
-
-		for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
-			if (singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType") == FuelType.electricity) {
-				numberOfElectricVehilceTypes++;
-				if (singleVehicleType.getId().toString().equals("18t-electro")) {
-					Double[] electricityProperties = new Double[2];
-					electricityProperties[0] = 450.;
-					electricityProperties[1] = 30.;
-					batteryConstraints.put(singleVehicleType.getId().toString(), electricityProperties);
-				}
-				if (singleVehicleType.getId().toString().equals("E-Force KSF")) {
-					Double[] electricityProperties = new Double[2];
-					electricityProperties[0] = 225.;
-					electricityProperties[1] = 15.;
-					batteryConstraints.put(singleVehicleType.getId().toString(), electricityProperties);
-				}
-			}
-		}
-		if (batteryConstraints.size() != numberOfElectricVehilceTypes)
-			log.error(
-					"Not every electric vehilceType has batteryConstraints. Check the vehicle ID or create the battery constraints every electric vehicleType");
-
-		return batteryConstraints;
-	}
+//	/**
+//	 * For every electric vehicle of the added vehicleTypes battery capacity and
+//	 * consumption has to be set. Take care to use the same vehicleType ID.
+//	 * electricProperties[0] is the battery capacity in kWh electricProperties[1] is
+//	 * the consumption for 1km in kWh/km
+//	 * 
+//	 * @param vehicleTypes
+//	 * @return Map with the battery capacity and consumption of every electric
+//	 *         vehicle
+//	 */
+//	static Multimap<String, Double[]> createVehilceTypeBatteryConstraints(CarrierVehicleTypes vehicleTypes) {
+//		Multimap<String, Double[]> batteryConstraints = ArrayListMultimap.create();
+//
+//		int numberOfElectricVehilceTypes = 0;
+//
+//		for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
+//			if (singleVehicleType.getEngineInformation().getAttributes()
+//					.getAttribute("fuelType") == FuelType.electricity) {
+//				numberOfElectricVehilceTypes++;
+//				if (singleVehicleType.getId().toString().equals("18t-electro")) {
+//					Double[] electricityProperties = new Double[2];
+//					electricityProperties[0] = 450.;
+//					electricityProperties[1] = 30.;
+//					batteryConstraints.put(singleVehicleType.getId().toString(), electricityProperties);
+//				}
+//				if (singleVehicleType.getId().toString().equals("E-Force KSF")) {
+//					Double[] electricityProperties = new Double[2];
+//					electricityProperties[0] = 225.;
+//					electricityProperties[1] = 15.;
+//					batteryConstraints.put(singleVehicleType.getId().toString(), electricityProperties);
+//				}
+//			}
+//		}
+//		if (batteryConstraints.size() != numberOfElectricVehilceTypes)
+//			log.error(
+//					"Not every electric vehilceType has batteryConstraints. Check the vehicle ID or create the battery constraints every electric vehicleType");
+//
+//		return batteryConstraints;
+//	}
 
 	/**
 	 * Creates a VehicleRoutingCostMatrix for calculating the distance between all
@@ -130,12 +131,11 @@ class DistanceConstraintUtils {
 		int startTime = 10000000;
 		int endTime = 0;
 		int duration = 0;
-	
+
 		VehicleRoutingTransportCostsMatrix.Builder distanceMatrixBuilder = VehicleRoutingTransportCostsMatrix.Builder
 				.newInstance(false);
 
 		final NetworkBasedTransportCosts netBasedCostsMatrix = netBuilder.build();
-	
 
 		for (String from : vrpBuilder.getLocationMap().keySet()) {
 			for (String to : vrpBuilder.getLocationMap().keySet()) {
@@ -224,14 +224,15 @@ class DistanceConstraint implements HardActivityConstraint {
 
 	private final StateId distanceStateId;
 
-	private final Multimap<String, Double[]> batteryConstraints;
+	private final CarrierVehicleTypes vehicleTypes;
 
 	DistanceConstraint(StateId distanceStateId, StateManager stateManager,
-			VehicleRoutingTransportCostsMatrix transportCosts, Multimap<String, Double[]> batteryConstraints) {
+			VehicleRoutingTransportCostsMatrix transportCosts,
+			CarrierVehicleTypes vehicleTypes) {
 		this.costsMatrix = transportCosts;
 		this.stateManager = stateManager;
 		this.distanceStateId = distanceStateId;
-		this.batteryConstraints = batteryConstraints;
+		this.vehicleTypes = vehicleTypes;
 	}
 
 	/**
@@ -255,33 +256,25 @@ class DistanceConstraint implements HardActivityConstraint {
 	public ConstraintsStatus fulfilled(JobInsertionContext context, TourActivity prevAct, TourActivity newAct,
 			TourActivity nextAct, double v) {
 		double additionalDistance;
-		// reicht es wenn das newVehicle elektrisch ist?
 		// TODO this method is created with the only delivery shipments from a depot.
 		// Perhaps some conditions have to be changed when pickups in different
 		// locations are possible
 		// TODO also for services
-		if ((batteryConstraints.containsKey(context.getRoute().getVehicle().getType().getTypeId().toString())
-				|| batteryConstraints.containsKey(context.getNewVehicle().getType().getTypeId().toString()))
-				&& batteryConstraints.containsKey(context.getNewVehicle().getType().getTypeId().toString()) == true) {
-			String vehicleTypeId = context.getRoute().getVehicle().getType().getTypeId().toString();
-			if (batteryConstraints.containsKey(context.getNewVehicle().getType().getTypeId().toString()) == true) {
-				vehicleTypeId = context.getNewVehicle().getType().getTypeId().toString();
-			}
-			Double electricityConsumptionPerkm = 0.;
-			Double electricityCapacityinkWh = 0.;
-			Double routeConsumption = null;
+		VehicleType vehicleTypeOfNewVehicle = vehicleTypes.getVehicleTypes()
+				.get(Id.create(context.getNewVehicle().getType().getTypeId().toString(), VehicleType.class));
 
-			for (Double[] singleBatteryFeature : batteryConstraints.get(vehicleTypeId)) {
-				electricityCapacityinkWh = singleBatteryFeature[0];
-				electricityConsumptionPerkm = singleBatteryFeature[1];			
-			}
+		if (vehicleTypeOfNewVehicle.getEngineInformation().getAttributes()
+				.getAttribute("fuelType") == (FuelType.electricity)) {
+
+			Double electricityCapacityinkWh = (Double) vehicleTypeOfNewVehicle.getEngineInformation().getAttributes()
+					.getAttribute("engeryCapacity");
+			Double electricityConsumptionPerkm = (Double) vehicleTypeOfNewVehicle.getEngineInformation().getAttributes()
+					.getAttribute("engeryConsumptionPerKm");
+			Double routeConsumption = null;
 
 			Double routeDistance = stateManager.getRouteState(context.getRoute(), distanceStateId, Double.class);
 
 			if (routeDistance == null) {
-//				routeDistance = getDistance(prevAct, context.getAssociatedActivities().get(1))
-//						+ getDistance(context.getAssociatedActivities().get(1), nextAct)
-//						- getDistance(prevAct, nextAct);
 				routeDistance = 0.;
 				routeConsumption = 0.;
 			} else {
@@ -293,13 +286,12 @@ class DistanceConstraint implements HardActivityConstraint {
 			} else {
 				additionalDistance = getDistance(prevAct, newAct) + getDistance(newAct, nextAct)
 						- getDistance(prevAct, nextAct);
-		//		additionalDistance = 0;
+
 			}
 			double additionalConsumption = additionalDistance * (electricityConsumptionPerkm / 1000);
-
-			// double newRouteDistance = routeDistance + additionalDistance;
 			double newRouteConsumption = routeConsumption + additionalConsumption;
-			if (/* newRouteDistance > maxDistance || */newRouteConsumption > electricityCapacityinkWh) {
+
+			if (newRouteConsumption > electricityCapacityinkWh) {
 				return ConstraintsStatus.NOT_FULFILLED;
 			} else
 				return ConstraintsStatus.FULFILLED;

@@ -41,7 +41,7 @@ public class TestRunDistanceConstraint {
 		boolean electricCar = true;
 		boolean addAdditionalVehicle = true;
 		CarrierVehicleTypes vehicleTypes = TestRunDistanceConstraintUtils.createAndAddVehicles(electricCar, addAdditionalVehicle); 
-		Multimap<String, Double[]> batteryConstraints = DistanceConstraintUtils.createVehilceTypeBatteryConstraints(vehicleTypes); 
+//		Multimap<String, Double[]> batteryConstraints = DistanceConstraintUtils.createVehilceTypeBatteryConstraints(vehicleTypes); 
 		
 		//Shipment 1
 		CarrierShipment shipment1 = CarrierShipment.Builder
@@ -75,7 +75,7 @@ public class TestRunDistanceConstraint {
 		TestRunDistanceConstraintUtils.createCarriers(carriers, fleetSize, myTestCarrier, scenario, vehicleTypes);
 		
 		int jspritIterations = 100;
-		TestRunDistanceConstraintUtils.solveWithJsprit(scenario, carriers, myTestCarrier, jspritIterations, vehicleTypes, batteryConstraints);
+		TestRunDistanceConstraintUtils.solveWithJsprit(scenario, carriers, myTestCarrier, jspritIterations, vehicleTypes);
 		final Controler controler = new Controler(scenario);
 		
 		TestRunDistanceConstraintUtils.scoringAndManagerFactory(scenario, carriers, controler);

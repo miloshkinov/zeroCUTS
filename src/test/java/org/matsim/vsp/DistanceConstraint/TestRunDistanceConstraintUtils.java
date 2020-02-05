@@ -237,7 +237,7 @@ class TestRunDistanceConstraintUtils {
 	 * @param
 	 */
 	static void solveWithJsprit(Scenario scenario, Carriers carriers, Carrier singleCarrier, int jspritIteration,
-			CarrierVehicleTypes vehicleTypes, Multimap<String, Double[]> batteryConstraints) {
+			CarrierVehicleTypes vehicleTypes) {
 
 		// Netzwerk integrieren und Kosten für jsprit
 		Network network = scenario.getNetwork();
@@ -265,7 +265,7 @@ class TestRunDistanceConstraintUtils {
 
 		ConstraintManager constraintManager = new ConstraintManager(problem, stateManager);
 		constraintManager.addConstraint(
-				new DistanceConstraint(distanceStateId, stateManager, distanceMatrix, batteryConstraints),
+				new DistanceConstraint(distanceStateId, stateManager, distanceMatrix, vehicleTypes),
 				ConstraintManager.Priority.CRITICAL);
 
 		// get the algorithm out-of-the-box, search solution and get the best one.
