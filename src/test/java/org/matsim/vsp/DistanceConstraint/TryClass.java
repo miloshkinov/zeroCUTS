@@ -41,7 +41,7 @@ public class TryClass {
 		boolean electricCar = true;
 		boolean addAdditionalVehicle = true;
 		CarrierVehicleTypes vehicleTypes = TryUtils.createAndAddVehicles(electricCar, addAdditionalVehicle); 
-		Multimap<String, Double[]> batteryConstraints = ConstraintUtilsTry.createVehilceTypeBatteryConstraints(vehicleTypes); 
+		Multimap<String, Double[]> batteryConstraints = DistanceConstraintUtils.createVehilceTypeBatteryConstraints(vehicleTypes); 
 		
 		//Shipment 1
 		CarrierShipment shipment1 = CarrierShipment.Builder

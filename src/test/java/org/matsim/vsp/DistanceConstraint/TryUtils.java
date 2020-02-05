@@ -30,6 +30,7 @@ import org.matsim.contrib.freight.usecases.chessboard.CarrierScoringFunctionFact
 import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.ControlerConfigGroup;
+import org.matsim.core.config.groups.ControlerConfigGroup.CompressionType;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
@@ -71,7 +72,7 @@ class TryUtils {
 	static Config prepareConfig(Config config, int lastIteration) {
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
-				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
+				config.controler().getOverwriteFileSetting(), CompressionType.gzip);
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 
 		config.controler().setLastIteration(lastIteration);
@@ -88,6 +89,8 @@ class TryUtils {
 	 */
 	static CarrierVehicleTypes createAndAddVehicles(boolean electricCar, boolean addAdditionalVehicle) {
 		VehicleType newVehicleType = null;
+		double engeryConsumptionPerKm = 0.;
+		double energyCapacity = 0.;
 		if (addAdditionalVehicle == true) {
 			String vehicleTypeId = "MB_Econic_Diesel";
 			// capacityTruck = 11500; // kg
@@ -107,11 +110,12 @@ class TryUtils {
 				costPerTimeUnit = 0.008; // €/s
 				fixCosts = 70; // €
 				engineInformation = FuelType.electricity;
-				literPerMeter = 0.0; // l/m
+				engeryConsumptionPerKm = 15.;
+				energyCapacity = 225.;
 			}
 
 			newVehicleType = createGarbageTruckType(vehicleTypeId, maxVelocity, costPerDistanceUnit, costPerTimeUnit,
-					fixCosts, engineInformation, literPerMeter, capacityTruck);
+					fixCosts, engineInformation, literPerMeter, capacityTruck, engeryConsumptionPerKm, energyCapacity);
 		}
 		return adVehicleTypes(addAdditionalVehicle, newVehicleType);
 
@@ -125,18 +129,28 @@ class TryUtils {
 	 */
 	private static VehicleType createGarbageTruckType(String vehicleTypeId, double maxVelocity,
 			double costPerDistanceUnit, double costPerTimeUnit, double fixCosts, FuelType engineInformation,
-			double literPerMeter, int capacityTruck) {
-		
+			double literPerMeter, int capacityTruck, double engeryConsumptionPerKm, double energyCapacity) {
+
 //		VehicleTypeImpl thisVehicleType = VehicleTypeImpl.Builder.newInstance(vehicleTypeId).addCapacityDimension(0, capacityTruck)
 //				.setMaxVelocity(maxVelocity).setCostPerDistance(costPerDistanceUnit).setProfile(vehicleTypeId)
 //				.setCostPerTime(costPerTimeUnit).setFixedCost(fixCosts).build();
-	
+
 		VehicleType thisVehicleType2 = VehicleUtils.createVehicleType(Id.create(vehicleTypeId, VehicleType.class));
 		thisVehicleType2.getCapacity().setOther(capacityTruck);
 		thisVehicleType2.getEngineInformation().getAttributes().putAttribute("fuelType", engineInformation);
-//		thisVehicleType2.getAttributes().putAttribute("fuelType", engineInformation);
-		thisVehicleType2.getCostInformation().setCostsPerMeter(costPerDistanceUnit).setCostsPerSecond(costPerTimeUnit).setFixedCost(fixCosts);
-		return 	thisVehicleType2;
+		if (engineInformation == FuelType.electricity) {
+			thisVehicleType2.getEngineInformation().getAttributes().putAttribute("engeryCapacity", energyCapacity);
+			thisVehicleType2.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm",
+					engeryConsumptionPerKm);
+
+		} else {
+			thisVehicleType2.getEngineInformation().getAttributes().putAttribute("fuelConsumptionLitersPerMeter",
+					literPerMeter);
+		}
+
+		thisVehicleType2.getCostInformation().setCostsPerMeter(costPerDistanceUnit).setCostsPerSecond(costPerTimeUnit)
+				.setFixedCost(fixCosts);
+		return thisVehicleType2;
 
 	}
 
@@ -208,7 +222,7 @@ class TryUtils {
 		singleCarrier.setCarrierCapabilities(CarrierCapabilities.Builder.newInstance().setFleetSize(fleetSize).build());
 		for (CarrierVehicle carrierVehicle : vehicles) {
 			CarrierUtils.addCarrierVehicle(singleCarrier, carrierVehicle);
-		}	
+		}
 		singleCarrier.getCarrierCapabilities().getVehicleTypes().addAll(vehicleTypes.getVehicleTypes().values());
 
 		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(vehicleTypes);
@@ -238,7 +252,7 @@ class TryUtils {
 		vrpBuilder.setRoutingCost(netBasedCosts);
 		// VehicleRoutingProblem problem = vrpBuilder.build();
 
-		VehicleRoutingTransportCostsMatrix distanceMatrix = ConstraintUtilsTry.createMatrix(vrpBuilder, singleCarrier,
+		VehicleRoutingTransportCostsMatrix distanceMatrix = DistanceConstraintUtils.createMatrix(vrpBuilder, singleCarrier,
 				network, netBuilder);
 
 		VehicleRoutingProblem problem = vrpBuilder.build();
