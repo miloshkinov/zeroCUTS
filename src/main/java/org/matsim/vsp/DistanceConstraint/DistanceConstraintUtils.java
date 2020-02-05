@@ -64,8 +64,8 @@ import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
  *         beginning.
  *
  */
-class ConstraintUtilsTry {
-	static final Logger log = Logger.getLogger(ConstraintUtilsTry.class);
+class DistanceConstraintUtils {
+	static final Logger log = Logger.getLogger(DistanceConstraintUtils.class);
 
 	/**
 	 * For every electric vehicle of the added vehicleTypes battery capacity and
