@@ -21,8 +21,8 @@ import com.google.common.collect.Multimap;
 
 
 
-public class TryClass {
-	static final Logger log = Logger.getLogger(TryClass.class);
+public class TestRunDistanceConstraint {
+	static final Logger log = Logger.getLogger(TestRunDistanceConstraint.class);
 
 	private static final String original_Chessboard = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 
@@ -31,7 +31,7 @@ public class TryClass {
 		Config config = ConfigUtils.createConfig();
 		config.controler().setOutputDirectory("output/original_Chessboard/Version4");
 		config.network().setInputFile(original_Chessboard);
-		config = TryUtils.prepareConfig(config, 0);		
+		config = TestRunDistanceConstraintUtils.prepareConfig(config, 0);		
 		
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 
@@ -40,7 +40,7 @@ public class TryClass {
 		Carrier myTestCarrier = CarrierUtils.createCarrier( Id.create("myCarrier", Carrier.class) );
 		boolean electricCar = true;
 		boolean addAdditionalVehicle = true;
-		CarrierVehicleTypes vehicleTypes = TryUtils.createAndAddVehicles(electricCar, addAdditionalVehicle); 
+		CarrierVehicleTypes vehicleTypes = TestRunDistanceConstraintUtils.createAndAddVehicles(electricCar, addAdditionalVehicle); 
 		Multimap<String, Double[]> batteryConstraints = DistanceConstraintUtils.createVehilceTypeBatteryConstraints(vehicleTypes); 
 		
 		//Shipment 1
@@ -72,13 +72,13 @@ public class TryClass {
 		carriers.addCarrier(myTestCarrier);
 		
 		FleetSize fleetSize = FleetSize.INFINITE;
-		TryUtils.createCarriers(carriers, fleetSize, myTestCarrier, scenario, vehicleTypes);
+		TestRunDistanceConstraintUtils.createCarriers(carriers, fleetSize, myTestCarrier, scenario, vehicleTypes);
 		
 		int jspritIterations = 100;
-		TryUtils.solveWithJsprit(scenario, carriers, myTestCarrier, jspritIterations, vehicleTypes, batteryConstraints);
+		TestRunDistanceConstraintUtils.solveWithJsprit(scenario, carriers, myTestCarrier, jspritIterations, vehicleTypes, batteryConstraints);
 		final Controler controler = new Controler(scenario);
 		
-		TryUtils.scoringAndManagerFactory(scenario, carriers, controler);
+		TestRunDistanceConstraintUtils.scoringAndManagerFactory(scenario, carriers, controler);
 		controler.run();
 		new CarrierPlanXmlWriterV2(carriers)
 		.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierPlans.xml");

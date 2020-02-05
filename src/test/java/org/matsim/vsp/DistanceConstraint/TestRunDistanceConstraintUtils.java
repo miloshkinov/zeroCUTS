@@ -56,7 +56,7 @@ import com.graphhopper.jsprit.core.problem.vehicle.VehicleTypeImpl;
 import com.graphhopper.jsprit.core.util.Solutions;
 import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
 
-class TryUtils {
+class TestRunDistanceConstraintUtils {
 
 	static int noDelivery = 0;
 	static int noShipments = 0;
