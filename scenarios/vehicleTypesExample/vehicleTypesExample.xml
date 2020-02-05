@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-	<vehicleTypes>
+<vehicleDefinitions xmlns="http://www.matsim.org/files/dtd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.matsim.org/files/dtd http://www.matsim.org/files/dtd/vehicleDefinitions_v2.0.xsd">
 		<!-- <vehicleType id="heavy40t"> -->
 			<!-- <description>Heavy Vehicle 40t</description> -->
 			<!-- <allowableWeight weight="40"/> -->
@@ -46,25 +46,42 @@
 		<!-- </vehicleType> -->
 		<vehicleType id="18t-electro">
 			<description>Medium Vehicle 18t electro</description>
-			<allowableWeight weight="18"/>
-			<engineInformation fuelType="electricity" gasConsumption="0.00"/>  <!--gasConsumption in liter per meter -->
-			<adBlueConsumption perMeter="0.0"  />
-			<hcnox perMeter="0.0"  />
-			<pm10 perMeter="0.0"  />
-			<co perMeter="0.0"  />
-			<costInformation fix="100" perMeter="0.00055" perSecond="0.008" emissionsPerMeter="0.433"/>
-			<capacity>40</capacity>
+			<capacity seats="1" standingRoomInPersons="0" other="40.0">
+			</capacity>
+			<!-- <allowableWeight weight="18"/> -->
+			<engineInformation>
+				<attributes>
+					<attribute name="fuelType" class="org.matsim.vehicles.EngineInformation$FuelType">electricity</attribute>
+					<attribute name="engeryCapacity" class="java.lang.Double">450.0</attribute>
+					<attribute name="engeryConsumptionPerKm" class="java.lang.Double">30.0</attribute>
+				</attributes>
+			</engineInformation>
+			<costInformation fixedCostsPerDay="100.0" costsPerMeter="5.5E-4" costsPerSecond="0.008">
+			</costInformation>			
+			<!-- <adBlueConsumption perMeter="0.0"  /> -->
+			<!-- <hcnox perMeter="0.0"  /> -->
+			<!-- <pm10 perMeter="0.0"  /> -->
+			<!-- <co perMeter="0.0"  /> -->
+			<!-- <costInformation fix="100" perMeter="0.00055" perSecond="0.008" emissionsPerMeter="0.433"/> -->
 		</vehicleType>
 		<vehicleType id="light8t">
 			<description>Light Vehicle 7.5t</description>
-			<allowableWeight weight="7.5"/>
-			 <engineInformation fuelType="gasoline" gasConsumption="0.0001625"/>  <!-- gasConsumption in liter per meter -->  
-			 <adBlueConsumption perMeter="0.000002178"  />
-			<hcnox perMeter="0.0"  />
-			<pm10 perMeter="0.0"  />
-			<co perMeter="0.0"  />
-			<costInformation fix="200" perMeter="0.00055" perSecond="0.008" emissionsPerMeter="0"/>
-			<capacity>40</capacity>
+			<capacity seats="1" standingRoomInPersons="0" other="40.0">
+			</capacity>
+			<!-- <allowableWeight weight="7.5"/> -->
+			<engineInformation>
+				<attributes>
+					<attribute name="fuelConsumptionLitersPerMeter" class="java.lang.Double">1.625E-4</attribute>
+					<attribute name="fuelType" class="org.matsim.vehicles.EngineInformation$FuelType">gasoline</attribute>
+				</attributes>
+			</engineInformation>
+			<costInformation fixedCostsPerDay="200.0" costsPerMeter="5.5E-4" costsPerSecond="0.008">
+			</costInformation>			
+			 <!-- <adBlueConsumption perMeter="0.000002178"  /> -->
+			<!-- <hcnox perMeter="0.0"  /> -->
+			<!-- <pm10 perMeter="0.0"  /> -->
+			<!-- <co perMeter="0.0"  /> -->
+			<!-- <costInformation fix="200" perMeter="0.00055" perSecond="0.008" emissionsPerMeter="0"/> -->
 		</vehicleType>
 <!-- 		<vehicleType id="light8telectro"> -->
 <!-- 			<description>Light Vehicle 7.5t electro</description> -->
@@ -121,4 +138,5 @@
 <!-- 			<costInformation fix="89" perMeter="0.0005" perSecond="0.008" emissionsPerMeter="0.346"/> -->
 <!-- 			<capacity>70</capacity> -->
 		<!-- </vehicleType> -->
-	</vehicleTypes>
+	
+</vehicleDefinitions>
