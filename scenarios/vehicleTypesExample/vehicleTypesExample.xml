@@ -44,11 +44,26 @@
 			<!-- <costInformation fix="82.160413306" perMeter="0.000579283" perSecond="0" emissionsPerMeter="0"/> -->
 			<!-- <capacity>17</capacity> -->
 		<!-- </vehicleType> -->
-		<vehicleType id="18t-electro">
-			<description>Medium Vehicle 18t electro</description>
+		<vehicleType id="testVehicleSmallBattery">
+			<description>test Vehicle with small Battery</description>
 			<capacity seats="1" standingRoomInPersons="0" other="40.0">
 			</capacity>
-			<!-- <allowableWeight weight="18"/> -->
+			<maximumVelocity meterPerSecond="33.333333333333336"/>
+			<engineInformation>
+				<attributes>
+					<attribute name="fuelType" class="org.matsim.vehicles.EngineInformation$FuelType">electricity</attribute>
+					<attribute name="engeryCapacity" class="java.lang.Double">225.0</attribute>
+					<attribute name="engeryConsumptionPerKm" class="java.lang.Double">15.0</attribute>
+				</attributes>
+			</engineInformation>
+			<costInformation fixedCostsPerDay="70.0" costsPerMeter="5.5E-4" costsPerSecond="0.008">
+			</costInformation>			
+		</vehicleType>
+		<vehicleType id="testVehicleLargeBattery">
+			<description>test Vehicle with Large Battery</description>
+			<capacity seats="1" standingRoomInPersons="0" other="40.0">
+			</capacity>
+			<maximumVelocity meterPerSecond="33.333333333333336"/>
 			<engineInformation>
 				<attributes>
 					<attribute name="fuelType" class="org.matsim.vehicles.EngineInformation$FuelType">electricity</attribute>
@@ -58,17 +73,12 @@
 			</engineInformation>
 			<costInformation fixedCostsPerDay="100.0" costsPerMeter="5.5E-4" costsPerSecond="0.008">
 			</costInformation>			
-			<!-- <adBlueConsumption perMeter="0.0"  /> -->
-			<!-- <hcnox perMeter="0.0"  /> -->
-			<!-- <pm10 perMeter="0.0"  /> -->
-			<!-- <co perMeter="0.0"  /> -->
-			<!-- <costInformation fix="100" perMeter="0.00055" perSecond="0.008" emissionsPerMeter="0.433"/> -->
 		</vehicleType>
-		<vehicleType id="light8t">
-			<description>Light Vehicle 7.5t</description>
+		<vehicleType id="testVehicleDiesel">
+			<description>test diesel vehicle </description>
 			<capacity seats="1" standingRoomInPersons="0" other="40.0">
 			</capacity>
-			<!-- <allowableWeight weight="7.5"/> -->
+			<maximumVelocity meterPerSecond="33.333333333333336"/>
 			<engineInformation>
 				<attributes>
 					<attribute name="fuelConsumptionLitersPerMeter" class="java.lang.Double">1.625E-4</attribute>
@@ -77,12 +87,7 @@
 			</engineInformation>
 			<costInformation fixedCostsPerDay="200.0" costsPerMeter="5.5E-4" costsPerSecond="0.008">
 			</costInformation>			
-			 <!-- <adBlueConsumption perMeter="0.000002178"  /> -->
-			<!-- <hcnox perMeter="0.0"  /> -->
-			<!-- <pm10 perMeter="0.0"  /> -->
-			<!-- <co perMeter="0.0"  /> -->
-			<!-- <costInformation fix="200" perMeter="0.00055" perSecond="0.008" emissionsPerMeter="0"/> -->
-		</vehicleType>
+		</vehicleType>		
 <!-- 		<vehicleType id="light8telectro"> -->
 <!-- 			<description>Light Vehicle 7.5t electro</description> -->
 <!-- 			<allowableWeight weight="12"/> -->
