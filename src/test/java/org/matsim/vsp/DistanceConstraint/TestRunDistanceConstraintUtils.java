@@ -83,61 +83,7 @@ class TestRunDistanceConstraintUtils {
 		return config;
 	}
 
-	/**
-	 * Creates the vehicle at the depot, ads this vehicle to the carriers and sets
-	 * the capabilities. Sets TimeWindow for the carriers.
-	 * 
-	 * @param
-	 */
-	static void createCarriers(Carriers carriers, FleetSize fleetSize, Carrier singleCarrier, Scenario scenario,
-			CarrierVehicleTypes vehicleTypes) {
-		String vehicleName = "Depot";
-		double earliestStartingTime = 0 * 3600;
-		double latestFinishingTime = 48 * 3600;
-		List<CarrierVehicle> vehicles = new ArrayList<CarrierVehicle>();
-		for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
-			vehicles.add(createGarbageTruck(vehicleName + "-" + singleVehicleType.getId(), earliestStartingTime,
-					latestFinishingTime, singleVehicleType));
-		}
-
-		// define Carriers
-
-		defineCarriersBorusan(carriers, fleetSize, singleCarrier, vehicles, vehicleTypes);
-	}
-
-	/**
-	 * Method for creating a new carrierVehicle
-	 * 
-	 * @param
-	 * 
-	 * @return new carrierVehicle at the depot
-	 */
-	static CarrierVehicle createGarbageTruck(String vehicleName, double earliestStartingTime,
-			double latestFinishingTime, VehicleType singleVehicleType) {
-
-		return CarrierVehicle.Builder.newInstance(Id.create(vehicleName, Vehicle.class), Id.createLinkId("i(1,8)"))
-				.setEarliestStart(earliestStartingTime).setLatestEnd(latestFinishingTime)
-				.setTypeId(singleVehicleType.getId()).setType(singleVehicleType).build();
-	}
-
-	/**
-	 * Defines and sets the Capabilities of the Carrier, including the vehicleTypes
-	 * for the carriers
-	 * 
-	 * @param
-	 * 
-	 */
-	private static void defineCarriersBorusan(Carriers carriers, FleetSize fleetSize, Carrier singleCarrier,
-			List<CarrierVehicle> vehicles, CarrierVehicleTypes vehicleTypes) {
-
-		singleCarrier.setCarrierCapabilities(CarrierCapabilities.Builder.newInstance().setFleetSize(fleetSize).build());
-		for (CarrierVehicle carrierVehicle : vehicles) {
-			CarrierUtils.addCarrierVehicle(singleCarrier, carrierVehicle);
-		}
-		singleCarrier.getCarrierCapabilities().getVehicleTypes().addAll(vehicleTypes.getVehicleTypes().values());
-
-		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(vehicleTypes);
-	}
+	
 
 	/**
 	 * Solves with jsprit and gives a xml output of the plans and a plot of the
@@ -147,7 +93,7 @@ class TestRunDistanceConstraintUtils {
 	 * 
 	 * @param
 	 */
-	static void solveWithJsprit(Scenario scenario, Carriers carriers, Carrier singleCarrier, int jspritIteration,
+	static void solveWithJsprit(Scenario scenario, Carriers carriers, int jspritIteration,
 			CarrierVehicleTypes vehicleTypes) {
 
 		// Netzwerk integrieren und Kosten für jsprit
@@ -156,6 +102,9 @@ class TestRunDistanceConstraintUtils {
 				vehicleTypes.getVehicleTypes().values());
 		final NetworkBasedTransportCosts netBasedCosts = netBuilder.build();
 
+		for (Carrier singleCarrier : carriers.getCarriers().values()) {
+			
+		
 		netBuilder.setTimeSliceWidth(1800);
 
 		VehicleRoutingProblem.Builder vrpBuilder = MatsimJspritFactory.createRoutingProblemBuilder(singleCarrier,
@@ -199,7 +148,7 @@ class TestRunDistanceConstraintUtils {
 		// noDeliveryList = bestSolution.getUnassignedJobs();
 //		new Plotter(problem, bestSolution).plot(
 //				scenario.getConfig().controler().getOutputDirectory() + "/jsprit_CarrierPlans.png", "bestSolution");
-
+		}
 		new CarrierPlanXmlWriterV2(carriers)
 				.write(scenario.getConfig().controler().getOutputDirectory() + "/jsprit_CarrierPlans.xml");
 

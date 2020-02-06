@@ -6,9 +6,11 @@ import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.freight.carrier.Carrier;
+import org.matsim.contrib.freight.carrier.CarrierPlanXmlReader;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
 import org.matsim.contrib.freight.carrier.CarrierShipment;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
+import org.matsim.contrib.freight.carrier.CarrierVehicleTypeLoader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.contrib.freight.carrier.Carriers;
@@ -26,7 +28,8 @@ public class TestRunDistanceConstraint {
 	static final Logger log = Logger.getLogger(TestRunDistanceConstraint.class);
 
 	private static final String original_Chessboard = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
-	private static final String input_vehicleTypes = "scenarios/vehicleTypesExample/vehicleTypesExample.xml";
+	private static final String input_vehicleTypes = "scenarios/DistanceConstraint/vehicleTypesExample.xml";
+	private static final String input_carriers = "scenarios/DistanceConstraint/carriers-3_vehicles.xml";
 
 	public static void main(String[] args) throws IOException {
 		
@@ -36,47 +39,19 @@ public class TestRunDistanceConstraint {
 		config = TestRunDistanceConstraintUtils.prepareConfig(config, 0);		
 		
 		Scenario scenario = ScenarioUtils.loadScenario(config);
-
-		Carriers carriers = new Carriers();
 		
-		Carrier myTestCarrier = CarrierUtils.createCarrier( Id.create("myCarrier", Carrier.class) );
+//		Carrier myTestCarrier = CarrierUtils.createCarrier( Id.create("myCarrier", Carrier.class) );
 		CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes();
 		new CarrierVehicleTypeReader(vehicleTypes).readFile(input_vehicleTypes);
 		
-		
-		//Shipment 1
-		CarrierShipment shipment1 = CarrierShipment.Builder
-				.newInstance(Id.create("Shipment1", CarrierShipment.class), Id.createLinkId("i(1,8)"),
-						Id.createLinkId("j(3,8)"), 40)
-				.setDeliveryServiceTime(20).setDeliveryTimeWindow(TimeWindow.newInstance(0 * 3600, 1 * 3600))
-				.setPickupServiceTime(20).setPickupTimeWindow(TimeWindow.newInstance(0 * 3600, 0.2 * 3600))
-				.build();
-		CarrierUtils.addShipment(myTestCarrier, shipment1);
-		
-		//Shipment 2
-		CarrierShipment shipment2 = CarrierShipment.Builder
-				.newInstance(Id.create("Shipment2", CarrierShipment.class), Id.createLinkId("i(1,8)"),
-						Id.createLinkId("j(0,3)R"), 40)
-				.setDeliveryServiceTime(30).setDeliveryTimeWindow(TimeWindow.newInstance(0 * 3600, 1 * 3600))
-				.setPickupServiceTime(30).setPickupTimeWindow(TimeWindow.newInstance(0 * 3600, 0.2 * 3600))
-				.build();
-		CarrierUtils.addShipment(myTestCarrier, shipment2);
-		
-		CarrierShipment shipment3 = CarrierShipment.Builder
-				.newInstance(Id.create("Shipment3", CarrierShipment.class), Id.createLinkId("i(1,8)"),
-						Id.createLinkId("j(9,2)"), 40)
-				.setDeliveryServiceTime(30).setDeliveryTimeWindow(TimeWindow.newInstance(0 * 3600, 1 * 3600))
-				.setPickupServiceTime(30).setPickupTimeWindow(TimeWindow.newInstance(0 * 3600, 0.2 * 3600))
-				.build();
-		CarrierUtils.addShipment(myTestCarrier, shipment3);
-		
-		carriers.addCarrier(myTestCarrier);
-		
-		FleetSize fleetSize = FleetSize.INFINITE;
-		TestRunDistanceConstraintUtils.createCarriers(carriers, fleetSize, myTestCarrier, scenario, vehicleTypes);
+		Carriers carriers = new Carriers() ;
+		new CarrierPlanXmlReader(carriers).readFile(input_carriers) ;
+
+		// assign vehicle types to the carriers
+		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(vehicleTypes) ;
 		
 		int jspritIterations = 100;
-		TestRunDistanceConstraintUtils.solveWithJsprit(scenario, carriers, myTestCarrier, jspritIterations, vehicleTypes);
+		TestRunDistanceConstraintUtils.solveWithJsprit(scenario, carriers, jspritIterations, vehicleTypes);
 		final Controler controler = new Controler(scenario);
 		
 		TestRunDistanceConstraintUtils.scoringAndManagerFactory(scenario, carriers, controler);
