@@ -9,6 +9,7 @@ import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
 import org.matsim.contrib.freight.carrier.CarrierShipment;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
+import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.contrib.freight.carrier.Carriers;
 import org.matsim.contrib.freight.carrier.TimeWindow;
@@ -25,11 +26,12 @@ public class TestRunDistanceConstraint {
 	static final Logger log = Logger.getLogger(TestRunDistanceConstraint.class);
 
 	private static final String original_Chessboard = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
+	private static final String input_vehicleTypes = "scenarios/vehicleTypesExample/vehicleTypesExample.xml";
 
 	public static void main(String[] args) throws IOException {
 		
 		Config config = ConfigUtils.createConfig();
-		config.controler().setOutputDirectory("output/original_Chessboard/Version4");
+		config.controler().setOutputDirectory("output/original_Chessboard/Test1");
 		config.network().setInputFile(original_Chessboard);
 		config = TestRunDistanceConstraintUtils.prepareConfig(config, 0);		
 		
@@ -38,10 +40,9 @@ public class TestRunDistanceConstraint {
 		Carriers carriers = new Carriers();
 		
 		Carrier myTestCarrier = CarrierUtils.createCarrier( Id.create("myCarrier", Carrier.class) );
-		boolean electricCar = true;
-		boolean addAdditionalVehicle = true;
-		CarrierVehicleTypes vehicleTypes = TestRunDistanceConstraintUtils.createAndAddVehicles(electricCar, addAdditionalVehicle); 
-//		Multimap<String, Double[]> batteryConstraints = DistanceConstraintUtils.createVehilceTypeBatteryConstraints(vehicleTypes); 
+		CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes();
+		new CarrierVehicleTypeReader(vehicleTypes).readFile(input_vehicleTypes);
+		
 		
 		//Shipment 1
 		CarrierShipment shipment1 = CarrierShipment.Builder
