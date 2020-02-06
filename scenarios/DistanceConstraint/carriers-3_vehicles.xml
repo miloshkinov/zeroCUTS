@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<carriers>
+		<carrier id="myCarrier">
+			<capabilities fleetSize="INFINITE">
+				<vehicles>
+					<vehicle id="testVehicleLargeBattery" depotLinkId="i(1,8)" typeId="testVehicleLargeBattery" earliestStart="00:00:00" latestEnd="48:00:00"/>
+					<vehicle id="testVehicleDiesel" depotLinkId="i(1,8)" typeId="testVehicleDiesel" earliestStart="00:00:00" latestEnd="48:00:00"/>
+					<vehicle id="testVehicleSmallBattery" depotLinkId="i(1,8)" typeId="testVehicleSmallBattery" earliestStart="00:00:00" latestEnd="48:00:00"/>
+				</vehicles>
+
+			</capabilities>
+
+			<shipments>
+				<shipment id="Shipment1" from="i(1,8)" to="j(3,8)" size="40" startPickup="00:00:00" endPickup="00:12:00" startDelivery="00:00:00" endDelivery="01:00:00" pickupServiceTime="00:00:20" deliveryServiceTime="00:00:20"/>
+				<shipment id="Shipment2" from="i(1,8)" to="j(0,3)R" size="40" startPickup="00:00:00" endPickup="00:12:00" startDelivery="00:00:00" endDelivery="01:00:00" pickupServiceTime="00:00:30" deliveryServiceTime="00:00:30"/>
+				<shipment id="Shipment3" from="i(1,8)" to="j(9,2)" size="40" startPickup="00:00:00" endPickup="00:12:00" startDelivery="00:00:00" endDelivery="01:00:00" pickupServiceTime="00:00:30" deliveryServiceTime="00:00:30"/>
+			</shipments>
+
+		</carrier>
+
+	</carriers>
