@@ -44,7 +44,7 @@
 			<!-- <costInformation fix="82.160413306" perMeter="0.000579283" perSecond="0" emissionsPerMeter="0"/> -->
 			<!-- <capacity>17</capacity> -->
 		<!-- </vehicleType> -->
-		<vehicleType id="testVehicleSmallBattery">
+		<vehicleType id="VehicleSmallBattery">
 			<description>test Vehicle with small Battery</description>
 			<capacity seats="1" standingRoomInPersons="0" other="40.0">
 			</capacity>
@@ -59,7 +59,7 @@
 			<costInformation fixedCostsPerDay="70.0" costsPerMeter="5.5E-4" costsPerSecond="0.008">
 			</costInformation>			
 		</vehicleType>
-		<vehicleType id="testVehicleLargeBattery">
+		<vehicleType id="VehicleLargeBattery">
 			<description>test Vehicle with Large Battery</description>
 			<capacity seats="1" standingRoomInPersons="0" other="40.0">
 			</capacity>
@@ -74,7 +74,7 @@
 			<costInformation fixedCostsPerDay="100.0" costsPerMeter="5.5E-4" costsPerSecond="0.008">
 			</costInformation>			
 		</vehicleType>
-		<vehicleType id="testVehicleDiesel">
+		<vehicleType id="VehicleDiesel">
 			<description>test diesel vehicle </description>
 			<capacity seats="1" standingRoomInPersons="0" other="40.0">
 			</capacity>
