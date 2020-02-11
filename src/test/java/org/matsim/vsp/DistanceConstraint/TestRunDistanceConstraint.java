@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.junit.Assert;
+import org.junit.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
@@ -22,7 +24,6 @@ import org.matsim.contrib.freight.carrier.CarrierCapabilities;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
 import org.matsim.contrib.freight.carrier.CarrierService;
-import org.matsim.contrib.freight.carrier.CarrierShipment;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
 import org.matsim.contrib.freight.carrier.CarrierVehicle;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypeLoader;
@@ -50,7 +51,6 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.replanning.GenericStrategyManager;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.core.utils.io.UncheckedIOException;
 import org.matsim.vehicles.EngineInformation.FuelType;
 
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
@@ -77,7 +77,7 @@ public class TestRunDistanceConstraint {
 	 * @param args
 	 * @throws IOException
 	 */
-	public static void main(String[] args) throws IOException {
+	@Test public static void main(String[] args) throws IOException {
 
 		Config config = ConfigUtils.createConfig();
 		config.controler().setOutputDirectory("output/original_Chessboard/Test1");
@@ -418,6 +418,8 @@ public class TestRunDistanceConstraint {
 	 * @param vehicleTypes
 	 * @throws IOException
 	 */
+	@SuppressWarnings("resource")
+	@Test
 	private static void createResultFile(Scenario scenario, Carriers carriers, CarrierVehicleTypes vehicleTypes)
 			throws IOException {
 
@@ -533,9 +535,9 @@ public class TestRunDistanceConstraint {
 						"\n\n" + "\tTourID\t\t\t\t\t\tdistance (max Distance) (km)\tconsumption (capacity) (kWh)\n\n");
 
 				for (Id<Person> id : personId2tourDistance.keySet()) {
+					
 					int tourDistance = (int) Math.round(personId2tourDistance.get(id) / 1000);
 					int consumption = 0;
-
 					double distanceRange = 0;
 					double electricityCapacityinkWh = 0;
 					double electricityConsumptionPerkm = 0;
@@ -554,7 +556,7 @@ public class TestRunDistanceConstraint {
 							if (consumption < electricityCapacityinkWh) {
 								throw new RuntimeException("Consumption is higher then the capacity. The vehicle "
 										+ id.toString()
-										+ " can not handle the tour. DistanceConstraint has a mistake, because the tour should not be possible as a solution.");
+										+ " can not handle the tour. DistanceConstraint has a mistake, because the tour should not be possible as a solution.");								
 							}
 						}
 					}
@@ -575,6 +577,7 @@ public class TestRunDistanceConstraint {
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+			Assert.fail("Problem with the DistanceConstraint");
 		}
 
 		log.info("Output geschrieben");
