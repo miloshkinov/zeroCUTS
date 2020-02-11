@@ -555,9 +555,8 @@ public class TestRunDistanceConstraint {
 							distanceRange = (int) Math.round(electricityCapacityinkWh / electricityConsumptionPerkm);
 							consumption = (int) Math.round(personId2tourConsumptionkWh.get(id));
 
-							if (consumption < electricityCapacityinkWh) {
-								overconsumption = true;
-							}
+							if (consumption > electricityCapacityinkWh) 
+								overconsumption = true;							
 						}
 					}
 
@@ -582,7 +581,6 @@ public class TestRunDistanceConstraint {
 					overconsumption == false);
 		} catch (IOException e) {
 			e.printStackTrace();
-			// Assert.fail("Problem with the DistanceConstraint");
 		}
 
 	}
