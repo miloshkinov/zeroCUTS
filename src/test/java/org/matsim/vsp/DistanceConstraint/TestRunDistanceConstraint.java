@@ -70,6 +70,7 @@ import org.matsim.vehicles.VehicleUtils;
 
 public class TestRunDistanceConstraint {
 	static final Logger log = Logger.getLogger(TestRunDistanceConstraint.class);
+	static boolean overconsumption = false;
 
 	private static final String original_Chessboard = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 
@@ -420,7 +421,6 @@ public class TestRunDistanceConstraint {
 	 * @throws IOException
 	 */
 
-	@ Test
 	private static void createResultFile(Scenario scenario, Carriers carriers, CarrierVehicleTypes vehicleTypes)
 			throws IOException {
 
@@ -430,7 +430,6 @@ public class TestRunDistanceConstraint {
 		Map<Id<Person>, Double> personId2tourDistance = new HashMap<>();
 		Map<Id<Person>, Double> personId2tourConsumptionkWh = new HashMap<>();
 		Map<String, Integer> usedNumberPerVehicleType = new HashMap<>();
-		boolean overconsumption = false;
 
 		for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
 			usedNumberPerVehicleType.put(singleVehicleType.getId().toString(), 0);
@@ -577,12 +576,20 @@ public class TestRunDistanceConstraint {
 			writer.close();
 			log.info("Output geschrieben");
 			log.info("### Done.");
-			Assert.assertTrue(
-					"Consumption is higher then the capacity. Minimum one vehicle can not handle the tour. DistanceConstraint has a mistake, because the tour should not be possible as a solution.",
-					overconsumption == false);
+//			Assert.assertTrue(
+//					"Consumption is higher then the capacity. Minimum one vehicle can not handle the tour. DistanceConstraint has a mistake, because the tour should not be possible as a solution.",
+//					overconsumption == false);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 	}
-}
+	@Test
+	public final void testOverconsumption() {	
+		Assert.assertTrue(
+				"Consumption is higher then the capacity. Minimum one vehicle can not handle the tour. DistanceConstraint has a mistake, because the tour should not be possible as a solution.",
+				overconsumption == false);
+		}
+	}
+
+
