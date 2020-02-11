@@ -77,7 +77,7 @@ public class TestRunDistanceConstraint {
 	 * @param args
 	 * @throws IOException
 	 */
-	@Test
+
 	public static void main(String[] args) throws IOException {
 
 		Config config = ConfigUtils.createConfig();
