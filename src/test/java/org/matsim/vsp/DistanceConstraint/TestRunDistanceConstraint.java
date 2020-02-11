@@ -50,6 +50,7 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.replanning.GenericStrategyManager;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.io.UncheckedIOException;
 import org.matsim.vehicles.EngineInformation.FuelType;
 
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
@@ -550,6 +551,10 @@ public class TestRunDistanceConstraint {
 									.getAttribute("engeryCapacity");
 							distanceRange = (int) Math.round(electricityCapacityinkWh / electricityConsumptionPerkm);
 							consumption = (int) Math.round(personId2tourConsumptionkWh.get(id));
+							if (consumption < electricityCapacityinkWh){
+								throw new IOException("");
+								   //     throw new Exception("Consumption higher then capacity");
+								    }
 						}
 					}
 
