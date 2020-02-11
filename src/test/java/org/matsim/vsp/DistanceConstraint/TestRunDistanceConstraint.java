@@ -420,6 +420,7 @@ public class TestRunDistanceConstraint {
 	 * @throws IOException
 	 */
 
+	@ Test
 	private static void createResultFile(Scenario scenario, Carriers carriers, CarrierVehicleTypes vehicleTypes)
 			throws IOException {
 
