@@ -6,7 +6,6 @@ import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.freight.carrier.Carrier;
-import org.matsim.contrib.freight.carrier.CarrierImpl;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
 import org.matsim.contrib.freight.carrier.CarrierService;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
@@ -55,46 +54,6 @@ import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
 class DistanceConstraintUtils {
 	static final Logger log = Logger.getLogger(DistanceConstraintUtils.class);
 
-//	/**
-//	 * For every electric vehicle of the added vehicleTypes battery capacity and
-//	 * consumption has to be set. Take care to use the same vehicleType ID.
-//	 * electricProperties[0] is the battery capacity in kWh electricProperties[1] is
-//	 * the consumption for 1km in kWh/km
-//	 * 
-//	 * @param vehicleTypes
-//	 * @return Map with the battery capacity and consumption of every electric
-//	 *         vehicle
-//	 */
-//	static Multimap<String, Double[]> createVehilceTypeBatteryConstraints(CarrierVehicleTypes vehicleTypes) {
-//		Multimap<String, Double[]> batteryConstraints = ArrayListMultimap.create();
-//
-//		int numberOfElectricVehilceTypes = 0;
-//
-//		for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
-//			if (singleVehicleType.getEngineInformation().getAttributes()
-//					.getAttribute("fuelType") == FuelType.electricity) {
-//				numberOfElectricVehilceTypes++;
-//				if (singleVehicleType.getId().toString().equals("18t-electro")) {
-//					Double[] electricityProperties = new Double[2];
-//					electricityProperties[0] = 450.;
-//					electricityProperties[1] = 30.;
-//					batteryConstraints.put(singleVehicleType.getId().toString(), electricityProperties);
-//				}
-//				if (singleVehicleType.getId().toString().equals("E-Force KSF")) {
-//					Double[] electricityProperties = new Double[2];
-//					electricityProperties[0] = 225.;
-//					electricityProperties[1] = 15.;
-//					batteryConstraints.put(singleVehicleType.getId().toString(), electricityProperties);
-//				}
-//			}
-//		}
-//		if (batteryConstraints.size() != numberOfElectricVehilceTypes)
-//			log.error(
-//					"Not every electric vehilceType has batteryConstraints. Check the vehicle ID or create the battery constraints every electric vehicleType");
-//
-//		return batteryConstraints;
-//	}
-
 	/**
 	 * Creates a VehicleRoutingCostMatrix for calculating the distance between all
 	 * different locations of a carrier. Matrix has informations about the distance
@@ -134,7 +93,7 @@ class DistanceConstraintUtils {
 
 				} else {
 
-					Carrier oneShipmentCarrier = CarrierImpl.newInstance(Id.create("OneShipment", Carrier.class));
+					Carrier oneShipmentCarrier = CarrierUtils.createCarrier(Id.create("OneShipment", Carrier.class));
 					for (VehicleType vehicleType : singleCarrier.getCarrierCapabilities().getVehicleTypes()) {
 
 						CarrierVehicle testVehicle = CarrierVehicle.Builder
@@ -375,7 +334,7 @@ class DistanceConstraint implements HardActivityConstraint {
 		return minimalAdditionalDistance;
 	}
 
-	double getDistance(TourActivity from, TourActivity to) {
+	private double getDistance(TourActivity from, TourActivity to) {
 		return costsMatrix.getDistance(from.getLocation().getId(), to.getLocation().getId());
 	}
 }
