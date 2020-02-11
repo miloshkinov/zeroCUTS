@@ -21,6 +21,7 @@ import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
+import org.matsim.contrib.freight.carrier.CarrierService;
 import org.matsim.contrib.freight.carrier.CarrierShipment;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
 import org.matsim.contrib.freight.carrier.CarrierVehicle;
@@ -110,8 +111,8 @@ public class TestRunDistanceConstraint {
 
 		vehicleTypes.getVehicleTypes().put(newVT1.getId(), newVT1);
 		vehicleTypes.getVehicleTypes().put(newVT2.getId(), newVT2);
-		boolean threeShipments = false;
-		createShipments(carrierV1, threeShipments, carriers);
+		boolean threeServices = false;
+		createServices(carrierV1, threeServices, carriers);
 		createCarriers(carriers, fleetSize, carrierV1, scenario, vehicleTypes);
 
 //Option 2: Tour is not possible with the vehicle with the small battery
@@ -136,8 +137,8 @@ public class TestRunDistanceConstraint {
 		vehicleTypes.getVehicleTypes().put(newVT3.getId(), newVT3);
 		vehicleTypes.getVehicleTypes().put(newVT4.getId(), newVT4);
 
-		threeShipments = false;
-		createShipments(carrierV2, threeShipments, carriers);
+		threeServices = false;
+		createServices(carrierV2, threeServices, carriers);
 		createCarriers(carriers, fleetSize, carrierV2, scenario, vehicleTypes);
 
 //Option 3: costs for using one long range vehicle are higher than the costs of using two short range truck	
@@ -162,8 +163,8 @@ public class TestRunDistanceConstraint {
 		vehicleTypes.getVehicleTypes().put(newVT5.getId(), newVT5);
 		vehicleTypes.getVehicleTypes().put(newVT6.getId(), newVT6);
 
-		threeShipments = false;
-		createShipments(carrierV3, threeShipments, carriers);
+		threeServices = false;
+		createServices(carrierV3, threeServices, carriers);
 		createCarriers(carriers, fleetSize, carrierV3, scenario, vehicleTypes);
 
 //Option 4: An additional shipment outside the range of both BEVtypes
@@ -195,8 +196,8 @@ public class TestRunDistanceConstraint {
 		vehicleTypes.getVehicleTypes().put(newVT8.getId(), newVT8);
 		vehicleTypes.getVehicleTypes().put(newVT9.getId(), newVT9);
 
-		threeShipments = true;
-		createShipments(carrierV4, threeShipments, carriers);
+		threeServices = true;
+		createServices(carrierV4, threeServices, carriers);
 		createCarriers(carriers, fleetSize, carrierV4, scenario, vehicleTypes);
 
 		int jspritIterations = 100;
@@ -223,30 +224,28 @@ public class TestRunDistanceConstraint {
 		return config;
 	}
 
-	private static void createShipments(Carrier carrier, boolean threeShipments, Carriers carriers) {
-		// Shipment 1
-		CarrierShipment shipment1 = CarrierShipment.Builder
-				.newInstance(Id.create("Shipment1", CarrierShipment.class), Id.createLinkId("i(1,8)"),
-						Id.createLinkId("j(3,8)"), 40)
-				.setDeliveryServiceTime(20).setDeliveryTimeWindow(TimeWindow.newInstance(8 * 3600, 10 * 3600))
-				.setPickupServiceTime(20).setPickupTimeWindow(TimeWindow.newInstance(0 * 3600, 10 * 3600)).build();
-		CarrierUtils.addShipment(carrier, shipment1);
+	private static void createServices(Carrier carrier, boolean threeServices, Carriers carriers) {
+// Shipment 1		
+		CarrierService service1 = CarrierService.Builder
+				.newInstance(Id.create("Service1", CarrierService.class), Id.createLinkId("j(3,8)"))
+				.setServiceDuration(20).setServiceStartTimeWindow(TimeWindow.newInstance(8 * 3600, 10 * 3600))
+				.setCapacityDemand(40).build();
+		CarrierUtils.addService(carrier, service1);
 
-		// Shipment 2
-		CarrierShipment shipment2 = CarrierShipment.Builder
-				.newInstance(Id.create("Shipment2", CarrierShipment.class), Id.createLinkId("i(1,8)"),
-						Id.createLinkId("j(0,3)R"), 40)
-				.setDeliveryServiceTime(30).setDeliveryTimeWindow(TimeWindow.newInstance(8 * 3600, 10 * 3600))
-				.setPickupServiceTime(30).setPickupTimeWindow(TimeWindow.newInstance(0 * 3600, 10 * 3600)).build();
-		CarrierUtils.addShipment(carrier, shipment2);
+// Shipment 2
+		CarrierService service2 = CarrierService.Builder
+				.newInstance(Id.create("Service2", CarrierService.class), Id.createLinkId("j(0,3)R"))
+				.setServiceDuration(20).setServiceStartTimeWindow(TimeWindow.newInstance(8 * 3600, 10 * 3600))
+				.setCapacityDemand(40).build();
+		CarrierUtils.addService(carrier, service2);
 
-		if (threeShipments == true) {
-			CarrierShipment shipment3 = CarrierShipment.Builder
-					.newInstance(Id.create("Shipment3", CarrierShipment.class), Id.createLinkId("i(1,8)"),
-							Id.createLinkId("j(9,2)"), 40)
-					.setDeliveryServiceTime(30).setDeliveryTimeWindow(TimeWindow.newInstance(8 * 3600, 10 * 3600))
-					.setPickupServiceTime(30).setPickupTimeWindow(TimeWindow.newInstance(8 * 3600, 10 * 3600)).build();
-			CarrierUtils.addShipment(carrier, shipment3);
+// Shipment 3
+		if (threeServices == true) {
+			CarrierService service3 = CarrierService.Builder
+					.newInstance(Id.create("Service3", CarrierService.class), Id.createLinkId("j(9,2)"))
+					.setServiceDuration(20).setServiceStartTimeWindow(TimeWindow.newInstance(8 * 3600, 10 * 3600))
+					.setCapacityDemand(40).build();
+			CarrierUtils.addService(carrier, service3);
 		}
 		carriers.addCarrier(carrier);
 	}
@@ -467,7 +466,7 @@ public class TestRunDistanceConstraint {
 
 					List<Tour.TourElement> elements = scheduledTour.getTour().getTourElements();
 					for (Tour.TourElement element : elements) {
-						if (element instanceof Tour.Pickup) {
+						if (element instanceof Tour.ServiceActivity) {
 							numCollections++;
 
 						}
@@ -492,9 +491,9 @@ public class TestRunDistanceConstraint {
 				numberOfVehicles = numberOfVehicles + (tourNumberCarrier - 1);
 				writer.write("\n\n" + "Version: " + singleCarrier.getId().toString() + "\n");
 				writer.write(
-						"\tAnzahl der Abholstellen (Soll): \t\t\t\t\t" + singleCarrier.getShipments().size() + "\n");
+						"\tAnzahl der Abholstellen (Soll): \t\t\t\t\t" + singleCarrier.getServices().size() + "\n");
 				writer.write("\tAnzahl der Abholstellen ohne Abholung: \t\t\t\t"
-						+ (singleCarrier.getShipments().size() - numCollections) + "\n");
+						+ (singleCarrier.getServices().size() - numCollections) + "\n");
 				writer.write("\tAnzahl der Fahrzeuge:\t\t\t\t\t\t\t\t" + numberOfVehicles + "\n");
 				for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
 					if (singleCarrier.getId().toString().equals(singleVehicleType.getDescription())) {
