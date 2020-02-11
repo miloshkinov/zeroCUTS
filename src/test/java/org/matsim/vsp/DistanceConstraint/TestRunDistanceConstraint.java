@@ -77,7 +77,8 @@ public class TestRunDistanceConstraint {
 	 * @param args
 	 * @throws IOException
 	 */
-	@Test public static void main(String[] args) throws IOException {
+	@Test
+	public static void main(String[] args) throws IOException {
 
 		Config config = ConfigUtils.createConfig();
 		config.controler().setOutputDirectory("output/original_Chessboard/Test1");
@@ -418,8 +419,7 @@ public class TestRunDistanceConstraint {
 	 * @param vehicleTypes
 	 * @throws IOException
 	 */
-	@SuppressWarnings("resource")
-	@Test
+
 	private static void createResultFile(Scenario scenario, Carriers carriers, CarrierVehicleTypes vehicleTypes)
 			throws IOException {
 
@@ -429,6 +429,7 @@ public class TestRunDistanceConstraint {
 		Map<Id<Person>, Double> personId2tourDistance = new HashMap<>();
 		Map<Id<Person>, Double> personId2tourConsumptionkWh = new HashMap<>();
 		Map<String, Integer> usedNumberPerVehicleType = new HashMap<>();
+		boolean overconsumption = false;
 
 		for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
 			usedNumberPerVehicleType.put(singleVehicleType.getId().toString(), 0);
@@ -535,7 +536,7 @@ public class TestRunDistanceConstraint {
 						"\n\n" + "\tTourID\t\t\t\t\t\tdistance (max Distance) (km)\tconsumption (capacity) (kWh)\n\n");
 
 				for (Id<Person> id : personId2tourDistance.keySet()) {
-					
+
 					int tourDistance = (int) Math.round(personId2tourDistance.get(id) / 1000);
 					int consumption = 0;
 					double distanceRange = 0;
@@ -553,10 +554,9 @@ public class TestRunDistanceConstraint {
 									.getAttribute("engeryCapacity");
 							distanceRange = (int) Math.round(electricityCapacityinkWh / electricityConsumptionPerkm);
 							consumption = (int) Math.round(personId2tourConsumptionkWh.get(id));
-							if (consumption > electricityCapacityinkWh) {
-								throw new IOException("Consumption is higher then the capacity. The vehicle "
-										+ id.toString()
-										+ " can not handle the tour. DistanceConstraint has a mistake, because the tour should not be possible as a solution.");								
+
+							if (consumption < electricityCapacityinkWh) {
+								overconsumption = true;
 							}
 						}
 					}
@@ -575,13 +575,15 @@ public class TestRunDistanceConstraint {
 			}
 			writer.flush();
 			writer.close();
+			log.info("Output geschrieben");
+			log.info("### Done.");
+			Assert.assertTrue(
+					"Consumption is higher then the capacity. Minimum one vehicle can not handle the tour. DistanceConstraint has a mistake, because the tour should not be possible as a solution.",
+					overconsumption == false);
 		} catch (IOException e) {
 			e.printStackTrace();
-		//	Assert.fail("Problem with the DistanceConstraint");
+			// Assert.fail("Problem with the DistanceConstraint");
 		}
-
-		log.info("Output geschrieben");
-		log.info("### Done.");
 
 	}
 }
