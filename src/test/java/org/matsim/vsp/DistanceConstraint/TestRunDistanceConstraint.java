@@ -553,7 +553,7 @@ public class TestRunDistanceConstraint {
 									.getAttribute("engeryCapacity");
 							distanceRange = (int) Math.round(electricityCapacityinkWh / electricityConsumptionPerkm);
 							consumption = (int) Math.round(personId2tourConsumptionkWh.get(id));
-							if (consumption < electricityCapacityinkWh) {
+							if (consumption > electricityCapacityinkWh) {
 								throw new IOException("Consumption is higher then the capacity. The vehicle "
 										+ id.toString()
 										+ " can not handle the tour. DistanceConstraint has a mistake, because the tour should not be possible as a solution.");								
