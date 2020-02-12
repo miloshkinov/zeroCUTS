@@ -43,8 +43,8 @@ import org.matsim.core.scenario.ScenarioUtils;
  */
 
 class RunOfflineAirPollutionAnalysis {
-    private final static String runDirectory = "public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/output-berlin-v5.4-10pct/";
-    private final static String runId = "berlin-v5.4-10pct";
+    private final static String runDirectory = "../outputKMT/zerocuts/BerlinFood/I_Base_allVehicles/output/";
+    private final static String runId = "";
 
     private final static String hbefaFileCold = "../shared-svn/projects/matsim-germany/hbefa/hbefa-files/v3.2/EFA_ColdStart_vehcat_2005average.txt";
     private final static String hbefaFileWarm = "../shared-svn/projects/matsim-germany/hbefa/hbefa-files/v3.2/EFA_HOT_vehcat_2005average.txt";
@@ -61,8 +61,10 @@ class RunOfflineAirPollutionAnalysis {
 
         if (!rootDirectory.endsWith("/")) rootDirectory = rootDirectory + "/";
 
-        Config config = ConfigUtils.loadConfig(rootDirectory + runDirectory + runId + ".output_config.xml");
-        config.vehicles().setVehiclesFile(rootDirectory + runDirectory + runId + ".output_allVehicles.xml.gz");         //Note: All Vehicles is necessary
+        Config config = ConfigUtils.loadConfig(rootDirectory + runDirectory + runId + "output_config.xml");
+        config.vehicles().setVehiclesFile(rootDirectory + runDirectory + runId + "output_allVehicles.xml.gz");         //Note: All Vehicles is necessary
+        config.network().setInputFile(rootDirectory + runDirectory + runId + "output_network.xml.gz");
+        config.network().setChangeEventsInputFile(null);      //not needed here
         config.plans().setInputFile(null);
 
         EmissionsConfigGroup emissionsConfigGroup = ConfigUtils.addOrGetModule(config, EmissionsConfigGroup.class);
@@ -71,8 +73,8 @@ class RunOfflineAirPollutionAnalysis {
         emissionsConfigGroup.setHbefaRoadTypeSource(HbefaRoadTypeSource.fromLinkAttributes);
         emissionsConfigGroup.setNonScenarioVehicles(NonScenarioVehicles.ignore);
 
-        final String emissionEventOutputFile = rootDirectory + runDirectory + runId + ".emission.events.offline.xml.gz";
-        final String eventsFile = rootDirectory + runDirectory + runId + ".output_events.xml.gz";
+        final String emissionEventOutputFile = rootDirectory + runDirectory + runId + "emission.events.offline.xml.gz";
+        final String eventsFile = rootDirectory + runDirectory + runId + "output_events.xml.gz";
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
