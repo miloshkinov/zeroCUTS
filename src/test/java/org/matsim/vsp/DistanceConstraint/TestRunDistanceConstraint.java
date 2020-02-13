@@ -51,9 +51,6 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.replanning.GenericStrategyManager;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.vehicles.EngineInformation.FuelType;
-import org.matsim.vsp.freight.RunFreight;
-
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit.Strategy;
@@ -110,14 +107,14 @@ public class TestRunDistanceConstraint {
 		Carrier carrierV1 = CarrierUtils.createCarrier(Id.create("Carrier_Version1", Carrier.class));
 		VehicleType newVT1 = VehicleUtils.createVehicleType(Id.create("LargeBattery_V1", VehicleType.class));
 		newVT1.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(100.);
-		newVT1.getEngineInformation().getAttributes().putAttribute("fuelType", FuelType.electricity);
+		newVT1.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
 		newVT1.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 450.);
 		newVT1.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
 		newVT1.getCapacity().setOther(40.);
 		newVT1.setDescription("Carrier_Version1");
 		VehicleType newVT2 = VehicleUtils.createVehicleType(Id.create("SmallBattery_V1", VehicleType.class));
 		newVT2.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(70.);
-		newVT2.getEngineInformation().getAttributes().putAttribute("fuelType", FuelType.electricity);
+		newVT2.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
 		newVT2.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 225.);
 		newVT2.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
 		newVT2.setDescription("Carrier_Version1");
@@ -135,14 +132,14 @@ public class TestRunDistanceConstraint {
 
 		VehicleType newVT3 = VehicleUtils.createVehicleType(Id.create("LargeBattery_V2", VehicleType.class));
 		newVT3.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(100.);
-		newVT3.getEngineInformation().getAttributes().putAttribute("fuelType", FuelType.electricity);
+		newVT3.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
 		newVT3.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 450.);
 		newVT3.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
 		newVT3.setDescription("Carrier_Version2");
 		newVT3.getCapacity().setOther(40.);
 		VehicleType newVT4 = VehicleUtils.createVehicleType(Id.create("SmallBattery_V2", VehicleType.class));
 		newVT4.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(70.);
-		newVT4.getEngineInformation().getAttributes().putAttribute("fuelType", FuelType.electricity);
+		newVT4.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
 		newVT4.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 150.);
 		newVT4.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
 		newVT4.setDescription("Carrier_Version2");
@@ -161,14 +158,14 @@ public class TestRunDistanceConstraint {
 
 		VehicleType newVT5 = VehicleUtils.createVehicleType(Id.create("LargeBattery_V3", VehicleType.class));
 		newVT5.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(100.);
-		newVT5.getEngineInformation().getAttributes().putAttribute("fuelType", FuelType.electricity);
+		newVT5.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
 		newVT5.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 450.);
 		newVT5.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
 		newVT5.setDescription("Carrier_Version3");
 		newVT5.getCapacity().setOther(80.);
 		VehicleType newVT6 = VehicleUtils.createVehicleType(Id.create("SmallBattery_V3", VehicleType.class));
 		newVT6.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(40.);
-		newVT6.getEngineInformation().getAttributes().putAttribute("fuelType", FuelType.electricity);
+		newVT6.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
 		newVT6.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 500.);
 		newVT6.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
 		newVT6.setDescription("Carrier_Version3");
@@ -187,21 +184,21 @@ public class TestRunDistanceConstraint {
 
 		VehicleType newVT7 = VehicleUtils.createVehicleType(Id.create("LargeBattery_V4", VehicleType.class));
 		newVT7.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(100.);
-		newVT7.getEngineInformation().getAttributes().putAttribute("fuelType", FuelType.electricity);
+		newVT7.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
 		newVT7.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 450.);
 		newVT7.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
 		newVT7.setDescription("Carrier_Version4");
 		newVT7.getCapacity().setOther(40.);
 		VehicleType newVT8 = VehicleUtils.createVehicleType(Id.create("SmallBattery_V4", VehicleType.class));
 		newVT8.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(70.);
-		newVT8.getEngineInformation().getAttributes().putAttribute("fuelType", FuelType.electricity);
+		newVT8.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
 		newVT8.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 150.);
 		newVT8.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
 		newVT8.setDescription("Carrier_Version4");
 		newVT8.getCapacity().setOther(40.);
 		VehicleType newVT9 = VehicleUtils.createVehicleType(Id.create("DieselVehicle", VehicleType.class));
 		newVT9.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(400.);
-		newVT9.getEngineInformation().getAttributes().putAttribute("fuelType", FuelType.diesel);
+		newVT9.getEngineInformation().getAttributes().putAttribute("fuelType", "diesel");
 		newVT9.getEngineInformation().getAttributes().putAttribute("fuelConsumptionLitersPerMeter", 0.0001625);
 		newVT9.setDescription("Carrier_Version4");
 		newVT9.getCapacity().setOther(40.);
@@ -239,21 +236,21 @@ public class TestRunDistanceConstraint {
 	}
 
 	private static void createServices(Carrier carrier, boolean threeServices, Carriers carriers) {
-// Shipment 1		
+// Service 1		
 		CarrierService service1 = CarrierService.Builder
 				.newInstance(Id.create("Service1", CarrierService.class), Id.createLinkId("j(3,8)"))
 				.setServiceDuration(20).setServiceStartTimeWindow(TimeWindow.newInstance(8 * 3600, 10 * 3600))
 				.setCapacityDemand(40).build();
 		CarrierUtils.addService(carrier, service1);
 
-// Shipment 2
+// Service 2
 		CarrierService service2 = CarrierService.Builder
 				.newInstance(Id.create("Service2", CarrierService.class), Id.createLinkId("j(0,3)R"))
 				.setServiceDuration(20).setServiceStartTimeWindow(TimeWindow.newInstance(8 * 3600, 10 * 3600))
 				.setCapacityDemand(40).build();
 		CarrierUtils.addService(carrier, service2);
 
-// Shipment 3
+// Service 3
 		if (threeServices == true) {
 			CarrierService service3 = CarrierService.Builder
 					.newInstance(Id.create("Service3", CarrierService.class), Id.createLinkId("j(9,2)"))
@@ -385,8 +382,7 @@ public class TestRunDistanceConstraint {
 			CarrierPlan carrierPlanServices = MatsimJspritFactory.createPlan(singleCarrier, bestSolution);
 			NetworkRouter.routePlan(carrierPlanServices, netBasedCosts);
 			singleCarrier.setSelectedPlan(carrierPlanServices);
-//		new Plotter(problem, bestSolution).plot(
-//				scenario.getConfig().controler().getOutputDirectory() + "/jsprit_CarrierPlans.png", "bestSolution");
+
 		}
 		new CarrierPlanXmlWriterV2(carriers)
 				.write(scenario.getConfig().controler().getOutputDirectory() + "/jsprit_CarrierPlans.xml");
@@ -441,6 +437,7 @@ public class TestRunDistanceConstraint {
 		Map<Id<Person>, Double> personId2tourDistance = new HashMap<>();
 		Map<Id<Person>, Double> personId2tourConsumptionkWh = new HashMap<>();
 		Map<String, Integer> usedNumberPerVehicleType = new HashMap<>();
+		ArrayList<String> toursWithOverconsumption = new ArrayList<>();
 
 		for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
 			usedNumberPerVehicleType.put(singleVehicleType.getId().toString(), 0);
@@ -450,143 +447,144 @@ public class TestRunDistanceConstraint {
 		BufferedWriter writer;
 		File file;
 		file = new File(scenario.getConfig().controler().getOutputDirectory() + "/02_SummaryOutput.txt");
-		
-			writer = new BufferedWriter(new FileWriter(file, true));
-			String now = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new Date());
-			writer.write("Tourenstatisitik erstellt am: " + now + "\n\n");
 
-			for (Carrier singleCarrier : carriers.getCarriers().values()) {
+		writer = new BufferedWriter(new FileWriter(file, true));
+		String now = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new Date());
+		writer.write("Tourenstatisitik erstellt am: " + now + "\n\n");
 
-				double totalDistance = 0;
-				int numberOfVehicles = 0;
-				double distanceTour;
-				int numCollections = 0;
-				int tourNumberCarrier = 1;
-				VehicleType vt = null;
+		for (Carrier singleCarrier : carriers.getCarriers().values()) {
 
-				for (ScheduledTour scheduledTour : singleCarrier.getSelectedPlan().getScheduledTours()) {
-					distanceTour = 0.0;
-					for (VehicleType vt2 : singleCarrier.getCarrierCapabilities().getVehicleTypes()) {
-						if (vt2.getId().toString().contains(scheduledTour.getVehicle().getVehicleId().toString())) {
+			double totalDistance = 0;
+			int numberOfVehicles = 0;
+			double distanceTour;
+			int numCollections = 0;
+			int tourNumberCarrier = 1;
+			VehicleType vt = null;
 
-							vt = vt2;
-							break;
-						}
-					}
+			for (ScheduledTour scheduledTour : singleCarrier.getSelectedPlan().getScheduledTours()) {
+				distanceTour = 0.0;
+				for (VehicleType vt2 : singleCarrier.getCarrierCapabilities().getVehicleTypes()) {
+					if (vt2.getId().toString().contains(scheduledTour.getVehicle().getVehicleId().toString())) {
 
-					int vehicleTypeCount = usedNumberPerVehicleType
-							.get(scheduledTour.getVehicle().getVehicleId().toString());
-					usedNumberPerVehicleType.replace(scheduledTour.getVehicle().getVehicleId().toString(),
-							vehicleTypeCount + 1);
-
-					List<Tour.TourElement> elements = scheduledTour.getTour().getTourElements();
-					for (Tour.TourElement element : elements) {
-						if (element instanceof Tour.ServiceActivity) {
-							numCollections++;
-
-						}
-						if (element instanceof Tour.Leg) {
-							Tour.Leg legElement = (Tour.Leg) element;
-							if (legElement.getRoute().getDistance() != 0)
-								distanceTour = distanceTour
-										+ RouteUtils.calcDistance((NetworkRoute) legElement.getRoute(), 0, 0, network);
-						}
-					}
-					Id<Person> personId = Id.create(
-							scheduledTour.getVehicle().getVehicleId().toString() + "-Tour " + tourNumberCarrier,
-							Person.class);
-					personId2tourDistance.put(personId, distanceTour);
-					if (vt.getEngineInformation().getAttributes().getAttribute("fuelType") == FuelType.electricity) {
-						personId2tourConsumptionkWh.put(personId, (distanceTour / 1000) * (double) vt
-								.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm"));
-					}
-					totalDistance = totalDistance + distanceTour;
-					tourNumberCarrier++;
-				}
-				numberOfVehicles = numberOfVehicles + (tourNumberCarrier - 1);
-				writer.write("\n\n" + "Version: " + singleCarrier.getId().toString() + "\n");
-				writer.write(
-						"\tAnzahl der Abholstellen (Soll): \t\t\t\t\t" + singleCarrier.getServices().size() + "\n");
-				writer.write("\tAnzahl der Abholstellen ohne Abholung: \t\t\t\t"
-						+ (singleCarrier.getServices().size() - numCollections) + "\n");
-				writer.write("\tAnzahl der Fahrzeuge:\t\t\t\t\t\t\t\t" + numberOfVehicles + "\n");
-				for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
-					if (singleCarrier.getId().toString().equals(singleVehicleType.getDescription())) {
-						writer.write("\t\t\tAnzahl Typ " + singleVehicleType.getId().toString() + ":\t\t\t\t"
-								+ usedNumberPerVehicleType.get(singleVehicleType.getId().toString()) + "\n");
+						vt = vt2;
+						break;
 					}
 				}
-				writer.write("\n" + "\tGefahrene Kilometer insgesamt:\t\t\t\t\t\t" + Math.round(totalDistance / 1000)
-						+ " km\n");
-				writer.write("\tVerfügbare Fahrzeugtypen:\t\t\t\t\t\n\n");
-				for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
-					if (singleCarrier.getId().toString().equals(singleVehicleType.getDescription())) {
-						writer.write("\t\t\tID: " + singleVehicleType.getId() + "\t\tAntrieb: "
-								+ singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
-										.toString()
-								+ "\t\tKapazität: " + singleVehicleType.getCapacity().getOther() + "\t\tFixkosten:"
-								+ singleVehicleType.getCostInformation().getFixedCosts() + " €");
-						if (singleVehicleType.getEngineInformation().getAttributes()
-								.getAttribute("fuelType") == FuelType.electricity) {
-							double electricityConsumptionPer100km = 0;
-							double electricityCapacityinkWh = 0;
-							electricityConsumptionPer100km = (double) singleVehicleType.getEngineInformation()
-									.getAttributes().getAttribute("engeryConsumptionPerKm");
-							electricityCapacityinkWh = (double) singleVehicleType.getEngineInformation().getAttributes()
-									.getAttribute("engeryCapacity");
 
-							writer.write("\t\tLadekapazität: " + electricityCapacityinkWh + " kWh\t\tVerbrauch: "
-									+ electricityConsumptionPer100km + " kWh/100km\t\tReichweite: "
-									+ (int) Math.round(electricityCapacityinkWh / electricityConsumptionPer100km)
-									+ " km\n");
-						} else
-							writer.write("\n");
+				int vehicleTypeCount = usedNumberPerVehicleType
+						.get(scheduledTour.getVehicle().getVehicleId().toString());
+				usedNumberPerVehicleType.replace(scheduledTour.getVehicle().getVehicleId().toString(),
+						vehicleTypeCount + 1);
+
+				List<Tour.TourElement> elements = scheduledTour.getTour().getTourElements();
+				for (Tour.TourElement element : elements) {
+					if (element instanceof Tour.ServiceActivity) {
+						numCollections++;
+
+					}
+					if (element instanceof Tour.Leg) {
+						Tour.Leg legElement = (Tour.Leg) element;
+						if (legElement.getRoute().getDistance() != 0)
+							distanceTour = distanceTour
+									+ RouteUtils.calcDistance((NetworkRoute) legElement.getRoute(), 0, 0, network);
 					}
 				}
-				writer.write(
-						"\n\n" + "\tTourID\t\t\t\t\t\tdistance (max Distance) (km)\tconsumption (capacity) (kWh)\n\n");
-
-				for (Id<Person> id : personId2tourDistance.keySet()) {
-
-					int tourDistance = (int) Math.round(personId2tourDistance.get(id) / 1000);
-					int consumption = 0;
-					double distanceRange = 0;
-					double electricityCapacityinkWh = 0;
-					double electricityConsumptionPerkm = 0;
-
-					for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
-
-						if (id.toString().contains(singleVehicleType.getId().toString())
-								&& singleVehicleType.getEngineInformation().getFuelType() == FuelType.electricity) {
-
-							electricityConsumptionPerkm = (double) singleVehicleType.getEngineInformation()
-									.getAttributes().getAttribute("engeryConsumptionPerKm");
-							electricityCapacityinkWh = (double) singleVehicleType.getEngineInformation().getAttributes()
-									.getAttribute("engeryCapacity");
-							distanceRange = (int) Math.round(electricityCapacityinkWh / electricityConsumptionPerkm);
-							consumption = (int) Math.round(personId2tourConsumptionkWh.get(id));
-
-							if (consumption > electricityCapacityinkWh)
-								throw new Exception("A tour has a higher consumption then the battery capacity");
-						}
-					}
-
-					writer.write("\t" + id + "\t\t" + tourDistance);
-					if (distanceRange > 0) {
-						writer.write(" (" + distanceRange + ")\t\t\t\t\t\t" + consumption + " ("
-								+ electricityCapacityinkWh + ")");
-					} else
-						writer.write("\t\t\t\t\t\t\t\t\t\t");
-					writer.newLine();
-
+				Id<Person> personId = Id.create(
+						scheduledTour.getVehicle().getVehicleId().toString() + "-Tour " + tourNumberCarrier,
+						Person.class);
+				personId2tourDistance.put(personId, distanceTour);
+				if (vt.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electricity")) {
+					personId2tourConsumptionkWh.put(personId, (distanceTour / 1000) * (double) vt.getEngineInformation()
+							.getAttributes().getAttribute("engeryConsumptionPerKm"));
 				}
-				personId2tourConsumptionkWh.clear();
-				personId2tourDistance.clear();
+				totalDistance = totalDistance + distanceTour;
+				tourNumberCarrier++;
 			}
-			writer.flush();
-			writer.close();
-			log.info("Output geschrieben");
-			log.info("### Done.");		
+			numberOfVehicles = numberOfVehicles + (tourNumberCarrier - 1);
+			writer.write("\n\n" + "Version: " + singleCarrier.getId().toString() + "\n");
+			writer.write("\tAnzahl der Abholstellen (Soll): \t\t\t\t\t" + singleCarrier.getServices().size() + "\n");
+			writer.write("\tAnzahl der Abholstellen ohne Abholung: \t\t\t\t"
+					+ (singleCarrier.getServices().size() - numCollections) + "\n");
+			writer.write("\tAnzahl der Fahrzeuge:\t\t\t\t\t\t\t\t" + numberOfVehicles + "\n");
+			for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
+				if (singleCarrier.getId().toString().equals(singleVehicleType.getDescription())) {
+					writer.write("\t\t\tAnzahl Typ " + singleVehicleType.getId().toString() + ":\t\t\t\t"
+							+ usedNumberPerVehicleType.get(singleVehicleType.getId().toString()) + "\n");
+				}
+			}
+			writer.write(
+					"\n" + "\tGefahrene Kilometer insgesamt:\t\t\t\t\t\t" + Math.round(totalDistance / 1000) + " km\n");
+			writer.write("\tVerfügbare Fahrzeugtypen:\t\t\t\t\t\n\n");
+			for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
+				if (singleCarrier.getId().toString().equals(singleVehicleType.getDescription())) {
+					writer.write("\t\t\tID: " + singleVehicleType.getId() + "\t\tAntrieb: "
+							+ singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
+									.toString()
+							+ "\t\tKapazität: " + singleVehicleType.getCapacity().getOther() + "\t\tFixkosten:"
+							+ singleVehicleType.getCostInformation().getFixedCosts() + " €");
+					if (singleVehicleType.getEngineInformation().getAttributes()
+							.getAttribute("fuelType").equals("electricity")) {
+						double electricityConsumptionPer100km = 0;
+						double electricityCapacityinkWh = 0;
+						electricityConsumptionPer100km = (double) singleVehicleType.getEngineInformation()
+								.getAttributes().getAttribute("engeryConsumptionPerKm");
+						electricityCapacityinkWh = (double) singleVehicleType.getEngineInformation().getAttributes()
+								.getAttribute("engeryCapacity");
+
+						writer.write("\t\tLadekapazität: " + electricityCapacityinkWh + " kWh\t\tVerbrauch: "
+								+ electricityConsumptionPer100km + " kWh/100km\t\tReichweite: "
+								+ (int) Math.round(electricityCapacityinkWh / electricityConsumptionPer100km)
+								+ " km\n");
+					} else
+						writer.write("\n");
+				}
+			}
+			writer.write("\n\n" + "\tTourID\t\t\t\t\t\tdistance (max Distance) (km)\tconsumption (capacity) (kWh)\n\n");
+
+			for (Id<Person> id : personId2tourDistance.keySet()) {
+
+				int tourDistance = (int) Math.round(personId2tourDistance.get(id) / 1000);
+				int consumption = 0;
+				double distanceRange = 0;
+				double electricityCapacityinkWh = 0;
+				double electricityConsumptionPerkm = 0;
+
+				for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
+
+					if (id.toString().contains(singleVehicleType.getId().toString())
+							&& singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electricity")) {
+
+						electricityConsumptionPerkm = (double) singleVehicleType.getEngineInformation().getAttributes()
+								.getAttribute("engeryConsumptionPerKm");
+						electricityCapacityinkWh = (double) singleVehicleType.getEngineInformation().getAttributes()
+								.getAttribute("engeryCapacity");
+						distanceRange = (int) Math.round(electricityCapacityinkWh / electricityConsumptionPerkm);
+						consumption = (int) Math.round(personId2tourConsumptionkWh.get(id));
+
+						if (consumption > electricityCapacityinkWh)
+							toursWithOverconsumption.add(id.toString());
+					}
+				}
+
+				writer.write("\t" + id + "\t\t" + tourDistance);
+				if (distanceRange > 0) {
+					writer.write(" (" + distanceRange + ")\t\t\t\t\t\t" + consumption + " (" + electricityCapacityinkWh
+							+ ")");
+				} else
+					writer.write("\t\t\t\t\t\t\t\t\t\t");
+				writer.newLine();
+
+			}
+			personId2tourConsumptionkWh.clear();
+			personId2tourDistance.clear();
+		}
+		writer.flush();
+		writer.close();
+		log.info("Output geschrieben");
+		log.info("### Done.");
+		if (toursWithOverconsumption.isEmpty() == false)
+			throw new Exception("The tour(s) " + toursWithOverconsumption.toString()
+					+ " have a higher consumption then their capacity");
 
 	}
 

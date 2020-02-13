@@ -205,7 +205,7 @@ class DistanceConstraint implements HardActivityConstraint {
 				.get(Id.create(context.getNewVehicle().getType().getTypeId().toString(), VehicleType.class));
 
 		if (vehicleTypeOfNewVehicle.getEngineInformation().getAttributes()
-				.getAttribute("fuelType") == (FuelType.electricity)) {
+				.getAttribute("fuelType").equals("electricity")) {
 
 			Double electricityCapacityinkWh = (Double) vehicleTypeOfNewVehicle.getEngineInformation().getAttributes()
 					.getAttribute("engeryCapacity");
