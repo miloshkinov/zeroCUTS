@@ -45,7 +45,8 @@ import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
  *         Includes all classes and methods for the distance constraint of every
  *         electric vehicle based on the capacity and the consumption of the
  *         battery. The base for calculating the consumption is only the driven
- *         distance and not the transported weight or other influences.
+ *         distance and not the transported weight or other influences. But is
+ *         possible to integrate it.
  * 
  *         !! No recharging is integrated. Vehicles are totally loaded at the
  *         beginning.
@@ -174,8 +175,7 @@ class DistanceConstraint implements HardActivityConstraint {
 	private final CarrierVehicleTypes vehicleTypes;
 
 	DistanceConstraint(StateId distanceStateId, StateManager stateManager,
-			VehicleRoutingTransportCostsMatrix transportCosts,
-			CarrierVehicleTypes vehicleTypes) {
+			VehicleRoutingTransportCostsMatrix transportCosts, CarrierVehicleTypes vehicleTypes) {
 		this.costsMatrix = transportCosts;
 		this.stateManager = stateManager;
 		this.distanceStateId = distanceStateId;
@@ -183,30 +183,24 @@ class DistanceConstraint implements HardActivityConstraint {
 	}
 
 	/**
-	 * When adding a TourActivity to the tour or changing i.e. changing the vehicle
-	 * of the tour, in the algorithm always the fulfilled method checks if all
-	 * conditions (constraints) are fulfilled or not. This method always checks the
-	 * distance constraint. The constraint is only important for electric drive
-	 * vehicles. Thats why the first steps checks if the used or the new vehicle is
-	 * electric. When minimum one of them is electric the constraint will be
-	 * checked. Because every activity is added separately and the pickup before the
-	 * delivery of a shipment, it will be investigated which additional distance is
-	 * necessary, when a pickup at the depot is added, although the additional
-	 * distance of the pickup is null. Therefore the minimal additional distance of
-	 * the associated Delivery is also important for the fulfilled decision of this
-	 * function. At the end the conditions checks if the electric consumption of the
-	 * tour including the additional shipment is possible with the used capacity of
-	 * the battery.
+	 * When adding a TourActivity to the tour and the vehicle of the tour is
+	 * electric drive the algorithm always checks the fulfilled method if all
+	 * conditions (constraints) are fulfilled or not. This method is always been
+	 * checked by the distance constraint, if the new vehicle is electric. Because
+	 * every activity is added separately and the pickup before the delivery of a
+	 * shipment, it will investigate which additional distance is necessary for the
+	 * pickup and which minimal additional distance of the associated Delivery is
+	 * needed. This is also important for the fulfilled decision of this function.
+	 * At the end the conditions checks if the electric consumption of the tour
+	 * including the additional shipment is possible with the used capacity of the
+	 * battery.
 	 */
 
 	@Override
 	public ConstraintsStatus fulfilled(JobInsertionContext context, TourActivity prevAct, TourActivity newAct,
 			TourActivity nextAct, double v) {
 		double additionalDistance;
-		// TODO this method is created with the only delivery shipments from a depot.
-		// Perhaps some conditions have to be changed when pickups in different
-		// locations are possible
-		// TODO also for services
+
 		VehicleType vehicleTypeOfNewVehicle = vehicleTypes.getVehicleTypes()
 				.get(Id.create(context.getNewVehicle().getType().getTypeId().toString(), VehicleType.class));
 
