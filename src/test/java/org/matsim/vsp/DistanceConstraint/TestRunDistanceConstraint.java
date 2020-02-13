@@ -52,6 +52,7 @@ import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.replanning.GenericStrategyManager;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.vehicles.EngineInformation.FuelType;
+import org.matsim.vsp.freight.RunFreight;
 
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
@@ -74,12 +75,23 @@ public class TestRunDistanceConstraint {
 
 	private static final String original_Chessboard = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 
+	@Test
+	public void testRunDistanceConstraint() {
+		try {
+			main(null);
+		} catch (Exception e) {
+			Logger.getLogger(this.getClass()).fatal("there was an exception: \n" + e);
+			// if one catches an exception, then one needs to explicitly fail the test:
+			Assert.fail();
+		}
+	}
+
 	/**
 	 * @param args
 	 * @throws IOException
 	 */
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Exception {
 
 		Config config = ConfigUtils.createConfig();
 		config.controler().setOutputDirectory("output/original_Chessboard/Test1");
@@ -422,7 +434,7 @@ public class TestRunDistanceConstraint {
 	 */
 
 	private static void createResultFile(Scenario scenario, Carriers carriers, CarrierVehicleTypes vehicleTypes)
-			throws IOException {
+			throws Exception {
 
 		log.info("Starting");
 
@@ -555,8 +567,8 @@ public class TestRunDistanceConstraint {
 							distanceRange = (int) Math.round(electricityCapacityinkWh / electricityConsumptionPerkm);
 							consumption = (int) Math.round(personId2tourConsumptionkWh.get(id));
 
-							if (consumption < electricityCapacityinkWh) 
-								overconsumption = true;							
+							if (consumption < electricityCapacityinkWh)
+								throw new Exception("A tour has a higher consumption then the battery capacity");
 						}
 					}
 
@@ -576,20 +588,11 @@ public class TestRunDistanceConstraint {
 			writer.close();
 			log.info("Output geschrieben");
 			log.info("### Done.");
-//			Assert.assertTrue(
-//					"Consumption is higher then the capacity. Minimum one vehicle can not handle the tour. DistanceConstraint has a mistake, because the tour should not be possible as a solution.",
-//					overconsumption == false);
-		} catch (IOException e) {
+
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 	}
-	@Test
-	public final void testOverconsumption() {	
-		Assert.assertTrue(
-				"Consumption is higher then the capacity. Minimum one vehicle can not handle the tour. DistanceConstraint has a mistake, because the tour should not be possible as a solution.",
-				overconsumption == false);
-		}
-	}
 
-
+}
