@@ -71,7 +71,6 @@ import org.matsim.vehicles.VehicleUtils;
 
 public class TestRunDistanceConstraint {
 	static final Logger log = Logger.getLogger(TestRunDistanceConstraint.class);
-	static boolean overconsumption = false;
 
 	private static final String original_Chessboard = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 
@@ -88,7 +87,7 @@ public class TestRunDistanceConstraint {
 
 	/**
 	 * @param args
-	 * @throws IOException
+	 * @throws Exception
 	 */
 
 	public static void main(String[] args) throws Exception {
@@ -451,7 +450,7 @@ public class TestRunDistanceConstraint {
 		BufferedWriter writer;
 		File file;
 		file = new File(scenario.getConfig().controler().getOutputDirectory() + "/02_SummaryOutput.txt");
-		try {
+		
 			writer = new BufferedWriter(new FileWriter(file, true));
 			String now = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new Date());
 			writer.write("Tourenstatisitik erstellt am: " + now + "\n\n");
@@ -567,7 +566,7 @@ public class TestRunDistanceConstraint {
 							distanceRange = (int) Math.round(electricityCapacityinkWh / electricityConsumptionPerkm);
 							consumption = (int) Math.round(personId2tourConsumptionkWh.get(id));
 
-							if (consumption < electricityCapacityinkWh)
+							if (consumption > electricityCapacityinkWh)
 								throw new Exception("A tour has a higher consumption then the battery capacity");
 						}
 					}
@@ -587,11 +586,7 @@ public class TestRunDistanceConstraint {
 			writer.flush();
 			writer.close();
 			log.info("Output geschrieben");
-			log.info("### Done.");
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+			log.info("### Done.");		
 
 	}
 
