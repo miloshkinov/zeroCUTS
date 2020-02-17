@@ -74,13 +74,9 @@ public class TestRunDistanceConstraint {
 
 	private static final String original_Chessboard = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 
-//	@Before
-//	public final void setUp() {
-//
-//	}
-
 	/**
-	 
+	 * Option 1: Tour is possible with the vehicle with the small battery and the
+	 * vehicle with the small battery is cheaper
 	 */
 	@SuppressWarnings("deprecation")
 	@Test
@@ -98,8 +94,6 @@ public class TestRunDistanceConstraint {
 		CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes();
 
 		FleetSize fleetSize = FleetSize.INFINITE;
-
-//Option 1: Tour is possible with the vehicle with the small battery and the vehicle with the small battery is cheaper
 
 		Carrier carrierV1 = CarrierUtils.createCarrier(Id.create("Carrier_Version1", Carrier.class));
 		VehicleType newVT1 = VehicleUtils.createVehicleType(Id.create("LargeBattery_V1", VehicleType.class));
@@ -127,7 +121,8 @@ public class TestRunDistanceConstraint {
 		int jspritIterations = 100;
 		solveJspritAndMATSim(scenario, vehicleTypes, carriers, jspritIterations);
 
-		Assert.assertEquals(1, carrierV1.getSelectedPlan().getScheduledTours().size());
+		Assert.assertEquals("Not the correct amout of scheduled tours", 1,
+				carrierV1.getSelectedPlan().getScheduledTours().size());
 
 		Assert.assertEquals(newVT2.getId(), carrierV1.getSelectedPlan().getScheduledTours().iterator().next()
 				.getVehicle().getVehicleType().getId());
@@ -138,9 +133,11 @@ public class TestRunDistanceConstraint {
 				.getAttribute("engeryCapacity")
 				/ (double) newVT2.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
 
-		Assert.assertEquals(30, maxDistanceVehicle1, MatsimTestUtils.EPSILON);
+		Assert.assertEquals("Wrong maximum distance of the tour of this vehicleType", 30, maxDistanceVehicle1,
+				MatsimTestUtils.EPSILON);
 
-		Assert.assertEquals(30, maxDistanceVehilce2, MatsimTestUtils.EPSILON);
+		Assert.assertEquals("Wrong maximum distance of the tour of this vehicleType", 30, maxDistanceVehilce2,
+				MatsimTestUtils.EPSILON);
 
 		double distanceTour = 0.0;
 		List<Tour.TourElement> elements = carrierV1.getSelectedPlan().getScheduledTours().iterator().next().getTour()
@@ -153,12 +150,12 @@ public class TestRunDistanceConstraint {
 							scenario.getNetwork());
 			}
 		}
-		Assert.assertEquals(24000, distanceTour, MatsimTestUtils.EPSILON);
+		Assert.assertEquals("The schedulded tour has a non expected distance",24000, distanceTour, MatsimTestUtils.EPSILON);
 	}
 
 //Option 2: Tour is not possible with the vehicle with the small battery
 	@Test
-	public void CarrierLargeBatteryTest_Version2() {
+	public final void CarrierLargeBatteryTest_Version2() {
 		Config config = ConfigUtils.createConfig();
 		config.controler().setOutputDirectory("output/original_Chessboard/Test/Version2");
 		config.network().setInputFile(original_Chessboard);
@@ -199,7 +196,8 @@ public class TestRunDistanceConstraint {
 		int jspritIterations = 100;
 		solveJspritAndMATSim(scenario, vehicleTypes, carriers, jspritIterations);
 
-		Assert.assertEquals(1, carrierV2.getSelectedPlan().getScheduledTours().size());
+		Assert.assertEquals("Not the correct amout of scheduled tours", 1,
+				carrierV2.getSelectedPlan().getScheduledTours().size());
 
 		Assert.assertEquals(newVT3.getId(), carrierV2.getSelectedPlan().getScheduledTours().iterator().next()
 				.getVehicle().getVehicleType().getId());
@@ -210,9 +208,11 @@ public class TestRunDistanceConstraint {
 				.getAttribute("engeryCapacity")
 				/ (double) newVT4.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
 
-		Assert.assertEquals(30, maxDistanceVehicle3, MatsimTestUtils.EPSILON);
+		Assert.assertEquals("Wrong maximum distance of the tour of this vehicleType", 30, maxDistanceVehicle3,
+				MatsimTestUtils.EPSILON);
 
-		Assert.assertEquals(15, maxDistanceVehilce4, MatsimTestUtils.EPSILON);
+		Assert.assertEquals("Wrong maximum distance of the tour of this vehicleType", 15, maxDistanceVehilce4,
+				MatsimTestUtils.EPSILON);
 
 		double distanceTour = 0.0;
 		List<Tour.TourElement> elements = carrierV2.getSelectedPlan().getScheduledTours().iterator().next().getTour()
@@ -225,13 +225,13 @@ public class TestRunDistanceConstraint {
 							scenario.getNetwork());
 			}
 		}
-		Assert.assertEquals(24000, distanceTour, MatsimTestUtils.EPSILON);
+		Assert.assertEquals("The schedulded tour has a non expected distance",24000, distanceTour, MatsimTestUtils.EPSILON);
 
 	}
 
 //Option 3: costs for using one long range vehicle are higher than the costs of using two short range truck	
 	@Test
-	public void Carrier2SmallBatteryTest_Version3() {
+	public final void Carrier2SmallBatteryTest_Version3() {
 		Config config = ConfigUtils.createConfig();
 		config.controler().setOutputDirectory("output/original_Chessboard/Test/Version3");
 		config.network().setInputFile(original_Chessboard);
@@ -271,7 +271,8 @@ public class TestRunDistanceConstraint {
 		int jspritIterations = 100;
 		solveJspritAndMATSim(scenario, vehicleTypes, carriers, jspritIterations);
 
-		Assert.assertEquals(2, carrierV3.getSelectedPlan().getScheduledTours().size());
+		Assert.assertEquals("Not the correct amout of scheduled tours", 2,
+				carrierV3.getSelectedPlan().getScheduledTours().size());
 
 		double maxDistanceVehicle5 = (double) newVT5.getEngineInformation().getAttributes()
 				.getAttribute("engeryCapacity")
@@ -280,9 +281,11 @@ public class TestRunDistanceConstraint {
 				.getAttribute("engeryCapacity")
 				/ (double) newVT6.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
 
-		Assert.assertEquals(30, maxDistanceVehicle5, MatsimTestUtils.EPSILON);
+		Assert.assertEquals("Wrong maximum distance of the tour of this vehicleType", 30, maxDistanceVehicle5,
+				MatsimTestUtils.EPSILON);
 
-		Assert.assertEquals(30, maxDistanceVehilce6, MatsimTestUtils.EPSILON);
+		Assert.assertEquals("Wrong maximum distance of the tour of this vehicleType", 30, maxDistanceVehilce6,
+				MatsimTestUtils.EPSILON);
 
 		for (ScheduledTour scheduledTour : carrierV3.getSelectedPlan().getScheduledTours()) {
 
@@ -298,15 +301,15 @@ public class TestRunDistanceConstraint {
 			}
 			Assert.assertEquals(newVT6.getId(), scheduledTour.getVehicle().getVehicleType().getId());
 			if (distanceTour == 12000)
-				Assert.assertEquals(12000, distanceTour, MatsimTestUtils.EPSILON);
+				Assert.assertEquals("The schedulded tour has a non expected distance",12000, distanceTour, MatsimTestUtils.EPSILON);
 			else
-				Assert.assertEquals(20000, distanceTour, MatsimTestUtils.EPSILON);
+				Assert.assertEquals("The schedulded tour has a non expected distance",20000, distanceTour, MatsimTestUtils.EPSILON);
 		}
 	}
 
 //Option 4: An additional shipment outside the range of both BEVtypes
 	@Test
-	public void CarrierWithAddiotionalDieselVehicleTest_Version4() {
+	public final void CarrierWithAddiotionalDieselVehicleTest_Version4() {
 		Config config = ConfigUtils.createConfig();
 		config.controler().setOutputDirectory("output/original_Chessboard/Test/Version4");
 		config.network().setInputFile(original_Chessboard);
@@ -353,7 +356,8 @@ public class TestRunDistanceConstraint {
 		int jspritIterations = 100;
 		solveJspritAndMATSim(scenario, vehicleTypes, carriers, jspritIterations);
 
-		Assert.assertEquals(2, carrierV4.getSelectedPlan().getScheduledTours().size());
+		Assert.assertEquals("Not the correct amout of scheduled tours", 2,
+				carrierV4.getSelectedPlan().getScheduledTours().size());
 
 		double maxDistanceVehicle7 = (double) newVT7.getEngineInformation().getAttributes()
 				.getAttribute("engeryCapacity")
@@ -362,9 +366,11 @@ public class TestRunDistanceConstraint {
 				.getAttribute("engeryCapacity")
 				/ (double) newVT8.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
 
-		Assert.assertEquals(30, maxDistanceVehicle7, MatsimTestUtils.EPSILON);
+		Assert.assertEquals("Wrong maximum distance of the tour of this vehicleType", 30, maxDistanceVehicle7,
+				MatsimTestUtils.EPSILON);
 
-		Assert.assertEquals(30, maxDistanceVehilce8, MatsimTestUtils.EPSILON);
+		Assert.assertEquals("Wrong maximum distance of the tour of this vehicleType", 30, maxDistanceVehilce8,
+				MatsimTestUtils.EPSILON);
 
 		for (ScheduledTour scheduledTour : carrierV4.getSelectedPlan().getScheduledTours()) {
 
@@ -380,11 +386,11 @@ public class TestRunDistanceConstraint {
 				}
 			}
 			if (thisTypeId == "SmallBattery_V4")
-				Assert.assertEquals(24000, distanceTour, MatsimTestUtils.EPSILON);
+				Assert.assertEquals("The schedulded tour has a non expected distance",24000, distanceTour, MatsimTestUtils.EPSILON);
 			else if (thisTypeId == "DieselVehicle")
-				Assert.assertEquals(36000, distanceTour, MatsimTestUtils.EPSILON);
+				Assert.assertEquals("The schedulded tour has a non expected distance",36000, distanceTour, MatsimTestUtils.EPSILON);
 			else
-				Assert.fail("Wrong vehicleType used");;
+				Assert.fail("Wrong vehicleType used");
 		}
 
 	}
@@ -593,172 +599,4 @@ public class TestRunDistanceConstraint {
 			}
 		};
 	}
-
-	/**
-	 * @param scenario
-	 * @param carriers
-	 * @param vehicleTypes
-	 * @throws IOException
-	 */
-
-	private static void createResultFile(Scenario scenario, Carriers carriers, CarrierVehicleTypes vehicleTypes)
-			throws Exception {
-
-		log.info("Starting");
-
-		// String inputDir;
-		Map<Id<Person>, Double> personId2tourDistance = new HashMap<>();
-		Map<Id<Person>, Double> personId2tourConsumptionkWh = new HashMap<>();
-		Map<String, Integer> usedNumberPerVehicleType = new HashMap<>();
-		ArrayList<String> toursWithOverconsumption = new ArrayList<>();
-
-		for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
-			usedNumberPerVehicleType.put(singleVehicleType.getId().toString(), 0);
-		}
-		Network network = scenario.getNetwork();
-
-		BufferedWriter writer;
-		File file;
-		file = new File(scenario.getConfig().controler().getOutputDirectory() + "/02_SummaryOutput.txt");
-
-		writer = new BufferedWriter(new FileWriter(file, true));
-		String now = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new Date());
-		writer.write("Tourenstatisitik erstellt am: " + now + "\n\n");
-
-		for (Carrier singleCarrier : carriers.getCarriers().values()) {
-
-			double totalDistance = 0;
-			int numberOfVehicles = 0;
-			double distanceTour;
-			int numCollections = 0;
-			int tourNumberCarrier = 1;
-			VehicleType vt = null;
-
-			for (ScheduledTour scheduledTour : singleCarrier.getSelectedPlan().getScheduledTours()) {
-				distanceTour = 0.0;
-				for (VehicleType vt2 : singleCarrier.getCarrierCapabilities().getVehicleTypes()) {
-					if (vt2.getId().toString().contains(scheduledTour.getVehicle().getVehicleId().toString())) {
-						// String test = scheduledTour.getVehicle().getType().getId().toString();
-						vt = vt2;
-						break;
-					}
-				}
-
-				int vehicleTypeCount = usedNumberPerVehicleType
-						.get(scheduledTour.getVehicle().getVehicleId().toString());
-				usedNumberPerVehicleType.replace(scheduledTour.getVehicle().getVehicleId().toString(),
-						vehicleTypeCount + 1);
-
-				List<Tour.TourElement> elements = scheduledTour.getTour().getTourElements();
-				for (Tour.TourElement element : elements) {
-					if (element instanceof Tour.ServiceActivity) {
-						numCollections++;
-
-					}
-					if (element instanceof Tour.Leg) {
-						Tour.Leg legElement = (Tour.Leg) element;
-						if (legElement.getRoute().getDistance() != 0)
-							distanceTour = distanceTour
-									+ RouteUtils.calcDistance((NetworkRoute) legElement.getRoute(), 0, 0, network);
-					}
-				}
-				Id<Person> personId = Id.create(
-						scheduledTour.getVehicle().getVehicleId().toString() + "-Tour " + tourNumberCarrier,
-						Person.class);
-				personId2tourDistance.put(personId, distanceTour);
-				if (vt.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electricity")) {
-					personId2tourConsumptionkWh.put(personId, (distanceTour / 1000) * (double) vt.getEngineInformation()
-							.getAttributes().getAttribute("engeryConsumptionPerKm"));
-				}
-				totalDistance = totalDistance + distanceTour;
-				tourNumberCarrier++;
-			}
-			numberOfVehicles = numberOfVehicles + (tourNumberCarrier - 1);
-			writer.write("\n\n" + "Version: " + singleCarrier.getId().toString() + "\n");
-			writer.write("\tAnzahl der Abholstellen (Soll): \t\t\t\t\t" + singleCarrier.getServices().size() + "\n");
-			writer.write("\tAnzahl der Abholstellen ohne Abholung: \t\t\t\t"
-					+ (singleCarrier.getServices().size() - numCollections) + "\n");
-			writer.write("\tAnzahl der Fahrzeuge:\t\t\t\t\t\t\t\t" + numberOfVehicles + "\n");
-			for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
-				if (singleCarrier.getId().toString().equals(singleVehicleType.getDescription())) {
-					writer.write("\t\t\tAnzahl Typ " + singleVehicleType.getId().toString() + ":\t\t\t\t"
-							+ usedNumberPerVehicleType.get(singleVehicleType.getId().toString()) + "\n");
-				}
-			}
-			writer.write(
-					"\n" + "\tGefahrene Kilometer insgesamt:\t\t\t\t\t\t" + Math.round(totalDistance / 1000) + " km\n");
-			writer.write("\tVerfügbare Fahrzeugtypen:\t\t\t\t\t\n\n");
-			for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
-				if (singleCarrier.getId().toString().equals(singleVehicleType.getDescription())) {
-					writer.write("\t\t\tID: " + singleVehicleType.getId() + "\t\tAntrieb: "
-							+ singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
-									.toString()
-							+ "\t\tKapazität: " + singleVehicleType.getCapacity().getOther() + "\t\tFixkosten:"
-							+ singleVehicleType.getCostInformation().getFixedCosts() + " €");
-					if (singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
-							.equals("electricity")) {
-						double electricityConsumptionPer100km = 0;
-						double electricityCapacityinkWh = 0;
-						electricityConsumptionPer100km = (double) singleVehicleType.getEngineInformation()
-								.getAttributes().getAttribute("engeryConsumptionPerKm");
-						electricityCapacityinkWh = (double) singleVehicleType.getEngineInformation().getAttributes()
-								.getAttribute("engeryCapacity");
-
-						writer.write("\t\tLadekapazität: " + electricityCapacityinkWh + " kWh\t\tVerbrauch: "
-								+ electricityConsumptionPer100km + " kWh/100km\t\tReichweite: "
-								+ (int) Math.round(electricityCapacityinkWh / electricityConsumptionPer100km)
-								+ " km\n");
-					} else
-						writer.write("\n");
-				}
-			}
-			writer.write("\n\n" + "\tTourID\t\t\t\t\t\tdistance (max Distance) (km)\tconsumption (capacity) (kWh)\n\n");
-
-			for (Id<Person> id : personId2tourDistance.keySet()) {
-
-				int tourDistance = (int) Math.round(personId2tourDistance.get(id) / 1000);
-				int consumption = 0;
-				double distanceRange = 0;
-				double electricityCapacityinkWh = 0;
-				double electricityConsumptionPerkm = 0;
-
-				for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
-
-					if (id.toString().contains(singleVehicleType.getId().toString()) && singleVehicleType
-							.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electricity")) {
-
-						electricityConsumptionPerkm = (double) singleVehicleType.getEngineInformation().getAttributes()
-								.getAttribute("engeryConsumptionPerKm");
-						electricityCapacityinkWh = (double) singleVehicleType.getEngineInformation().getAttributes()
-								.getAttribute("engeryCapacity");
-						distanceRange = (int) Math.round(electricityCapacityinkWh / electricityConsumptionPerkm);
-						consumption = (int) Math.round(personId2tourConsumptionkWh.get(id));
-
-						if (consumption < electricityCapacityinkWh)
-							toursWithOverconsumption.add(id.toString());
-					}
-				}
-
-				writer.write("\t" + id + "\t\t" + tourDistance);
-				if (distanceRange > 0) {
-					writer.write(" (" + distanceRange + ")\t\t\t\t\t\t" + consumption + " (" + electricityCapacityinkWh
-							+ ")");
-				} else
-					writer.write("\t\t\t\t\t\t\t\t\t\t");
-				writer.newLine();
-
-			}
-			personId2tourConsumptionkWh.clear();
-			personId2tourDistance.clear();
-		}
-		writer.flush();
-		writer.close();
-		log.info("Output geschrieben");
-		log.info("### Done.");
-		if (toursWithOverconsumption.isEmpty() == false)
-			throw new Exception("The tour(s) " + toursWithOverconsumption.toString()
-					+ " have a higher consumption then their capacity");
-
-	}
-
 }
