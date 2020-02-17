@@ -1,25 +1,14 @@
 package org.matsim.vsp.DistanceConstraint;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
@@ -150,10 +139,14 @@ public class TestRunDistanceConstraint {
 							scenario.getNetwork());
 			}
 		}
-		Assert.assertEquals("The schedulded tour has a non expected distance",24000, distanceTour, MatsimTestUtils.EPSILON);
+		Assert.assertEquals("The schedulded tour has a non expected distance", 24000, distanceTour,
+				MatsimTestUtils.EPSILON);
 	}
 
-//Option 2: Tour is not possible with the vehicle with the small battery
+	/**
+	 * Option 2: Tour is not possible with the vehicle with the small battery. Thats
+	 * why one vehicle with a large battery is used.
+	 */
 	@Test
 	public final void CarrierLargeBatteryTest_Version2() {
 		Config config = ConfigUtils.createConfig();
@@ -225,11 +218,16 @@ public class TestRunDistanceConstraint {
 							scenario.getNetwork());
 			}
 		}
-		Assert.assertEquals("The schedulded tour has a non expected distance",24000, distanceTour, MatsimTestUtils.EPSILON);
+		Assert.assertEquals("The schedulded tour has a non expected distance", 24000, distanceTour,
+				MatsimTestUtils.EPSILON);
 
 	}
 
-//Option 3: costs for using one long range vehicle are higher than the costs of using two short range truck	
+	/**
+	 * Option 3: costs for using one long range vehicle are higher than the costs of
+	 * using two short range truck
+	 */
+
 	@Test
 	public final void Carrier2SmallBatteryTest_Version3() {
 		Config config = ConfigUtils.createConfig();
@@ -301,13 +299,20 @@ public class TestRunDistanceConstraint {
 			}
 			Assert.assertEquals(newVT6.getId(), scheduledTour.getVehicle().getVehicleType().getId());
 			if (distanceTour == 12000)
-				Assert.assertEquals("The schedulded tour has a non expected distance",12000, distanceTour, MatsimTestUtils.EPSILON);
+				Assert.assertEquals("The schedulded tour has a non expected distance", 12000, distanceTour,
+						MatsimTestUtils.EPSILON);
 			else
-				Assert.assertEquals("The schedulded tour has a non expected distance",20000, distanceTour, MatsimTestUtils.EPSILON);
+				Assert.assertEquals("The schedulded tour has a non expected distance", 20000, distanceTour,
+						MatsimTestUtils.EPSILON);
 		}
 	}
 
-//Option 4: An additional shipment outside the range of both BEVtypes
+	/**
+	 * Option 4: An additional shipment outside the range of both BEVtypes.
+	 * Therefore one diesel vehicle must be used and one vehicle with a small
+	 * battery.
+	 */
+
 	@Test
 	public final void CarrierWithAddiotionalDieselVehicleTest_Version4() {
 		Config config = ConfigUtils.createConfig();
@@ -386,9 +391,11 @@ public class TestRunDistanceConstraint {
 				}
 			}
 			if (thisTypeId == "SmallBattery_V4")
-				Assert.assertEquals("The schedulded tour has a non expected distance",24000, distanceTour, MatsimTestUtils.EPSILON);
+				Assert.assertEquals("The schedulded tour has a non expected distance", 24000, distanceTour,
+						MatsimTestUtils.EPSILON);
 			else if (thisTypeId == "DieselVehicle")
-				Assert.assertEquals("The schedulded tour has a non expected distance",36000, distanceTour, MatsimTestUtils.EPSILON);
+				Assert.assertEquals("The schedulded tour has a non expected distance", 36000, distanceTour,
+						MatsimTestUtils.EPSILON);
 			else
 				Assert.fail("Wrong vehicleType used");
 		}
