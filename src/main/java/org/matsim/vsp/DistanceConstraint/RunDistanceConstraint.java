@@ -98,15 +98,16 @@ public class RunDistanceConstraint {
 		newVT1.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
 		newVT1.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 450.);
 		newVT1.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
-		newVT1.getCapacity().setOther(40.);
+		newVT1.getCapacity().setOther(80.);
 		newVT1.setDescription("Carrier_Version1");
 		VehicleType newVT2 = VehicleUtils.createVehicleType(Id.create("SmallBattery_V1", VehicleType.class));
 		newVT2.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(70.);
 		newVT2.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
-		newVT2.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 225.);
-		newVT2.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
+		newVT2.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 300.);
+		newVT2.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 10.);
 		newVT2.setDescription("Carrier_Version1");
-		newVT2.getCapacity().setOther(40.);
+		newVT2.getCapacity().setOther(80.);
+
 
 		vehicleTypes.getVehicleTypes().put(newVT1.getId(), newVT1);
 		vehicleTypes.getVehicleTypes().put(newVT2.getId(), newVT2);
@@ -124,14 +125,14 @@ public class RunDistanceConstraint {
 		newVT3.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 450.);
 		newVT3.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
 		newVT3.setDescription("Carrier_Version2");
-		newVT3.getCapacity().setOther(40.);
+		newVT3.getCapacity().setOther(80.);
 		VehicleType newVT4 = VehicleUtils.createVehicleType(Id.create("SmallBattery_V2", VehicleType.class));
 		newVT4.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(70.);
 		newVT4.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
 		newVT4.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 150.);
-		newVT4.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
+		newVT4.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 10.);
 		newVT4.setDescription("Carrier_Version2");
-		newVT4.getCapacity().setOther(40.);
+		newVT4.getCapacity().setOther(80.);
 
 		vehicleTypes.getVehicleTypes().put(newVT3.getId(), newVT3);
 		vehicleTypes.getVehicleTypes().put(newVT4.getId(), newVT4);
@@ -176,14 +177,14 @@ public class RunDistanceConstraint {
 		newVT7.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 450.);
 		newVT7.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
 		newVT7.setDescription("Carrier_Version4");
-		newVT7.getCapacity().setOther(40.);
+		newVT7.getCapacity().setOther(120.);
 		VehicleType newVT8 = VehicleUtils.createVehicleType(Id.create("SmallBattery_V4", VehicleType.class));
 		newVT8.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(70.);
 		newVT8.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
-		newVT8.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 150.);
-		newVT8.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
+		newVT8.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 300.);
+		newVT8.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 10.);
 		newVT8.setDescription("Carrier_Version4");
-		newVT8.getCapacity().setOther(40.);
+		newVT8.getCapacity().setOther(120.);
 		VehicleType newVT9 = VehicleUtils.createVehicleType(Id.create("DieselVehicle", VehicleType.class));
 		newVT9.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(400.);
 		newVT9.getEngineInformation().getAttributes().putAttribute("fuelType", "diesel");
