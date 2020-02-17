@@ -14,6 +14,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -51,6 +52,8 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.replanning.GenericStrategyManager;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.testcases.MatsimTestUtils;
+
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit.Strategy;
@@ -71,26 +74,20 @@ public class TestRunDistanceConstraint {
 
 	private static final String original_Chessboard = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 
-	@Test
-	public void testRunDistanceConstraint() {
-		try {
-			main(null);
-		} catch (Exception e) {
-			Logger.getLogger(this.getClass()).fatal("there was an exception: \n" + e);
-			// if one catches an exception, then one needs to explicitly fail the test:
-			Assert.fail();
-		}
-	}
+//	@Before
+//	public final void setUp() {
+//
+//	}
 
 	/**
-	 * @param args
-	 * @throws Exception
+	 
 	 */
-
-	public static void main(String[] args) throws Exception {
+	@SuppressWarnings("deprecation")
+	@Test
+	public final void CarrierSmallBatteryTest_Version1() {
 
 		Config config = ConfigUtils.createConfig();
-		config.controler().setOutputDirectory("output/original_Chessboard/Test1");
+		config.controler().setOutputDirectory("output/original_Chessboard/Test/Version1");
 		config.network().setInputFile(original_Chessboard);
 		config = prepareConfig(config, 0);
 
@@ -102,7 +99,7 @@ public class TestRunDistanceConstraint {
 
 		FleetSize fleetSize = FleetSize.INFINITE;
 
-//Option 1: Tour is possible with the vehicle with the small battery
+//Option 1: Tour is possible with the vehicle with the small battery and the vehicle with the small battery is cheaper
 
 		Carrier carrierV1 = CarrierUtils.createCarrier(Id.create("Carrier_Version1", Carrier.class));
 		VehicleType newVT1 = VehicleUtils.createVehicleType(Id.create("LargeBattery_V1", VehicleType.class));
@@ -110,23 +107,70 @@ public class TestRunDistanceConstraint {
 		newVT1.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
 		newVT1.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 450.);
 		newVT1.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
-		newVT1.getCapacity().setOther(40.);
+		newVT1.getCapacity().setOther(80.);
 		newVT1.setDescription("Carrier_Version1");
 		VehicleType newVT2 = VehicleUtils.createVehicleType(Id.create("SmallBattery_V1", VehicleType.class));
 		newVT2.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(70.);
 		newVT2.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
-		newVT2.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 225.);
-		newVT2.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
+		newVT2.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 300.);
+		newVT2.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 10.);
 		newVT2.setDescription("Carrier_Version1");
-		newVT2.getCapacity().setOther(40.);
+		newVT2.getCapacity().setOther(80.);
 
 		vehicleTypes.getVehicleTypes().put(newVT1.getId(), newVT1);
 		vehicleTypes.getVehicleTypes().put(newVT2.getId(), newVT2);
+
 		boolean threeServices = false;
 		createServices(carrierV1, threeServices, carriers);
 		createCarriers(carriers, fleetSize, carrierV1, scenario, vehicleTypes);
 
+		int jspritIterations = 100;
+		solveJspritAndMATSim(scenario, vehicleTypes, carriers, jspritIterations);
+
+		Assert.assertEquals(1, carrierV1.getSelectedPlan().getScheduledTours().size());
+
+		Assert.assertEquals(newVT2.getId(), carrierV1.getSelectedPlan().getScheduledTours().iterator().next()
+				.getVehicle().getVehicleType().getId());
+		double maxDistanceVehicle1 = (double) newVT1.getEngineInformation().getAttributes()
+				.getAttribute("engeryCapacity")
+				/ (double) newVT1.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
+		double maxDistanceVehilce2 = (double) newVT2.getEngineInformation().getAttributes()
+				.getAttribute("engeryCapacity")
+				/ (double) newVT2.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
+
+		Assert.assertEquals(30, maxDistanceVehicle1, MatsimTestUtils.EPSILON);
+
+		Assert.assertEquals(30, maxDistanceVehilce2, MatsimTestUtils.EPSILON);
+
+		double distanceTour = 0.0;
+		List<Tour.TourElement> elements = carrierV1.getSelectedPlan().getScheduledTours().iterator().next().getTour()
+				.getTourElements();
+		for (Tour.TourElement element : elements) {
+			if (element instanceof Tour.Leg) {
+				Tour.Leg legElement = (Tour.Leg) element;
+				if (legElement.getRoute().getDistance() != 0)
+					distanceTour = distanceTour + RouteUtils.calcDistance((NetworkRoute) legElement.getRoute(), 0, 0,
+							scenario.getNetwork());
+			}
+		}
+		Assert.assertEquals(24000, distanceTour, MatsimTestUtils.EPSILON);
+	}
+
 //Option 2: Tour is not possible with the vehicle with the small battery
+	@Test
+	public void CarrierLargeBatteryTest_Version2() {
+		Config config = ConfigUtils.createConfig();
+		config.controler().setOutputDirectory("output/original_Chessboard/Test/Version2");
+		config.network().setInputFile(original_Chessboard);
+		config = prepareConfig(config, 0);
+
+		Scenario scenario = ScenarioUtils.loadScenario(config);
+
+		Carriers carriers = new Carriers();
+
+		CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes();
+
+		FleetSize fleetSize = FleetSize.INFINITE;
 
 		Carrier carrierV2 = CarrierUtils.createCarrier(Id.create("Carrier_Version2", Carrier.class));
 
@@ -136,24 +180,70 @@ public class TestRunDistanceConstraint {
 		newVT3.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 450.);
 		newVT3.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
 		newVT3.setDescription("Carrier_Version2");
-		newVT3.getCapacity().setOther(40.);
+		newVT3.getCapacity().setOther(80.);
 		VehicleType newVT4 = VehicleUtils.createVehicleType(Id.create("SmallBattery_V2", VehicleType.class));
 		newVT4.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(70.);
 		newVT4.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
 		newVT4.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 150.);
-		newVT4.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
+		newVT4.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 10.);
 		newVT4.setDescription("Carrier_Version2");
-		newVT4.getCapacity().setOther(40.);
+		newVT4.getCapacity().setOther(80.);
 
 		vehicleTypes.getVehicleTypes().put(newVT3.getId(), newVT3);
 		vehicleTypes.getVehicleTypes().put(newVT4.getId(), newVT4);
 
-		threeServices = false;
+		boolean threeServices = false;
 		createServices(carrierV2, threeServices, carriers);
 		createCarriers(carriers, fleetSize, carrierV2, scenario, vehicleTypes);
 
-//Option 3: costs for using one long range vehicle are higher than the costs of using two short range truck	
+		int jspritIterations = 100;
+		solveJspritAndMATSim(scenario, vehicleTypes, carriers, jspritIterations);
 
+		Assert.assertEquals(1, carrierV2.getSelectedPlan().getScheduledTours().size());
+
+		Assert.assertEquals(newVT3.getId(), carrierV2.getSelectedPlan().getScheduledTours().iterator().next()
+				.getVehicle().getVehicleType().getId());
+		double maxDistanceVehicle3 = (double) newVT3.getEngineInformation().getAttributes()
+				.getAttribute("engeryCapacity")
+				/ (double) newVT3.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
+		double maxDistanceVehilce4 = (double) newVT4.getEngineInformation().getAttributes()
+				.getAttribute("engeryCapacity")
+				/ (double) newVT4.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
+
+		Assert.assertEquals(30, maxDistanceVehicle3, MatsimTestUtils.EPSILON);
+
+		Assert.assertEquals(15, maxDistanceVehilce4, MatsimTestUtils.EPSILON);
+
+		double distanceTour = 0.0;
+		List<Tour.TourElement> elements = carrierV2.getSelectedPlan().getScheduledTours().iterator().next().getTour()
+				.getTourElements();
+		for (Tour.TourElement element : elements) {
+			if (element instanceof Tour.Leg) {
+				Tour.Leg legElement = (Tour.Leg) element;
+				if (legElement.getRoute().getDistance() != 0)
+					distanceTour = distanceTour + RouteUtils.calcDistance((NetworkRoute) legElement.getRoute(), 0, 0,
+							scenario.getNetwork());
+			}
+		}
+		Assert.assertEquals(24000, distanceTour, MatsimTestUtils.EPSILON);
+
+	}
+
+//Option 3: costs for using one long range vehicle are higher than the costs of using two short range truck	
+	@Test
+	public void Carrier2SmallBatteryTest_Version3() {
+		Config config = ConfigUtils.createConfig();
+		config.controler().setOutputDirectory("output/original_Chessboard/Test/Version3");
+		config.network().setInputFile(original_Chessboard);
+		config = prepareConfig(config, 0);
+
+		Scenario scenario = ScenarioUtils.loadScenario(config);
+
+		Carriers carriers = new Carriers();
+
+		CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes();
+
+		FleetSize fleetSize = FleetSize.INFINITE;
 		Carrier carrierV3 = CarrierUtils.createCarrier(Id.create("Carrier_Version3", Carrier.class));
 
 		VehicleType newVT5 = VehicleUtils.createVehicleType(Id.create("LargeBattery_V3", VehicleType.class));
@@ -166,20 +256,69 @@ public class TestRunDistanceConstraint {
 		VehicleType newVT6 = VehicleUtils.createVehicleType(Id.create("SmallBattery_V3", VehicleType.class));
 		newVT6.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(40.);
 		newVT6.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
-		newVT6.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 500.);
-		newVT6.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
+		newVT6.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 300.);
+		newVT6.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 10.);
 		newVT6.setDescription("Carrier_Version3");
 		newVT6.getCapacity().setOther(40.);
 
 		vehicleTypes.getVehicleTypes().put(newVT5.getId(), newVT5);
 		vehicleTypes.getVehicleTypes().put(newVT6.getId(), newVT6);
 
-		threeServices = false;
+		boolean threeServices = false;
 		createServices(carrierV3, threeServices, carriers);
 		createCarriers(carriers, fleetSize, carrierV3, scenario, vehicleTypes);
 
-//Option 4: An additional shipment outside the range of both BEVtypes
+		int jspritIterations = 100;
+		solveJspritAndMATSim(scenario, vehicleTypes, carriers, jspritIterations);
 
+		Assert.assertEquals(2, carrierV3.getSelectedPlan().getScheduledTours().size());
+
+		double maxDistanceVehicle5 = (double) newVT5.getEngineInformation().getAttributes()
+				.getAttribute("engeryCapacity")
+				/ (double) newVT5.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
+		double maxDistanceVehilce6 = (double) newVT6.getEngineInformation().getAttributes()
+				.getAttribute("engeryCapacity")
+				/ (double) newVT6.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
+
+		Assert.assertEquals(30, maxDistanceVehicle5, MatsimTestUtils.EPSILON);
+
+		Assert.assertEquals(30, maxDistanceVehilce6, MatsimTestUtils.EPSILON);
+
+		for (ScheduledTour scheduledTour : carrierV3.getSelectedPlan().getScheduledTours()) {
+
+			double distanceTour = 0.0;
+			List<Tour.TourElement> elements = scheduledTour.getTour().getTourElements();
+			for (Tour.TourElement element : elements) {
+				if (element instanceof Tour.Leg) {
+					Tour.Leg legElement = (Tour.Leg) element;
+					if (legElement.getRoute().getDistance() != 0)
+						distanceTour = distanceTour + RouteUtils.calcDistance((NetworkRoute) legElement.getRoute(), 0,
+								0, scenario.getNetwork());
+				}
+			}
+			Assert.assertEquals(newVT6.getId(), scheduledTour.getVehicle().getVehicleType().getId());
+			if (distanceTour == 12000)
+				Assert.assertEquals(12000, distanceTour, MatsimTestUtils.EPSILON);
+			else
+				Assert.assertEquals(20000, distanceTour, MatsimTestUtils.EPSILON);
+		}
+	}
+
+//Option 4: An additional shipment outside the range of both BEVtypes
+	@Test
+	public void CarrierWithAddiotionalDieselVehicleTest_Version4() {
+		Config config = ConfigUtils.createConfig();
+		config.controler().setOutputDirectory("output/original_Chessboard/Test/Version4");
+		config.network().setInputFile(original_Chessboard);
+		config = prepareConfig(config, 0);
+
+		Scenario scenario = ScenarioUtils.loadScenario(config);
+
+		Carriers carriers = new Carriers();
+
+		CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes();
+
+		FleetSize fleetSize = FleetSize.INFINITE;
 		Carrier carrierV4 = CarrierUtils.createCarrier(Id.create("Carrier_Version4", Carrier.class));
 
 		VehicleType newVT7 = VehicleUtils.createVehicleType(Id.create("LargeBattery_V4", VehicleType.class));
@@ -188,14 +327,14 @@ public class TestRunDistanceConstraint {
 		newVT7.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 450.);
 		newVT7.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
 		newVT7.setDescription("Carrier_Version4");
-		newVT7.getCapacity().setOther(40.);
+		newVT7.getCapacity().setOther(120.);
 		VehicleType newVT8 = VehicleUtils.createVehicleType(Id.create("SmallBattery_V4", VehicleType.class));
 		newVT8.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(70.);
 		newVT8.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
-		newVT8.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 150.);
-		newVT8.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 15.);
+		newVT8.getEngineInformation().getAttributes().putAttribute("engeryCapacity", 300.);
+		newVT8.getEngineInformation().getAttributes().putAttribute("engeryConsumptionPerKm", 10.);
 		newVT8.setDescription("Carrier_Version4");
-		newVT8.getCapacity().setOther(40.);
+		newVT8.getCapacity().setOther(120.);
 		VehicleType newVT9 = VehicleUtils.createVehicleType(Id.create("DieselVehicle", VehicleType.class));
 		newVT9.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(400.);
 		newVT9.getEngineInformation().getAttributes().putAttribute("fuelType", "diesel");
@@ -207,13 +346,47 @@ public class TestRunDistanceConstraint {
 		vehicleTypes.getVehicleTypes().put(newVT8.getId(), newVT8);
 		vehicleTypes.getVehicleTypes().put(newVT9.getId(), newVT9);
 
-		threeServices = true;
+		boolean threeServices = true;
 		createServices(carrierV4, threeServices, carriers);
 		createCarriers(carriers, fleetSize, carrierV4, scenario, vehicleTypes);
 
 		int jspritIterations = 100;
 		solveJspritAndMATSim(scenario, vehicleTypes, carriers, jspritIterations);
-		createResultFile(scenario, carriers, vehicleTypes);
+
+		Assert.assertEquals(2, carrierV4.getSelectedPlan().getScheduledTours().size());
+
+		double maxDistanceVehicle7 = (double) newVT7.getEngineInformation().getAttributes()
+				.getAttribute("engeryCapacity")
+				/ (double) newVT7.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
+		double maxDistanceVehilce8 = (double) newVT8.getEngineInformation().getAttributes()
+				.getAttribute("engeryCapacity")
+				/ (double) newVT8.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
+
+		Assert.assertEquals(30, maxDistanceVehicle7, MatsimTestUtils.EPSILON);
+
+		Assert.assertEquals(30, maxDistanceVehilce8, MatsimTestUtils.EPSILON);
+
+		for (ScheduledTour scheduledTour : carrierV4.getSelectedPlan().getScheduledTours()) {
+
+			String thisTypeId = scheduledTour.getVehicle().getVehicleType().getId().toString();
+			double distanceTour = 0.0;
+			List<Tour.TourElement> elements = scheduledTour.getTour().getTourElements();
+			for (Tour.TourElement element : elements) {
+				if (element instanceof Tour.Leg) {
+					Tour.Leg legElement = (Tour.Leg) element;
+					if (legElement.getRoute().getDistance() != 0)
+						distanceTour = distanceTour + RouteUtils.calcDistance((NetworkRoute) legElement.getRoute(), 0,
+								0, scenario.getNetwork());
+				}
+			}
+			if (thisTypeId == "SmallBattery_V4")
+				Assert.assertEquals(24000, distanceTour, MatsimTestUtils.EPSILON);
+			else if (thisTypeId == "DieselVehicle")
+				Assert.assertEquals(36000, distanceTour, MatsimTestUtils.EPSILON);
+			else
+				Assert.fail("Wrong vehicleType used");;
+		}
+
 	}
 
 	/**
@@ -465,7 +638,7 @@ public class TestRunDistanceConstraint {
 				distanceTour = 0.0;
 				for (VehicleType vt2 : singleCarrier.getCarrierCapabilities().getVehicleTypes()) {
 					if (vt2.getId().toString().contains(scheduledTour.getVehicle().getVehicleId().toString())) {
-
+						// String test = scheduledTour.getVehicle().getType().getId().toString();
 						vt = vt2;
 						break;
 					}
@@ -522,8 +695,8 @@ public class TestRunDistanceConstraint {
 									.toString()
 							+ "\t\tKapazität: " + singleVehicleType.getCapacity().getOther() + "\t\tFixkosten:"
 							+ singleVehicleType.getCostInformation().getFixedCosts() + " €");
-					if (singleVehicleType.getEngineInformation().getAttributes()
-							.getAttribute("fuelType").equals("electricity")) {
+					if (singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
+							.equals("electricity")) {
 						double electricityConsumptionPer100km = 0;
 						double electricityCapacityinkWh = 0;
 						electricityConsumptionPer100km = (double) singleVehicleType.getEngineInformation()
@@ -551,8 +724,8 @@ public class TestRunDistanceConstraint {
 
 				for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
 
-					if (id.toString().contains(singleVehicleType.getId().toString())
-							&& singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electricity")) {
+					if (id.toString().contains(singleVehicleType.getId().toString()) && singleVehicleType
+							.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electricity")) {
 
 						electricityConsumptionPerkm = (double) singleVehicleType.getEngineInformation().getAttributes()
 								.getAttribute("engeryConsumptionPerKm");
@@ -561,7 +734,7 @@ public class TestRunDistanceConstraint {
 						distanceRange = (int) Math.round(electricityCapacityinkWh / electricityConsumptionPerkm);
 						consumption = (int) Math.round(personId2tourConsumptionkWh.get(id));
 
-						if (consumption > electricityCapacityinkWh)
+						if (consumption < electricityCapacityinkWh)
 							toursWithOverconsumption.add(id.toString());
 					}
 				}
