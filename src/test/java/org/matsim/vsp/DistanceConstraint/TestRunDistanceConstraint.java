@@ -58,6 +58,12 @@ import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
 
+/**
+ * Test for the distance constraint. 4 different setups are used to control the correct working of the constraint
+ * 
+ * @author rewert
+ *
+ */
 public class TestRunDistanceConstraint {
 	static final Logger log = Logger.getLogger(TestRunDistanceConstraint.class);
 
@@ -67,7 +73,7 @@ public class TestRunDistanceConstraint {
 	 * Option 1: Tour is possible with the vehicle with the small battery and the
 	 * vehicle with the small battery is cheaper
 	 */
-	@SuppressWarnings("deprecation")
+
 	@Test
 	public final void CarrierSmallBatteryTest_Version1() {
 
@@ -399,7 +405,6 @@ public class TestRunDistanceConstraint {
 			else
 				Assert.fail("Wrong vehicleType used");
 		}
-
 	}
 
 	/**
