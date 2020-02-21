@@ -1,63 +1,33 @@
-/* *********************************************************************** *
- * project: org.matsim.*												   *
- *                                                                         *
- * *********************************************************************** *
- *                                                                         *
- * copyright       : (C) 2008 by the members listed in the COPYING,        *
- *                   LICENSE and WARRANTY file.                            *
- * email           : info at matsim dot org                                *
- *                                                                         *
- * *********************************************************************** *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *   See also COPYING, LICENSE and WARRANTY file                           *
- *                                                                         *
- * *********************************************************************** */
+/*
+  * *********************************************************************** *
+  * project: org.matsim.*
+  * *********************************************************************** *
+  *                                                                         *
+  * copyright       : (C) 2020 by the members listed in the COPYING,        *
+  *                   LICENSE and WARRANTY file.                            *
+  * email           : info at matsim dot org                                *
+  *                                                                         *
+  * *********************************************************************** *
+  *                                                                         *
+  *   This program is free software; you can redistribute it and/or modify  *
+  *   it under the terms of the GNU General Public License as published by  *
+  *   the Free Software Foundation; either version 2 of the License, or     *
+  *   (at your option) any later version.                                   *
+  *   See also COPYING, LICENSE and WARRANTY file                           *
+  *                                                                         *
+  * *********************************************************************** *
+ */
 package org.matsim.vsp.freight;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import javax.management.InvalidAttributeValueException;
-
-import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
-import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
-import com.graphhopper.jsprit.core.algorithm.listener.VehicleRoutingAlgorithmListeners.Priority;
-import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
-import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
-import com.graphhopper.jsprit.core.util.Solutions;
-import com.graphhopper.jsprit.analysis.toolbox.StopWatch;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.freight.FreightConfigGroup;
-import org.matsim.contrib.freight.carrier.Carrier;
-import org.matsim.contrib.freight.carrier.CarrierPlan;
-import org.matsim.contrib.freight.carrier.CarrierPlanXmlReader;
-import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
-import org.matsim.contrib.freight.carrier.CarrierService;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypeLoader;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypeWriter;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
-import org.matsim.contrib.freight.carrier.Carriers;
-import org.matsim.contrib.freight.carrier.ScheduledTour;
-import org.matsim.contrib.freight.carrier.Tour.ServiceActivity;
-import org.matsim.contrib.freight.carrier.Tour.TourElement;
+import org.matsim.contrib.freight.carrier.*;
 import org.matsim.contrib.freight.controler.CarrierModule;
 import org.matsim.contrib.freight.controler.CarrierPlanStrategyManagerFactory;
 import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
-import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
-import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts;
-import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts.Builder;
-import org.matsim.contrib.freight.jsprit.NetworkRouter;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.consistency.VspConfigConsistencyCheckerImpl;
@@ -78,6 +48,12 @@ import org.matsim.core.scoring.SumScoringFunction;
 import org.matsim.vehicles.VehicleType;
 import org.osgeo.proj4j.UnsupportedParameterException;
 
+import javax.management.InvalidAttributeValueException;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.LocalDateTime;
+
 /**
  * This is a short an easy version to run MATSim freight scenarios .
  * 
@@ -86,29 +62,28 @@ import org.osgeo.proj4j.UnsupportedParameterException;
  * @author kturner
  * 
  */
-public class RunFreight {
+public class RunFreightOnlyMatsim {
 
-	private static final Logger log = Logger.getLogger(RunFreight.class);
+	private static final Logger log = Logger.getLogger(RunFreightOnlyMatsim.class);
 	private static final Level loggingLevel = Level.INFO; 		//Set to info to avoid all Debug-Messages, e.g. from VehicleRountingAlgorithm, but can be set to other values if needed. KMT feb/18. 
 
 	private enum CostsModififier {av, avFix110pct, avDist110pct, avVehCapUp}
 	private final static CostsModififier costsModififier = null;
 
 	//Beginn Namesdefinition KT Für Berlin-Szenario 
-	private static final String INPUT_DIR = "scenarios/BerlinFood/";
+	private static final String INPUT_DIR = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBln_oneTW/output/I-Base_NwCE_BVWP_Pickup_10000it/";
 
-	private static final String OUTPUT_DIR = "scenarios/BerlinFood/output/Base_ServiceBased/" ;
+	private static final String OUTPUT_DIR = "../outputKMT/zerocuts/BerlinFood/I_Base_allVehicles/output/" ;
 	private static final String LOG_DIR = OUTPUT_DIR + "Logs/";
 
 	//Dateinamen
-	private static final String NETFILE_NAME = "network.xml.gz" ;
-	private static final String CARRIERFILE_NAME = "carrierLEH_v2_withFleet_depot.xml";
-	private static final String VEHTYPEFILE_NAME = "vehicleTypes.xml" ;
+	private static final String NETFILE_NAME = "output_network.xml.gz" ;
+	private static final String CARRIERFILE_NAME = "output_carriers.xml.gz";
+	private static final String VEHTYPEFILE_NAME = "output_vehicleTypes.xml" ;
 
 	private static final String NETFILE = INPUT_DIR + NETFILE_NAME ;
 	private static final String VEHTYPEFILE = INPUT_DIR + VEHTYPEFILE_NAME;
 	private static final String CARRIERFILE = INPUT_DIR + CARRIERFILE_NAME;
-	//	private static final String ALGORITHMFILE = INPUT_DIR + ALGORITHMFILE_NAME;
 
 	// Einstellungen für den Run	
 	private static final boolean runMatsim = true;	 //when false only jsprit run will be performed
@@ -124,7 +99,7 @@ public class RunFreight {
 		log.info("#### Starting Run: ");
 
 		// ### config stuff: ###	
-		config = createConfig(args);
+		config = createConfig();
 
 		// ### scenario stuff: ###
 		Scenario scenario = ScenarioUtils.loadScenario(config);
@@ -135,7 +110,6 @@ public class RunFreight {
 		if (runMatsim){
 			matsimRun(scenario, carriers);	//final MATSim configurations and start of the MATSim-Run
 		}
-		writeAdditionalRunOutput(config, carriers);	//write some final Output
 
 		writeRunInfo();	
 
@@ -145,15 +119,10 @@ public class RunFreight {
 		System.out.println("#### Finished ####");
 	}
 
-	private static Config createConfig(String[] args) {
+	private static Config createConfig() {
 		Config config = ConfigUtils.createConfig() ;
 
-		if ((args == null) || (args.length == 0)) {
-			config.controler().setOutputDirectory(OUTPUT_DIR);
-		} else {
-			System.out.println( "args[0]:" + args[0] );
-			config.controler().setOutputDirectory( args[0]+"/" );
-		}
+		config.controler().setOutputDirectory(OUTPUT_DIR);
 
 		// (the directory structure is needed for jsprit output, which is before the
 		// controler starts. Maybe there is a better alternative ...)
@@ -172,7 +141,6 @@ public class RunFreight {
 		config.planCalcScore().setFractionOfIterationsToStartScoreMSA(0.8);
 		config.plans().setRemovingUnneccessaryPlanAttributes(true);
 		config.plansCalcRoute().setInsertingAccessEgressWalk(true);
-		//		config.qsim().setUsePersonIdForMissingVehicleId(false);		//TODO: Doesn't work here yet: "java.lang.IllegalStateException: NetworkRoute without a specified vehicle id." KMT jan/18
 		config.qsim().setUsingTravelTimeCheckInTeleportation(true);
 		config.qsim().setTrafficDynamics(TrafficDynamics.kinematicWaves);
 		config.strategy().setFractionOfIterationsToDisableInnovation(0.8);
@@ -199,15 +167,6 @@ public class RunFreight {
 		vehicleTypes = modifyVehicleTypes(vehicleTypes);
 
 		Carriers carriers = createCarriers(vehicleTypes);
-		generateCarrierPlans(network, carriers, vehicleTypes, config); // Hier erfolgt Lösung des VRPs
-
-		checkServiceAssignment(carriers);
-
-		//### Output nach Jsprit Iteration
-		new CarrierPlanXmlWriterV2(carriers).write( config.controler().getOutputDirectory() + "/jsprit_plannedCarriers.xml") ; //Muss in Temp, da OutputDir leer sein muss // setOverwriteFiles gibt es nicht mehr; kt 05.11.2014
-
-		new WriteCarrierScoreInfos(carriers, new File(config.controler().getOutputDirectory() +  "/#JspritCarrierScoreInformation.txt"));
-
 		return carriers;
 	}
 
@@ -259,133 +218,6 @@ public class RunFreight {
 		CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes() ;
 		new CarrierVehicleTypeReader(vehicleTypes).readFile(VEHTYPEFILE) ;
 		return vehicleTypes;
-	}
-
-	/**
-	 * Create and solve the VRP with jsprit
-	 * 
-	 * @param network
-	 * @param carriers
-	 * @param vehicleTypes
-	 * @param config
-	 */
-	private static void generateCarrierPlans(Network network, Carriers carriers, CarrierVehicleTypes vehicleTypes, Config config) {
-		Builder netBuilder = NetworkBasedTransportCosts.Builder.newInstance( network, vehicleTypes.getVehicleTypes().values() );
-
-		netBuilder.setTimeSliceWidth(1800) ; // !!!!, otherwise it will not do anything.
-
-		final NetworkBasedTransportCosts netBasedCosts = netBuilder.build() ;
-		log.debug(netBasedCosts.toString());
-
-		for ( Carrier carrier : carriers.getCarriers().values() ) {
-			VehicleRoutingProblem.Builder vrpBuilder = MatsimJspritFactory.createRoutingProblemBuilder( carrier, network ) ;
-			vrpBuilder.setRoutingCost(netBasedCosts) ;
-			VehicleRoutingProblem vrp = vrpBuilder.build() ;
-
-
-			VehicleRoutingAlgorithm vra = Jsprit.Builder.newInstance(vrp).setProperty(Jsprit.Parameter.THREADS, "5").buildAlgorithm();
-			vra.getAlgorithmListeners().addListener(new StopWatch(), Priority.HIGH);
-			//	        vra.getAlgorithmListeners().addListener(new AlgorithmSearchProgressChartListener(TEMP_DIR +  RUN + runIndex + "jsprit_progress.png"));
-			vra.setMaxIterations(MAX_JSPRIT_ITERATION);
-			VehicleRoutingProblemSolution solution = Solutions.bestOf(vra.searchSolutions());
-
-			//TODO: Auch option für Einlesen des Algorithmus, wenn vorhanden?
-			//			VehicleRoutingAlgorithm algorithm = VehicleRoutingAlgorithms.readAndCreateAlgorithm(vrp, IOUtils.getUrlFromFileOrResource(ALGORITHMFILE));
-			//			algorithm.setMaxIterations(MAX_JSPRIT_ITERATION);
-			//			VehicleRoutingProblemSolution solution = Solutions.bestOf(algorithm.searchSolutions());
-			CarrierPlan newPlan = MatsimJspritFactory.createPlan(carrier, solution) ;
-
-			NetworkRouter.routePlan(newPlan,netBasedCosts) ;
-
-			carrier.setSelectedPlan(newPlan) ;
-
-			//Plot der Jsprit-Lösung
-			//			Plotter plotter = new Plotter(vrp,solution);
-			//			plotter.plot(config.controler().getOutputDirectory() + "/jsprit_solution_" + carrier.getId().toString() +".png", carrier.getId().toString());
-
-			//Ausgabe der Ergebnisse auf der Console
-			//SolutionPrinter.print(vrp,solution,Print.VERBOSE);
-
-		}
-	}
-
-	/**
-	 * Prüft für die Carriers, ob alle Services auch in den geplanten Touren vorkommen, d.h., ob sie auch tatsächlich geplant wurden.
-	 * Falls nicht: log.warn und Ausgabe einer Datei: "#UnassignedServices.txt" mit den Service-Ids.
-	 * @param carriers
-	 */
-	//TODO: Auch für Shipments auslegen und umbennnen. KMT feb'19
-	//TODO: Funktionaltität in contrib vorsehen -> FreightUtils? KMT feb'19
-	private static void checkServiceAssignment(Carriers carriers) {
-		for (Carrier c :carriers.getCarriers().values()){
-			ArrayList<CarrierService> assignedServices = new ArrayList<CarrierService>();
-			ArrayList<CarrierService> multiassignedServices = new ArrayList<CarrierService>();
-			ArrayList<CarrierService> unassignedServices = new ArrayList<CarrierService>();
-
-			log.info("### Check service assignements of Carrier: " +c.getId());
-			//Erfasse alle einer Tour zugehörigen (-> stattfindenden) Services 
-			for (ScheduledTour tour : c.getSelectedPlan().getScheduledTours()){
-				for (TourElement te : tour.getTour().getTourElements()){
-					if (te instanceof  ServiceActivity){
-						CarrierService assignedService = ((ServiceActivity) te).getService();
-						if (!assignedServices.contains(assignedService)){
-							assignedServices.add(assignedService);
-							log.debug("Assigned Service: " +assignedServices.toString());
-						} else {
-							multiassignedServices.add(assignedService);
-							log.warn("Service " + assignedService.getId().toString() + " has already been assigned to Carrier " + c.getId().toString() + " -> multiple Assignment!");
-						}
-					}
-				}
-			}
-
-			//Check, if all Services of the Carrier were assigned
-			for (CarrierService service : c.getServices().values()){
-				if (!assignedServices.contains(service)){
-					unassignedServices.add(service);
-					log.warn("Service " + service.getId().toString() +" will NOT be served by Carrier " + c.getId().toString());
-				} else {
-					log.debug("Service was assigned: " +service.toString());
-				}
-			}
-
-			//Schreibe die mehrfach eingeplanten Services in Datei
-			if (!multiassignedServices.isEmpty()){
-				try {
-					FileWriter writer = new FileWriter(new File(config.controler().getOutputDirectory() + "#MultiAssignedServices.txt"), true);
-					writer.write("#### Multi-assigned Services of Carrier: " + c.getId().toString() + System.getProperty("line.separator"));
-					for (CarrierService s : multiassignedServices){
-						writer.write(s.getId().toString() + System.getProperty("line.separator"));
-					}
-					writer.flush();
-					writer.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				} 
-			} else {
-				log.info("No service(s)of " + c.getId().toString() +" were assigned to a tour more then one times.");
-			}
-
-
-			//Schreibe die nicht eingeplanten Services in Datei
-			if (!unassignedServices.isEmpty()){
-				try {
-					FileWriter writer = new FileWriter(new File(config.controler().getOutputDirectory() + "#UnassignedServices.txt"), true);
-					writer.write("#### Unassigned Services of Carrier: " + c.getId().toString() + System.getProperty("line.separator"));
-					for (CarrierService s : unassignedServices){
-						writer.write(s.getId().toString() + System.getProperty("line.separator"));
-					}
-					writer.flush();
-					writer.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				} 
-			} else {
-				log.info("All service(s) of " + c.getId().toString() +" were assigned to at least one tour");
-			}
-
-		}//for(carriers)
-
 	}
 
 
@@ -455,17 +287,6 @@ public class RunFreight {
 				return sumSf;
 			}
 		};
-	}
-
-	private static void writeAdditionalRunOutput(Config config, Carriers carriers) {
-		// ### some final output: ###
-		if (runMatsim){		//makes only sense, when MATSimrRun was performed KT 06.04.15
-			new WriteCarrierScoreInfos(carriers, new File(OUTPUT_DIR + "#MatsimCarrierScoreInformation.txt"));
-		}		
-		new CarrierPlanXmlWriterV2(carriers).write( config.controler().getOutputDirectory() + "/output_carriers.xml") ;
-		new CarrierPlanXmlWriterV2(carriers).write( config.controler().getOutputDirectory() + "/output_carriers.xml.gz") ;
-		new CarrierVehicleTypeWriter(CarrierVehicleTypes.getVehicleTypes(carriers)).write(config.controler().getOutputDirectory() + "/output_vehicleTypes.xml");
-		new CarrierVehicleTypeWriter(CarrierVehicleTypes.getVehicleTypes(carriers)).write(config.controler().getOutputDirectory() + "/output_vehicleTypes.xml.gz");
 	}
 
 	/**
