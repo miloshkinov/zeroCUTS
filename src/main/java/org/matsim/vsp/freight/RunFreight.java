@@ -95,16 +95,15 @@ public class RunFreight {
 	private final static CostsModififier costsModififier = null;
 
 	//Beginn Namesdefinition KT Für Berlin-Szenario 
-	private static final String INPUT_DIR = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBln_oneTW/output/I-Base_NwCE_BVWP_Pickup_10000it/";
+	private static final String INPUT_DIR = "scenarios/BerlinFood/";
 
-	private static final String OUTPUT_DIR = "../outputKMT/zerocuts/BerlinFood/I_Base_allVehicles/output/" ;
+	private static final String OUTPUT_DIR = "scenarios/BerlinFood/output/Base_ServiceBased/" ;
 	private static final String LOG_DIR = OUTPUT_DIR + "Logs/";
 
 	//Dateinamen
-	private static final String NETFILE_NAME = "output_network.xml.gz" ;
-	private static final String CARRIERFILE_NAME = "output_carriers.xml.gz";
-	//	private static final String ALGORITHMFILE_NAME = "mdvrp_algorithmConfig_2.xml" ;
-	private static final String VEHTYPEFILE_NAME = "output_vehicleTypes.xml" ;
+	private static final String NETFILE_NAME = "network.xml.gz" ;
+	private static final String CARRIERFILE_NAME = "carrierLEH_v2_withFleet_depot.xml";
+	private static final String VEHTYPEFILE_NAME = "vehicleTypes.xml" ;
 
 	private static final String NETFILE = INPUT_DIR + NETFILE_NAME ;
 	private static final String VEHTYPEFILE = INPUT_DIR + VEHTYPEFILE_NAME;
@@ -125,7 +124,7 @@ public class RunFreight {
 		log.info("#### Starting Run: ");
 
 		// ### config stuff: ###	
-		config = createConfig();
+		config = createConfig(args);
 
 		// ### scenario stuff: ###
 		Scenario scenario = ScenarioUtils.loadScenario(config);
@@ -146,10 +145,15 @@ public class RunFreight {
 		System.out.println("#### Finished ####");
 	}
 
-	private static Config createConfig() {
+	private static Config createConfig(String[] args) {
 		Config config = ConfigUtils.createConfig() ;
 
-		config.controler().setOutputDirectory(OUTPUT_DIR);
+		if ((args == null) || (args.length == 0)) {
+			config.controler().setOutputDirectory(OUTPUT_DIR);
+		} else {
+			System.out.println( "args[0]:" + args[0] );
+			config.controler().setOutputDirectory( args[0]+"/" );
+		}
 
 		// (the directory structure is needed for jsprit output, which is before the
 		// controler starts. Maybe there is a better alternative ...)
