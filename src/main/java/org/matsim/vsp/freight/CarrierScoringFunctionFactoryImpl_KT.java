@@ -216,8 +216,8 @@ public class CarrierScoringFunctionFactoryImpl_KT implements CarrierScoringFunct
 		//Kosten für Zeit von Beginn bis Ende der Aktivität (enthält aktuell jun '15 auch Wartezeit bis Service beginnt)
 		private double calcActCosts(FreightActivity act) {
 				// deduct score for the time spent at the facility:
-				final double actStartTime = act.getStartTime();
-				final double actEndTime = act.getEndTime();
+				final double actStartTime = act.getStartTime().seconds();
+				final double actEndTime = act.getEndTime().seconds();
 				return (actEndTime - actStartTime) * this.margUtlOfTime_s ;
 		}
 
@@ -301,8 +301,8 @@ public class CarrierScoringFunctionFactoryImpl_KT implements CarrierScoringFunct
 		//Costs für Zeit von Begin bis Ende der Aktivität (enthält aktuell jun '15 auch Wartezeit bis Service beginnt)
 		private double calcActCosts(FreightActivity act) {
 				// deduct score for the time spent at the facility:
-				final double actStartTime = act.getStartTime();
-				final double actEndTime = act.getEndTime();
+				final double actStartTime = act.getStartTime().seconds();
+				final double actEndTime = act.getEndTime().seconds();
 				return (actEndTime - actStartTime) * this.margUtlOfTime_s ;
 		}
 		
@@ -331,7 +331,7 @@ public class CarrierScoringFunctionFactoryImpl_KT implements CarrierScoringFunct
 		//Korrigiert den Score bei der ersten Service-Aktivität (Wartezeit, da bereits zu Beginn der Depotöffnung losgefahren)
 		//indem diese Zeit wieder mit einem positiven Wert gegengerechnet wird
 		private double correctFirstService(FreightActivity act){
-			final double actStartTime = act.getStartTime();
+			final double actStartTime = act.getStartTime().seconds();
 			final double windowStartTime = act.getTimeWindow().getStart();
 				if ( actStartTime < windowStartTime ) {	//Fahrzeug vor Öffnungszeit angekommen.
 					return ( windowStartTime - actStartTime ) * this.margUtlOfTime_s ;
