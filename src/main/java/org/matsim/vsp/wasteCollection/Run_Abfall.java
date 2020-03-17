@@ -38,8 +38,10 @@ public class Run_Abfall {
 	private static final String original_Chessboard = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 	private static final String berlin = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.2-1pct/output-berlin-v5.2-1pct/berlin-v5.2-1pct.output_network.xml.gz";
 	private static final String berlinDistrictsWithGarbageInformations = "scenarios/wasteCollection/garbageInput/districtsWithGarbageInformations.shp";
-	private static final String inputVehicleTypes = "C:\\Users\\Ricardo\\Desktop\\vehicleTypes.xml";
-	private static final String inputCarriers = "C:\\Users\\Ricardo\\Desktop\\carriers.xml";
+	private static final String inputVehicleTypes = "scenarios/wasteCollection/vehicleTypes.xml";
+	private static final String inputCarriersWithDieselVehicle = "scenarios/wasteCollection/carriers_diesel_vehicle.xml";
+	private static final String inputCarriersWithMediumBatteryVehicle = "scenarios/wasteCollection/carriers_medium_EV.xml";
+	private static final String inputCarriersWithSmallBatteryVehicle = "scenarios/wasteCollection/carriers_small_EV.xml";
 
 	private enum netzwerkAuswahl {
 		originalChessboard, berlinNetwork
@@ -51,6 +53,9 @@ public class Run_Abfall {
 		berlinCollectedGarbageForOneDay
 
 	};
+	private enum carrierChoice{
+		carriersWithDieselVehicle, carriersWithMediumBattereyVehicle, carriersWithSmallBatteryVehicle
+	}
 
 	public static void main(String[] args) throws Exception {
 
@@ -74,6 +79,7 @@ public class Run_Abfall {
 		 */
 		netzwerkAuswahl netzwerkWahl = netzwerkAuswahl.berlinNetwork;
 		scenarioAuswahl scenarioWahl = scenarioAuswahl.berlinSelectedDistricts;
+		carrierChoice chosenCarrier = carrierChoice.carriersWithDieselVehicle;
 
 		// MATSim config
 		Config config = ConfigUtils.createConfig();
@@ -86,24 +92,34 @@ public class Run_Abfall {
 		case berlinNetwork:
 			// Berlin scenario network
 //			config.controler().setOutputDirectory(outputLocation);	//for cluster
-			config.controler().setOutputDirectory("output/wasteCollection/Montag");
+			config.controler().setOutputDirectory("output/wasteCollection/Test");
 			config.network().setInputFile(berlin);
 			break;
 		default:
 			new RuntimeException("no network selected.");
 		}
-		int lastMATSimIteration = 0;
+		switch(chosenCarrier) {
+		case carriersWithDieselVehicle:
+			config = AbfallUtils.prepareConfig(config, 0, inputVehicleTypes, inputCarriersWithDieselVehicle);
+			break;
+		case carriersWithSmallBatteryVehicle:
+			config = AbfallUtils.prepareConfig(config, 0, inputVehicleTypes, inputCarriersWithSmallBatteryVehicle);
+			break;
+		case carriersWithMediumBattereyVehicle:
+			config = AbfallUtils.prepareConfig(config, 0, inputVehicleTypes, inputCarriersWithMediumBatteryVehicle);
+			break;
+		default:
+			new RuntimeException("no carriers selected.");
+		}
+
 		int jspritIterations = 100; // Moved to args[] for cluster
-		config = AbfallUtils.prepareConfig(config, lastMATSimIteration, inputVehicleTypes, inputCarriers);
+		
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 
 		// creates carrier
 		Carriers carriers = FreightUtils.getOrCreateCarriers(scenario);
 		HashMap<String, Carrier> carrierMap = AbfallUtils.createCarrier(carriers);
-
-		// creates a garbage truck type and ads this type to the carrierVehicleTypes
-		boolean electricCar = false; // Moved to args[] for cluster
 
 		Map<Id<Link>, ? extends Link> allLinks = scenario.getNetwork().getLinks();
 		HashMap<String, Id<Link>> garbageDumps = AbfallUtils.createDumpMap();
@@ -132,8 +148,8 @@ public class Run_Abfall {
 			break;
 		case berlinSelectedDistricts:
 			// day input: MO or DI or MI or DO or FR
-			List<String> districtsForShipments = Arrays.asList("Gesundbrunnen", "Moabit");
-			day = "MO";
+			List<String> districtsForShipments = Arrays.asList("Malchow");
+			day = "MI";
 			AbfallUtils.createShipmentsForSelectedArea(districtsWithGarbage, districtsForShipments, day, garbageDumps,
 					scenario, carriers, carrierMap, allLinks, volumeDustbin, secondsServiceTimePerDustbin);
 //			fleetSize = FleetSize.INFINITE;
@@ -195,7 +211,7 @@ public class Run_Abfall {
 		new CarrierPlanXmlWriterV2(carriers)
 				.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierPlans.xml");
 
-		AbfallUtils.outputSummary(districtsWithGarbage, scenario, carrierMap, day, electricCar, volumeDustbin,
+		AbfallUtils.outputSummary(districtsWithGarbage, scenario, carrierMap, day, volumeDustbin,
 				secondsServiceTimePerDustbin);
 		AbfallUtils.createResultFile(scenario, carriers);
 
