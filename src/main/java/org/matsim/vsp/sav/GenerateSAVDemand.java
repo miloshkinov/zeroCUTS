@@ -22,9 +22,6 @@ package org.matsim.vsp.sav;/*
  * This script transform all inner city Berlin car trips to SAV.
  */
 
-import static org.matsim.core.config.ConfigUtils.createConfig;
-import static org.matsim.core.scenario.ScenarioUtils.createScenario;
-
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -39,6 +36,7 @@ import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.PopulationWriter;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.router.MainModeIdentifier;
@@ -46,6 +44,7 @@ import org.matsim.core.router.MainModeIdentifierImpl;
 //import org.matsim.core.router.StageActivityTypes;
 //import org.matsim.core.router.StageActivityTypesImpl;
 import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -56,8 +55,8 @@ public class GenerateSAVDemand {
     private static final String taxiPopulation = "scenarios/avscenario/berlin-v5.2-1pct.taxiplans.xml.gz";
 
     public static void main(String[] args) {
-        Config config = createConfig();
-        Scenario scenario = createScenario(config);
+        Config config = ConfigUtils.createConfig();
+        Scenario scenario = ScenarioUtils.createScenario(config);
         new PopulationReader(scenario).readFile(taxiPopulation);
         scenario.getPopulation().getPersons().values().forEach(p -> removeTaxiStages(p.getSelectedPlan()));
         new PopulationWriter(scenario.getPopulation()).write(taxiPopulation);
