@@ -98,7 +98,7 @@ public class RunFreight {
 	private static final String INPUT_DIR = "scenarios/BerlinFood/";
 
 	private static final String OUTPUT_DIR = "scenarios/BerlinFood/output/Base_ServiceBased/" ;
-	private static final String LOG_DIR = OUTPUT_DIR + "Logs/";
+	private static final String LOG_DIR = "scenarios/BerlinFood/output/Base_ServiceBased_Logs/" ;
 
 	//Dateinamen
 	private static final String NETFILE_NAME = "network.xml.gz" ;
@@ -160,7 +160,7 @@ public class RunFreight {
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(), config.controler().getOverwriteFileSetting(), CompressionType.gzip);
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
-
+		
 		config.controler().setLastIteration(LAST_MATSIM_ITERATION);	
 		config.network().setInputFile(NETFILE);
 
