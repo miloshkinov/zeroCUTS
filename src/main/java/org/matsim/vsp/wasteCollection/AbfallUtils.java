@@ -1318,7 +1318,7 @@ class AbfallUtils {
 
 				List<Tour.TourElement> elements = scheduledTour.getTour().getTourElements();
 				for (Tour.TourElement element : elements) {
-					if (element instanceof Tour.ServiceActivity) {
+					if (element instanceof Tour.Pickup) {
 						numCollections++;
 
 					}
@@ -1342,9 +1342,9 @@ class AbfallUtils {
 			}
 			numberOfVehicles = numberOfVehicles + (tourNumberCarrier - 1);
 			writer.write("\n\n" + "Version: " + singleCarrier.getId().toString() + "\n");
-			writer.write("\tAnzahl der Abholstellen (Soll): \t\t\t\t\t" + singleCarrier.getServices().size() + "\n");
+			writer.write("\tAnzahl der Abholstellen (Soll): \t\t\t\t\t" + singleCarrier.getShipments().size() + "\n");
 			writer.write("\tAnzahl der Abholstellen ohne Abholung: \t\t\t\t"
-					+ (singleCarrier.getServices().size() - numCollections) + "\n");
+					+ (singleCarrier.getShipments().size() - numCollections) + "\n");
 			writer.write("\tAnzahl der Fahrzeuge:\t\t\t\t\t\t\t\t" + numberOfVehicles + "\n");
 			for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
 				if (singleCarrier.getId().toString().equals(singleVehicleType.getDescription())) {
