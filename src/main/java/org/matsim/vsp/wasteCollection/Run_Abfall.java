@@ -52,7 +52,8 @@ public class Run_Abfall {
 	};
 
 	private enum carrierChoice {
-		carriersWithDieselVehicle, carriersWithMediumBattereyVehicle, carriersWithSmallBatteryVehicle
+		carriersWithDieselVehicle, carriersWithMediumBattereyVehicle, carriersWithSmallBatteryVehicle,
+		carriersFromInputFile
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -72,6 +73,9 @@ public class Run_Abfall {
 		double secondsServiceTimePerDustbin;
 		String outputLocation;
 		String day;
+		String networkChangeEventsFileLocation;
+		String carriersFileLocation = null;
+		String vehicleTypesFileLocation = null;
 
 		for (String arg : args) {
 			log.info(arg);
@@ -82,24 +86,21 @@ public class Run_Abfall {
 			jspritIterations = 100;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
-			outputLocation = "output/wasteCollection/Test";
+			outputLocation = "output/wasteCollection/Test1";
 			day = "MO";
+			networkChangeEventsFileLocation = "";
+			networkChangeEventsFileLocation = "T:/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBln_oneTW/input/networkChangeEvents.xml.gz";
 		} else {
 			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay;
 			jspritIterations = Integer.parseInt(args[0]);
 			volumeDustbinInLiters = Double.parseDouble(args[1]); // in liter
 			secondsServiceTimePerDustbin = Double.parseDouble(args[2]);
-			outputLocation = args[3];
-			day = args[4];
-			String carrier = args[5];
-			if (carrier.contains("diesel"))
-				chosenCarrier = carrierChoice.carriersWithDieselVehicle;
-			else if (carrier.contains("medium"))
-				chosenCarrier = carrierChoice.carriersWithMediumBattereyVehicle;
-			else if (carrier.contains("small"))
-				chosenCarrier = carrierChoice.carriersWithSmallBatteryVehicle;
-			else
-				new RuntimeException("wrong carrier input selected.");
+			day = args[3];
+			outputLocation = args[4];
+			vehicleTypesFileLocation = args[5];
+			networkChangeEventsFileLocation = args[6];
+			carriersFileLocation = args[7];
+			chosenCarrier = carrierChoice.carriersFromInputFile;
 		}
 
 		log.setLevel(Level.INFO);
@@ -116,24 +117,34 @@ public class Run_Abfall {
 			// Berlin scenario network
 			config.controler().setOutputDirectory(outputLocation);
 			config.network().setInputFile(berlin);
+			if (networkChangeEventsFileLocation != "") {
+				log.info("Setting networkChangeEventsInput file: " + networkChangeEventsFileLocation);
+				config.network().setTimeVariantNetwork(true);
+				config.network().setChangeEventsInputFile(networkChangeEventsFileLocation);
+			}
 			break;
 		default:
 			new RuntimeException("no network selected.");
 		}
 		switch (chosenCarrier) {
 		case carriersWithDieselVehicle:
-			config = AbfallUtils.prepareConfig(config, 0, inputVehicleTypes, inputCarriersWithDieselVehicle);
+			vehicleTypesFileLocation =  inputVehicleTypes;
+			carriersFileLocation = inputCarriersWithDieselVehicle;
 			break;
 		case carriersWithSmallBatteryVehicle:
-			config = AbfallUtils.prepareConfig(config, 0, inputVehicleTypes, inputCarriersWithSmallBatteryVehicle);
+			vehicleTypesFileLocation =  inputVehicleTypes;
+			carriersFileLocation = inputCarriersWithSmallBatteryVehicle;
 			break;
 		case carriersWithMediumBattereyVehicle:
-			config = AbfallUtils.prepareConfig(config, 0, inputVehicleTypes, inputCarriersWithMediumBatteryVehicle);
+			vehicleTypesFileLocation =  inputVehicleTypes;
+			carriersFileLocation = inputCarriersWithMediumBatteryVehicle;
+			break;
+		case carriersFromInputFile:			
 			break;
 		default:
 			new RuntimeException("no carriers selected.");
 		}
-
+		config = AbfallUtils.prepareConfig(config, 0, vehicleTypesFileLocation, carriersFileLocation);
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 

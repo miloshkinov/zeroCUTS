@@ -205,8 +205,8 @@ class AbfallUtils {
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 		freightConfigGroup.setCarriersFile(inputCarriers);
 		freightConfigGroup.setCarriersVehicleTypesFile(inputVehicleTypes);
-		// freightConfigGroup.setTravelTimeSliceWidth(1800);
-		// freightConfigGroup.setTimeWindowHandling(FreightConfigGroup.TimeWindowHandling.enforceBeginnings);
+		freightConfigGroup.setTravelTimeSliceWidth(1800);
+		freightConfigGroup.setTimeWindowHandling(FreightConfigGroup.TimeWindowHandling.enforceBeginnings);
 
 		return config;
 	}
