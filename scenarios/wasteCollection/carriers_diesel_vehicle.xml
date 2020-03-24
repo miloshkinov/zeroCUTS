@@ -3,7 +3,7 @@
 		<carrier id="BSR_Gradestrasse">
 			<capabilities fleetSize="INFINITE">
 				<vehicles>
-					<vehicle id="TruckGradestrasseDiesel" depotLinkId="71781" typeId="diesel" earliestStart="06:00:00" latestEnd="14:00:00"/>
+					<vehicle id="TruckGradestrasseDiesel" depotLinkId="71781" typeId="diesel_vehicle" earliestStart="06:00:00" latestEnd="14:00:00"/>
 				</vehicles>
 
 			</capabilities>
@@ -13,7 +13,7 @@
 		<carrier id="BSR_MalmoeerStr">
 			<capabilities fleetSize="INFINITE">
 				<vehicles>
-					<vehicle id="TruckMalmoeerDiesel" depotLinkId="116212" typeId="diesel" earliestStart="06:00:00" latestEnd="14:00:00"/>
+					<vehicle id="TruckMalmoeerDiesel" depotLinkId="116212" typeId="diesel_vehicle" earliestStart="06:00:00" latestEnd="14:00:00"/>
 				</vehicles>
 
 			</capabilities>
@@ -23,7 +23,7 @@
 		<carrier id="BSR_Forckenbeck">
 			<capabilities fleetSize="INFINITE">
 				<vehicles>
-					<vehicle id="TruckForckenbeckDiesel" depotLinkId="27766" typeId="diesel" earliestStart="06:00:00" latestEnd="14:00:00"/>
+					<vehicle id="TruckForckenbeckDiesel" depotLinkId="27766" typeId="diesel_vehicle" earliestStart="06:00:00" latestEnd="14:00:00"/>
 				</vehicles>
 
 			</capabilities>
@@ -33,7 +33,7 @@
 		<carrier id="BSR_Nordring">
 			<capabilities fleetSize="INFINITE">
 				<vehicles>
-					<vehicle id="TruckNordringDiesel" depotLinkId="42882" typeId="diesel" earliestStart="06:00:00" latestEnd="14:00:00"/>
+					<vehicle id="TruckNordringDiesel" depotLinkId="42882" typeId="diesel_vehicle" earliestStart="06:00:00" latestEnd="14:00:00"/>
 				</vehicles>
 
 			</capabilities>
