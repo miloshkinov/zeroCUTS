@@ -414,17 +414,16 @@ class AbfallUtils {
 		Id<Link> dumpId = null;
 		double distanceWithShipments = 0;
 		int garbageToCollect = 0;
-		// String depot = null;
+		String depot = null;
 		Map<Id<Link>, Link> garbageLinks = new HashMap<Id<Link>, Link>();
 		createMapEnt();
-		carrierMap.clear();
+//		carrierMap.clear();
 		for (SimpleFeature districtInformation : districtsWithGarbage) {
 			if ((double) districtInformation.getAttribute(day) > 0) {
 				garbageToCollect = (int) ((double) districtInformation.getAttribute(day) * 1000);
 				dumpId = garbageDumps.get(districtInformation.getAttribute(dataEnt.get(day)));
-				// depot = districtInformation.getAttribute("Depot").toString();
-				carrierMap.put(districtInformation.getAttribute("Ortsteil").toString(), CarrierUtils.createCarrier(Id
-						.create("Carrier " + districtInformation.getAttribute("Ortsteil").toString(), Carrier.class)));
+				depot = districtInformation.getAttribute("Depot").toString();
+
 				for (Link link : allLinks.values()) {
 					for (String linkInDistrict : linksInDistricts
 							.get(districtInformation.getAttribute("Ortsteil").toString())) {
@@ -456,7 +455,7 @@ class AbfallUtils {
 
 				createShipmentsForCarrierII(garbageToCollect, volumeBigTrashcan, serviceTimePerBigDustbin,
 						distanceWithShipments, garbageLinks, scenario,
-						carrierMap.get(districtInformation.getAttribute("Ortsteil").toString()), dumpId, carriers);
+						carrierMap.get(depot), dumpId, carriers);
 			}
 			distanceWithShipments = 0;
 			garbageLinks.clear();
@@ -1271,6 +1270,7 @@ class AbfallUtils {
 		Map<Id<Person>, Double> personId2tourDistance = new HashMap<>();
 		Map<Id<Person>, Double> personId2tourConsumptionkWh = new HashMap<>();
 		Map<String, Integer> usedNumberPerVehicleType = new HashMap<>();
+		Map<Id<Person>, Integer> personId2tourDurations = new HashMap<>();
 		ArrayList<String> toursWithOverconsumption = new ArrayList<>();
 		CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes();
 
@@ -1302,6 +1302,9 @@ class AbfallUtils {
 
 			for (ScheduledTour scheduledTour : singleCarrier.getSelectedPlan().getScheduledTours()) {
 				distanceTour = 0.0;
+				int startTime = 10000000;
+				int endTime = 0;
+
 				for (VehicleType vt2 : singleCarrier.getCarrierCapabilities().getVehicleTypes()) {
 					if (vt2.getId().toString()
 							.contains(scheduledTour.getVehicle().getVehicleType().getId().toString())) {
@@ -1327,12 +1330,19 @@ class AbfallUtils {
 						if (legElement.getRoute().getDistance() != 0)
 							distanceTour = distanceTour
 									+ RouteUtils.calcDistance((NetworkRoute) legElement.getRoute(), 0, 0, network);
+						if (startTime > legElement.getExpectedDepartureTime())
+							startTime = (int) legElement.getExpectedDepartureTime();
+						if (endTime < (legElement.getExpectedDepartureTime() + legElement.getExpectedTransportTime()))
+							endTime = (int) (legElement.getExpectedDepartureTime()
+									+ legElement.getExpectedTransportTime());
+
 					}
 				}
 				Id<Person> personId = Id.create(
 						scheduledTour.getVehicle().getVehicleType().getId() + "-Tour " + tourNumberCarrier,
 						Person.class);
 				personId2tourDistance.put(personId, distanceTour);
+				personId2tourDurations.put(personId, endTime - startTime);
 				if (vt.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electricity")) {
 					personId2tourConsumptionkWh.put(personId, (distanceTour / 1000) * (double) vt.getEngineInformation()
 							.getAttributes().getAttribute("engeryConsumptionPerKm"));
@@ -1356,34 +1366,36 @@ class AbfallUtils {
 					"\n" + "\tGefahrene Kilometer insgesamt:\t\t\t\t\t\t" + Math.round(totalDistance / 1000) + " km\n");
 			writer.write("\tVerfügbare Fahrzeugtypen:\t\t\t\t\t\n\n");
 			for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
-		
-					writer.write("\t\t\tID: " + singleVehicleType.getId() + "\t\tAntrieb: "
-							+ singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
-									.toString()
-							+ "\t\tKapazität: " + singleVehicleType.getCapacity().getOther() + "\t\tFixkosten:"
-							+ singleVehicleType.getCostInformation().getFixedCosts() + " €");
-					if (singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
-							.equals("electricity")) {
-						double electricityConsumptionPer100km = 0;
-						double electricityCapacityinkWh = 0;
-						electricityConsumptionPer100km = (double) singleVehicleType.getEngineInformation()
-								.getAttributes().getAttribute("engeryConsumptionPerKm");
-						electricityCapacityinkWh = (double) singleVehicleType.getEngineInformation().getAttributes()
-								.getAttribute("engeryCapacity");
 
-						writer.write("\t\tLadekapazität: " + electricityCapacityinkWh + " kWh\t\tVerbrauch: "
-								+ electricityConsumptionPer100km + " kWh/100km\t\tReichweite: "
-								+ (int) Math.round(electricityCapacityinkWh / electricityConsumptionPer100km)
-								+ " km\n");
-					} else
-						writer.write("\n");
-				
+				writer.write(
+						"\t\t\tID: " + singleVehicleType.getId() + "\t\tAntrieb: "
+								+ singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
+										.toString()
+								+ "\t\tKapazität: " + singleVehicleType.getCapacity().getOther() + "\t\tFixkosten:"
+								+ singleVehicleType.getCostInformation().getFixedCosts() + " €");
+				if (singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
+						.equals("electricity")) {
+					double electricityConsumptionPer100km = 0;
+					double electricityCapacityinkWh = 0;
+					electricityConsumptionPer100km = (double) singleVehicleType.getEngineInformation().getAttributes()
+							.getAttribute("engeryConsumptionPerKm");
+					electricityCapacityinkWh = (double) singleVehicleType.getEngineInformation().getAttributes()
+							.getAttribute("engeryCapacity");
+
+					writer.write("\t\tLadekapazität: " + electricityCapacityinkWh + " kWh\t\tVerbrauch: "
+							+ electricityConsumptionPer100km + " kWh/100km\t\tReichweite: "
+							+ (int) Math.round(electricityCapacityinkWh / electricityConsumptionPer100km) + " km\n");
+				} else
+					writer.write("\n");
+
 			}
-			writer.write("\n\n" + "\tTourID\t\t\t\t\t\tdistance (max Distance) (km)\tconsumption (capacity) (kWh)\n\n");
+			writer.write("\n\n"
+					+ "\tTourID\t\t\t\t\t\tdistance (max Distance) (km)\tduration \tconsumption (capacity) (kWh)\n\n");
 
 			for (Id<Person> id : personId2tourDistance.keySet()) {
 
 				int tourDistance = (int) Math.round(personId2tourDistance.get(id) / 1000);
+				int duration = personId2tourDurations.get(id);
 				int consumption = 0;
 				double distanceRange = 0;
 				double electricityCapacityinkWh = 0;
@@ -1406,9 +1418,9 @@ class AbfallUtils {
 					}
 				}
 
-				writer.write("\t" + id + "\t\t" + tourDistance);
+				writer.write("\t" + id + "\t\t" + tourDistance + "\t\t\t\t\t\t" + timeTransmission(duration));
 				if (distanceRange > 0) {
-					writer.write(" (" + distanceRange + ")\t\t\t\t\t\t" + consumption + " (" + electricityCapacityinkWh
+					writer.write(" (" + distanceRange + ")\t\t\t" + consumption + " (" + electricityCapacityinkWh
 							+ ")");
 				} else
 					writer.write("\t\t\t\t\t\t\t\t\t\t");
@@ -1426,6 +1438,13 @@ class AbfallUtils {
 			throw new Exception("The tour(s) " + toursWithOverconsumption.toString()
 					+ " have a higher consumption then their capacity");
 
+	}
+
+	public static String timeTransmission(int duration) {
+		int stunden = (int) duration / 3600;
+		int minuten = (int) (duration - stunden * 3600) / 60;
+		int sekunden = duration - stunden * 3600 - minuten * 60;
+		return stunden + ":" + minuten + ":" + sekunden;
 	}
 
 }

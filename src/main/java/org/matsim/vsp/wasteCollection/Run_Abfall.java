@@ -76,6 +76,9 @@ public class Run_Abfall {
 		String networkChangeEventsFileLocation;
 		String carriersFileLocation = null;
 		String vehicleTypesFileLocation = null;
+		String shapefilelocation;
+		
+		log.setLevel(Level.INFO);
 
 		for (String arg : args) {
 			log.info(arg);
@@ -86,10 +89,11 @@ public class Run_Abfall {
 			jspritIterations = 100;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
-			outputLocation = "output/wasteCollection/Test1";
+			outputLocation = "output/wasteCollection/Test2";
 			day = "MO";
 			networkChangeEventsFileLocation = "";
-			networkChangeEventsFileLocation = "T:/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBln_oneTW/input/networkChangeEvents.xml.gz";
+		//	networkChangeEventsFileLocation = "T:/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBln_oneTW/input/networkChangeEvents.xml.gz";
+			shapefilelocation = berlinDistrictsWithGarbageInformations;
 		} else {
 			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay;
 			jspritIterations = Integer.parseInt(args[0]);
@@ -100,6 +104,7 @@ public class Run_Abfall {
 			vehicleTypesFileLocation = args[5];
 			networkChangeEventsFileLocation = args[6];
 			carriersFileLocation = args[7];
+			shapefilelocation = args[8];
 			chosenCarrier = carrierChoice.carriersFromInputFile;
 		}
 
@@ -156,7 +161,7 @@ public class Run_Abfall {
 		HashMap<String, Id<Link>> garbageDumps = AbfallUtils.createDumpMap();
 
 		Collection<SimpleFeature> districtsWithGarbage = ShapeFileReader
-				.getAllFeatures(berlinDistrictsWithGarbageInformations);
+				.getAllFeatures(shapefilelocation);
 		AbfallUtils.createMapWithLinksInDistricts(districtsWithGarbage, allLinks);
 
 		switch (scenarioWahl) {
