@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
-import org.jgrapht.alg.cycle.SzwarcfiterLauerSimpleCycles;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Id;
@@ -29,7 +28,6 @@ import org.matsim.contrib.freight.carrier.CarrierPlan;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
 import org.matsim.contrib.freight.carrier.CarrierShipment;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
-import org.matsim.contrib.freight.carrier.CarrierVehicle;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.contrib.freight.carrier.Carriers;
 import org.matsim.contrib.freight.carrier.ScheduledTour;
@@ -53,7 +51,6 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
-import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.vehicles.VehicleType;
@@ -96,16 +93,8 @@ class AbfallUtils {
 	static List<String> districtsWithShipments = new ArrayList<String>();
 	static List<String> districtsWithNoShipments = new ArrayList<String>();
 	static HashMap<String, String> dataEnt = new HashMap<String, String>();
-	static CarrierVehicleTypes vehicleTypes = null;
-	static VehicleType carrierVehType = null;
-//	static int capacityTruck = 0;
-	static double energyConsumptionPerWeight = 0;
-	static double energyConsumptionPerDistance = 0;
-	static CarrierVehicle vehicleAtDepot = null;
 	static Multimap<String, String> linksInDistricts;
 	static boolean streetAlreadyInGarbageLinks = false;
-	static boolean oneCarrierForEachDistrict = false;
-//	static String vehicleTypeId;
 
 	/**
 	 * Creates a map for getting the name of the attribute, where you can find the
@@ -410,21 +399,26 @@ class AbfallUtils {
 	static void createShipmentsForSelectedDay(Collection<SimpleFeature> districtsWithGarbage, String day,
 			HashMap<String, Id<Link>> garbageDumps, Scenario scenario, Carriers carriers,
 			HashMap<String, Carrier> carrierMap, Map<Id<Link>, ? extends Link> allLinks, double volumeBigTrashcan,
-			double serviceTimePerBigDustbin) {
+			double serviceTimePerBigDustbin, boolean oneCarrierForEachDistrict) {
 		Id<Link> dumpId = null;
 		double distanceWithShipments = 0;
 		int garbageToCollect = 0;
-		// String depot = null;
+		String usedCarrier = null;
+		String district = null;
 		Map<Id<Link>, Link> garbageLinks = new HashMap<Id<Link>, Link>();
 		createMapEnt();
-		carrierMap.clear();
+//		carrierMap.clear();
 		for (SimpleFeature districtInformation : districtsWithGarbage) {
 			if ((double) districtInformation.getAttribute(day) > 0) {
 				garbageToCollect = (int) ((double) districtInformation.getAttribute(day) * 1000);
 				dumpId = garbageDumps.get(districtInformation.getAttribute(dataEnt.get(day)));
-				// depot = districtInformation.getAttribute("Depot").toString();
-				carrierMap.put(districtInformation.getAttribute("Ortsteil").toString(), CarrierUtils.createCarrier(Id
-						.create("Carrier " + districtInformation.getAttribute("Ortsteil").toString(), Carrier.class)));
+				usedCarrier = districtInformation.getAttribute("Depot").toString();
+				if (oneCarrierForEachDistrict == true) {
+					district = districtInformation.getAttribute("Ortsteil").toString();
+					Carrier newCarrier = createSingleCarrier(usedCarrier, carrierMap, district);
+					carrierMap.put(district, newCarrier);
+					usedCarrier = district;
+				}
 				for (Link link : allLinks.values()) {
 					for (String linkInDistrict : linksInDistricts
 							.get(districtInformation.getAttribute("Ortsteil").toString())) {
@@ -456,14 +450,37 @@ class AbfallUtils {
 
 				createShipmentsForCarrierII(garbageToCollect, volumeBigTrashcan, serviceTimePerBigDustbin,
 						distanceWithShipments, garbageLinks, scenario,
-						carrierMap.get(districtInformation.getAttribute("Ortsteil").toString()), dumpId, carriers);
+						carrierMap.get(usedCarrier), dumpId, carriers);
 			}
 			distanceWithShipments = 0;
 			garbageLinks.clear();
 		}
-		oneCarrierForEachDistrict = true;
-		for (Carrier carrier : carrierMap.values())
+		if (oneCarrierForEachDistrict == true) {
+			carrierMap.remove("Nordring");
+			carrierMap.remove("MalmoeerStr");
+			carrierMap.remove("Forckenbeck");
+			carrierMap.remove("Gradestrasse");
+		}
+		carriers.getCarriers().clear();
+		for (Carrier carrier : carrierMap.values()) {
 			carriers.addCarrier(carrier);
+		}
+	}
+
+	private static Carrier createSingleCarrier(String depot, HashMap<String, Carrier> carrierMap, String district) {
+		Carrier newCarrier = CarrierUtils.createCarrier(Id.create("Carrier " + district, Carrier.class));
+		for (Carrier originalCarrier : carrierMap.values()) {
+			if (originalCarrier.getId().toString().contains(depot)) {
+				newCarrier.getCarrierCapabilities()
+						.setFleetSize(originalCarrier.getCarrierCapabilities().getFleetSize());
+				newCarrier.getCarrierCapabilities().getCarrierVehicles()
+						.putAll(originalCarrier.getCarrierCapabilities().getCarrierVehicles());
+				newCarrier.getCarrierCapabilities().getVehicleTypes()
+						.addAll(originalCarrier.getCarrierCapabilities().getVehicleTypes());
+			}
+		}
+
+		return newCarrier;
 	}
 
 	/**
@@ -565,88 +582,6 @@ class AbfallUtils {
 		if (garbageDumpId.equals(Id.createLinkId(linkUmladestationGradestrasse)))
 			garbageGradestr = garbageGradestr + volumeGarbage;
 	}
-
-	/**
-	 * Creates the vehicles at the depots, ads this vehicles to the carriers and
-	 * sets the capabilities. This method is for the Berlin network and creates the
-	 * vehicles for the 4 different depots.
-	 * 
-	 * @param
-	 */
-//	static void createCarriersBerlin(Collection<SimpleFeature> districtsWithGarbage, Carriers carriers,
-//			HashMap<String, Carrier> carrierMap, FleetSize fleetSize) {
-//		String depotForckenbeck = "27766";
-//		String depotMalmoeerStr = "116212";
-//		String depotNordring = "42882";
-//		String depotGradestrasse = "71781";
-//
-//		String vehicleIdForckenbeck = "TruckForckenbeck";
-//		String vehicleIdMalmoeer = "TruckMalmoeer";
-//		String vehicleIdNordring = "TruckNordring";
-//		String vehicleIdGradestrasse = "TruckGradestrasse";
-//		double earliestStartingTime = 6 * 3600;
-//		double latestFinishingTime = 14 * 3600;
-//
-//		HashMap<String, CarrierVehicle> depotMap = new HashMap<String, CarrierVehicle>();
-//
-//		CarrierVehicle vehicleForckenbeck = createGarbageTruck(vehicleIdForckenbeck, depotForckenbeck,
-//				earliestStartingTime, latestFinishingTime);
-//		CarrierVehicle vehicleMalmoeerStr = createGarbageTruck(vehicleIdMalmoeer, depotMalmoeerStr,
-//				earliestStartingTime, latestFinishingTime);
-//		CarrierVehicle vehicleNordring = createGarbageTruck(vehicleIdNordring, depotNordring, earliestStartingTime,
-//				latestFinishingTime);
-//		CarrierVehicle vehicleGradestrasse = createGarbageTruck(vehicleIdGradestrasse, depotGradestrasse,
-//				earliestStartingTime, latestFinishingTime);
-//		depotMap.put("Forckenbeck", vehicleForckenbeck);
-//		depotMap.put("MalmoeerStr", vehicleMalmoeerStr);
-//		depotMap.put("Nordring", vehicleNordring);
-//		depotMap.put("Gradestrasse", vehicleGradestrasse);
-//
-//		// define Carriers
-//
-//		defineCarriersBerlin(depotMap, districtsWithGarbage, carriers, carrierMap, vehicleForckenbeck,
-//				vehicleMalmoeerStr, vehicleNordring, vehicleGradestrasse, fleetSize);
-//	}
-//
-//	/**
-//	 * Defines and sets the Capabilities of the Carrier, including the vehicleTypes
-//	 * for the carriers for the Berlin network
-//	 * 
-//	 * @param
-//	 * 
-//	 */
-//	private static void defineCarriersBerlin(HashMap<String, CarrierVehicle> depotMap,
-//			Collection<SimpleFeature> districtsWithGarbage, Carriers carriers, HashMap<String, Carrier> carrierMap,
-//			CarrierVehicle vehicleForckenbeck, CarrierVehicle vehicleMalmoeerStr, CarrierVehicle vehicleNordring,
-//			CarrierVehicle vehicleGradestrasse, FleetSize fleetSize) {
-//
-//		if (oneCarrierForEachDistrict == false) {
-//			CarrierCapabilities carrierCapabilities = CarrierCapabilities.Builder.newInstance().addType(carrierVehType)
-//					.addVehicle(vehicleForckenbeck).setFleetSize(fleetSize).build();
-//			carrierMap.get("Forckenbeck").setCarrierCapabilities(carrierCapabilities);
-//			carrierCapabilities = CarrierCapabilities.Builder.newInstance().addType(carrierVehType)
-//					.addVehicle(vehicleMalmoeerStr).setFleetSize(fleetSize).build();
-//			carrierMap.get("MalmoeerStr").setCarrierCapabilities(carrierCapabilities);
-//			carrierCapabilities = CarrierCapabilities.Builder.newInstance().addType(carrierVehType)
-//					.addVehicle(vehicleNordring).setFleetSize(fleetSize).build();
-//			carrierMap.get("Nordring").setCarrierCapabilities(carrierCapabilities);
-//			carrierCapabilities = CarrierCapabilities.Builder.newInstance().addType(carrierVehType)
-//					.addVehicle(vehicleGradestrasse).setFleetSize(fleetSize).build();
-//			carrierMap.get("Gradestrasse").setCarrierCapabilities(carrierCapabilities);
-//		} else {
-//			for (Carrier carrier : carrierMap.values()) {
-//				for (SimpleFeature simpleFeature : districtsWithGarbage) {
-//					if (carrier.getId().toString().equals("Carrier " + simpleFeature.getAttribute("Ortsteil"))) {
-//						carrier.setCarrierCapabilities(CarrierCapabilities.Builder.newInstance().addType(carrierVehType)
-//								.addVehicle(depotMap.get(simpleFeature.getAttribute("Depot"))).setFleetSize(fleetSize)
-//								.build());
-//					}
-//				}
-//			}
-//		}
-//		// Fahrzeugtypen den Anbietern zuordenen
-//		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(vehicleTypes);
-//	}
 
 	/**
 	 * Solves with jsprit and gives a xml output of the plans and a plot of the
@@ -851,12 +786,18 @@ class AbfallUtils {
 		boolean electricCar = false;
 		double capacityTruck = 0;
 		String vehicleTypeId = null;
+		double energyConsumptionPerDistance = 0;
+		double energyConsumptionPerWeight = 0;
 
 		Carriers allCarriers = (Carriers) scenario.getScenarioElement("carriers");
 		Carrier testCarrier = allCarriers.getCarriers().values().iterator().next();
 		for (VehicleType usedType : testCarrier.getCarrierCapabilities().getVehicleTypes()) {
-			if (usedType.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electric"))
+			if (usedType.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electric")) {
 				electricCar = true;
+				energyConsumptionPerDistance = (double) usedType.getEngineInformation().getAttributes()
+						.getAttribute("engeryConsumptionPerKm");
+				energyConsumptionPerWeight = 1.4;
+			}
 			capacityTruck = usedType.getCapacity().getOther();
 			vehicleTypeId = usedType.getId().toString();
 		}
@@ -1356,28 +1297,28 @@ class AbfallUtils {
 					"\n" + "\tGefahrene Kilometer insgesamt:\t\t\t\t\t\t" + Math.round(totalDistance / 1000) + " km\n");
 			writer.write("\tVerfügbare Fahrzeugtypen:\t\t\t\t\t\n\n");
 			for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
-		
-					writer.write("\t\t\tID: " + singleVehicleType.getId() + "\t\tAntrieb: "
-							+ singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
-									.toString()
-							+ "\t\tKapazität: " + singleVehicleType.getCapacity().getOther() + "\t\tFixkosten:"
-							+ singleVehicleType.getCostInformation().getFixedCosts() + " €");
-					if (singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
-							.equals("electricity")) {
-						double electricityConsumptionPer100km = 0;
-						double electricityCapacityinkWh = 0;
-						electricityConsumptionPer100km = (double) singleVehicleType.getEngineInformation()
-								.getAttributes().getAttribute("engeryConsumptionPerKm");
-						electricityCapacityinkWh = (double) singleVehicleType.getEngineInformation().getAttributes()
-								.getAttribute("engeryCapacity");
 
-						writer.write("\t\tLadekapazität: " + electricityCapacityinkWh + " kWh\t\tVerbrauch: "
-								+ electricityConsumptionPer100km + " kWh/100km\t\tReichweite: "
-								+ (int) Math.round(electricityCapacityinkWh / electricityConsumptionPer100km)
-								+ " km\n");
-					} else
-						writer.write("\n");
-				
+				writer.write(
+						"\t\t\tID: " + singleVehicleType.getId() + "\t\tAntrieb: "
+								+ singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
+										.toString()
+								+ "\t\tKapazität: " + singleVehicleType.getCapacity().getOther() + "\t\tFixkosten:"
+								+ singleVehicleType.getCostInformation().getFixedCosts() + " €");
+				if (singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
+						.equals("electricity")) {
+					double electricityConsumptionPer100km = 0;
+					double electricityCapacityinkWh = 0;
+					electricityConsumptionPer100km = (double) singleVehicleType.getEngineInformation().getAttributes()
+							.getAttribute("engeryConsumptionPerKm");
+					electricityCapacityinkWh = (double) singleVehicleType.getEngineInformation().getAttributes()
+							.getAttribute("engeryCapacity");
+
+					writer.write("\t\tLadekapazität: " + electricityCapacityinkWh + " kWh\t\tVerbrauch: "
+							+ electricityConsumptionPer100km + " kWh/100km\t\tReichweite: "
+							+ (int) Math.round(electricityCapacityinkWh / electricityConsumptionPer100km) + " km\n");
+				} else
+					writer.write("\n");
+
 			}
 			writer.write("\n\n" + "\tTourID\t\t\t\t\t\tdistance (max Distance) (km)\tconsumption (capacity) (kWh)\n\n");
 

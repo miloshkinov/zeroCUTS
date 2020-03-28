@@ -76,20 +76,24 @@ public class Run_Abfall {
 		String networkChangeEventsFileLocation;
 		String carriersFileLocation = null;
 		String vehicleTypesFileLocation = null;
+		String shapeFileLocation;
+		boolean oneCarrierForOneDistrict;
 
 		for (String arg : args) {
 			log.info(arg);
 		}
 		if (args.length == 0) {
 			chosenCarrier = carrierChoice.carriersWithDieselVehicle;
-			scenarioWahl = scenarioAuswahl.berlinSelectedDistricts;
+			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay;
+			shapeFileLocation = berlinDistrictsWithGarbageInformations;
+			oneCarrierForOneDistrict = true;
 			jspritIterations = 100;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
 			outputLocation = "output/wasteCollection/Test1";
 			day = "MO";
 			networkChangeEventsFileLocation = "";
-			networkChangeEventsFileLocation = "T:/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBln_oneTW/input/networkChangeEvents.xml.gz";
+	//		networkChangeEventsFileLocation = "T:/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBln_oneTW/input/networkChangeEvents.xml.gz";
 		} else {
 			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay;
 			jspritIterations = Integer.parseInt(args[0]);
@@ -100,6 +104,8 @@ public class Run_Abfall {
 			vehicleTypesFileLocation = args[5];
 			networkChangeEventsFileLocation = args[6];
 			carriersFileLocation = args[7];
+			shapeFileLocation = args[8];
+			oneCarrierForOneDistrict = Boolean.parseBoolean(args[9]);
 			chosenCarrier = carrierChoice.carriersFromInputFile;
 		}
 
@@ -156,7 +162,7 @@ public class Run_Abfall {
 		HashMap<String, Id<Link>> garbageDumps = AbfallUtils.createDumpMap();
 
 		Collection<SimpleFeature> districtsWithGarbage = ShapeFileReader
-				.getAllFeatures(berlinDistrictsWithGarbageInformations);
+				.getAllFeatures(shapeFileLocation);
 		AbfallUtils.createMapWithLinksInDistricts(districtsWithGarbage, allLinks);
 
 		switch (scenarioWahl) {
@@ -205,7 +211,7 @@ public class Run_Abfall {
 		case berlinCollectedGarbageForOneDay:
 			// MO or DI or MI or DO or FR
 			AbfallUtils.createShipmentsForSelectedDay(districtsWithGarbage, day, garbageDumps, scenario, carriers,
-					carrierMap, allLinks, volumeDustbinInLiters, secondsServiceTimePerDustbin);
+					carrierMap, allLinks, volumeDustbinInLiters, secondsServiceTimePerDustbin, oneCarrierForOneDistrict);
 			break;
 		default:
 			new RuntimeException("no scenario selected.");
