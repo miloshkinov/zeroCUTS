@@ -14,6 +14,8 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
+import org.matsim.contrib.freight.carrier.CarrierUtils;
+import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.contrib.freight.carrier.Carriers;
 import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
@@ -21,6 +23,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.gis.ShapeFileReader;
+import org.matsim.vehicles.VehicleUtils;
 import org.opengis.feature.simple.SimpleFeature;
 
 /**
@@ -168,17 +171,19 @@ public class Run_Abfall {
 		switch (scenarioWahl) {
 		case chessboardTotalGarbageToCollect:
 			int kgGarbageToCollect = 12 * 1000;
+			CarrierVehicleTypes carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
 			AbfallChessboardUtils.createShipmentsForChessboardI(carrierMap, kgGarbageToCollect, allLinks,
 					volumeDustbinInLiters, secondsServiceTimePerDustbin, scenario, carriers);
 			FleetSize fleetSize = FleetSize.INFINITE;
-			AbfallChessboardUtils.createCarriersForChessboard(carriers, fleetSize);
+			AbfallChessboardUtils.createCarriersForChessboard(carriers, fleetSize, carrierVehicleTypes);
 			break;
 		case chessboardGarbagePerMeterToCollect:
 			double kgGarbagePerMeterToCollect = 0.2;
+			CarrierVehicleTypes carrierVehicleTypes2 = FreightUtils.getCarrierVehicleTypes(scenario);
 			AbfallChessboardUtils.createShipmentsForChessboardII(carrierMap, kgGarbagePerMeterToCollect, allLinks,
 					volumeDustbinInLiters, secondsServiceTimePerDustbin, scenario, carriers);
 			FleetSize fleetSize2 = FleetSize.INFINITE;
-			AbfallChessboardUtils.createCarriersForChessboard(carriers, fleetSize2);
+			AbfallChessboardUtils.createCarriersForChessboard(carriers, fleetSize2, carrierVehicleTypes2);
 			break;
 		case berlinSelectedDistricts:
 			// day input: MO or DI or MI or DO or FR
