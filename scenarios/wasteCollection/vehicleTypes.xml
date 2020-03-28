@@ -15,7 +15,7 @@
 				<attribute name="fuelType" class="java.lang.String">diesel</attribute>
 			</attributes>
 		</engineInformation>
-		<costInformation fixedCostsPerDay="1999.93" costsPerMeter="8.46E-4" costsPerSecond="0.0">
+		<costInformation fixedCostsPerDay="982.98" costsPerMeter="8.46E-4" costsPerSecond="0.0">
 
 		</costInformation>
 	</vehicleType>
