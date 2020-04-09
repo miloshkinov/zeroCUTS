@@ -50,7 +50,7 @@ public class AddAdditionalBEVTrucksToCarriers {
 			for (CarrierVehicle carrierVehicle : carrierVehicles.values()) {
 				String vehicleIdString = carrierVehicle.getId().toString();
 				var index = vehicleIdString.indexOf("_");
-				String vehicleId2String = vehicleIdString.substring(0,index-1) + "_electro" + vehicleIdString.substring(index);
+				String vehicleId2String = vehicleIdString.substring(0,index) + "_electro" + vehicleIdString.substring(index);
 				Id<Vehicle> vehicleId2 = Id.createVehicleId(vehicleId2String);
 
 				Id<VehicleType> vehicleTypeId2 = Id.create(carrierVehicle.getVehicleTypeId() + "_electro", VehicleType.class);
