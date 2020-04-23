@@ -68,12 +68,14 @@ class RunFood {
 
         if ( args.length==0 ) {
             String inputPath = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBln_oneTW/input/";
-            args = new String[] {inputPath+"I-Base_carrierLEH_v2_withFleet_Shipment_OneTW.xml",
-                    inputPath + "vehicleTypes.xml",
-                    inputPath + "mdvrp_algorithmConfig_2.xml",
-                    "1",                                                    //only for demonstration.
-                    inputPath + "networkChangeEvents.xml.gz",
-                    "../OutputKMT/TestsOutput/FoodOpenBerlin_NWCE_parallel"}  ;
+            args = new String[] {
+                inputPath+"I-Base_carrierLEH_v2_withFleet_Shipment_OneTW.xml",
+                inputPath + "vehicleTypes.xml",
+                inputPath + "mdvrp_algorithmConfig_2.xml",
+                "1",                                                    //only for demonstration.
+                inputPath + "networkChangeEvents.xml.gz",
+                "../OutputKMT/TestsOutput/FoodOpenBerlin_NWCE_parallel",
+            };
         }
 
         Config config = prepareConfig( args ) ;
@@ -92,6 +94,14 @@ class RunFood {
         nuOfJspritIteration = Integer.parseInt(args[3]);
         String networkChangeEventsFileLocation = args[4];
         String outputLocation = args[5];
+
+        Boolean useDistanceConstraint = false;
+        try {
+            useDistanceConstraint = Boolean.parseBoolean(args[6]);
+        } catch (Exception e) {
+            log.warn("Was not able to parse the boolean for using the distance constraint. Using + " + useDistanceConstraint + " as default.");
+//            e.printStackTrace();
+        }
 
 
         Config config = ConfigUtils.createConfig();
@@ -118,6 +128,10 @@ class RunFood {
         freightConfigGroup.setCarriersVehicleTypesFile(vehicleTypesFileLocation);
         freightConfigGroup.setTravelTimeSliceWidth(1800);
         freightConfigGroup.setTimeWindowHandling(FreightConfigGroup.TimeWindowHandling.enforceBeginnings);
+
+        if(useDistanceConstraint) {
+            freightConfigGroup.setUseDistanceConstraintForTourPlanning(FreightConfigGroup.UseDistanceConstraintForTourPlanning.basedOnEnergyConsumption);
+        }
 
         return config;
     }
