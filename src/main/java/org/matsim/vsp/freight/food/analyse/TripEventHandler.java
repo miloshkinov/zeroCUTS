@@ -32,10 +32,6 @@ class TripEventHandler  implements ActivityEndEventHandler, LinkEnterEventHandle
 	private Map<Id<VehicleType>, VehicleTypeSpezificCapabilities> vehTypId2Capabilities = new HashMap<Id<VehicleType>, VehicleTypeSpezificCapabilities>();
 
 
-	Scenario getScenario() {
-		return scenario;
-	}
-
 	CarrierVehicleTypes getVehicleTypes() {
 		return vehicleTypes;
 	}
@@ -60,29 +56,6 @@ class TripEventHandler  implements ActivityEndEventHandler, LinkEnterEventHandle
 
 	private void readVehicleTypeCapabilities() {
 		for (VehicleType vehType : vehicleTypes.getVehicleTypes().values()){
-			//Emissionswerte nicht über Eigenschaften einlesbar :(	
-			double emissionsPerMeter = -99999.0;			//TODO: log.warn wenn vehType nochjt definiert ist... kmt feb/18
-			switch (vehType.getId().toString()) {
-			case "heavy40t" : emissionsPerMeter = 0.917;
-			break;
-			case "heavy26t" : emissionsPerMeter =	0.786;
-			break;
-			case "heavy26t_frozen" : emissionsPerMeter = 0.786;
-			break;
-			case "medium18t" : emissionsPerMeter = 0.655;
-			break;
-			case "medium18telectro" : emissionsPerMeter = 0.0; // Assuming carbon-free energy generation; Value before this assumption: 0.433;
-			break;
-			case "light8t" : emissionsPerMeter = 0.524;
-			break;
-			case "light8telectro" : emissionsPerMeter = 0.0; // Assuming carbon-free energy generation; Value before this assumption:  0.346;
-			break;
-			case "light8t_frozen" : emissionsPerMeter = 0.524;
-			break;
-			case "light8telectro_frozen" : emissionsPerMeter = 0.0; // Assuming carbon-free energy generation; Value before this assumption: 0.524;
-			break;
-			default: log.error("No values for vehicle type defined. Emissions may be incorrect for vehicles of type: " +  vehType);
-			}
 
 			VehicleTypeSpezificCapabilities vehTypeCapabilities = 
 					new VehicleTypeSpezificCapabilities(vehType.getCostInformation().getFixedCosts() ,

@@ -29,23 +29,8 @@ public class VehicleTypeSpezificCapabilities{
 		this.capacity = capacity;
 	}
 
-	double getFixCosts() {
-		return fixCosts;
-	}
-
-	double getCostsPerMeter() {
-		return costsPerMeter;
-	}
-
-	double getCostsPerSecond() {
-		return costsPerSecond;
-	}
-
-	double getCapacity() {
-		return capacity;
-	}	
 	
-	double getFuelConsumtion() {
+	double getFuelConsumption() {
 		return fuelConsumtion;
 	}	
 	

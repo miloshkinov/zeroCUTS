@@ -74,40 +74,25 @@ public class TripWriter {
 			bw.write("____________________________________________________________________________");
 			bw.newLine();
 
-//			bw.write("departure time [sec];person Id;amount per trip [monetary units];distance [m];travel time [sec]");
 			bw.write("person Id;"
 					+ "distance trip [km];"
-//					+ "distance tour [km]"
+
 			);
 			bw.newLine();
 
-//			Map<Id<Person>,List<Double>> personId2listOfAmounts = this.handler.getPersonId2listOfAmounts(mode);
-//			Map<Id<Person>,List<Double>> personId2listOfDepartureTimes = this.handler.getPersonId2listOfDepartureTimes(mode);
 			Map<Id<Person>,List<Double>> personId2listOfDistances = this.handler.getPersonId2listOfDistances(carrierIdString);
-//			Map<Id<Person>,List<Double>> personId2listOfTravelTimes = this.handler.getPersonId2listOfTravelTimes(mode);
-			
-//			KT:
+
 			Map<Id<Person>, Double> personId2tourDistance = this.handler.getPersonId2TourDistances(carrierIdString);
 				
 			for (Id<Person> id :personId2listOfDistances.keySet()) {
-//				List<Double> amounts = personId2listOfAmounts.get(id);
-//				List<Double> departureTimes = personId2listOfDepartureTimes.get(id);
 				List<Double> distancesInMeters = personId2listOfDistances.get(id);
-//				List<Double> travelTimes = personId2listOfTravelTimes.get(id);
-				
-//				Double tourDistanceInKm = personId2tourDistance.get(id) / 1000;
 				
 				
 				for (int i = 0 ; i < distancesInMeters.size() ; i++) {
-//					double price = amounts.get(i);
-//					double departureTime = departureTimes.get(i);
 					double distanceInKm = distancesInMeters.get(i)/1000;
-//					double travelTime = travelTimes.get(i);
-					
-//					bw.write(departureTime + ";" + id + ";" + price + ";" + distance + ";" + travelTime);
+
 					bw.write(id + ";"
 							+ distanceInKm + ";"
-//							+ tourDistanceInKm
 					);
 					bw.newLine();
 				}
@@ -138,7 +123,6 @@ public class TripWriter {
 			bw.write("____________________________________________________________________________");
 			bw.newLine();
 
-//			bw.write("departure time [sec];person Id;amount per trip [monetary units];distance [m];travel time [sec]");
 			bw.write("person Id;"
 					+ "distance tour [km] ; "
 					+ "TravelTime tour [h]"
@@ -192,8 +176,7 @@ public class TripWriter {
 	 * des Carriers für jeden FahrzeugTyp einzeln auf und bildet auch Gesamtsumme.
 	 * TODO: gesamte Reisezeit (Ende "start"-act bis Beginn "end"-act)
 	 */
-	//TODO: Ergebnisse können nicht stimmen: Entfernung in m und km haben gleichen Wert. // für _frozen Carrier ist Faktor 10. eigentlich müsste aber Faktor 1000 sein ... KMT feb/18
-	public void writeResultsPerVehicleTypes() {
+		public void writeResultsPerVehicleTypes() {
 		
 		String fileName = this.outputFolder + "total_infos_per_vehicleType.csv";
 		File file = new File(fileName);
@@ -205,16 +188,11 @@ public class TripWriter {
 			bw.write("____________________________________________________________________________");
 			bw.newLine();
 
-//			bw.write("departure time [sec];person Id;amount per trip [monetary units];distance [m];travel time [sec]");
+
 			bw.write("vehType Id;" +
 					"#ofVehicles;" +
-//					"distance [m]; " +
 					"distance [km];" +
 					"TravelTime [h]; " //+
-//					"FuelConsumption[l]; " +
-//					"Emission [t Co2];  " +
-//					"FuelConsumptionRate[l/100m]; " +
-//					"EmissionRate [g/m]; "
 					);
 			bw.newLine();
 	
@@ -262,24 +240,17 @@ public class TripWriter {
 			Double totalDistanceInMeter = 0.0;
 			Double totalTravelTimeInSeconds = 0.0;
 			Integer totalNumberofVehicles = 0;
-			Double totalFuelConsumtion = 0.0;
-			Double totalEmissions = 0.0;
 			for (Id<VehicleType> vehTypeId : vehTypeId2TourDistances.keySet()) {
 				totalDistanceInMeter = totalDistanceInMeter + vehTypeId2TourDistances.get(vehTypeId);
 				totalTravelTimeInSeconds = totalTravelTimeInSeconds + vehTypeId2TravelTimes.get(vehTypeId);
 				totalNumberofVehicles = totalNumberofVehicles + vehTypeId2NumberOfVehicles.get(vehTypeId);
-				totalFuelConsumtion = totalFuelConsumtion + vehTypeId2TourDistances.get(vehTypeId)*vehTypId2Capabilities.get(vehTypeId).getFuelConsumtion()/100;
-				totalEmissions = totalEmissions + vehTypeId2TourDistances.get(vehTypeId)*vehTypId2Capabilities.get(vehTypeId).getEmissionsPerMeter()/1000000;
 			}
 			
 			// Gesamtsumme
 			bw.write("SUMME alle Carrier;"+ 
-					totalNumberofVehicles + ";" + 
-//					totalDistanceInMeter + ";" +
+					totalNumberofVehicles + ";" +
 					totalDistanceInMeter/1000 + ";" +
 					totalTravelTimeInSeconds/3600 + ";" //+
-//					totalFuelConsumtion + ";" +  // Spritverbrauch in Liter
-//					totalEmissions	// CO2-Ausstoss in t
 					);
 			bw.newLine();
 			
@@ -293,13 +264,8 @@ public class TripWriter {
 				
 				bw.write(vehTypeId + ";" +
 						numberOfVehicles + ";" +
-//						tourDistanceInMeters + ";" +
 						tourDistanceInMeters/1000 + ";" +
 						tourTravelTimeInSeconds /3600+ ";" //+
-//						tourDistanceInMeters*capabilites.getFuelConsumtion()/100 + ";" +  // Spritverbrauch in Liter (Faktor wg l/100km als Grundangabe)
-//						tourDistanceInMeters*capabilites.getEmissionsPerMeter()/1000000 +";" + 	// CO2-Ausstoss in t (= 1Mio g)
-//						capabilites.getFuelConsumtion() + ";" +
-//						capabilites.getEmissionsPerMeter()
 						);
 				bw.newLine();
 
@@ -332,14 +298,8 @@ public class TripWriter {
 
 			bw.write("personId; " +
 					"vehType Id;" +
-//					"distance [m] ; " +
 					"distance [km] ;" +
-//					"TravelTime [s]; " +
 					"TravelTime [h];" //+
-//					"FuelConsumption[l]; " +
-//					"Emission [t Co2];  " +
-//					"FuelConsumptionRate[l/100m]; " +
-//					"EmissionRate [g/m]; "
 					);
 			bw.newLine();
 
@@ -384,19 +344,10 @@ public class TripWriter {
 					log.error("Vehicle type for person not defined: " + personId);
 				}
 
-				double fuelConsuptionRate = (vehTypId2Capabilities.get(vehTypeId)).getFuelConsumtion()*1000; // Usually in  l/100km
-				double emissionsRatePerMeter = vehTypId2Capabilities.get(vehTypeId).getEmissionsPerMeter(); 
-
 				bw.write(personId + ";" +
 						vehTypeId + ";" +
-//						tourDistanceMeter + ";" +
 						tourDistanceMeter/1000 + ";" +  //km
-//						tourTravelTimeSec + ";" +
 						tourTravelTimeSec/3600 + ";" //+ 	//h
-//						tourDistanceMeter*fuelConsuptionRate/100/1000 + ";" +  // rate is in [liter/100km]
-//						tourDistanceMeter*emissionsRatePerMeter /1000000 +";" + 	// CO2-Ausstoss in t (= 1Mio g)
-//						fuelConsuptionRate+ ";" +
-//						emissionsRatePerMeter
 						);
 				bw.newLine();
 
