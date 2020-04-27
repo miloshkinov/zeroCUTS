@@ -28,14 +28,14 @@ public class FreightAnalyseKT {
 	 */
 	
 
-	private static final String RUN_DIR = "../../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/01_ICEVBEV_NwCE_BVWP_2000it_DC_noTax/" ;
-//	private static final String RUN_DIR = "../../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/02_ICEVBEV_NwCE_BVWP_2000it_Tax25/" ;
-//	private static final String RUN_DIR = "../../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/03_ICEVBEV_NwCE_BVWP_2000it_Tax50/" ;
-//	private static final String RUN_DIR = "../../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/04_ICEVBEV_NwCE_BVWP_2000it_Tax100/" ;
-//	private static final String RUN_DIR = "../../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/05_ICEVBEV_NwCE_BVWP_2000it_Tax150/" ;
-//	private static final String RUN_DIR = "../../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/06_ICEVBEV_NwCE_BVWP_2000it_Tax200/" ;
-//	private static final String RUN_DIR = "../../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/07_ICEVBEV_NwCE_BVWP_2000it_Tax250/" ;
-//	private static final String RUN_DIR = "../../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/08_ICEVBEV_NwCE_BVWP_2000it_Tax300/" ;
+	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/01_ICEVBEV_NwCE_BVWP_2000it_DC_noTax/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/02_ICEVBEV_NwCE_BVWP_2000it_Tax25/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/03_ICEVBEV_NwCE_BVWP_2000it_Tax50/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/04_ICEVBEV_NwCE_BVWP_2000it_Tax100/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/05_ICEVBEV_NwCE_BVWP_2000it_Tax150/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/06_ICEVBEV_NwCE_BVWP_2000it_Tax200/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/07_ICEVBEV_NwCE_BVWP_2000it_Tax250/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/08_ICEVBEV_NwCE_BVWP_2000it_Tax300/" ;
 
 	
 	private static final String OUTPUT_DIR = RUN_DIR + "Analysis/" ;
