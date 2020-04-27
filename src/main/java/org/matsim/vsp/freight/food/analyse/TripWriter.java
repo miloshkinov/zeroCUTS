@@ -191,9 +191,16 @@ public class TripWriter {
 			bw.newLine();
 
 //			bw.write("departure time [sec];person Id;amount per trip [monetary units];distance [m];travel time [sec]");
-			bw.write("vehType Id;#ofVehicles;distance [m] ; distance [km] ;TravelTime [s]  ; " +
-					"FuelConsumption[l]; Emission [t Co2];  FuelConsumptionRate[l/100m]; " +
-					"EmissionRate [g/m]; ");
+			bw.write("vehType Id;" +
+					"#ofVehicles;" +
+//					"distance [m]; " +
+					"distance [km];" +
+					"TravelTime [h]; " //+
+//					"FuelConsumption[l]; " +
+//					"Emission [t Co2];  " +
+//					"FuelConsumptionRate[l/100m]; " +
+//					"EmissionRate [g/m]; "
+					);
 			bw.newLine();
 	
 		
@@ -237,14 +244,14 @@ public class TripWriter {
 			}
 			
 			//Gesamtsumme
-			Double totalDistance = 0.0;
-			Double totalTravelTime = 0.0;
+			Double totalDistanceInMeter = 0.0;
+			Double totalTravelTimeInSeconds = 0.0;
 			Integer totalNumberofVehicles = 0;
 			Double totalFuelConsumtion = 0.0;
 			Double totalEmissions = 0.0;
 			for (Id<VehicleType> vehTypeId : vehTypeId2TourDistances.keySet()) {
-				totalDistance = totalDistance + vehTypeId2TourDistances.get(vehTypeId);
-				totalTravelTime = totalTravelTime + vehTypeId2TravelTimes.get(vehTypeId);
+				totalDistanceInMeter = totalDistanceInMeter + vehTypeId2TourDistances.get(vehTypeId);
+				totalTravelTimeInSeconds = totalTravelTimeInSeconds + vehTypeId2TravelTimes.get(vehTypeId);
 				totalNumberofVehicles = totalNumberofVehicles + vehTypeId2NumberOfVehicles.get(vehTypeId);
 				totalFuelConsumtion = totalFuelConsumtion + vehTypeId2TourDistances.get(vehTypeId)*vehTypId2Capabilities.get(vehTypeId).getFuelConsumtion()/100;
 				totalEmissions = totalEmissions + vehTypeId2TourDistances.get(vehTypeId)*vehTypId2Capabilities.get(vehTypeId).getEmissionsPerMeter()/1000000;
@@ -253,31 +260,31 @@ public class TripWriter {
 			// Gesamtsumme
 			bw.write("SUMME alle Carrier;"+ 
 					totalNumberofVehicles + ";" + 
-					totalDistance + ";" +
-					totalDistance/1000 + ";" +
-					totalTravelTime + ";" +
-					totalFuelConsumtion + ";" +  // Spritverbrauch in Liter
-					totalEmissions	// CO2-Ausstoss in t
+//					totalDistanceInMeter + ";" +
+					totalDistanceInMeter/1000 + ";" +
+					totalTravelTimeInSeconds/3600 + ";" //+
+//					totalFuelConsumtion + ";" +  // Spritverbrauch in Liter
+//					totalEmissions	// CO2-Ausstoss in t
 					);
 			bw.newLine();
 			
 			// Werte der einzelnen Fahrzeugtypen (alle Carrier)
 			for (Id<VehicleType> vehTypeId : vehTypeId2TourDistances.keySet()) {
 
-				Double tourDistance = vehTypeId2TourDistances.get(vehTypeId);
-				Double tourTravelTime = vehTypeId2TravelTimes.get(vehTypeId);
-				Integer numberofVehicles = vehTypeId2NumberOfVehicles.get(vehTypeId);
+				Double tourDistanceInMeters = vehTypeId2TourDistances.get(vehTypeId);
+				Double tourTravelTimeInSeconds = vehTypeId2TravelTimes.get(vehTypeId);
+				Integer numberOfVehicles = vehTypeId2NumberOfVehicles.get(vehTypeId);
 				VehicleTypeSpezificCapabilities capabilites = vehTypId2Capabilities.get(vehTypeId);
 				
 				bw.write(vehTypeId + ";" +
-						numberofVehicles + ";" + 
-						tourDistance + ";" + 
-						tourDistance/1000 + ";" + 
-						tourTravelTime + ";" + 
-						tourDistance*capabilites.getFuelConsumtion()/100 + ";" +  // Spritverbrauch in Liter (Faktor wg l/100km als Grundangabe)
-						tourDistance*capabilites.getEmissionsPerMeter()/1000000 +";" + 	// CO2-Ausstoss in t (= 1Mio g)
-						capabilites.getFuelConsumtion() + ";" + 
-						capabilites.getEmissionsPerMeter() 
+						numberOfVehicles + ";" +
+//						tourDistanceInMeters + ";" +
+						tourDistanceInMeters/1000 + ";" +
+						tourTravelTimeInSeconds /3600+ ";" //+
+//						tourDistanceInMeters*capabilites.getFuelConsumtion()/100 + ";" +  // Spritverbrauch in Liter (Faktor wg l/100km als Grundangabe)
+//						tourDistanceInMeters*capabilites.getEmissionsPerMeter()/1000000 +";" + 	// CO2-Ausstoss in t (= 1Mio g)
+//						capabilites.getFuelConsumtion() + ";" +
+//						capabilites.getEmissionsPerMeter()
 						);
 				bw.newLine();
 
@@ -308,9 +315,17 @@ public class TripWriter {
 			bw.write("____________________________________________________________________________");
 			bw.newLine();
 
-			bw.write("personId; vehType Id;distance [m] ; distance [km] ;TravelTime [s]; TravelTime [h];" +
-					"FuelConsumption[l]; Emission [t Co2];  FuelConsumptionRate[l/100m]; " +
-					"EmissionRate [g/m]; ");
+			bw.write("personId; " +
+					"vehType Id;" +
+//					"distance [m] ; " +
+					"distance [km] ;" +
+//					"TravelTime [s]; " +
+					"TravelTime [h];" //+
+//					"FuelConsumption[l]; " +
+//					"Emission [t Co2];  " +
+//					"FuelConsumptionRate[l/100m]; " +
+//					"EmissionRate [g/m]; "
+					);
 			bw.newLine();
 
 
@@ -359,14 +374,14 @@ public class TripWriter {
 
 				bw.write(personId + ";" +
 						vehTypeId + ";" +
-						tourDistanceMeter + ";" + 
+//						tourDistanceMeter + ";" +
 						tourDistanceMeter/1000 + ";" +  //km
-						tourTravelTimeSec + ";" + 
-						tourTravelTimeSec/3600 + ";" + 	//h
-						tourDistanceMeter*fuelConsuptionRate/100/1000 + ";" +  // rate is in [liter/100km]
-						tourDistanceMeter*emissionsRatePerMeter /1000000 +";" + 	// CO2-Ausstoss in t (= 1Mio g)
-						fuelConsuptionRate+ ";" + 
-						emissionsRatePerMeter  
+//						tourTravelTimeSec + ";" +
+						tourTravelTimeSec/3600 + ";" //+ 	//h
+//						tourDistanceMeter*fuelConsuptionRate/100/1000 + ";" +  // rate is in [liter/100km]
+//						tourDistanceMeter*emissionsRatePerMeter /1000000 +";" + 	// CO2-Ausstoss in t (= 1Mio g)
+//						fuelConsuptionRate+ ";" +
+//						emissionsRatePerMeter
 						);
 				bw.newLine();
 

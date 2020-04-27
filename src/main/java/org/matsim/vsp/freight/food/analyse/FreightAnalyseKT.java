@@ -2,10 +2,7 @@ package org.matsim.vsp.freight.food.analyse;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.matsim.contrib.freight.carrier.CarrierPlanXmlReader;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
-import org.matsim.contrib.freight.carrier.Carriers;
+import org.matsim.contrib.freight.carrier.*;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -53,8 +50,7 @@ public class FreightAnalyseKT {
 	}
 	
 		private void run() throws UncheckedIOException, IOException {
-			
-			//TODO: Why is the configfile not used as .gz?
+
 			File configFile = new File(RUN_DIR + "output_config.xml");
 //			File configFile = new File(RUN_DIR + "output_config.xml.gz");
 			File populationFile = new File(RUN_DIR + "output_plans.xml.gz");
@@ -95,9 +91,9 @@ public class FreightAnalyseKT {
 //				tripWriter.writeDetailedResultsSingleCarrier(carrier.getId().toString());
 //				tripWriter.writeTourResultsSingleCarrier(carrier.getId().toString());
 //			}
-//			
+
 			tripWriter.writeResultsPerVehicleTypes();
-//			tripWriter.writeTourResultsAllCarrier();
+			tripWriter.writeTourResultsAllCarrier();
 			
 			
 			log.info("### Analysis DONE");
