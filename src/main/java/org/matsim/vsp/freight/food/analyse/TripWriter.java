@@ -75,7 +75,10 @@ public class TripWriter {
 			bw.newLine();
 
 //			bw.write("departure time [sec];person Id;amount per trip [monetary units];distance [m];travel time [sec]");
-			bw.write("person Id;distance trip[m];distance tour [m]");
+			bw.write("person Id;"
+					+ "distance trip [km];"
+//					+ "distance tour [km]"
+			);
 			bw.newLine();
 
 //			Map<Id<Person>,List<Double>> personId2listOfAmounts = this.handler.getPersonId2listOfAmounts(mode);
@@ -89,20 +92,23 @@ public class TripWriter {
 			for (Id<Person> id :personId2listOfDistances.keySet()) {
 //				List<Double> amounts = personId2listOfAmounts.get(id);
 //				List<Double> departureTimes = personId2listOfDepartureTimes.get(id);
-				List<Double> distances = personId2listOfDistances.get(id);
+				List<Double> distancesInMeters = personId2listOfDistances.get(id);
 //				List<Double> travelTimes = personId2listOfTravelTimes.get(id);
 				
-				Double tourDistance = personId2tourDistance.get(id);
+//				Double tourDistanceInKm = personId2tourDistance.get(id) / 1000;
 				
 				
-				for (int i = 0 ; i < distances.size() ; i++) {
+				for (int i = 0 ; i < distancesInMeters.size() ; i++) {
 //					double price = amounts.get(i);
 //					double departureTime = departureTimes.get(i);
-					double distance = distances.get(i);
+					double distanceInKm = distancesInMeters.get(i)/1000;
 //					double travelTime = travelTimes.get(i);
 					
 //					bw.write(departureTime + ";" + id + ";" + price + ";" + distance + ";" + travelTime);
-					bw.write(id + ";" + distance+ ";" + tourDistance);
+					bw.write(id + ";"
+							+ distanceInKm + ";"
+//							+ tourDistanceInKm
+					);
 					bw.newLine();
 				}
 			}
@@ -133,7 +139,10 @@ public class TripWriter {
 			bw.newLine();
 
 //			bw.write("departure time [sec];person Id;amount per trip [monetary units];distance [m];travel time [sec]");
-			bw.write("person Id;distance tour [m] ; TravelTime tour [s]");
+			bw.write("person Id;"
+					+ "distance tour [km] ; "
+					+ "TravelTime tour [h]"
+			);
 			bw.newLine();
 
 			
@@ -143,23 +152,29 @@ public class TripWriter {
 			Map<Id<Person>, Double> personId2tourTravelTimes = this.handler.getPersonId2TravelTimes(carrierIdString);
 			
 			//Summe für gesammten Carrier
-			Double totalTourDistance = 0.0;
-			Double totalTourTravelTime =0.0;
+			Double totalTourDistanceInMeters = 0.0;
+			Double totalTourTravelTimeInSeconds =0.0;
 			for (Id<Person> id :personId2tourDistance.keySet()) {
-				totalTourDistance = totalTourDistance + personId2tourDistance.get(id);
-				totalTourTravelTime = totalTourTravelTime + personId2tourTravelTimes.get(id);
+				totalTourDistanceInMeters = totalTourDistanceInMeters + personId2tourDistance.get(id);
+				totalTourTravelTimeInSeconds = totalTourTravelTimeInSeconds + personId2tourTravelTimes.get(id);
 			}
 			
-			bw.write("SUMME Carrier;" + totalTourDistance + ";" + totalTourTravelTime);
+			bw.write("SUMME Carrier;"
+					+ totalTourDistanceInMeters/1000 + ";"
+					+ totalTourTravelTimeInSeconds/3600
+			);
 			bw.newLine();
 			
 			// Werte der einzelnen Agenten
 			for (Id<Person> id :personId2tourDistance.keySet()) {
 
-				Double tourDistance = personId2tourDistance.get(id);
-				Double tourTravelTime = personId2tourTravelTimes.get(id);
+				Double tourDistanceInMeters = personId2tourDistance.get(id);
+				Double tourTravelTimeInSeconds = personId2tourTravelTimes.get(id);
 				
-				bw.write(id + ";" + tourDistance + ";" + tourTravelTime);
+				bw.write(id + ";"
+						+ tourDistanceInMeters/1000 + ";"
+						+ tourTravelTimeInSeconds/3600
+				);
 				bw.newLine();
 
 			}
@@ -398,160 +413,6 @@ public class TripWriter {
 
 	
 	
-	
-//	//Neu KT: Noch anpassen
-//public void writeDetailedResultsAllCarrier() {
-//		
-//		String fileName = this.outputFolder + "tour_infos_all_Carriers.csv";
-//		File file = new File(fileName);
-//			
-//		try {
-//			BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-//			bw.write(fileName);
-//			bw.newLine();
-//			bw.write("____________________________________________________________________________");
-//			bw.newLine();
-//
-//			bw.write("person Id;distance [m]");
-//			bw.newLine();
-//				
-//			Map<Id<Person>, Double> personId2listOfTourDistances = this.handler.getPersonId2listOfTourDistances(carrierIdString);
-//				
-//			for (Id<Person> id :personId2listOfTourDistances.keySet()) {
-//
-//				double tourDistance = personId2listOfTourDistances.get(id);
-//
-//				bw.write(id + ";" + tourDistance);
-//				bw.newLine();
-//
-//			}
-//			
-//			log.info("Output written to " + fileName);
-//			bw.close();
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//	}
-	
-//	public void writeAvgTollPerTimeBin(String mode) {
-//		String fileName = this.outputFolder + "avg_amount_per_trip_departure_time_" + mode + ".csv";
-//		File file = new File(fileName);
-//		Map<Double, Double> departureTime2avgAmount = this.handler.getAvgAmountPerTripDepartureTime(mode);
-//
-//		try {
-//			BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-//			bw.write(fileName);
-//			bw.newLine();
-//			bw.write("____________________________________________________________________________");
-//			bw.newLine();
-//
-//			bw.write("trip departure time;average amount");
-//			bw.newLine();
-//
-//			for (Double x : departureTime2avgAmount.keySet()) {
-//				
-//				bw.write(x + ";" + departureTime2avgAmount.get(x));
-//				bw.newLine();
-//			}
-//			
-//			log.info("Output written to " + fileName);
-//			bw.close();
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}	
-//	}
-//	
-//	public void writeAvgTollPerDistance(String mode) {
-//		String fileName = this.outputFolder + "avg_amount_per_trip_distance_" + mode + ".csv";
-//		File file = new File(fileName);
-//		Map<Double, Double> tripDistance2avgAmount = this.handler.getAvgAmountPerTripDistance(mode);
-//
-//		try {
-//			BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-//			bw.write(fileName);
-//			bw.newLine();
-//			bw.write("____________________________________________________________________________");
-//			bw.newLine();
-//
-//			bw.write("trip distance;average amount");
-//			bw.newLine();
-//
-//			for (Double x : tripDistance2avgAmount.keySet()) {
-//				
-//				bw.write(x + ";" + tripDistance2avgAmount.get(x));
-//				bw.newLine();
-//			}
-//			
-//			log.info("Output written to " + fileName);
-//			bw.close();
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}	
-//	}
-//	
-//	public void writePersonId2totalAmount() {
-//		
-//		String fileName = this.outputFolder + "personId2totalAmount.csv";
-//		File file = new File(fileName);
-//			
-//		try {
-//			BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-//			bw.write(fileName);
-//			bw.newLine();
-//			bw.write("____________________________________________________________________________");
-//			bw.newLine();
-//
-//			bw.write("person Id;total amount [monetary units]");
-//			bw.newLine();
-//			
-//			Map<Id<Person>,Double> personId2totalAmount = this.handler.getCausingAgentId2amountSumAllAgents();
-//
-//			for (Id<Person> id : personId2totalAmount.keySet()) {
-//				double totalAmount = personId2totalAmount.get(id);
-//				
-//				bw.write(id + ";" + totalAmount);
-//				bw.newLine();
-//			}
-//			
-//			log.info("Output written to " + fileName);
-//			bw.close();
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//	}
-//
-//	public void writeAvgTravelTimePerTimeBin(String mode) {
-//		String fileName = this.outputFolder + "avg_travelTime_per_trip_departure_time_" + mode + ".csv";
-//		File file = new File(fileName);
-//		Map<Double, Double> departureTime2avgTravelTime = this.handler.getAvgTravelTimePerTripDepartureTime(mode);
-//
-//		try {
-//			BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-//			bw.write(fileName);
-//			bw.newLine();
-//			bw.write("____________________________________________________________________________");
-//			bw.newLine();
-//
-//			bw.write("trip departure time;average travel time [sec]");
-//			bw.newLine();
-//
-//			for (Double x : departureTime2avgTravelTime.keySet()) {
-//				
-//				bw.write(x + ";" + departureTime2avgTravelTime.get(x));
-//				bw.newLine();
-//			}
-//			
-//			log.info("Output written to " + fileName);
-//			bw.close();
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}	
-//		
-//	}
+
 	
 }
