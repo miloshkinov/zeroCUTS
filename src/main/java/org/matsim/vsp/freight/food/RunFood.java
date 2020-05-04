@@ -210,7 +210,9 @@ class RunFood {
                    .build();
 
             log.warn("Ignore the algorithms file for jsprit and use an algorithm out of the box.");
-            VehicleRoutingAlgorithm vra = Jsprit.Builder.newInstance(vrp).setProperty(Jsprit.Parameter.THREADS, "5").buildAlgorithm();
+            Scenario scenario = controler.getScenario();
+            FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(controler.getConfig(), FreightConfigGroup.class);
+            VehicleRoutingAlgorithm vra = MatsimJspritFactory.loadOrCreateVehicleRoutingAlgorithm(scenario, freightConfigGroup, netBasedCosts, vrp);
             vra.getAlgorithmListeners().addListener(new StopWatch(), VehicleRoutingAlgorithmListeners.Priority.HIGH);
             vra.setMaxIterations(CarrierUtils.getJspritIterations(carrier));
             VehicleRoutingProblemSolution solution = Solutions.bestOf(vra.searchSolutions());
