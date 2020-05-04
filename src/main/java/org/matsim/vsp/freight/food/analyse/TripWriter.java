@@ -22,6 +22,7 @@
  */
 package org.matsim.vsp.freight.food.analyse;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
@@ -36,6 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static org.slf4j.event.Level.DEBUG;
+
 /**
  * @author ikaddoura , lkroeger
  *
@@ -47,6 +50,7 @@ public class TripWriter {
 	String outputFolder;
 	
 	public TripWriter(TripEventHandler handler, String outputFolder) {
+//		log.setLevel(Level.DEBUG);
 		this.handler = handler;
 		String directory = outputFolder + (outputFolder.endsWith("/") ? "" : "/");
 		this.outputFolder = directory;
@@ -201,7 +205,7 @@ public class TripWriter {
 			Map<Id<VehicleType>,Double> vehTypeId2TourDistances = new TreeMap<Id<VehicleType>,Double>();
 			Map<Id<VehicleType>,Double> vehTypeId2TravelTimes = new TreeMap<Id<VehicleType>,Double>();
 			Map<Id<VehicleType>,Integer> vehTypeId2NumberOfVehicles = new TreeMap<Id<VehicleType>,Integer>();
-			Map<Id<VehicleType>, VehicleTypeSpezificCapabilities> vehTypId2Capabilities = new TreeMap<Id<VehicleType>, VehicleTypeSpezificCapabilities>();
+//			Map<Id<VehicleType>, VehicleTypeSpezificCapabilities> vehTypId2Capabilities = new TreeMap<Id<VehicleType>, VehicleTypeSpezificCapabilities>();
 			
 			//Vorbereitung: Nur Aufnehmen, wenn nicht null;
 			CarrierVehicleTypes vehicleTypes = this.handler.getVehicleTypes();
@@ -214,7 +218,7 @@ public class TripWriter {
 					Double distance = this.handler.getVehTypId2TourDistances(vehicleTypeId).get(vehicleTypeId);
 					Double travelTime = this.handler.getVehTypId2TravelTimes(vehicleTypeId).get(vehicleTypeId);
 					Integer nuOfVeh = this.handler.getVehTypId2VehicleNumber(vehicleTypeId).get(vehicleTypeId);
-					VehicleTypeSpezificCapabilities capabilities = this.handler.getVehTypId2Capabilities().get(vehicleTypeId);
+//					VehicleTypeSpezificCapabilities capabilities = this.handler.getVehTypId2Capabilities().get(vehicleTypeId);
 					if (distance != null) {
 						vehTypeId2TourDistances.put(vehicleTypeId, distance );
 					} else {
@@ -230,9 +234,9 @@ public class TripWriter {
 					} else {
 						vehTypeId2NumberOfVehicles.put(vehicleTypeId, 0);
 					}
-					if (capabilities != null){
-						vehTypId2Capabilities.put(vehicleTypeId, capabilities);
-					}			
+//					if (capabilities != null){
+//						vehTypId2Capabilities.put(vehicleTypeId, capabilities);
+//					}
 				}
 			}
 			
@@ -260,7 +264,7 @@ public class TripWriter {
 				Double tourDistanceInMeters = vehTypeId2TourDistances.get(vehTypeId);
 				Double tourTravelTimeInSeconds = vehTypeId2TravelTimes.get(vehTypeId);
 				Integer numberOfVehicles = vehTypeId2NumberOfVehicles.get(vehTypeId);
-				VehicleTypeSpezificCapabilities capabilites = vehTypId2Capabilities.get(vehTypeId);
+//				VehicleTypeSpezificCapabilities capabilites = vehTypId2Capabilities.get(vehTypeId);
 				
 				bw.write(vehTypeId + ";" +
 						numberOfVehicles + ";" +
@@ -309,21 +313,22 @@ public class TripWriter {
 			Map<Id<Person>, Double> personId2tourDistance = this.handler.getPersonId2TourDistances();
 			Map<Id<Person>, Double> personId2tourTravelTimes = this.handler.getPersonId2TravelTimes();
 
-			Map<Id<VehicleType>, VehicleTypeSpezificCapabilities> vehTypId2Capabilities = new TreeMap<Id<VehicleType>, VehicleTypeSpezificCapabilities>();
+//			Map<Id<VehicleType>, VehicleTypeSpezificCapabilities> vehTypId2Capabilities = new TreeMap<Id<VehicleType>, VehicleTypeSpezificCapabilities>();
 
 			CarrierVehicleTypes vehicleTypes = this.handler.getVehicleTypes();
 
-			//preparation:
-			for (Id<VehicleType> vehicleTypeId : vehicleTypes.getVehicleTypes().keySet()){
-				VehicleTypeSpezificCapabilities capabilities = this.handler.getVehTypId2Capabilities().get(vehicleTypeId);
-				if (capabilities != null){
-					vehTypId2Capabilities.put(vehicleTypeId, capabilities);
-				}
-
-			}
+//			//preparation:
+//			for (Id<VehicleType> vehicleTypeId : vehicleTypes.getVehicleTypes().keySet()){
+//				VehicleTypeSpezificCapabilities capabilities = this.handler.getVehTypId2Capabilities().get(vehicleTypeId);
+//				if (capabilities != null){
+//					vehTypId2Capabilities.put(vehicleTypeId, capabilities);
+//				}
+//
+//			}
 
 			//write results:
-			for (Id<Person> personId :personId2tourDistance.keySet()) {
+			for (Id<Person> personId : personId2tourDistance.keySet()) {
+				log.debug("PersonId: " + personId);
 
 				Double tourDistanceMeter = personId2tourDistance.get(personId);
 				Double tourTravelTimeSec = personId2tourTravelTimes.get(personId);
@@ -331,11 +336,13 @@ public class TripWriter {
 				Id<VehicleType> vehTypeId = null;
 
 				for (Id<VehicleType> vehTypeIdsAvail : vehicleTypes.getVehicleTypes().keySet()) {
+					log.debug("Trying if VehicleTypeId is matching: " + vehTypeIdsAvail.toString());
 					if(personId.toString().contains("_"+vehTypeIdsAvail.toString()+"_")){
-						if (vehTypeIdsAvail.toString().endsWith("frozen") == personId.toString().contains("frozen")) {//only frozen
-							vehTypeId = vehTypeIdsAvail;
-						} else { //not "frozen"
-							vehTypeId = vehTypeIdsAvail;
+						if (vehTypeIdsAvail.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
+							if (vehTypeIdsAvail.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
+								vehTypeId = vehTypeIdsAvail;
+								log.debug("vehicletypeId was set to: " +vehTypeId);
+							}
 						}
 					}
 				}

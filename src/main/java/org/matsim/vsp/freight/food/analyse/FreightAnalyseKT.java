@@ -25,7 +25,7 @@ public class FreightAnalyseKT {
 	 */
 	
 
-	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/01_ICEVBEV_NwCE_BVWP_2000it_DC_noTax/" ;
+	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/08_ICEVBEV_NwCE_BVWP_2000it_DC_Tax300/" ;
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/02_ICEVBEV_NwCE_BVWP_2000it_Tax25/" ;
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/03_ICEVBEV_NwCE_BVWP_2000it_Tax50/" ;
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/04_ICEVBEV_NwCE_BVWP_2000it_Tax100/" ;
@@ -41,7 +41,6 @@ public class FreightAnalyseKT {
 	
 	public static void main(String[] args) throws UncheckedIOException, IOException {
 		OutputDirectoryLogging.initLoggingWithOutputDirectory(OUTPUT_DIR);
-		log.setLevel(Level.INFO);
 		
 		FreightAnalyseKT analysis = new FreightAnalyseKT();
 		analysis.run();

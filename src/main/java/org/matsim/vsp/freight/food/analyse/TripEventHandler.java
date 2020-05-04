@@ -29,16 +29,16 @@ class TripEventHandler  implements ActivityEndEventHandler, LinkEnterEventHandle
 	private Scenario scenario;
 	private CarrierVehicleTypes vehicleTypes;
 
-	private Map<Id<VehicleType>, VehicleTypeSpezificCapabilities> vehTypId2Capabilities = new HashMap<Id<VehicleType>, VehicleTypeSpezificCapabilities>();
+//	private Map<Id<VehicleType>, VehicleTypeSpezificCapabilities> vehTypId2Capabilities = new HashMap<Id<VehicleType>, VehicleTypeSpezificCapabilities>();
 
 
 	CarrierVehicleTypes getVehicleTypes() {
 		return vehicleTypes;
 	}
 
-	Map<Id<VehicleType>, VehicleTypeSpezificCapabilities> getVehTypId2Capabilities() {
-		return vehTypId2Capabilities;
-	}
+//	Map<Id<VehicleType>, VehicleTypeSpezificCapabilities> getVehTypId2Capabilities() {
+//		return vehTypId2Capabilities;
+//	}
 
 	private Map<Id<Person>,Integer> personId2currentTripNumber = new HashMap<Id<Person>, Integer>();
 	private Map<Id<Person>,Map<Integer,Double>> personId2tripNumber2departureTime = new HashMap<Id<Person>, Map<Integer,Double>>();
@@ -51,22 +51,22 @@ class TripEventHandler  implements ActivityEndEventHandler, LinkEnterEventHandle
 	public TripEventHandler(Scenario scenario, CarrierVehicleTypes vehicleTypes) {
 		this.scenario = scenario;
 		this.vehicleTypes = vehicleTypes;
-		readVehicleTypeCapabilities();
+//		readVehicleTypeCapabilities();
 	}
 
-	private void readVehicleTypeCapabilities() {
-		for (VehicleType vehType : vehicleTypes.getVehicleTypes().values()){
-
-			VehicleTypeSpezificCapabilities vehTypeCapabilities = 
-					new VehicleTypeSpezificCapabilities(vehType.getCostInformation().getFixedCosts() ,
-							vehType.getCostInformation().getCostsPerMeter(),
-							vehType.getCostInformation().getCostsPerSecond(),
-							vehType.getCapacity().getOther().intValue());
-
-			vehTypId2Capabilities.put(vehType.getId(), vehTypeCapabilities);
-		}
-
-	}
+//	private void readVehicleTypeCapabilities() {
+//		for (VehicleType vehType : vehicleTypes.getVehicleTypes().values()){
+//
+//			VehicleTypeSpezificCapabilities vehTypeCapabilities =
+//					new VehicleTypeSpezificCapabilities(vehType.getCostInformation().getFixedCosts() ,
+//							vehType.getCostInformation().getCostsPerMeter(),
+//							vehType.getCostInformation().getCostsPerSecond(),
+//							vehType.getCapacity().getOther().intValue());
+//
+//			vehTypId2Capabilities.put(vehType.getId(), vehTypeCapabilities);
+//		}
+//
+//	}
 
 	@Override
 	public void reset(int iteration) {
