@@ -1,16 +1,11 @@
-image: maven:3-jdk-11
+image: maven:3.6.3-openjdk-11
 
-stages:
-    - compile
-    - test
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
 
-compile:
-    script: "mvn compile --batch-mode"
-    # only:
-       # - master
+cache:
+  paths:
+    - .m2/repository/
 
-test:
-    stage: test
-    script: "mvn test --batch-mode -Dmaven.test.redirectTestOutputToFile -Dmatsim.preferLocalDtds=true"
-    # dependencies: 
-        # - compile
+build:
+  script: "mvn install -B --fail-at-end -B -Dmaven.test.redirectTestOutputToFile -Dmatsim.preferLocalDtds=true"
