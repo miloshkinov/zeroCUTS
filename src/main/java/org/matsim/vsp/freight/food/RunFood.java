@@ -74,7 +74,7 @@ class RunFood {
                 inputPath + "mdvrp_algorithmConfig_2.xml",
                 "1",                                                    //only for demonstration.
                 inputPath + "networkChangeEvents.xml.gz",
-                "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/Demo1It",
+                "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/Demo1ItDC",
                 "true"
             };
         }
