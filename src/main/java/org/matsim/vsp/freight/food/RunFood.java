@@ -67,14 +67,15 @@ class RunFood {
         }
 
         if ( args.length==0 ) {
-            String inputPath = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBln_oneTW/input/";
+            String inputPath = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/input/";
             args = new String[] {
-                inputPath+"I-Base_carrierLEH_v2_withFleet_Shipment_OneTW.xml",
-                inputPath + "vehicleTypes.xml",
+                inputPath+"TwoCarrier_Shipment_OneTW_PickupTime_ICEVandBEV.xml",
+                inputPath + "vehicleTypesBVWP100_DC_Tax300.xml",
                 inputPath + "mdvrp_algorithmConfig_2.xml",
                 "1",                                                    //only for demonstration.
                 inputPath + "networkChangeEvents.xml.gz",
-                "../OutputKMT/TestsOutput/FoodOpenBerlin_NWCE_parallel",
+                "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/Demo1ItDC",
+                "true"
             };
         }
 
@@ -210,7 +211,9 @@ class RunFood {
                    .build();
 
             log.warn("Ignore the algorithms file for jsprit and use an algorithm out of the box.");
-            VehicleRoutingAlgorithm vra = Jsprit.Builder.newInstance(vrp).setProperty(Jsprit.Parameter.THREADS, "5").buildAlgorithm();
+            Scenario scenario = controler.getScenario();
+            FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(controler.getConfig(), FreightConfigGroup.class);
+            VehicleRoutingAlgorithm vra = MatsimJspritFactory.loadOrCreateVehicleRoutingAlgorithm(scenario, freightConfigGroup, netBasedCosts, vrp);
             vra.getAlgorithmListeners().addListener(new StopWatch(), VehicleRoutingAlgorithmListeners.Priority.HIGH);
             vra.setMaxIterations(CarrierUtils.getJspritIterations(carrier));
             VehicleRoutingProblemSolution solution = Solutions.bestOf(vra.searchSolutions());
