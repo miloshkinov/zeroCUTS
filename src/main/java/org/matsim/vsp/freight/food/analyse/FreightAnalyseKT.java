@@ -24,41 +24,68 @@ public class FreightAnalyseKT {
 	 *  @author kturner
 	 */
 
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/01_ICEVBEV_NwCE_BVWP_2000it_DC_noTax/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/02_ICEVBEV_NwCE_BVWP_2000it_DC_Tax25/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/03_ICEVBEV_NwCE_BVWP_2000it_DC_Tax50/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/04_ICEVBEV_NwCE_BVWP_2000it_DC_Tax100/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/05_ICEVBEV_NwCE_BVWP_2000it_DC_Tax150/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/06_ICEVBEV_NwCE_BVWP_2000it_DC_Tax200/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/07_ICEVBEV_NwCE_BVWP_2000it_DC_Tax250/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/08_ICEVBEV_NwCE_BVWP_2000it_DC_Tax300/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/01_ICEVBEV_NwCE_BVWP_2000it_DC_noTax/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/02_ICEVBEV_NwCE_BVWP_2000it_DC_Tax25/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/03_ICEVBEV_NwCE_BVWP_2000it_DC_Tax50/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/04_ICEVBEV_NwCE_BVWP_2000it_DC_Tax100/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/05_ICEVBEV_NwCE_BVWP_2000it_DC_Tax150/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/06_ICEVBEV_NwCE_BVWP_2000it_DC_Tax200/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/07_ICEVBEV_NwCE_BVWP_2000it_DC_Tax250/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/08_ICEVBEV_NwCE_BVWP_2000it_DC_Tax300/" ;
 
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/51_ICEVBEV_NwCE_BVWP_2000it_DCoff_noTax/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/52_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax25/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/53_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax50/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/54_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax100/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/55_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax150/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/56_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax200/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/57_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax250/" ;
-	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/58_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax300/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/51_ICEVBEV_NwCE_BVWP_2000it_DCoff_noTax/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/52_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax25/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/53_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax50/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/54_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax100/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/55_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax150/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/56_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax200/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/57_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax250/" ;
+	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/58_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax300/" ;
+	
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/21_ICEVBEV_NwCE_BVWP_10000it_DC_noTax/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/22_ICEVBEV_NwCE_BVWP_10000it_DC_Tax25/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/23_ICEVBEV_NwCE_BVWP_10000it_DC_Tax50/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/24_ICEVBEV_NwCE_BVWP_10000it_DC_Tax100/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/25_ICEVBEV_NwCE_BVWP_10000it_DC_Tax150/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/26_ICEVBEV_NwCE_BVWP_10000it_DC_Tax200/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/27_ICEVBEV_NwCE_BVWP_10000it_DC_Tax250/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/28_ICEVBEV_NwCE_BVWP_10000it_DC_Tax300/" ;
 
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/11_ICEVBEV_NwCE_BVWP_1it_DC_noTax/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/12_ICEVBEV_NwCE_BVWP_1it_DC_Tax25/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/13_ICEVBEV_NwCE_BVWP_1it_DC_Tax50/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/14_ICEVBEV_NwCE_BVWP_1it_DC_Tax100/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/15_ICEVBEV_NwCE_BVWP_1it_DC_Tax150/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/16_ICEVBEV_NwCE_BVWP_1it_DC_Tax200/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/17_ICEVBEV_NwCE_BVWP_1it_DC_Tax250/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/18_ICEVBEV_NwCE_BVWP_1it_DC_Tax300/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/72_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax25/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/73_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax50/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/74_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax100/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/75_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax150/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/76_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax200/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/77_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax250/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/78_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax300/" ;
 
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/61_ICEVBEV_NwCE_BVWP_1it_DCoff_noTax/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/62_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax25/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/63_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax50/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/64_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax100/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/65_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax150/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/66_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax200/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/67_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax250/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200514_87d52e1/68_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax300/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/11_ICEVBEV_NwCE_BVWP_1it_DC_noTax/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/12_ICEVBEV_NwCE_BVWP_1it_DC_Tax25/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/13_ICEVBEV_NwCE_BVWP_1it_DC_Tax50/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/14_ICEVBEV_NwCE_BVWP_1it_DC_Tax100/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/15_ICEVBEV_NwCE_BVWP_1it_DC_Tax150/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/16_ICEVBEV_NwCE_BVWP_1it_DC_Tax200/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/17_ICEVBEV_NwCE_BVWP_1it_DC_Tax250/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/18_ICEVBEV_NwCE_BVWP_1it_DC_Tax300/" ;
+
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/61_ICEVBEV_NwCE_BVWP_1it_DCoff_noTax/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/62_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax25/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/63_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax50/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/64_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax100/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/65_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax150/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/66_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax200/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/67_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax250/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/68_ICEVBEV_NwCE_BVWP_1it_DCoff_Tax300/" ;
+	
+	
+//#### Diesel only
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/01a_ICEV_NwCE_BVWP_2000it_DC_noTax/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/51a_ICEV_NwCE_BVWP_2000it_DCoff_noTax/" ;
+	
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/21a_ICEV_NwCE_BVWP_10000it_DC_noTax/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/" ;
+	
 
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/Demo1ItDC/" ;
 
