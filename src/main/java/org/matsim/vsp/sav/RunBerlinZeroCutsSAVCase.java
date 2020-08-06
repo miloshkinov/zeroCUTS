@@ -33,6 +33,7 @@ import org.matsim.contrib.taxi.run.TaxiConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
+import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
@@ -95,7 +96,7 @@ public class RunBerlinZeroCutsSAVCase {
         config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
         config.qsim().setInsertingWaitingVehiclesBeforeDrivingVehicles(true);
         // vsp defaults
-        config.plansCalcRoute().setInsertingAccessEgressWalk(true);
+        config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
 
 
         config.qsim().setUsingTravelTimeCheckInTeleportation(true);
