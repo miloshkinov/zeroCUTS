@@ -95,7 +95,7 @@ public class RunBerlinZeroCutsSAVCase {
         config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
         config.qsim().setInsertingWaitingVehiclesBeforeDrivingVehicles(true);
         // vsp defaults
-//        config.plansCalcRoute().setInsertingAccessEgressWalk(true);
+        config.plansCalcRoute().setInsertingAccessEgressWalk(true);
 
 
         config.qsim().setUsingTravelTimeCheckInTeleportation(true);
