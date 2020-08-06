@@ -146,7 +146,7 @@ public class RunFreightOnlyMatsim {
 		//therefore no need for e.g. a strategy! KMT jan/18
 		config.planCalcScore().setFractionOfIterationsToStartScoreMSA(0.8);
 		config.plans().setRemovingUnneccessaryPlanAttributes(true);
-		config.plansCalcRoute().setInsertingAccessEgressWalk(true);
+//		config.plansCalcRoute().setInsertingAccessEgressWalk(true);
 		config.qsim().setUsingTravelTimeCheckInTeleportation(true);
 		config.qsim().setTrafficDynamics(TrafficDynamics.kinematicWaves);
 		config.strategy().setFractionOfIterationsToDisableInnovation(0.8);
