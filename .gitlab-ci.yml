@@ -7,5 +7,10 @@ cache:
   paths:
     - .m2/repository/
 
+test:
+  stage: test
+  script: "mvn test --batch-mode -Dmaven.test.redirectTestOutputToFile -Dmatsim.preferLocalDtds=true"
+
 build:
+  stage: build
   script: "mvn install -B --fail-at-end -B -Dmaven.test.redirectTestOutputToFile -Dmatsim.preferLocalDtds=true"
