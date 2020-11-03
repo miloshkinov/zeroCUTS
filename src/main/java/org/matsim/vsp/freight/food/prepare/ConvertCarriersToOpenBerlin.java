@@ -1,7 +1,6 @@
 package org.matsim.vsp.freight.food.prepare;
 
 import org.apache.log4j.Logger;
-import org.junit.Assert;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
@@ -145,12 +144,17 @@ class ConvertCarriersToOpenBerlin {
 	}
 
 	private void someChecks(Carriers oldCarriers, Carriers newCarriers) {
-		Assert.assertEquals("Number of carriers are not equal.", oldCarriers.getCarriers().size(), newCarriers.getCarriers().size());
+		if (oldCarriers.getCarriers().size() != newCarriers.getCarriers().size())
+			throw new AssertionError("Number of carriers are not equal.");
 		for (Id<Carrier> carrierId : oldCarriers.getCarriers().keySet()){
-			Assert.assertNotNull("Carrier with Id is missing in converted Carriers: " + carrierId.toString(), newCarriers.getCarriers().get(carrierId));
-			Assert.assertEquals("Number of vehicles of carrier are not equal: " + carrierId.toString(), oldCarriers.getCarriers().get(carrierId).getCarrierCapabilities().getCarrierVehicles().size(), newCarriers.getCarriers().get(carrierId).getCarrierCapabilities().getCarrierVehicles().size());
-			Assert.assertEquals("Number of services of carrier are not equal: " + carrierId.toString(), oldCarriers.getCarriers().get(carrierId).getServices().size(), newCarriers.getCarriers().get(carrierId).getServices().size());
-			Assert.assertEquals("Number of shipments of carrier are not equal: " + carrierId.toString(), oldCarriers.getCarriers().get(carrierId).getShipments().size(), newCarriers.getCarriers().get(carrierId).getShipments().size());
+			if (newCarriers.getCarriers().get(carrierId) == null)
+				throw new AssertionError("Carrier with Id is missing in converted Carriers: " + carrierId.toString());
+			if (oldCarriers.getCarriers().get(carrierId).getCarrierCapabilities().getCarrierVehicles().size() != newCarriers.getCarriers().get(carrierId).getCarrierCapabilities().getCarrierVehicles().size())
+				throw new AssertionError("Number of vehicles of carrier are not equal: " + carrierId.toString());
+			if (oldCarriers.getCarriers().get(carrierId).getServices().size() != newCarriers.getCarriers().get(carrierId).getServices().size())
+				throw new AssertionError("Number of services of carrier are not equal: " + carrierId.toString());
+			if (oldCarriers.getCarriers().get(carrierId).getShipments().size() != newCarriers.getCarriers().get(carrierId).getShipments().size())
+				throw new AssertionError("Number of shipments of carrier are not equal: " + carrierId.toString());
 		}
 	}
 
