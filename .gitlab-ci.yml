@@ -9,8 +9,8 @@ cache:
 
 test:
   stage: test
-  script: "mvn test --batch-mode -Dmaven.test.redirectTestOutputToFile -Dmatsim.preferLocalDtds=true"
+  script: "mvn test --batch-mode --fail-at-end -Dmaven.test.redirectTestOutputToFile -Dmatsim.preferLocalDtds=true"
 
 build:
   stage: build
-  script: "mvn install -B --fail-at-end -B -Dmaven.test.redirectTestOutputToFile -Dmatsim.preferLocalDtds=true"
+  script: "mvn install --batch-mode --fail-at-end -Dmaven.test.redirectTestOutputToFile -Dmatsim.preferLocalDtds=true"
