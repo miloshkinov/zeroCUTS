@@ -107,6 +107,7 @@
 			<artifactId>junit</artifactId>
 			<version>4.13.1</version>
 			<type>java</type>
+			<scope>provided</scope>
 			<!--<scope>test</scope>-->
 		</dependency>
 
