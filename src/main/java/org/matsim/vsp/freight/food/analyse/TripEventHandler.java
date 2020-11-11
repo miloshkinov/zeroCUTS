@@ -100,7 +100,7 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 	public void handleEvent(ActivityStartEvent event) {
 		final Id<Person> personId = event.getPersonId();
 		if (event.getActType().equals("end")) {
-			personId2DurationFromStartToEnd.put(personId, personId2DurationFromStartToEnd.get(personId) - event.getTime()) ; // Calculation of duration of whole tour (from start to the end)
+			personId2DurationFromStartToEnd.put(personId, personId2DurationFromStartToEnd.get(personId) + event.getTime()) ; // Calculation of duration of whole tour (from start to the end)
 		} else { //ignore end Event (end of the tour -> no activity, where anything happens for calculation of activity durations
 			if (personId2ActivityDurations.containsKey(personId)) {
 				personId2ActivityDurations.put(personId, personId2ActivityDurations.get(personId) - event.getTime());
