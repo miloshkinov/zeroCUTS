@@ -2,6 +2,7 @@ package org.matsim.vsp.freight.food.analyse;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.freight.carrier.*;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
@@ -9,6 +10,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
+import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.MutableScenario;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.UncheckedIOException;
@@ -40,7 +42,7 @@ public class FreightAnalyseKT {
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/55_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax150/" ;
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/56_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax200/" ;
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/57_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax250/" ;
-	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/58_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax300/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/58_ICEVBEV_NwCE_BVWP_2000it_DCoff_Tax300/" ;
 	
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/21_ICEVBEV_NwCE_BVWP_10000it_DC_noTax/" ;
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/22_ICEVBEV_NwCE_BVWP_10000it_DC_Tax25/" ;
@@ -84,13 +86,15 @@ public class FreightAnalyseKT {
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/51a_ICEV_NwCE_BVWP_2000it_DCoff_noTax/" ;
 	
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/21a_ICEV_NwCE_BVWP_10000it_DC_noTax/" ;
-//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/" ;
+	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/10000it/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/" ;
 	
 
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/Demo1ItDC/" ;
 
+// 	private static final String RUN_DIR = "../runs-svn/zeroCUTS/Food_ETrucks/I-Base_NwCE_BVWP_Pickup_10000it/";
+
 	
-	private static final String OUTPUT_DIR = RUN_DIR + "Analysis/" ;
+	private static final String OUTPUT_DIR = RUN_DIR + "Analysis2/" ;
 		
 	private static final Logger log = Logger.getLogger(FreightAnalyseKT.class);
 	
@@ -105,39 +109,34 @@ public class FreightAnalyseKT {
 	
 		private void run() throws UncheckedIOException, IOException {
 
-			File configFile = new File(RUN_DIR + "output_config.xml");
-//			File configFile = new File(RUN_DIR + "output_config.xml.gz");
-			File populationFile = new File(RUN_DIR + "output_plans.xml.gz");
+//			File configFile = new File(RUN_DIR + "output_config.xml");
+////			File configFile = new File(RUN_DIR + "output_config.xml.gz");
+//			File populationFile = new File(RUN_DIR + "output_plans.xml.gz");
 			File networkFile = new File(RUN_DIR+ "output_network.xml.gz");
 			File carrierFile = new File(RUN_DIR+ "output_carriers.xml.gz");
-			File vehicleTypefile = new File(RUN_DIR+ "output_vehicleTypes.xml.gz");
+			File vehicleTypeFile = new File(RUN_DIR+ "output_vehicleTypes.xml.gz");
 			
-			Config config = ConfigUtils.loadConfig(configFile.getAbsolutePath());
-			config.plans().setInputFile(populationFile.getAbsolutePath());
-			config.network().setInputFile(networkFile.getAbsolutePath());
-			config.network().setChangeEventsInputFile("");
+			Network network = NetworkUtils.readNetwork(networkFile.getAbsolutePath());
 			
-			MutableScenario scenario = (MutableScenario) ScenarioUtils.loadScenario(config);
-			EventsManager eventsManager = EventsUtils.createEventsManager();
+
 			
 			CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes() ;
-			new CarrierVehicleTypeReader(vehicleTypes).readFile(vehicleTypefile.getAbsolutePath()) ;
+			new CarrierVehicleTypeReader(vehicleTypes).readFile(vehicleTypeFile.getAbsolutePath()) ;
 			
 			log.warn("VehicleTypes: "+ vehicleTypes.getVehicleTypes().keySet().toString());
 			
 			Carriers carriers = new Carriers() ;
 			new CarrierPlanXmlReader(carriers).readFile(carrierFile.getAbsolutePath() ) ;
 
-			TripEventHandler tripHandler = new TripEventHandler(scenario, vehicleTypes);
+			EventsManager eventsManager = EventsUtils.createEventsManager();
+			TripEventHandler tripHandler = new TripEventHandler(network, vehicleTypes);
 			eventsManager.addHandler(tripHandler);
-					
-//			int iteration = config.controler().getLastIteration();
-//			String eventsFile = RUN_DIR + "ITERS/it." + iteration + "/" + iteration + ".events.xml";
-			String eventsFile = RUN_DIR + "output_events.xml.gz";
-			
+
 			log.info("Reading the event file...");
+			eventsManager.initProcessing();
 			MatsimEventsReader reader = new MatsimEventsReader(eventsManager);
-			reader.readFile(eventsFile);
+			reader.readFile(RUN_DIR + "output_events.xml.gz");
+			eventsManager.finishProcessing();
 			log.info("Reading the event file... Done.");
 			
 			TripWriter tripWriter = new TripWriter(tripHandler, OUTPUT_DIR);

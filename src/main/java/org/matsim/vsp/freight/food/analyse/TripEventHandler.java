@@ -5,6 +5,7 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.vehicles.VehicleType;
@@ -19,7 +20,7 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 
 	private final static Logger log = Logger.getLogger(TripEventHandler.class);
 
-	private Scenario scenario;
+	private Network network;
 	private CarrierVehicleTypes vehicleTypes;
 
 //	private Map<Id<VehicleType>, VehicleTypeSpezificCapabilities> vehTypId2Capabilities = new HashMap<Id<VehicleType>, VehicleTypeSpezificCapabilities>();
@@ -43,8 +44,8 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 	private Map<Id<Person>,Double> personId2DurationFromStartToEnd = new HashMap<>(); // Calculation of duration of whole tour (from start to the end)
 
 
-	public TripEventHandler(Scenario scenario, CarrierVehicleTypes vehicleTypes) {
-		this.scenario = scenario;
+	public TripEventHandler(Network network, CarrierVehicleTypes vehicleTypes) {
+		this.network = network;
 		this.vehicleTypes = vehicleTypes;
 //		readVehicleTypeCapabilities();
 	}
@@ -77,7 +78,7 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 
 	@Override
 	public void handleEvent(LinkEnterEvent event) {
-		double linkLength = this.scenario.getNetwork().getLinks().get(event.getLinkId()).getLength();
+		double linkLength = this.network.getLinks().get(event.getLinkId()).getLength();
 
 		if(driverId2totalDistance.containsKey(event.getVehicleId())){
 			driverId2totalDistance.put(Id.createPersonId(event.getVehicleId()),driverId2totalDistance.get(Id.createPersonId(event.getVehicleId())) + linkLength);
