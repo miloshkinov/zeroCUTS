@@ -17,9 +17,6 @@
  *                                                                         *
  * *********************************************************************** */
 
-/**
- * 
- */
 package org.matsim.vsp.freight.food.analyse;
 
 import org.apache.log4j.Logger;
@@ -34,13 +31,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 /**
- * @author ikaddoura , lkroeger
+ * @author kturner based on ikaddoura , lkroeger
  *
  */
-public class TripWriter {
+/*package-private*/ class TripWriter {
 	private static final Logger log = Logger.getLogger(TripWriter.class);
 
 	TripEventHandler handler;
@@ -49,25 +47,23 @@ public class TripWriter {
 	public TripWriter(TripEventHandler handler, String outputFolder) {
 //		log.setLevel(Level.DEBUG);
 		this.handler = handler;
-		String directory = outputFolder + (outputFolder.endsWith("/") ? "" : "/");
-		this.outputFolder = directory;
-		
-		String fileName = outputFolder;
-		File file = new File(fileName);
+		this.outputFolder = outputFolder + (outputFolder.endsWith("/") ? "" : "/");
+
+		File file = new File(outputFolder);
 		file.mkdirs();
 	}
-	
-/**
- * Schreibt die Informationen (TripDistance, diastance Tour) des Carriers für jeden Trip einzeln auf.
- * TODO: TravelTime, 
- * TODO: gesamte Reisezeit (Ende "start"-act bis Beginn "end"-act)
- * @param carrierIdString
- */
-	public void writeDetailedResultsSingleCarrier(String carrierIdString) {
-		
+
+	/**
+	 * Schreibt die Informationen (TripDistance, diastance Tour) des Carriers für jeden Trip einzeln auf.
+	 * TODO: TravelTime,
+	 * TODO: gesamte Reisezeit (Ende "start"-act bis Beginn "end"-act)
+	 * @param carrierIdString
+	 */
+	/*package-private*/ void writeDetailedResultsSingleCarrier(String carrierIdString) {
+
 		String fileName = this.outputFolder + "trip_infos_" + carrierIdString + ".csv";
 		File file = new File(fileName);
-			
+
 		try {
 			BufferedWriter bw = new BufferedWriter(new FileWriter(file));
 			bw.write(fileName);
@@ -84,13 +80,13 @@ public class TripWriter {
 			Map<Id<Person>,List<Double>> personId2listOfDistances = this.handler.getPersonId2listOfDistances(carrierIdString);
 
 			Map<Id<Person>, Double> personId2tourDistance = this.handler.getPersonId2TourDistances(carrierIdString);
-				
+
 			for (Id<Person> id :personId2listOfDistances.keySet()) {
 				List<Double> distancesInMeters = personId2listOfDistances.get(id);
-				
-				
-				for (int i = 0 ; i < distancesInMeters.size() ; i++) {
-					double distanceInKm = distancesInMeters.get(i)/1000;
+
+
+				for (Double distancesInMeter : distancesInMeters) {
+					double distanceInKm = distancesInMeter / 1000;
 
 					bw.write(id + ";"
 							+ distanceInKm + ";"
@@ -98,25 +94,25 @@ public class TripWriter {
 					bw.newLine();
 				}
 			}
-			
+
 			log.info("Output written to " + fileName);
 			bw.close();
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Schreibt die Informationen (tour distance, tour travelTime) des Carriers für jede Tour (= jedes Fzg) einzeln auf.
 	 * TODO: gesamte Reisezeit (Ende "start"-act bis Beginn "end"-act)
 	 * @param carrierIdString
 	 */
-	public void writeTourResultsSingleCarrier(String carrierIdString) {
-		
+	/*package-private*/ void writeTourResultsSingleCarrier(String carrierIdString) {
+
 		String fileName = this.outputFolder + "tour_infos_" + carrierIdString + ".csv";
 		File file = new File(fileName);
-			
+
 		try {
 			BufferedWriter bw = new BufferedWriter(new FileWriter(file));
 			bw.write(fileName);
@@ -135,32 +131,32 @@ public class TripWriter {
 			Map<Id<Person>, Double> personId2tourDistance = this.handler.getPersonId2TourDistances(carrierIdString);
 			Map<Id<Person>, Double> personId2tourTravelTimes = this.handler.getPersonId2TravelTimes(carrierIdString);
 			Map<Id<Person>, Double> personId2tourActivityDurations = this.handler.getPersonId2SumOfActivityDurations(carrierIdString);
-			
+
 			//Summe für gesammten Carrier
-			Double totalTourDistanceInMeters = 0.0;
-			Double totalTourTravelTimeInSeconds =0.0;
-			Double totalTourActivityDurationInSeconds =0.0;
+			double totalTourDistanceInMeters = 0.0;
+			double totalTourTravelTimeInSeconds =0.0;
+			double totalTourActivityDurationInSeconds =0.0;
 
 			for (Id<Person> id :personId2tourDistance.keySet()) {
 				totalTourDistanceInMeters = totalTourDistanceInMeters + personId2tourDistance.get(id);
 				totalTourTravelTimeInSeconds = totalTourTravelTimeInSeconds + personId2tourTravelTimes.get(id);
 				totalTourActivityDurationInSeconds = totalTourActivityDurationInSeconds + personId2tourActivityDurations.get(id);
 			}
-			
+
 			bw.write("SUMME Carrier;"
 					+ totalTourDistanceInMeters/1000 + ";"
 					+ totalTourTravelTimeInSeconds/3600 + ";"
 					+ totalTourActivityDurationInSeconds/3600
 			);
 			bw.newLine();
-			
+
 			// Werte der einzelnen Agenten
 			for (Id<Person> id :personId2tourDistance.keySet()) {
 
 				Double tourDistanceInMeters = personId2tourDistance.get(id);
 				Double tourTravelTimeInSeconds = personId2tourTravelTimes.get(id);
 				Double tourActivityDurationInSeconds = personId2tourActivityDurations.get(id);
-				
+
 				bw.write(id + ";"
 						+ tourDistanceInMeters/1000 + ";"
 						+ tourTravelTimeInSeconds/3600 + ";"
@@ -169,25 +165,24 @@ public class TripWriter {
 				bw.newLine();
 
 			}
-			
+
 			log.info("Output written to " + fileName);
 			bw.close();
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Schreibt die Informationen (#Fahrzeuge, distance, travelTime (Fahrzeit), FuelConsumption, CO2-Emissionen) 
 	 * des Carriers für jeden FahrzeugTyp einzeln auf und bildet auch Gesamtsumme.
-	 * TODO: gesamte Reisezeit (Ende "start"-act bis Beginn "end"-act)
 	 */
-		public void writeResultsPerVehicleTypes() {
-		
+	/*package-private*/ void writeResultsPerVehicleTypes() {
+
 		String fileName = this.outputFolder + "total_infos_per_vehicleType.csv";
 		File file = new File(fileName);
-			
+
 		try {
 			BufferedWriter bw = new BufferedWriter(new FileWriter(file));
 			bw.write(fileName);
@@ -202,18 +197,17 @@ public class TripWriter {
 					"TravelTime [h]; " +
 					"ActivityDuration [h];" +
 					"DurationFromStartToEndofTour [h]"
-					);
+			);
 			bw.newLine();
-	
-		
+
+
 //			KT:
 			Map<Id<VehicleType>,Double> vehTypeId2TourDistances = new TreeMap<>();
 			Map<Id<VehicleType>,Double> vehTypeId2TravelTimes = new TreeMap<>();
 			Map<Id<VehicleType>,Double> vehTypeId2ActivityDurations = new TreeMap<>();
 			Map<Id<VehicleType>,Double> vehTypeId2DurationsStartToEnd = new TreeMap<>();
 			Map<Id<VehicleType>,Integer> vehTypeId2NumberOfVehicles = new TreeMap<>();
-//			Map<Id<VehicleType>, VehicleTypeSpezificCapabilities> vehTypId2Capabilities = new TreeMap<Id<VehicleType>, VehicleTypeSpezificCapabilities>();
-			
+
 			//Vorbereitung: Nur Aufnehmen, wenn nicht null;
 			CarrierVehicleTypes vehicleTypes = this.handler.getVehicleTypes();
 			for (Id<VehicleType> vehicleTypeId : vehicleTypes.getVehicleTypes().keySet()){
@@ -227,44 +221,21 @@ public class TripWriter {
 					Double activityDuration = this.handler.getVehTypId2ActivityDurations(vehicleTypeId).get(vehicleTypeId);
 					Double durationStartToEnde = this.handler.getVehTypId2DurationsStartToEnd(vehicleTypeId).get(vehicleTypeId);
 					Integer nuOfVeh = this.handler.getVehTypId2VehicleNumber(vehicleTypeId).get(vehicleTypeId);
-//					VehicleTypeSpezificCapabilities capabilities = this.handler.getVehTypId2Capabilities().get(vehicleTypeId);
-					if (distance != null) {
-						vehTypeId2TourDistances.put(vehicleTypeId, distance );
-					} else {
-						vehTypeId2TourDistances.put(vehicleTypeId, 0.);
-					}
-					if (travelTime != null){
-						vehTypeId2TravelTimes.put(vehicleTypeId, travelTime);
-					}else {
-						vehTypeId2TravelTimes.put(vehicleTypeId, 0.);
-					}
-					if (activityDuration != null){
-						vehTypeId2ActivityDurations.put(vehicleTypeId, activityDuration);
-					}else {
-						vehTypeId2ActivityDurations.put(vehicleTypeId, 0.);
-					}
-					if (nuOfVeh != null){
-						vehTypeId2NumberOfVehicles.put(vehicleTypeId, nuOfVeh);
-					} else {
-						vehTypeId2NumberOfVehicles.put(vehicleTypeId, 0);
-					}
-					if (durationStartToEnde != null){
-						vehTypeId2DurationsStartToEnd.put(vehicleTypeId, durationStartToEnde);
-					} else {
-						vehTypeId2DurationsStartToEnd.put(vehicleTypeId, 0.);
-					}
-//					if (capabilities != null){
-//						vehTypId2Capabilities.put(vehicleTypeId, capabilities);
-//					}
+
+					vehTypeId2TourDistances.put(vehicleTypeId, Objects.requireNonNullElse(distance, 0.));
+					vehTypeId2TravelTimes.put(vehicleTypeId, Objects.requireNonNullElse(travelTime, 0.));
+					vehTypeId2ActivityDurations.put(vehicleTypeId, Objects.requireNonNullElse(activityDuration, 0.));
+					vehTypeId2NumberOfVehicles.put(vehicleTypeId, Objects.requireNonNullElse(nuOfVeh, 0));
+					vehTypeId2DurationsStartToEnd.put(vehicleTypeId, Objects.requireNonNullElse(durationStartToEnde, 0.));
 				}
 			}
-			
+
 			//Gesamtsumme
-			Double totalDistanceInMeter = 0.0;
-			Double totalTravelTimeInSeconds = 0.0;
-			Integer totalNumberofVehicles = 0;
-			Double totalActivityDurationsInSeconds = 0.0;
-			Double totalDurationsStartToEndInSeconds = 0.0;
+			double totalDistanceInMeter = 0.0;
+			double totalTravelTimeInSeconds = 0.0;
+			int totalNumberofVehicles = 0;
+			double totalActivityDurationsInSeconds = 0.0;
+			double totalDurationsStartToEndInSeconds = 0.0;
 			for (Id<VehicleType> vehTypeId : vehTypeId2TourDistances.keySet()) {
 				totalDistanceInMeter = totalDistanceInMeter + vehTypeId2TourDistances.get(vehTypeId);
 				totalTravelTimeInSeconds = totalTravelTimeInSeconds + vehTypeId2TravelTimes.get(vehTypeId);
@@ -272,48 +243,48 @@ public class TripWriter {
 				totalActivityDurationsInSeconds = totalActivityDurationsInSeconds + vehTypeId2ActivityDurations.get(vehTypeId);
 				totalDurationsStartToEndInSeconds = totalDurationsStartToEndInSeconds + vehTypeId2DurationsStartToEnd.get(vehTypeId);
 			}
-			
+
 			// Gesamtsumme
-			bw.write("SUMME alle Carrier;"+ 
+			bw.write("SUMME alle Carrier;"+
 					totalNumberofVehicles + ";" +
 					totalDistanceInMeter/1000 + ";" +
 					totalTravelTimeInSeconds/3600 + ";" +
 					totalActivityDurationsInSeconds/3600 + ";" +
 					totalDurationsStartToEndInSeconds/3600 + ";"
-					);
+			);
 			bw.newLine();
-			
+
 			// Werte der einzelnen Fahrzeugtypen (alle Carrier)
 			for (Id<VehicleType> vehTypeId : vehTypeId2TourDistances.keySet()) {
 
 				//				VehicleTypeSpezificCapabilities capabilites = vehTypId2Capabilities.get(vehTypeId);
-				
+
 				bw.write(vehTypeId + ";" +
 						vehTypeId2NumberOfVehicles.get(vehTypeId) + ";" +
 						vehTypeId2TourDistances.get(vehTypeId) /1000 + ";" +
 						vehTypeId2TravelTimes.get(vehTypeId) /3600+ ";" +
 						vehTypeId2ActivityDurations.get(vehTypeId) / 3600 +";" +
 						vehTypeId2DurationsStartToEnd.get(vehTypeId) / 3600 +";"
-						);
+				);
 				bw.newLine();
 
 			}
-			
+
 			bw.newLine();
-			
+
 			log.info("Output written to " + fileName);
 			bw.close();
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	
+
 	/**
 	 * Writes out the information of all tours in one file. One line per tour
 	 */
-	public void writeTourResultsAllCarrier() {
+	/*package-private*/ void writeTourResultsAllCarrier() {
 		String fileName = this.outputFolder + "total_tour_infos_per_vehicleType.csv";
 		File file = new File(fileName);
 
@@ -328,27 +299,14 @@ public class TripWriter {
 					"vehType Id;" +
 					"distance [km] ;" +
 					"TravelTime [h];" //+
-					);
+			);
 			bw.newLine();
-
-
 
 			//			KT:
 			Map<Id<Person>, Double> personId2tourDistance = this.handler.getPersonId2TourDistances();
 			Map<Id<Person>, Double> personId2tourTravelTimes = this.handler.getPersonId2TravelTimes();
 
-//			Map<Id<VehicleType>, VehicleTypeSpezificCapabilities> vehTypId2Capabilities = new TreeMap<Id<VehicleType>, VehicleTypeSpezificCapabilities>();
-
 			CarrierVehicleTypes vehicleTypes = this.handler.getVehicleTypes();
-
-//			//preparation:
-//			for (Id<VehicleType> vehicleTypeId : vehicleTypes.getVehicleTypes().keySet()){
-//				VehicleTypeSpezificCapabilities capabilities = this.handler.getVehTypId2Capabilities().get(vehicleTypeId);
-//				if (capabilities != null){
-//					vehTypId2Capabilities.put(vehicleTypeId, capabilities);
-//				}
-//
-//			}
 
 			//write results:
 			for (Id<Person> personId : personId2tourDistance.keySet()) {
@@ -370,7 +328,7 @@ public class TripWriter {
 						}
 					}
 				}
-				
+
 				if (vehTypeId == null) {
 					log.error("Vehicle type for person not defined: " + personId);
 				}
@@ -379,22 +337,22 @@ public class TripWriter {
 						vehTypeId + ";" +
 						tourDistanceMeter/1000 + ";" +  //km
 						tourTravelTimeSec/3600 + ";" //+ 	//h
-						);
+				);
 				bw.newLine();
 
-			}	
-			
+			}
+
 			log.info("Output written to " + fileName);
 			bw.close();
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-		
 
-	
-	
 
-	
+
+
+
+
 }
