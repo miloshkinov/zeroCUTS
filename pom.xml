@@ -53,6 +53,12 @@
 			<url>https://jitpack.io</url>
 		</repository>
 
+		<!-- For MATSim DVRP contrib - necessary since fall 2020 -->
+		<repository>
+			<id>SBB</id>
+			<url>https://schweizerischebundesbahnen.bintray.com/simba.mvn</url>
+		</repository>
+
 	</repositories>
 
 	<dependencies>
