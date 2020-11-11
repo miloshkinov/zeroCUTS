@@ -22,7 +22,6 @@
  */
 package org.matsim.vsp.freight.food.analyse;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
@@ -37,8 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static org.slf4j.event.Level.DEBUG;
-
 /**
  * @author ikaddoura , lkroeger
  *
@@ -48,7 +45,7 @@ public class TripWriter {
 
 	TripEventHandler handler;
 	String outputFolder;
-	
+
 	public TripWriter(TripEventHandler handler, String outputFolder) {
 //		log.setLevel(Level.DEBUG);
 		this.handler = handler;
@@ -129,27 +126,31 @@ public class TripWriter {
 
 			bw.write("person Id;"
 					+ "distance tour [km] ; "
-					+ "TravelTime tour [h]"
+					+ "TravelTime tour [h] ;"
+					+ "ActivityTime tour [h]"
 			);
 			bw.newLine();
 
-			
-		
 //			KT:
 			Map<Id<Person>, Double> personId2tourDistance = this.handler.getPersonId2TourDistances(carrierIdString);
 			Map<Id<Person>, Double> personId2tourTravelTimes = this.handler.getPersonId2TravelTimes(carrierIdString);
+			Map<Id<Person>, Double> personId2tourActivityDurations = this.handler.getPersonId2SumOfActivityDurations(carrierIdString);
 			
 			//Summe für gesammten Carrier
 			Double totalTourDistanceInMeters = 0.0;
 			Double totalTourTravelTimeInSeconds =0.0;
+			Double totalTourActivityDurationInSeconds =0.0;
+
 			for (Id<Person> id :personId2tourDistance.keySet()) {
 				totalTourDistanceInMeters = totalTourDistanceInMeters + personId2tourDistance.get(id);
 				totalTourTravelTimeInSeconds = totalTourTravelTimeInSeconds + personId2tourTravelTimes.get(id);
+				totalTourActivityDurationInSeconds = totalTourActivityDurationInSeconds + personId2tourActivityDurations.get(id);
 			}
 			
 			bw.write("SUMME Carrier;"
 					+ totalTourDistanceInMeters/1000 + ";"
-					+ totalTourTravelTimeInSeconds/3600
+					+ totalTourTravelTimeInSeconds/3600 + ";"
+					+ totalTourActivityDurationInSeconds/3600
 			);
 			bw.newLine();
 			
@@ -158,10 +159,12 @@ public class TripWriter {
 
 				Double tourDistanceInMeters = personId2tourDistance.get(id);
 				Double tourTravelTimeInSeconds = personId2tourTravelTimes.get(id);
+				Double tourActivityDurationInSeconds = personId2tourActivityDurations.get(id);
 				
 				bw.write(id + ";"
 						+ tourDistanceInMeters/1000 + ";"
-						+ tourTravelTimeInSeconds/3600
+						+ tourTravelTimeInSeconds/3600 + ";"
+						+ tourActivityDurationInSeconds
 				);
 				bw.newLine();
 
@@ -196,15 +199,19 @@ public class TripWriter {
 			bw.write("vehType Id;" +
 					"#ofVehicles;" +
 					"distance [km];" +
-					"TravelTime [h]; " //+
+					"TravelTime [h]; " +
+					"ActivityDuration [h];" +
+					"DurationFromStartToEndofTour [h]"
 					);
 			bw.newLine();
 	
 		
 //			KT:
-			Map<Id<VehicleType>,Double> vehTypeId2TourDistances = new TreeMap<Id<VehicleType>,Double>();
-			Map<Id<VehicleType>,Double> vehTypeId2TravelTimes = new TreeMap<Id<VehicleType>,Double>();
-			Map<Id<VehicleType>,Integer> vehTypeId2NumberOfVehicles = new TreeMap<Id<VehicleType>,Integer>();
+			Map<Id<VehicleType>,Double> vehTypeId2TourDistances = new TreeMap<>();
+			Map<Id<VehicleType>,Double> vehTypeId2TravelTimes = new TreeMap<>();
+			Map<Id<VehicleType>,Double> vehTypeId2ActivityDurations = new TreeMap<>();
+			Map<Id<VehicleType>,Double> vehTypeId2DurationsStartToEnd = new TreeMap<>();
+			Map<Id<VehicleType>,Integer> vehTypeId2NumberOfVehicles = new TreeMap<>();
 //			Map<Id<VehicleType>, VehicleTypeSpezificCapabilities> vehTypId2Capabilities = new TreeMap<Id<VehicleType>, VehicleTypeSpezificCapabilities>();
 			
 			//Vorbereitung: Nur Aufnehmen, wenn nicht null;
@@ -217,6 +224,8 @@ public class TripWriter {
 					log.debug(vehicleTypeId + " added mit Entfernung " +  this.handler.getVehTypId2TourDistances(vehicleTypeId).get(vehicleTypeId));
 					Double distance = this.handler.getVehTypId2TourDistances(vehicleTypeId).get(vehicleTypeId);
 					Double travelTime = this.handler.getVehTypId2TravelTimes(vehicleTypeId).get(vehicleTypeId);
+					Double activityDuration = this.handler.getVehTypId2ActivityDurations(vehicleTypeId).get(vehicleTypeId);
+					Double durationStartToEnde = this.handler.getVehTypId2DurationsStartToEnd(vehicleTypeId).get(vehicleTypeId);
 					Integer nuOfVeh = this.handler.getVehTypId2VehicleNumber(vehicleTypeId).get(vehicleTypeId);
 //					VehicleTypeSpezificCapabilities capabilities = this.handler.getVehTypId2Capabilities().get(vehicleTypeId);
 					if (distance != null) {
@@ -229,10 +238,20 @@ public class TripWriter {
 					}else {
 						vehTypeId2TravelTimes.put(vehicleTypeId, 0.);
 					}
+					if (activityDuration != null){
+						vehTypeId2ActivityDurations.put(vehicleTypeId, activityDuration);
+					}else {
+						vehTypeId2ActivityDurations.put(vehicleTypeId, 0.);
+					}
 					if (nuOfVeh != null){
 						vehTypeId2NumberOfVehicles.put(vehicleTypeId, nuOfVeh);
 					} else {
 						vehTypeId2NumberOfVehicles.put(vehicleTypeId, 0);
+					}
+					if (durationStartToEnde != null){
+						vehTypeId2DurationsStartToEnd.put(vehicleTypeId, durationStartToEnde);
+					} else {
+						vehTypeId2DurationsStartToEnd.put(vehicleTypeId, 0.);
 					}
 //					if (capabilities != null){
 //						vehTypId2Capabilities.put(vehicleTypeId, capabilities);
@@ -244,32 +263,37 @@ public class TripWriter {
 			Double totalDistanceInMeter = 0.0;
 			Double totalTravelTimeInSeconds = 0.0;
 			Integer totalNumberofVehicles = 0;
+			Double totalActivityDurationsInSeconds = 0.0;
+			Double totalDurationsStartToEndInSeconds = 0.0;
 			for (Id<VehicleType> vehTypeId : vehTypeId2TourDistances.keySet()) {
 				totalDistanceInMeter = totalDistanceInMeter + vehTypeId2TourDistances.get(vehTypeId);
 				totalTravelTimeInSeconds = totalTravelTimeInSeconds + vehTypeId2TravelTimes.get(vehTypeId);
 				totalNumberofVehicles = totalNumberofVehicles + vehTypeId2NumberOfVehicles.get(vehTypeId);
+				totalActivityDurationsInSeconds = totalActivityDurationsInSeconds + vehTypeId2ActivityDurations.get(vehTypeId);
+				totalDurationsStartToEndInSeconds = totalDurationsStartToEndInSeconds + vehTypeId2DurationsStartToEnd.get(vehTypeId);
 			}
 			
 			// Gesamtsumme
 			bw.write("SUMME alle Carrier;"+ 
 					totalNumberofVehicles + ";" +
 					totalDistanceInMeter/1000 + ";" +
-					totalTravelTimeInSeconds/3600 + ";" //+
+					totalTravelTimeInSeconds/3600 + ";" +
+					totalActivityDurationsInSeconds/3600 + ";" +
+					totalDurationsStartToEndInSeconds/3600 + ";"
 					);
 			bw.newLine();
 			
 			// Werte der einzelnen Fahrzeugtypen (alle Carrier)
 			for (Id<VehicleType> vehTypeId : vehTypeId2TourDistances.keySet()) {
 
-				Double tourDistanceInMeters = vehTypeId2TourDistances.get(vehTypeId);
-				Double tourTravelTimeInSeconds = vehTypeId2TravelTimes.get(vehTypeId);
-				Integer numberOfVehicles = vehTypeId2NumberOfVehicles.get(vehTypeId);
-//				VehicleTypeSpezificCapabilities capabilites = vehTypId2Capabilities.get(vehTypeId);
+				//				VehicleTypeSpezificCapabilities capabilites = vehTypId2Capabilities.get(vehTypeId);
 				
 				bw.write(vehTypeId + ";" +
-						numberOfVehicles + ";" +
-						tourDistanceInMeters/1000 + ";" +
-						tourTravelTimeInSeconds /3600+ ";" //+
+						vehTypeId2NumberOfVehicles.get(vehTypeId) + ";" +
+						vehTypeId2TourDistances.get(vehTypeId) /1000 + ";" +
+						vehTypeId2TravelTimes.get(vehTypeId) /3600+ ";" +
+						vehTypeId2ActivityDurations.get(vehTypeId) / 3600 +";" +
+						vehTypeId2DurationsStartToEnd.get(vehTypeId) / 3600 +";"
 						);
 				bw.newLine();
 
