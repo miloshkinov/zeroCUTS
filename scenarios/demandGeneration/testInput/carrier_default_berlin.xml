@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<carriers>
+		<carrier id="testCarrier1">
+			<capabilities fleetSize="INFINITE">
+				<vehicles>
+					<vehicle id="heavy26t_19384" depotLinkId="19384" typeId="heavy26t" earliestStart="09:00:00" latestEnd="19:00:00"/>
+					<vehicle id="medium18t_19384" depotLinkId="19384" typeId="medium18t" earliestStart="09:00:00" latestEnd="19:00:00"/>
+					<vehicle id="heavy26t_electro_19384" depotLinkId="19384" typeId="heavy26t_electro" earliestStart="09:00:00" latestEnd="19:00:00"/>
+					<vehicle id="medium18t_electro_19384" depotLinkId="19384" typeId="medium18t_electro" earliestStart="09:00:00" latestEnd="19:00:00"/>
+				</vehicles>
+
+			</capabilities>
+
+			<shipments>
+				<shipment id="103S" from="19384" to="30425" size="8" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:24:00" deliveryServiceTime="00:24:00"/>
+				<shipment id="106S" from="19384" to="3231" size="10" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:30:00" deliveryServiceTime="00:30:00"/>
+				<shipment id="108S" from="19384" to="11" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="111S" from="19384" to="47085" size="10" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:30:00" deliveryServiceTime="00:30:00"/>
+				<shipment id="112S" from="19384" to="132709" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="119S" from="19384" to="128374" size="9" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:27:00" deliveryServiceTime="00:27:00"/>
+				<shipment id="11S" from="19384" to="98067" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="121S" from="19384" to="132965" size="8" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:24:00" deliveryServiceTime="00:24:00"/>
+				<shipment id="126S" from="19384" to="11862" size="9" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:27:00" deliveryServiceTime="00:27:00"/>
+				<shipment id="128S" from="19384" to="35421" size="8" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:24:00" deliveryServiceTime="00:24:00"/>
+				<shipment id="129S" from="19384" to="21615" size="6" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:18:00" deliveryServiceTime="00:18:00"/>
+				<shipment id="130S" from="19384" to="112372" size="8" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:24:00" deliveryServiceTime="00:24:00"/>
+				<shipment id="139S" from="19384" to="61639" size="13" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:39:00" deliveryServiceTime="00:39:00"/>
+				<shipment id="141S" from="19384" to="114688" size="6" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:18:00" deliveryServiceTime="00:18:00"/>
+				<shipment id="145S" from="19384" to="157408" size="11" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:33:00" deliveryServiceTime="00:33:00"/>
+				<shipment id="151S" from="19384" to="142033" size="13" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:39:00" deliveryServiceTime="00:39:00"/>
+				<shipment id="153S" from="19384" to="149528" size="11" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:33:00" deliveryServiceTime="00:33:00"/>
+				<shipment id="155S" from="19384" to="19153" size="10" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:30:00" deliveryServiceTime="00:30:00"/>
+				<shipment id="156S" from="19384" to="78150" size="6" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:18:00" deliveryServiceTime="00:18:00"/>
+				<shipment id="157S" from="19384" to="67901" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="158S" from="19384" to="55217" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="163S" from="19384" to="124394" size="12" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:36:00" deliveryServiceTime="00:36:00"/>
+				<shipment id="164S" from="19384" to="60194" size="8" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:24:00" deliveryServiceTime="00:24:00"/>
+				<shipment id="165S" from="19384" to="129379" size="8" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:24:00" deliveryServiceTime="00:24:00"/>
+				<shipment id="168S" from="19384" to="100770" size="10" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:30:00" deliveryServiceTime="00:30:00"/>
+				<shipment id="169S" from="19384" to="133675" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="17S" from="19384" to="148300" size="9" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:27:00" deliveryServiceTime="00:27:00"/>
+				<shipment id="1S" from="19384" to="145087" size="8" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:24:00" deliveryServiceTime="00:24:00"/>
+				<shipment id="21S" from="19384" to="53063" size="12" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:36:00" deliveryServiceTime="00:36:00"/>
+				<shipment id="27S" from="19384" to="50633" size="10" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:30:00" deliveryServiceTime="00:30:00"/>
+				<shipment id="28S" from="19384" to="151503" size="12" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:36:00" deliveryServiceTime="00:36:00"/>
+				<shipment id="29S" from="19384" to="104171" size="9" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:27:00" deliveryServiceTime="00:27:00"/>
+				<shipment id="33S" from="19384" to="33107" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="36S" from="19384" to="7647" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="40S" from="19384" to="84693" size="11" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:33:00" deliveryServiceTime="00:33:00"/>
+				<shipment id="41S" from="19384" to="48023" size="9" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:27:00" deliveryServiceTime="00:27:00"/>
+				<shipment id="43S" from="19384" to="98567" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="4S" from="19384" to="74281" size="8" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:24:00" deliveryServiceTime="00:24:00"/>
+				<shipment id="51S" from="19384" to="118809" size="12" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:36:00" deliveryServiceTime="00:36:00"/>
+				<shipment id="52S" from="19384" to="146333" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="53S" from="19384" to="68103" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="55S" from="19384" to="148811" size="9" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:27:00" deliveryServiceTime="00:27:00"/>
+				<shipment id="56S" from="19384" to="35449" size="10" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:30:00" deliveryServiceTime="00:30:00"/>
+				<shipment id="58S" from="19384" to="50118" size="8" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:24:00" deliveryServiceTime="00:24:00"/>
+				<shipment id="63S" from="19384" to="17569" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="64S" from="19384" to="100545" size="10" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:30:00" deliveryServiceTime="00:30:00"/>
+				<shipment id="68S" from="19384" to="58311" size="8" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:24:00" deliveryServiceTime="00:24:00"/>
+				<shipment id="6S" from="19384" to="69977" size="12" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:36:00" deliveryServiceTime="00:36:00"/>
+				<shipment id="70S" from="19384" to="129734" size="11" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:33:00" deliveryServiceTime="00:33:00"/>
+				<shipment id="75S" from="19384" to="32302" size="9" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:27:00" deliveryServiceTime="00:27:00"/>
+				<shipment id="76S" from="19384" to="81486" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="77S" from="19384" to="63748" size="11" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:33:00" deliveryServiceTime="00:33:00"/>
+				<shipment id="79S" from="19384" to="86406" size="11" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:33:00" deliveryServiceTime="00:33:00"/>
+				<shipment id="7S" from="19384" to="113137" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="80S" from="19384" to="70178" size="6" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:18:00" deliveryServiceTime="00:18:00"/>
+				<shipment id="81S" from="19384" to="13595" size="11" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:33:00" deliveryServiceTime="00:33:00"/>
+				<shipment id="82S" from="19384" to="68519" size="10" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:30:00" deliveryServiceTime="00:30:00"/>
+				<shipment id="86S" from="19384" to="147183" size="7" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:21:00" deliveryServiceTime="00:21:00"/>
+				<shipment id="89S" from="19384" to="122617" size="8" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:24:00" deliveryServiceTime="00:24:00"/>
+				<shipment id="8S" from="19384" to="68607" size="12" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:36:00" deliveryServiceTime="00:36:00"/>
+				<shipment id="91S" from="19384" to="129000" size="9" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:27:00" deliveryServiceTime="00:27:00"/>
+				<shipment id="96S" from="19384" to="157367" size="12" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:36:00" deliveryServiceTime="00:36:00"/>
+				<shipment id="97S" from="19384" to="13276" size="6" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:18:00" deliveryServiceTime="00:18:00"/>
+				<shipment id="98S" from="19384" to="149341" size="11" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:33:00" deliveryServiceTime="00:33:00"/>
+				<shipment id="99S" from="19384" to="19548" size="6" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:18:00" deliveryServiceTime="00:18:00"/>
+				<shipment id="9S" from="19384" to="87962" size="6" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:18:00" deliveryServiceTime="00:18:00"/>
+			</shipments>
+
+			<services>
+			</services>
+
+		</carrier>
+
+		<carrier id="testCarrier2">
+			<capabilities fleetSize="INFINITE">
+				<vehicles>
+					<vehicle id="heavy40t_49046" depotLinkId="49046" typeId="heavy40t" earliestStart="09:00:00" latestEnd="19:00:00"/>
+					<vehicle id="medium18t_49046" depotLinkId="49046" typeId="medium18t" earliestStart="09:00:00" latestEnd="19:00:00"/>
+					<vehicle id="heavy40t_electro_49046" depotLinkId="49046" typeId="heavy40t_electro" earliestStart="09:00:00" latestEnd="19:00:00"/>
+					<vehicle id="medium18t_electro_49046" depotLinkId="49046" typeId="medium18t_electro" earliestStart="09:00:00" latestEnd="19:00:00"/>
+				</vehicles>
+
+			</capabilities>
+
+			<shipments>
+				<shipment id="14S" from="49046" to="122966" size="15" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:45:00" deliveryServiceTime="00:45:00"/>
+				<shipment id="16S" from="49046" to="54387" size="14" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:42:00" deliveryServiceTime="00:42:00"/>
+				<shipment id="17S" from="49046" to="45195" size="29" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:27:00" deliveryServiceTime="01:27:00"/>
+				<shipment id="19S" from="49046" to="20767" size="22" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:06:00" deliveryServiceTime="01:06:00"/>
+				<shipment id="1S" from="49046" to="50870" size="19" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:57:00" deliveryServiceTime="00:57:00"/>
+				<shipment id="20S_1" from="49046" to="109970" size="22" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:06:00" deliveryServiceTime="01:06:00"/>
+				<shipment id="20S_2" from="49046" to="109970" size="21" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:03:00" deliveryServiceTime="01:03:00"/>
+				<shipment id="21S" from="49046" to="69240" size="15" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:45:00" deliveryServiceTime="00:45:00"/>
+				<shipment id="23S" from="49046" to="110396" size="20" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:00:00" deliveryServiceTime="01:00:00"/>
+				<shipment id="25S" from="49046" to="20693" size="32" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:36:00" deliveryServiceTime="01:36:00"/>
+				<shipment id="26S" from="49046" to="42323" size="18" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:54:00" deliveryServiceTime="00:54:00"/>
+				<shipment id="30S" from="49046" to="103345" size="16" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:48:00" deliveryServiceTime="00:48:00"/>
+				<shipment id="33S" from="49046" to="14698" size="28" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:24:00" deliveryServiceTime="01:24:00"/>
+				<shipment id="5S" from="49046" to="2683" size="23" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:09:00" deliveryServiceTime="01:09:00"/>
+				<shipment id="6S" from="49046" to="42547" size="21" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="01:03:00" deliveryServiceTime="01:03:00"/>
+				<shipment id="7S" from="49046" to="59969" size="16" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:48:00" deliveryServiceTime="00:48:00"/>
+				<shipment id="8S" from="49046" to="32092" size="16" startPickup="09:00:00" endPickup="19:00:00" startDelivery="09:00:00" endDelivery="19:00:00" pickupServiceTime="00:48:00" deliveryServiceTime="00:48:00"/>
+			</shipments>
+
+			<services>
+			</services>
+
+		</carrier>
+
+	</carriers>
