@@ -21,12 +21,13 @@
 package org.matsim.vsp.demandGeneration;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -35,6 +36,8 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -59,7 +62,10 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
+import org.matsim.core.utils.gis.ShapeFileReader;
+import org.opengis.feature.simple.SimpleFeature;
 
 import com.graphhopper.jsprit.analysis.toolbox.StopWatch;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
@@ -92,7 +98,7 @@ public class GeneralDemandGeneration {
 	};
 
 	private enum demandGenerationOptions {
-		distributeServicesOverAllLinks, xLocationsWithXDemand, useDemandFromUsedCarrierFile, distributeShipmentsOverAllLinks
+		generateServices, xLocationsWithXDemand, useDemandFromUsedCarrierFile, generateShipments
 	};
 
 	public static void main(String[] args)
@@ -103,9 +109,7 @@ public class GeneralDemandGeneration {
 		vehicleInputOptions selectedVehicleInputOption = null;
 		demandGenerationOptions selectedDemandGenerationOption = null;
 
-		String shapeFileLocation;
-
-		// create and prepare MATSim config
+// create and prepare MATSim config
 		String outputLocation = "output/demandGeneration/Test1";
 		int lastMATSimIteration = 0;
 		String coordinateSystem = TransformationFactory.GK4;
@@ -113,20 +117,20 @@ public class GeneralDemandGeneration {
 
 		log.info("Starting class to create a freight scenario");
 
-		// select network configurations
-		selectedNetwork = networkChoice.grid9x9;
+// select network configurations
+		selectedNetwork = networkChoice.berlinNetwork;
 		String networkPathOfOtherNetwork = "";
 		boolean usingNetworkChangeEvents = false;
 		String networkChangeEventsFilePath = "";
 		setNetworkAndNetworkChangeEvents(config, selectedNetwork, networkPathOfOtherNetwork, usingNetworkChangeEvents,
 				networkChangeEventsFilePath);
 
-		// load or create carrier
+// load or create carrier
 		selectedCarrierInputOption = carrierInputOptions.readCarrierFile;
-		String carriersFileLocation = "scenarios/demandGeneration/testInput/carrier_grid_noDemand.xml";
+		String carriersFileLocation = "scenarios/demandGeneration/testInput/carrier_berlin_noDemand.xml";
 		prepareCarrier(config, selectedCarrierInputOption, carriersFileLocation);
 
-		// load or create carrierVehicle
+// load or create carrierVehicle
 		selectedVehicleInputOption = vehicleInputOptions.readVehicleFile;
 		String vehicleTypesFileLocation = "scenarios/demandGeneration/testInput/vehicleTypes_default.xml";
 		prepareVehicles(config, selectedVehicleInputOption, vehicleTypesFileLocation);
@@ -134,18 +138,29 @@ public class GeneralDemandGeneration {
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 
-		// create the demand
-		// TODO also possibilty to add demand for carrier with existings jobs??
-		// TODO add services with no demand and only serviceTime
+// create the demand
+		// *distributeServicesOverAllLinks*:
+		// distributes a demand proportional to the lengths of all links in the network;
+		// if
 
-		int demandToDistribute = 500;
+		// *amountOfJobs* sets the number of jobs to be generated; if the amount should
+		// be result of the simulation set it to 0; if a amount of jobs is set the
+		// demand will evenly distributed
+		//
+		// TODO also possibility to add demand for carrier with existing jobs??
+		// TODO add possible locations (characiristics of links, speed, type etc.)
+		String shapeFileLocation = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/avoev/shp-files/shp-bezirke/bezirke_berlin.shp";
+		boolean demandLocationsInShape = false;
+		int demandToDistribute = 17;
+		int amountOfJobs = 2;
 		double serviceTimePerDemandUnit = 300;
-		List<String> deliveryLocations = Arrays.asList("");
-		boolean chooseNearestDeliveryLocation = true;
-		selectedDemandGenerationOption = demandGenerationOptions.distributeServicesOverAllLinks;
-		createDemand(selectedDemandGenerationOption, scenario, demandToDistribute, serviceTimePerDemandUnit);
+//		List<String> deliveryLocations = Arrays.asList("");
+//		boolean chooseNearestDeliveryLocation = true;
+		selectedDemandGenerationOption = demandGenerationOptions.generateServices;
+		createDemand(selectedDemandGenerationOption, scenario, demandToDistribute, serviceTimePerDemandUnit,
+				amountOfJobs, demandLocationsInShape, shapeFileLocation);
 
-		// prepare the VRP and get a solution
+// prepare the VRP and get a solution
 
 		Controler controler = prepareControler(scenario);
 
@@ -153,28 +168,36 @@ public class GeneralDemandGeneration {
 		boolean usingRangeRestriction = false;
 		runJsprit(controler, nuOfJspritIteration, usingRangeRestriction);
 
-		// run MATSim
+// run MATSim
 		controler.run();
 
-		// analyze results
+// analyze results
 		String[] argsAnalysis = { config.controler().getOutputDirectory() };
 		FreightAnalyse.main(argsAnalysis);
-		// TODO
+		// TODO add service/Shipment ID to events to also analyze the jobs or add the
+		// carrierFile to the analyzes
 
 		log.info("Finished");
 	}
 
 	private static void createDemand(demandGenerationOptions selectedDemandGenerationOption, Scenario scenario,
-			int demandToDistribute, double serviceTimePerDemandUnit) {
+			int demandToDistribute, double serviceTimePerDemandUnit, int amountOfJobs, boolean demandLocationsInShape,
+			String shapeFileLocation) throws MalformedURLException {
+
+		Collection<SimpleFeature> polygonsInShape = null;
+		if (demandLocationsInShape)
+			polygonsInShape = ShapeFileReader.getAllFeatures(new URL(shapeFileLocation));
 
 		switch (selectedDemandGenerationOption) {
-		case distributeServicesOverAllLinks:
-			createServicesWithStaticDemandOverAllLinks(scenario, demandToDistribute, serviceTimePerDemandUnit);
+		case generateServices:
+			if (demandToDistribute == 0 && amountOfJobs == 0)
+				throw new RuntimeException(
+						"No demand and no amount of jobs selected. Demand generation is not possible");
+			createServicesOverAllLinks(scenario, demandToDistribute, serviceTimePerDemandUnit, amountOfJobs,
+					demandLocationsInShape, polygonsInShape);
 			break;
-		case distributeShipmentsOverAllLinks:
-			createServicesWithStaticDemandOverAllLinks(scenario, demandToDistribute, serviceTimePerDemandUnit);
-			break;
-		case xLocationsWithXDemand:
+		case generateShipments:
+//			createServicesOverAllLinks(scenario, demandToDistribute, serviceTimePerDemandUnit);
 			break;
 		case useDemandFromUsedCarrierFile:
 			boolean oneCarrierHasJobs = false;
@@ -187,73 +210,175 @@ public class GeneralDemandGeneration {
 				}
 			}
 			if (!oneCarrierHasJobs)
-				throw new RuntimeException("No jobs for the carrier selected");
+				throw new RuntimeException("Minimum one carrier has no jobs");
 			break;
 		default:
 			break;
 		}
 	}
 
-	private static void createServicesWithStaticDemandOverAllLinks(Scenario scenario, int demandToDistribute,
-			double serviceTimePerDemandUnit) {
+	/**
+	 * @param scenario
+	 * @param demandToDistribute
+	 * @param serviceTimePerDemandUnit
+	 * @param demandLocationsInShape
+	 * @param singlePolygons
+	 * @param polygonsInShape
+	 * @throws MalformedURLException
+	 */
+	private static void createServicesOverAllLinks(Scenario scenario, int demandToDistribute,
+			double serviceTimePerDemandUnit, int amountOfJobs, boolean demandLocationsInShape,
+			Collection<SimpleFeature> polygonsInShape) {
 		int countOfLinks = 1;
 		int distributedDemand = 0;
 		double roundingError = 0;
 		double sumOfLinkLenght = 0;
+		int linksInNetwork = scenario.getNetwork().getLinks().size();
+		int count = 0;
 
-		for (Link link : scenario.getNetwork().getLinks().values()) {
-			sumOfLinkLenght = sumOfLinkLenght + link.getLength();
-		}
-		if (scenario.getNetwork().getLinks().size() > demandToDistribute) {
-			for (int i = 0; i < demandToDistribute; i++) {
-				Random rand = new Random();
-				Link link = scenario.getNetwork().getLinks().values().stream()
-						.skip(rand.nextInt(scenario.getNetwork().getLinks().size())).findFirst().get();
-				
-				double serviceTime = serviceTimePerDemandUnit * 1;
-				CarrierService thisService = CarrierService.Builder
-						.newInstance(Id.create("Service_" + link.getId(), CarrierService.class), link.getId())
-						.setCapacityDemand(1).setServiceDuration(serviceTime)
-						.setServiceStartTimeWindow(TimeWindow.newInstance(6 * 3600, 14 * 3600)).build();
-				FreightUtils.getCarriers(scenario).getCarriers().values().iterator().next().getServices()
-						.put(thisService.getId(), thisService);
+		if (amountOfJobs == 0) {
+			if (scenario.getNetwork().getLinks().size() > demandToDistribute) {
+
+				for (int i = 0; i < demandToDistribute; i++) {
+					count++;
+					if (count > linksInNetwork)
+						throw new RuntimeException("Not enough links in the shape file to distribute the demand");
+					Random rand = new Random();
+					// TODO check if a twice selection of a link is possible
+					Link link = scenario.getNetwork().getLinks().values().stream()
+							.skip(rand.nextInt(scenario.getNetwork().getLinks().size())).findFirst().get();
+					if (!link.getId().toString().contains("pt")
+							&& (!demandLocationsInShape || checkPositionInShape(link, polygonsInShape))) {
+						double serviceTime = serviceTimePerDemandUnit;
+						int demandForThisLink = 1;
+						CarrierService thisService = CarrierService.Builder
+								.newInstance(Id.create("Service_" + link.getId(), CarrierService.class), link.getId())
+								.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
+								.setServiceStartTimeWindow(TimeWindow.newInstance(6 * 3600, 14 * 3600)).build();
+						FreightUtils.getCarriers(scenario).getCarriers().values().iterator().next().getServices()
+								.put(thisService.getId(), thisService);
+					} else
+						i = i - 1;
+				}
+			} else {
+				for (Link link : scenario.getNetwork().getLinks().values()) {
+					if (!link.getId().toString().contains("pt")
+							&& (!demandLocationsInShape || checkPositionInShape(link, polygonsInShape)))
+						sumOfLinkLenght = sumOfLinkLenght + link.getLength();
+				}
+				if (sumOfLinkLenght == 0)
+					throw new RuntimeException("Not enough links in the shape file to distribute the demand");
+
+				for (Link link : scenario.getNetwork().getLinks().values()) {
+					if (!link.getId().toString().contains("pt")
+							&& (!demandLocationsInShape || checkPositionInShape(link, polygonsInShape))) {
+						int demandForThisLink;
+						if (countOfLinks == scenario.getNetwork().getLinks().size()) {
+							demandForThisLink = demandToDistribute - distributedDemand;
+						} else {
+							demandForThisLink = (int) Math
+									.ceil(link.getLength() / sumOfLinkLenght * demandToDistribute);
+							roundingError = roundingError
+									+ (demandForThisLink - (link.getLength() / sumOfLinkLenght * demandToDistribute));
+							if (roundingError > 1) {
+								demandForThisLink = demandForThisLink - 1;
+								roundingError = roundingError - 1;
+							}
+							countOfLinks++;
+						}
+						double serviceTime = serviceTimePerDemandUnit * demandForThisLink;
+						if (demandToDistribute > 0 && demandForThisLink > 0) {
+							CarrierService thisService = CarrierService.Builder
+									.newInstance(Id.create("Service_" + link.getId(), CarrierService.class),
+											link.getId())
+									.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
+									.setServiceStartTimeWindow(TimeWindow.newInstance(6 * 3600, 14 * 3600)).build();
+							FreightUtils.getCarriers(scenario).getCarriers().values().iterator().next().getServices()
+									.put(thisService.getId(), thisService);
+						} else if (demandToDistribute == 0) {
+							CarrierService thisService = CarrierService.Builder
+									.newInstance(Id.create("Service_" + link.getId(), CarrierService.class),
+											link.getId())
+									.setServiceDuration(serviceTime)
+									.setServiceStartTimeWindow(TimeWindow.newInstance(6 * 3600, 14 * 3600)).build();
+							FreightUtils.getCarriers(scenario).getCarriers().values().iterator().next().getServices()
+									.put(thisService.getId(), thisService);
+						}
+						distributedDemand = distributedDemand + demandForThisLink;
+					}
+				}
 			}
 		} else {
-
-			for (Link link : scenario.getNetwork().getLinks().values()) {
-				int demandForThisLink;
-				if (countOfLinks == scenario.getNetwork().getLinks().size()) {
-					demandForThisLink = demandToDistribute - distributedDemand;
-
-				} else {
-					demandForThisLink = (int) Math.ceil(link.getLength() / sumOfLinkLenght * demandToDistribute);
-					roundingError = roundingError
-							+ (demandForThisLink - (link.getLength() / sumOfLinkLenght * demandToDistribute));
-					if (roundingError > 1) {
-						demandForThisLink = demandForThisLink - 1;
-						roundingError = roundingError - 1;
+			// if a certain amount of services is selected
+			for (int i = 0; i < amountOfJobs; i++) {
+				count++;
+				if (count > linksInNetwork)
+					throw new RuntimeException("Not enough links in the shape file to distribute the demand");
+				Random rand = new Random();
+				// TODO check if a twice selection of a link is possible
+				Link link = scenario.getNetwork().getLinks().values().stream()
+						.skip(rand.nextInt(scenario.getNetwork().getLinks().size())).findFirst().get();
+				if (!link.getId().toString().contains("pt")
+						&& (!demandLocationsInShape || checkPositionInShape(link, polygonsInShape))) {
+					int demandForThisLink = (int) Math.ceil(demandToDistribute / amountOfJobs);
+					if (amountOfJobs == (i + 1)) {
+						demandForThisLink = demandToDistribute - distributedDemand;
+					} else {
+						roundingError = roundingError + (demandForThisLink - (demandToDistribute / amountOfJobs));
+						if (roundingError > 1) {
+							demandForThisLink = demandForThisLink - 1;
+							roundingError = roundingError - 1;
+						}
 					}
-					countOfLinks++;
-				}
-				double serviceTime = serviceTimePerDemandUnit * demandForThisLink;
-				if (demandToDistribute > 0 && demandForThisLink > 0) {
+					double serviceTime = serviceTimePerDemandUnit;
+
 					CarrierService thisService = CarrierService.Builder
 							.newInstance(Id.create("Service_" + link.getId(), CarrierService.class), link.getId())
 							.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
 							.setServiceStartTimeWindow(TimeWindow.newInstance(6 * 3600, 14 * 3600)).build();
 					FreightUtils.getCarriers(scenario).getCarriers().values().iterator().next().getServices()
 							.put(thisService.getId(), thisService);
-				} else if (demandToDistribute == 0) {
-					CarrierService thisService = CarrierService.Builder
-							.newInstance(Id.create("Service_" + link.getId(), CarrierService.class), link.getId())
-							.setServiceDuration(serviceTime)
-							.setServiceStartTimeWindow(TimeWindow.newInstance(6 * 3600, 14 * 3600)).build();
-					FreightUtils.getCarriers(scenario).getCarriers().values().iterator().next().getServices()
-							.put(thisService.getId(), thisService);
-				}
-				distributedDemand = distributedDemand + demandForThisLink;
+
+					distributedDemand = distributedDemand + demandForThisLink;
+				} else
+					i = i - 1;
 			}
 		}
+	}
+
+	/**
+	 * @param link
+	 * @param polygonsInShape2
+	 * @return
+	 * @throws MalformedURLException
+	 */
+	private static boolean checkPositionInShape(Link link, Collection<SimpleFeature> polygonsInShape) {
+		boolean isInShape = false;
+
+		double x, y, xCoordFrom, xCoordTo, yCoordFrom, yCoordTo;
+
+		xCoordFrom = link.getFromNode().getCoord().getX();
+		xCoordTo = link.getToNode().getCoord().getX();
+		yCoordFrom = link.getFromNode().getCoord().getY();
+		yCoordTo = link.getToNode().getCoord().getY();
+		Point p;
+		if (xCoordFrom > xCoordTo)
+			x = xCoordFrom - ((xCoordFrom - xCoordTo) / 2);
+		else
+			x = xCoordTo - ((xCoordTo - xCoordFrom) / 2);
+		if (yCoordFrom > yCoordTo)
+			y = yCoordFrom - ((yCoordFrom - yCoordTo) / 2);
+		else
+			y = yCoordTo - ((yCoordTo - yCoordFrom) / 2);
+		p = MGC.xy2Point(x, y);
+		for (SimpleFeature singlePolygon : polygonsInShape) {
+			if (((Geometry) singlePolygon.getDefaultGeometry()).contains(p)) {
+				isInShape = true;
+			}
+		}
+
+		return isInShape;
+
 	}
 
 	/**
