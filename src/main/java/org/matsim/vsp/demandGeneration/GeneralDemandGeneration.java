@@ -94,8 +94,7 @@ public class GeneralDemandGeneration {
 	};
 
 	private enum demandGenerationOptions {
-		generateServices, generateShipments, useDemandFromUsedCarrierFile,
-		getDataForGenerationFromCSV
+		generateServices, generateShipments, useDemandFromUsedCarrierFile, getDataForGenerationFromCSV
 	};
 
 	private enum optionsOfVRPSolutions {
@@ -223,7 +222,7 @@ public class GeneralDemandGeneration {
 			log.warn(
 					"##Finished without solution of the VRP. If you also want to run jsprit and/or MATSim, please change  case of optionsOfVRPSolutions");
 			System.exit(0);
-			 // TODO find perhaps better solution
+			// TODO find perhaps better solution
 			break;
 		default:
 			break;
@@ -291,11 +290,10 @@ public class GeneralDemandGeneration {
 			int demandToDistribute = singleCarrier.getDemandToDistribute();
 			int count = 0;
 
-			if (demandToDistribute == 0 && amountOfJobs == 0)
-				log.warn("For carrier " + singleCarrier.getName()
-						+ " no demand and no amount of jobs selected. Demand generation is not possible");
+			if (demandToDistribute == Integer.MAX_VALUE)
+				continue;
 
-			if (amountOfJobs == 0) {
+			if (amountOfJobs == Integer.MAX_VALUE) {
 				if (scenario.getNetwork().getLinks().size() > demandToDistribute) {
 
 					for (int i = 0; i < demandToDistribute; i++) {
@@ -587,12 +585,17 @@ public class GeneralDemandGeneration {
 		new CarrierVehicleTypeReader(carrierVehicleTypes).readFile(freightConfigGroup.getCarriersVehicleTypesFile());
 
 		for (NewCarrier singleNewCarrier : allNewCarrier) {
+			if (singleNewCarrier.getVehicleTypes() == null) {
+				continue;
+			}
 			Carrier thisCarrier = null;
 			CarrierCapabilities carrierCapabilities = null;
 			if (carriers.getCarriers().containsKey(Id.create(singleNewCarrier.getName(), Carrier.class))) {
 				thisCarrier = carriers.getCarriers().get(Id.create(singleNewCarrier.getName(), Carrier.class));
 				carrierCapabilities = thisCarrier.getCarrierCapabilities();
-				if (!carrierCapabilities.getFleetSize().equals(singleNewCarrier.getFleetSize()))
+				if (carrierCapabilities.getFleetSize() == null && singleNewCarrier.getFleetSize()!= null)
+					carrierCapabilities.setFleetSize(singleNewCarrier.getFleetSize());
+				if (singleNewCarrier.getFleetSize()!= null && carrierCapabilities.getFleetSize() != null &&!carrierCapabilities.getFleetSize().equals(singleNewCarrier.getFleetSize()))
 					throw new RuntimeException("For the carrier " + singleNewCarrier.getName()
 							+ " different fleetSize configuration was set. Please check and select only one!");
 			} else {
@@ -609,7 +612,7 @@ public class GeneralDemandGeneration {
 							thisType);
 					CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder
 							.newInstance(Id.create(thisType.getId().toString() + "_" + thisCarrier.getId().toString()
-									+ "_" + singleDepot, Vehicle.class), Id.createLinkId(singleDepot))
+									+ "_" + singleDepot + "_start"+singleNewCarrier.getCarrierStartTime(), Vehicle.class), Id.createLinkId(singleDepot))
 							.setEarliestStart(singleNewCarrier.getCarrierStartTime())
 							.setLatestEnd(singleNewCarrier.getCarrierEndTime()).setTypeId(thisType.getId()).build();
 					carrierCapabilities.getCarrierVehicles().put(newCarrierVehicle.getId(), newCarrierVehicle);
@@ -639,24 +642,41 @@ public class GeneralDemandGeneration {
 			String carrierID = record.get("carrierName");
 
 			FleetSize fleetSize = null;
-			if (record.get("fleetSize").contentEquals("infinite"))
+			if (!record.get("fleetSize").isBlank() && record.get("fleetSize").contentEquals("infinite"))
 				fleetSize = FleetSize.INFINITE;
-			else if (record.get("fleetSize").contentEquals("finite"))
+			else if (!record.get("fleetSize").isBlank() && record.get("fleetSize").contentEquals("finite"))
 				fleetSize = FleetSize.FINITE;
-			else
-				throw new RuntimeException(
-						"Select a valif FleetSize for the carrier: " + carrierID + ". Possible is finite or infinite");
-
-			String[] vehicleDepots = record.get("vehicleDepots").split(":");
-			String[] vehilceTypes = record.get("vehicleTypes").split(":");
-			int carrierStartTime = Integer.parseInt(record.get("carrierStartTime"));
-			int carrierEndTime = Integer.parseInt(record.get("carrierEndTime"));
-			String[] areasForTheDemand = record.get("demandAreas").split(":");
-			int demandToDistribute = Integer.parseInt(record.get("demandToDistribute"));
-			int amountOfJobs = Integer.parseInt(record.get("amountOfJobs"));
-			int serviceTimePerUnit = Integer.parseInt(record.get("serviceTimePerUnit"));
-			TimeWindow serviceTimeWindow = TimeWindow.newInstance(Integer.parseInt(record.get("serviceStartTime")),
-					Integer.parseInt(record.get("serviceEndTime")));
+//			else
+//				throw new RuntimeException(
+//						"Select a valid FleetSize for the carrier: " + carrierID + ". Possible is finite or infinite");
+			String[] vehicleDepots = null;
+			if (!record.get("vehicleDepots").isBlank())
+				vehicleDepots = record.get("vehicleDepots").split(":");
+			String[] vehilceTypes = null;
+			if (!record.get("vehicleTypes").isBlank())
+				vehilceTypes = record.get("vehicleTypes").split(":");
+			int carrierStartTime = 0;
+			if (!record.get("carrierStartTime").isBlank())
+				carrierStartTime = Integer.parseInt(record.get("carrierStartTime"));
+			int carrierEndTime = 0;
+			if (!record.get("carrierEndTime").isBlank())
+				carrierEndTime = Integer.parseInt(record.get("carrierEndTime"));
+			String[] areasForTheDemand = null;
+			if (!record.get("demandAreas").isBlank())
+				areasForTheDemand = record.get("demandAreas").split(":");
+			int demandToDistribute = Integer.MAX_VALUE;
+			if (!record.get("demandToDistribute").isBlank())
+				demandToDistribute = Integer.parseInt(record.get("demandToDistribute"));
+			int amountOfJobs = Integer.MAX_VALUE;
+			if (!record.get("amountOfJobs").isBlank())
+				amountOfJobs = Integer.parseInt(record.get("amountOfJobs"));
+			int serviceTimePerUnit = Integer.MAX_VALUE;
+			if (!record.get("serviceTimePerUnit").isBlank())
+				serviceTimePerUnit = Integer.parseInt(record.get("serviceTimePerUnit"));
+			TimeWindow serviceTimeWindow = null;
+			if (!record.get("serviceStartTime").isBlank() || !record.get("serviceEndTime").isBlank())
+				serviceTimeWindow = TimeWindow.newInstance(Integer.parseInt(record.get("serviceStartTime")),
+						Integer.parseInt(record.get("serviceEndTime")));
 			allNewCarrier.add(new NewCarrier(carrierID, vehilceTypes, vehicleDepots, fleetSize, carrierStartTime,
 					carrierEndTime, areasForTheDemand, demandToDistribute, amountOfJobs, serviceTimePerUnit,
 					serviceTimeWindow));
