@@ -81,32 +81,32 @@ public class GeneralDemandGeneration {
 	private static final String inputBerlinNetwork = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz";
 	private static final String inputGridNetwork = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 
-	private enum networkChoice {
+	private enum NetworkChoice {
 		grid9x9, berlinNetwork, otherNetwork
 	};
 
-	private enum carrierInputOptions {
+	private enum CarrierInputOptions {
 		createNewCarrierAndAddVehicleTypes, readCarrierFile, createFromCSV
 	};
 
-	private enum vehicleInputOptions {
+	private enum VehicleInputOptions {
 		createNewVehicles, readVehicleFile
 	};
 
-	private enum demandGenerationOptions {
+	private enum DemandGenerationOptions {
 		generateServices, generateShipments, useDemandFromUsedCarrierFile, getDataForGenerationFromCSV
 	};
 
-	private enum optionsOfVRPSolutions {
+	private enum OptionsOfVRPSolutions {
 		runJspritAndMATSim, onlyRunJsprit, createNoSolutionAndOnlyWriteCarrierFile
 	};
 
 	public static void main(String[] args) throws IOException, InvalidAttributeValueException {
-		networkChoice selectedNetwork = null;
-		carrierInputOptions selectedCarrierInputOption = null;
-		vehicleInputOptions selectedVehicleInputOption = null;
-		demandGenerationOptions selectedDemandGenerationOption = null;
-		optionsOfVRPSolutions selectedSolution = null;
+		NetworkChoice selectedNetwork = null;
+		CarrierInputOptions selectedCarrierInputOption = null;
+		VehicleInputOptions selectedVehicleInputOption = null;
+		DemandGenerationOptions selectedDemandGenerationOption = null;
+		OptionsOfVRPSolutions selectedSolution = null;
 
 // create and prepare MATSim config
 		String outputLocation = "output/demandGeneration/Test1";
@@ -117,7 +117,7 @@ public class GeneralDemandGeneration {
 		log.info("Starting class to create a freight scenario");
 
 // select network configurations
-		selectedNetwork = networkChoice.berlinNetwork;
+		selectedNetwork = NetworkChoice.berlinNetwork;
 		String networkPathOfOtherNetwork = "";
 		boolean usingNetworkChangeEvents = false;
 		String networkChangeEventsFilePath = "";
@@ -125,12 +125,12 @@ public class GeneralDemandGeneration {
 				networkChangeEventsFilePath);
 
 // load or create carrierVehicle
-		selectedVehicleInputOption = vehicleInputOptions.readVehicleFile;
+		selectedVehicleInputOption = VehicleInputOptions.readVehicleFile;
 		String vehicleTypesFileLocation = "scenarios/demandGeneration/testInput/vehicleTypes_default.xml";
 		prepareVehicles(config, selectedVehicleInputOption, vehicleTypesFileLocation);
 
 // load or create carrier
-		selectedCarrierInputOption = carrierInputOptions.createFromCSV;
+		selectedCarrierInputOption = CarrierInputOptions.createFromCSV;
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		String carriersFileLocation = "scenarios/demandGeneration/testInput/carrier_berlin_withDemand.xml";
 		String csvLocation = "scenarios/demandGeneration/testInput/testCarrierCSV.csv";
@@ -162,7 +162,7 @@ public class GeneralDemandGeneration {
 
 		for (NewCarrier newCarrier : allNewCarrier) {
 			if (newCarrier.getName().contains("csv2")) {
-				newCarrier.setAmountOfJobs(3);
+				newCarrier.setNumberOfJobs(3);
 				newCarrier.setDemandToDistribute(0);
 				newCarrier.setServiceTimePerUnit(300);
 				newCarrier.setAreasForTheDemand(new String[] { "Mahlsdorf" });
@@ -170,12 +170,12 @@ public class GeneralDemandGeneration {
 		}
 
 		// TODO check options (generateService and createFromCSV)
-		selectedDemandGenerationOption = demandGenerationOptions.generateServices;
+		selectedDemandGenerationOption = DemandGenerationOptions.generateServices;
 		createDemand(selectedDemandGenerationOption, scenario, allNewCarrier, demandLocationsInShape,
 				shapeFileLocation);
 
 // prepare the VRP and get a solution
-		selectedSolution = optionsOfVRPSolutions.runJspritAndMATSim;
+		selectedSolution = OptionsOfVRPSolutions.runJspritAndMATSim;
 		int nuOfJspritIteration = 10;
 		boolean usingRangeRestriction = false;
 		Controler controler = prepareControler(scenario);
@@ -199,7 +199,7 @@ public class GeneralDemandGeneration {
 	 * @param controler
 	 * @throws InvalidAttributeValueException
 	 */
-	private static void solveSelectedSolution(optionsOfVRPSolutions selectedSolution, Config config,
+	private static void solveSelectedSolution(OptionsOfVRPSolutions selectedSolution, Config config,
 			int nuOfJspritIteration, boolean usingRangeRestriction, Controler controler)
 			throws InvalidAttributeValueException {
 		switch (selectedSolution) {
@@ -237,7 +237,7 @@ public class GeneralDemandGeneration {
 	 * @param shapeFileLocation
 	 * @throws MalformedURLException
 	 */
-	private static void createDemand(demandGenerationOptions selectedDemandGenerationOption, Scenario scenario,
+	private static void createDemand(DemandGenerationOptions selectedDemandGenerationOption, Scenario scenario,
 			Set<NewCarrier> allNewCarrier, boolean demandLocationsInShape, String shapeFileLocation)
 			throws MalformedURLException {
 
@@ -286,14 +286,14 @@ public class GeneralDemandGeneration {
 			int distributedDemand = 0;
 			double roundingError = 0;
 			double sumOfLinkLenght = 0;
-			int amountOfJobs = singleCarrier.getAmountOfJobs();
+			int numberOfJobs = singleCarrier.getNumberOfJobs();
 			int demandToDistribute = singleCarrier.getDemandToDistribute();
 			int count = 0;
 
 			if (demandToDistribute == Integer.MAX_VALUE)
 				continue;
 
-			if (amountOfJobs == Integer.MAX_VALUE) {
+			if (numberOfJobs == Integer.MAX_VALUE) {
 				if (scenario.getNetwork().getLinks().size() > demandToDistribute) {
 
 					for (int i = 0; i < demandToDistribute; i++) {
@@ -371,7 +371,7 @@ public class GeneralDemandGeneration {
 				}
 			} else {
 				// if a certain amount of services is selected
-				for (int i = 0; i < amountOfJobs; i++) {
+				for (int i = 0; i < numberOfJobs; i++) {
 					count++;
 					if (count > linksInNetwork)
 						throw new RuntimeException(
@@ -382,11 +382,11 @@ public class GeneralDemandGeneration {
 							.skip(rand.nextInt(scenario.getNetwork().getLinks().size())).findFirst().get();
 					if (!link.getId().toString().contains("pt") && (!demandLocationsInShape
 							|| checkPositionInShape(link, polygonsInShape, singleCarrier.getAreasForTheDemand()))) {
-						int demandForThisLink = (int) Math.ceil(demandToDistribute / amountOfJobs);
-						if (amountOfJobs == (i + 1)) {
+						int demandForThisLink = (int) Math.ceil(demandToDistribute / numberOfJobs);
+						if (numberOfJobs == (i + 1)) {
 							demandForThisLink = demandToDistribute - distributedDemand;
 						} else {
-							roundingError = roundingError + (demandForThisLink - (demandToDistribute / amountOfJobs));
+							roundingError = roundingError + (demandForThisLink - (demandToDistribute / numberOfJobs));
 							if (roundingError > 1) {
 								demandForThisLink = demandForThisLink - 1;
 								roundingError = roundingError - 1;
@@ -457,7 +457,7 @@ public class GeneralDemandGeneration {
 	 * @param networkChangeEventsFilePath
 	 * @throws RuntimeException
 	 */
-	private static void setNetworkAndNetworkChangeEvents(Config config, networkChoice networkChoice,
+	private static void setNetworkAndNetworkChangeEvents(Config config, NetworkChoice networkChoice,
 			String networkPathOfOtherNetwork, boolean usingNetworkChangeEvents, String networkChangeEventsFilePath)
 			throws RuntimeException {
 
@@ -540,7 +540,7 @@ public class GeneralDemandGeneration {
 	 * @param csvLocation
 	 * @throws IOException
 	 */
-	private static void prepareCarrier(Scenario scenario, carrierInputOptions selectedCarrierInputOption,
+	private static void prepareCarrier(Scenario scenario, CarrierInputOptions selectedCarrierInputOption,
 			String carriersFileLocation, Set<NewCarrier> allNewCarrier, String csvLocation) throws IOException {
 
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(scenario.getConfig(),
@@ -667,9 +667,9 @@ public class GeneralDemandGeneration {
 			int demandToDistribute = Integer.MAX_VALUE;
 			if (!record.get("demandToDistribute").isBlank())
 				demandToDistribute = Integer.parseInt(record.get("demandToDistribute"));
-			int amountOfJobs = Integer.MAX_VALUE;
-			if (!record.get("amountOfJobs").isBlank())
-				amountOfJobs = Integer.parseInt(record.get("amountOfJobs"));
+			int numberOfJobs = Integer.MAX_VALUE;
+			if (!record.get("numberOfJobs").isBlank())
+				numberOfJobs = Integer.parseInt(record.get("numberOfJobs"));
 			int serviceTimePerUnit = Integer.MAX_VALUE;
 			if (!record.get("serviceTimePerUnit").isBlank())
 				serviceTimePerUnit = Integer.parseInt(record.get("serviceTimePerUnit"));
@@ -678,7 +678,7 @@ public class GeneralDemandGeneration {
 				serviceTimeWindow = TimeWindow.newInstance(Integer.parseInt(record.get("serviceStartTime")),
 						Integer.parseInt(record.get("serviceEndTime")));
 			allNewCarrier.add(new NewCarrier(carrierID, vehilceTypes, vehicleDepots, fleetSize, carrierStartTime,
-					carrierEndTime, areasForTheDemand, demandToDistribute, amountOfJobs, serviceTimePerUnit,
+					carrierEndTime, areasForTheDemand, demandToDistribute, numberOfJobs, serviceTimePerUnit,
 					serviceTimeWindow));
 		}
 		createNewCarrierAndAddVehilceTypes(scenario, allNewCarrier, freightConfigGroup);
@@ -690,7 +690,7 @@ public class GeneralDemandGeneration {
 	 * @param selectedVehicleInputOption
 	 * @param vehicleTypesFileLocation
 	 */
-	private static void prepareVehicles(Config config, vehicleInputOptions selectedVehicleInputOption,
+	private static void prepareVehicles(Config config, VehicleInputOptions selectedVehicleInputOption,
 			String vehicleTypesFileLocation) {
 
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);

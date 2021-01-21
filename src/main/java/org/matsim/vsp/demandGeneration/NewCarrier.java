@@ -17,12 +17,12 @@ final class NewCarrier {
 	private int carrierEndTime;
 	private String[] areasForTheDemand;
 	private int demandToDistribute;
-	private int amountOfJobs;
+	private int numberOfJobs;
 	private int serviceTimePerUnit;
 	private TimeWindow serviceTimeWindow;
 
 	NewCarrier(String name, String[] vehilceTypes, String[] vehicleDepots, FleetSize fleetSize, int carrierStartTime,
-			int carrierEndTime, String[] areasForTheDemand, int demandToDistribute, int amountOfJobs,
+			int carrierEndTime, String[] areasForTheDemand, int demandToDistribute, int numberOfJobs,
 			int serviceTimePerUnit, TimeWindow serviceTimeWindow) {
 		this.setId(name);
 		this.setVehicleTypes(vehilceTypes);
@@ -32,7 +32,7 @@ final class NewCarrier {
 		this.setCarrierEndTime(carrierEndTime);
 		this.setAreasForTheDemand(areasForTheDemand);
 		this.setDemandToDistribute(demandToDistribute);
-		this.setAmountOfJobs(amountOfJobs);
+		this.setNumberOfJobs(numberOfJobs);
 		this.setServiceTimePerUnit(serviceTimePerUnit);
 		this.setServiceTimeWindow(serviceTimeWindow);
 	}
@@ -87,12 +87,12 @@ final class NewCarrier {
 		this.demandToDistribute = demandToDistribute;
 	}
 
-	public int getAmountOfJobs() {
-		return amountOfJobs;
+	public int getNumberOfJobs() {
+		return numberOfJobs;
 	}
 
-	public void setAmountOfJobs(int amountOfJobs) {
-		this.amountOfJobs = amountOfJobs;
+	public void setNumberOfJobs(int numberOfJobs) {
+		this.numberOfJobs = numberOfJobs;
 	}
 
 	public int getServiceTimePerUnit() {
