@@ -1,0 +1,5 @@
+carrierName;vehicleTypes;vehicleDepots;fleetSize;carrierStartTime;carrierEndTime;demandAreas;demandToDistribute;amountOfJobs;serviceTimePerUnit;serviceStartTime;serviceEndTime
+csvCarrier1;medium18t_electro:heavy40t;82185:3302;infinite;3600;50000;Mitte;5;2;180;3000;13000
+csvCarrier2;medium18t_electro;82185;finite;3600;50000;Schmoeckwitz;4;4;300;10000;15000
+csvCarrier3;heavy40t;82185;finite;3600;50000;Mahlsdorf;4;4;300;20000;50000
+csvCarrier1;medium18t_electro:heavy40t;82185:3302;infinite;3600;50000;Mahlsdorf;5;2;180;3000;13000
