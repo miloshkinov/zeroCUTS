@@ -11,25 +11,31 @@ final class NewCarrier {
 
 	private String name;
 	private String[] vehilceTypes;
+	private int numberOfDepotsPerType;
 	private String[] vehicleDepots;
+	private String[] areaOfAdditonalDepots;
 	private FleetSize fleetSize;
-	private int carrierStartTime;
-	private int carrierEndTime;
+	private int vehicleStartTime;
+	private int vehicleEndTime;
+	private int jspritIterations;
 	private String[] areasForTheDemand;
 	private int demandToDistribute;
 	private int numberOfJobs;
 	private int serviceTimePerUnit;
 	private TimeWindow serviceTimeWindow;
 
-	NewCarrier(String name, String[] vehilceTypes, String[] vehicleDepots, FleetSize fleetSize, int carrierStartTime,
-			int carrierEndTime, String[] areasForTheDemand, int demandToDistribute, int numberOfJobs,
+	NewCarrier(String name, String[] vehilceTypes, int numberOfDepotsPerType, String[] vehicleDepots, String[] areaOfAdditonalDepots, FleetSize fleetSize, int vehicleStartTime,
+			int vehicleEndTime, int jspritIterations, String[] areasForTheDemand, int demandToDistribute, int numberOfJobs,
 			int serviceTimePerUnit, TimeWindow serviceTimeWindow) {
 		this.setId(name);
 		this.setVehicleTypes(vehilceTypes);
 		this.setVehicleDepots(vehicleDepots);
+		this.setNumberOfDepotsPerType(numberOfDepotsPerType);
+		this.setAreaOfAdditonalDepots(areaOfAdditonalDepots);
 		this.setFleetSize(fleetSize);
-		this.setCarrierStartTime(carrierStartTime);
-		this.setCarrierEndTime(carrierEndTime);
+		this.setVehicleStartTime(vehicleStartTime);
+		this.setVehicleEndTime(vehicleEndTime);
+		this.setJspritIterations(jspritIterations);
 		this.setAreasForTheDemand(areasForTheDemand);
 		this.setDemandToDistribute(demandToDistribute);
 		this.setNumberOfJobs(numberOfJobs);
@@ -37,14 +43,16 @@ final class NewCarrier {
 		this.setServiceTimeWindow(serviceTimeWindow);
 	}
 
-	public NewCarrier(String name, String[] vehilceTypes, String[] vehicleDepots, FleetSize fleetSize,
-			int carrierStartTime, int carrierEndTime) {
+	public NewCarrier(String name, String[] vehilceTypes, int numberOfDepotsPerType, String[] vehicleDepots, String[] areaOfAdditonalDepots, FleetSize fleetSize,
+			int vehicleStartTime, int vehicleEndTime, int jspritIterations) {
 		this.setId(name);
 		this.setVehicleTypes(vehilceTypes);
 		this.setVehicleDepots(vehicleDepots);
+		this.setAreaOfAdditonalDepots(areaOfAdditonalDepots);
+		this.setJspritIterations(jspritIterations);
 		this.setFleetSize(fleetSize);
-		this.setCarrierStartTime(carrierStartTime);
-		this.setCarrierEndTime(carrierEndTime);
+		this.setVehicleStartTime(vehicleStartTime);
+		this.setVehicleEndTime(vehicleEndTime);
 	}
 
 	public String getName() {
@@ -103,20 +111,20 @@ final class NewCarrier {
 		this.serviceTimePerUnit = serviceTimePerUnit;
 	}
 
-	public int getCarrierStartTime() {
-		return carrierStartTime;
+	public int getVehicleStartTime() {
+		return vehicleStartTime;
 	}
 
-	public void setCarrierStartTime(int carrierStartTime) {
-		this.carrierStartTime = carrierStartTime;
+	public void setVehicleStartTime(int carrierStartTime) {
+		this.vehicleStartTime = carrierStartTime;
 	}
 
-	public int getCarrierEndTime() {
-		return carrierEndTime;
+	public int getVehicleEndTime() {
+		return vehicleEndTime;
 	}
 
-	public void setCarrierEndTime(int carrierEndTime) {
-		this.carrierEndTime = carrierEndTime;
+	public void setVehicleEndTime(int vehicleEndTime) {
+		this.vehicleEndTime = vehicleEndTime;
 	}
 
 	public String[] getAreasForTheDemand() {
@@ -133,5 +141,29 @@ final class NewCarrier {
 
 	public void setServiceTimeWindow(TimeWindow serviceTimeWindow) {
 		this.serviceTimeWindow = serviceTimeWindow;
+	}
+
+	public int getJspritIterations() {
+		return jspritIterations;
+	}
+
+	public void setJspritIterations(int jspritIterations) {
+		this.jspritIterations = jspritIterations;
+	}
+
+	public int getNumberOfDepotsPerType() {
+		return numberOfDepotsPerType;
+	}
+
+	public void setNumberOfDepotsPerType(int numberOfDepotsPerType) {
+		this.numberOfDepotsPerType = numberOfDepotsPerType;
+	}
+
+	public String[] getAreaOfAdditonalDepots() {
+		return areaOfAdditonalDepots;
+	}
+
+	public void setAreaOfAdditonalDepots(String[] areaOfAdditonalDepots) {
+		this.areaOfAdditonalDepots = areaOfAdditonalDepots;
 	}
 }
