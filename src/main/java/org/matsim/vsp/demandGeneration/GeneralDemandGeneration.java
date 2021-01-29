@@ -398,9 +398,12 @@ public class GeneralDemandGeneration {
 	 * @throws MalformedURLException
 	 */
 	private static boolean checkPositionInShape(Link link, Collection<SimpleFeature> polygonsInShape,
-			String[] areasOfDemand) {
+			String[] possibleAreas) {
+		
+		if (possibleAreas == null) {
+			return true;
+		}
 		boolean isInShape = false;
-
 		double x, y, xCoordFrom, xCoordTo, yCoordFrom, yCoordTo;
 
 		xCoordFrom = link.getFromNode().getCoord().getX();
@@ -418,7 +421,7 @@ public class GeneralDemandGeneration {
 			y = yCoordTo - ((yCoordTo - yCoordFrom) / 2);
 		p = MGC.xy2Point(x, y);
 		for (SimpleFeature singlePolygon : polygonsInShape) {
-			for (String area : areasOfDemand) {
+			for (String area : possibleAreas) {
 				if (area.equals(singlePolygon.getAttribute("Ortsteil")))
 					if (((Geometry) singlePolygon.getDefaultGeometry()).contains(p)) {
 						isInShape = true;
@@ -555,9 +558,10 @@ public class GeneralDemandGeneration {
 	 * @param vehicleTypesOfThisCarrier
 	 * @param freightConfigGroup
 	 * @param polygonsInShape
+	 * @param polygonsInShape
 	 */
 	private static void createNewCarrierAndAddVehilceTypes(Scenario scenario, Set<NewCarrier> allNewCarrier,
-			FreightConfigGroup freightConfigGroup) {
+			FreightConfigGroup freightConfigGroup, Collection<SimpleFeature> polygonsInShape) {
 		Carriers carriers = FreightUtils.getOrCreateCarriers(scenario);
 		CarrierVehicleTypes carrierVehicleTypes = new CarrierVehicleTypes();
 		CarrierVehicleTypes usedCarrierVehicleTypes = new CarrierVehicleTypes();
@@ -584,8 +588,16 @@ public class GeneralDemandGeneration {
 						.setFleetSize(singleNewCarrier.getFleetSize()).build();
 				carriers.addCarrier(thisCarrier);
 			}
-			for (String singleDepot : singleNewCarrier.getVehicleDepots()) { // TODO create random depots in certain
-																				// area
+			while (singleNewCarrier.getVehicleDepots().length < singleNewCarrier.getNumberOfDepotsPerType()) {
+				Random rand = new Random();
+				Link link = scenario.getNetwork().getLinks().values().stream()
+						.skip(rand.nextInt(scenario.getNetwork().getLinks().size())).findFirst().get();
+				if (!link.getId().toString().contains("pt")
+						&& (checkPositionInShape(link, polygonsInShape, singleNewCarrier.getAreaOfAdditonalDepots()))) {
+					singleNewCarrier.addVehicleDepots(singleNewCarrier.getVehicleDepots(), link.getId().toString());
+				}
+			}
+			for (String singleDepot : singleNewCarrier.getVehicleDepots()) { 
 				for (String thisVehicleType : singleNewCarrier.getVehicleTypes()) {
 					VehicleType thisType = carrierVehicleTypes.getVehicleTypes()
 							.get(Id.create(thisVehicleType, VehicleType.class));
@@ -679,7 +691,7 @@ public class GeneralDemandGeneration {
 			allNewCarrier.add(newCarrier);
 		}
 		checkNewCarrier(allNewCarrier, freightConfigGroup, scenario, polygonsInShape);
-		createNewCarrierAndAddVehilceTypes(scenario, allNewCarrier, freightConfigGroup);
+		createNewCarrierAndAddVehilceTypes(scenario, allNewCarrier, freightConfigGroup, polygonsInShape);
 
 	}
 
@@ -722,6 +734,10 @@ public class GeneralDemandGeneration {
 				throw new RuntimeException(
 						"If a vehicle type is selected in the input file, numberOfDepots or selectedVehicleDepots should be set. Please check carrier "
 								+ carrier.getName());
+			if (carrier.getVehicleDepots() != null && (carrier.getNumberOfDepotsPerType() > carrier.getVehicleDepots().length) && carrier.getAreaOfAdditonalDepots() == null)
+				log.warn("No possible area for addional depot given. Random choice in the hole network of a possible position");
+			if (carrier.getVehicleDepots() == null && (carrier.getNumberOfDepotsPerType() > 0) && carrier.getAreaOfAdditonalDepots() == null)
+				log.warn("No possible area for addional depot given. Random choice in the hole network of a possible position");
 			if (carrier.getAreaOfAdditonalDepots() != null)
 				for (String depotArea : carrier.getAreaOfAdditonalDepots()) {
 					boolean isInShape = false;
@@ -764,7 +780,8 @@ public class GeneralDemandGeneration {
 			}
 			if (carrier.getJspritIterations() != 0)
 				for (NewCarrier existingCarrier : allNewCarrier)
-					if (existingCarrier.getName().equals(carrier.getName()) && existingCarrier.getJspritIterations() != 0
+					if (existingCarrier.getName().equals(carrier.getName())
+							&& existingCarrier.getJspritIterations() != 0
 							&& existingCarrier.getJspritIterations() != carrier.getJspritIterations())
 						throw new RuntimeException("For the carrier " + carrier.getName()
 								+ " different number of jsprit iterations are set. Please check!");

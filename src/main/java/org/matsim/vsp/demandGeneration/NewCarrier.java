@@ -78,6 +78,16 @@ final class NewCarrier {
 	public void setVehicleDepots(String[] vehicleDepots) {
 		this.vehicleDepots = vehicleDepots;
 	}
+	
+	public void addVehicleDepots(String[] vehicleDepots, String newDepot) {
+		String[] newdepotList = new String[vehicleDepots.length+1]; 
+		int count = 0;
+	    for(int cnt=0;cnt<vehicleDepots.length;cnt++, count++){  
+	        newdepotList[cnt] = vehicleDepots[cnt]; 
+	    }  
+	    newdepotList[count] = newDepot;
+		this.vehicleDepots = newdepotList;
+	}
 
 	public FleetSize getFleetSize() {
 		return fleetSize;
