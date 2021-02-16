@@ -78,12 +78,13 @@ public class FreightAnalyse {
 
 		TripWriter tripWriter = new TripWriter(tripHandler, OUTPUT_DIR);
 		for (Carrier carrier : carriers.getCarriers().values()){
-			tripWriter.writeDetailedResultsSingleCarrier(carrier.getId().toString());
+		//	tripWriter.writeDetailedResultsSingleCarrier(carrier.getId().toString());
 			tripWriter.writeTourResultsSingleCarrier(carrier.getId().toString());
 		}
 
 		tripWriter.writeResultsPerVehicleTypes();
 		tripWriter.writeTourResultsAllCarrier();
+		tripWriter.writeResultsAllCarrier(carriers);
 
 
 		log.info("### Analysis DONE");

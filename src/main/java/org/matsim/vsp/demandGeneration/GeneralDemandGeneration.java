@@ -62,10 +62,12 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.core.utils.io.IOUtils;
+import org.matsim.core.utils.io.UncheckedIOException;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.opengis.feature.simple.SimpleFeature;
@@ -80,26 +82,30 @@ public class GeneralDemandGeneration {
 
 	private static final String inputBerlinNetwork = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz";
 	private static final String inputGridNetwork = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
+	static CoordinateTransformation crsTransformation = null;
 
 	private enum NetworkChoice {
 		grid9x9, berlinNetwork, otherNetwork
 	};
 
 	private enum CarrierInputOptions {
-		readCarrierFile, createFromCSV
+		readCarrierFile, createFromCSV, addCSVDataToExistingCarrierFileData
 	};
 
 	private enum VehicleInputOptions {
-		createNewVehicles, readVehicleFile
+		readVehicleFile
 	};
 
 	private enum DemandGenerationOptions {
-		generateServices, generateShipments, useDemandFromUsedCarrierFile, getDataForGenerationFromCSV // TODO check the
-																										// best
+		useDemandFromCarrierFile, loadCSVData // here perhaps only options of generation (population, random, etc.)
 	};
 
 	private enum OptionsOfVRPSolutions {
 		runJspritAndMATSim, onlyRunJsprit, createNoSolutionAndOnlyWriteCarrierFile
+	};
+
+	private enum AnalyseOptions {
+		withoutAnalyseOutput, withAnalyseOutput
 	};
 
 	public static void main(String[] args) throws IOException, InvalidAttributeValueException {
@@ -107,8 +113,10 @@ public class GeneralDemandGeneration {
 // create and prepare MATSim config
 		String outputLocation = "output/demandGeneration/Test1";
 		int lastMATSimIteration = 0;
-		String coordinateSystem = TransformationFactory.GK4; // TODO perhaps add transformation shape/network
-		Config config = prepareConfig(lastMATSimIteration, outputLocation, coordinateSystem);
+		String networkCRS = "EPSG:31468";
+		String shapeCRS = "EPSG:3857";
+		crsTransformation = TransformationFactory.getCoordinateTransformation(networkCRS, shapeCRS);
+		Config config = prepareConfig(lastMATSimIteration, outputLocation, networkCRS);
 
 		log.info("Starting class to create a freight scenario");
 
@@ -126,11 +134,12 @@ public class GeneralDemandGeneration {
 		prepareVehicles(config, selectedVehicleInputOption, vehicleTypesFileLocation);
 
 // load or create carrier
-		CarrierInputOptions selectedCarrierInputOption = CarrierInputOptions.createFromCSV;
+		CarrierInputOptions selectedCarrierInputOption = CarrierInputOptions.addCSVDataToExistingCarrierFileData;
 		Scenario scenario = ScenarioUtils.loadScenario(config);
-		String carriersFileLocation = "scenarios/demandGeneration/testInput/carrier_berlin_withDemand.xml";
+		String carriersFileLocation = "scenarios/demandGeneration/testInput/carrier_berlin_noDemand.xml";
 		String csvLocation = "scenarios/demandGeneration/testInput/testCarrierCSV.csv";
-		String shapeFileLocation = "scenarios/wasteCollection/garbageInput/districtsWithGarbageInformations.shp";
+		String shapeFileLocation = "scenarios/demandGeneration/shp_berlin_districts/Berlin_Ortsteile.shp";
+		int defaultJspritIterations = 3;
 		boolean useShapeFileforLocationsChoice = true;
 
 		Set<NewCarrier> allNewCarrier = new HashSet<>();
@@ -138,7 +147,7 @@ public class GeneralDemandGeneration {
 		if (useShapeFileforLocationsChoice)
 			polygonsInShape = ShapeFileReader.getAllFeatures(shapeFileLocation);
 		prepareCarrier(scenario, selectedCarrierInputOption, carriersFileLocation, allNewCarrier, csvLocation,
-				polygonsInShape);
+				polygonsInShape, defaultJspritIterations);
 
 // create the demand
 		// *distributeServicesOverAllLinks*:
@@ -155,20 +164,21 @@ public class GeneralDemandGeneration {
 		// TODO add possible locations characteristics of links, speed, type etc.
 
 		// TODO check options (generateService and createFromCSV)
-		DemandGenerationOptions selectedDemandGenerationOption = DemandGenerationOptions.generateServices;
+		DemandGenerationOptions selectedDemandGenerationOption = DemandGenerationOptions.loadCSVData;
 		createDemand(selectedDemandGenerationOption, scenario, allNewCarrier, useShapeFileforLocationsChoice,
 				polygonsInShape);
 
 // prepare the VRP and get a solution
-		OptionsOfVRPSolutions selectedSolution = OptionsOfVRPSolutions.onlyRunJsprit;
+		OptionsOfVRPSolutions selectedSolution = OptionsOfVRPSolutions.runJspritAndMATSim;
 		boolean usingRangeRestriction = false;
 		Controler controler = prepareControler(scenario);
 
 		solveSelectedSolution(selectedSolution, config, usingRangeRestriction, controler);
 
 // analyze results
-		String[] argsAnalysis = { config.controler().getOutputDirectory() };
-		FreightAnalyse.main(argsAnalysis);
+		AnalyseOptions analyseOption = AnalyseOptions.withAnalyseOutput;
+		analyseResult(analyseOption, config.controler().getOutputDirectory());
+
 		// TODO add service/Shipment ID to events to also analyze the jobs or add the
 		// carrierFile to the analyzes
 
@@ -218,6 +228,7 @@ public class GeneralDemandGeneration {
 	 * @param allNewCarrier
 	 * @param demandLocationsInShape
 	 * @param polygonsInShape
+	 * @param defaultJspritIterations 
 	 * @throws MalformedURLException
 	 */
 	private static void createDemand(DemandGenerationOptions selectedDemandGenerationOption, Scenario scenario,
@@ -225,13 +236,10 @@ public class GeneralDemandGeneration {
 			throws MalformedURLException {
 
 		switch (selectedDemandGenerationOption) {
-		case generateServices:
+		case loadCSVData:
 			createServices(scenario, allNewCarrier, demandLocationsInShape, polygonsInShape);
 			break;
-		case generateShipments:
-//			createServicesOverAllLinks(scenario, demandToDistribute, serviceTimePerUnit);
-			break;
-		case useDemandFromUsedCarrierFile:
+		case useDemandFromCarrierFile:
 			boolean oneCarrierHasJobs = false;
 			for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 				if (carrier.getServices().isEmpty() && carrier.getShipments().isEmpty()) {
@@ -250,11 +258,33 @@ public class GeneralDemandGeneration {
 	}
 
 	/**
+	 * @param analyseOption
+	 * @param outputDirectory
+	 * @throws UncheckedIOException
+	 * @throws IOException
+	 */
+	private static void analyseResult(AnalyseOptions analyseOption, String outputDirectory)
+			throws UncheckedIOException, IOException {
+
+		switch (analyseOption) {
+		case withAnalyseOutput:
+			String[] argsAnalysis = { outputDirectory };
+			FreightAnalyse.main(argsAnalysis);
+			break;
+		case withoutAnalyseOutput:
+			break;
+		default:
+			break;
+		}
+	}
+
+	/**
 	 * @param scenario
 	 * @param allNewCarrier
 	 * @param demandLocationsInShape
 	 * @param singlePolygons
 	 * @param polygonsInShape
+	 * @param defaultJspritIterations 
 	 * @throws MalformedURLException
 	 */
 	private static void createServices(Scenario scenario, Set<NewCarrier> allNewCarrier, boolean demandLocationsInShape,
@@ -399,17 +429,17 @@ public class GeneralDemandGeneration {
 	 */
 	private static boolean checkPositionInShape(Link link, Collection<SimpleFeature> polygonsInShape,
 			String[] possibleAreas) {
-		
+
 		if (possibleAreas == null) {
 			return true;
 		}
 		boolean isInShape = false;
 		double x, y, xCoordFrom, xCoordTo, yCoordFrom, yCoordTo;
 
-		xCoordFrom = link.getFromNode().getCoord().getX();
-		xCoordTo = link.getToNode().getCoord().getX();
-		yCoordFrom = link.getFromNode().getCoord().getY();
-		yCoordTo = link.getToNode().getCoord().getY();
+		xCoordFrom = crsTransformation.transform(link.getFromNode().getCoord()).getX();
+		xCoordTo = crsTransformation.transform(link.getFromNode().getCoord()).getX();
+		yCoordFrom = crsTransformation.transform(link.getFromNode().getCoord()).getY();
+		yCoordTo = crsTransformation.transform(link.getFromNode().getCoord()).getY();
 		Point p;
 		if (xCoordFrom > xCoordTo)
 			x = xCoordFrom - ((xCoordFrom - xCoordTo) / 2);
@@ -522,15 +552,26 @@ public class GeneralDemandGeneration {
 	 * @param allNewCarrier
 	 * @param csvLocation
 	 * @param polygonsInShape
+	 * @param defaultJspritIterations 
 	 * @throws IOException
 	 */
 	private static void prepareCarrier(Scenario scenario, CarrierInputOptions selectedCarrierInputOption,
 			String carriersFileLocation, Set<NewCarrier> allNewCarrier, String csvLocation,
-			Collection<SimpleFeature> polygonsInShape) throws IOException {
+			Collection<SimpleFeature> polygonsInShape, int defaultJspritIterations) throws IOException {
 
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(scenario.getConfig(),
 				FreightConfigGroup.class);
 		switch (selectedCarrierInputOption) {
+		case addCSVDataToExistingCarrierFileData:
+			if (carriersFileLocation == "")
+				throw new RuntimeException("No path to the carrier file selected");
+			else {
+				freightConfigGroup.setCarriersFile(carriersFileLocation);
+				FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
+				log.info("Load carriers from: " + carriersFileLocation);
+				readAndCreateCarrierFromCSV(scenario, allNewCarrier, freightConfigGroup, csvLocation, polygonsInShape, defaultJspritIterations);
+			}
+			break;
 		case readCarrierFile:
 			if (carriersFileLocation == "")
 				throw new RuntimeException("No path to the carrier file selected");
@@ -541,7 +582,7 @@ public class GeneralDemandGeneration {
 			}
 			break;
 		case createFromCSV:
-			readAndCreateCarrierFromCSV(scenario, allNewCarrier, freightConfigGroup, csvLocation, polygonsInShape);
+			readAndCreateCarrierFromCSV(scenario, allNewCarrier, freightConfigGroup, csvLocation, polygonsInShape, defaultJspritIterations);
 			break;
 		default:
 			throw new RuntimeException("no methed to create or read carrier selected.");
@@ -559,9 +600,10 @@ public class GeneralDemandGeneration {
 	 * @param freightConfigGroup
 	 * @param polygonsInShape
 	 * @param polygonsInShape
+	 * @param CarrierVehicleTypes 
 	 */
 	private static void createNewCarrierAndAddVehilceTypes(Scenario scenario, Set<NewCarrier> allNewCarrier,
-			FreightConfigGroup freightConfigGroup, Collection<SimpleFeature> polygonsInShape) {
+			FreightConfigGroup freightConfigGroup, Collection<SimpleFeature> polygonsInShape, int defaultJspritIterations) {
 		Carriers carriers = FreightUtils.getOrCreateCarriers(scenario);
 		CarrierVehicleTypes carrierVehicleTypes = new CarrierVehicleTypes();
 		CarrierVehicleTypes usedCarrierVehicleTypes = new CarrierVehicleTypes();
@@ -597,7 +639,7 @@ public class GeneralDemandGeneration {
 					singleNewCarrier.addVehicleDepots(singleNewCarrier.getVehicleDepots(), link.getId().toString());
 				}
 			}
-			for (String singleDepot : singleNewCarrier.getVehicleDepots()) { 
+			for (String singleDepot : singleNewCarrier.getVehicleDepots()) {
 				for (String thisVehicleType : singleNewCarrier.getVehicleTypes()) {
 					VehicleType thisType = carrierVehicleTypes.getVehicleTypes()
 							.get(Id.create(thisVehicleType, VehicleType.class));
@@ -617,9 +659,23 @@ public class GeneralDemandGeneration {
 			}
 			thisCarrier.setCarrierCapabilities(carrierCapabilities);
 		}
+		for (Carrier carrier: carriers.getCarriers().values()) {
+			if (CarrierUtils.getJspritIterations(carrier)==Integer.MIN_VALUE) {
+				CarrierUtils.setJspritIterations(carrier, defaultJspritIterations);
+				log.warn("The jspritIterations war now set to the deafult value of "+defaultJspritIterations+" in this simulation");
+				}
+		}
 		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(carrierVehicleTypes);
-		scenario.addScenarioElement("carrierVehicleTypes", usedCarrierVehicleTypes); // TODO add to FreightUtils
-	}
+		if (scenario.getScenarioElement("carrierVehicleTypes") == null)
+			scenario.addScenarioElement("carrierVehicleTypes", usedCarrierVehicleTypes); // TODO add to FreightUtils
+		else {
+			CarrierVehicleTypes existingCarrierVehicleTypes = (CarrierVehicleTypes) scenario.getScenarioElement("carrierVehicleTypes");
+			for (VehicleType newType :usedCarrierVehicleTypes.getVehicleTypes().values()) {
+				if (!existingCarrierVehicleTypes.getVehicleTypes().containsKey(newType.getId()))
+					existingCarrierVehicleTypes.getVehicleTypes().put(newType.getId(), newType);
+			}
+			
+	}}
 
 	/**
 	 * @param scenario
@@ -627,10 +683,11 @@ public class GeneralDemandGeneration {
 	 * @param freightConfigGroup
 	 * @param csvLocation
 	 * @param polygonsInShape
+	 * @param defaultJspritIterations 
 	 * @throws IOException
 	 */
 	private static void readAndCreateCarrierFromCSV(Scenario scenario, Set<NewCarrier> allNewCarrier,
-			FreightConfigGroup freightConfigGroup, String csvLocation, Collection<SimpleFeature> polygonsInShape)
+			FreightConfigGroup freightConfigGroup, String csvLocation, Collection<SimpleFeature> polygonsInShape, int defaultJspritIterations)
 			throws IOException {
 		CSVParser parse = CSVFormat.DEFAULT.withDelimiter(';').withFirstRecordAsHeader()
 				.parse(IOUtils.getBufferedReader(csvLocation));
@@ -691,7 +748,7 @@ public class GeneralDemandGeneration {
 			allNewCarrier.add(newCarrier);
 		}
 		checkNewCarrier(allNewCarrier, freightConfigGroup, scenario, polygonsInShape);
-		createNewCarrierAndAddVehilceTypes(scenario, allNewCarrier, freightConfigGroup, polygonsInShape);
+		createNewCarrierAndAddVehilceTypes(scenario, allNewCarrier, freightConfigGroup, polygonsInShape, defaultJspritIterations);
 
 	}
 
@@ -705,6 +762,10 @@ public class GeneralDemandGeneration {
 			Scenario scenario, Collection<SimpleFeature> polygonsInShape) {
 
 		for (NewCarrier carrier : allNewCarrier) {
+			if (FreightUtils.getCarriers(scenario).getCarriers().containsKey(Id.create(carrier.getName(), Carrier.class)))
+				throw new RuntimeException(
+						"The Carrier "+carrier.getName()+" being loaded from the csv is already in the given Carrier file. It is not possible to add to an existing Carrier. Please check!");
+
 			if (carrier.getName() == null || carrier.getName().isBlank())
 				throw new RuntimeException(
 						"Minimum one carrier has no name. Every carrier information has to be related to one carrier. Please check the input csv file!");
@@ -734,10 +795,15 @@ public class GeneralDemandGeneration {
 				throw new RuntimeException(
 						"If a vehicle type is selected in the input file, numberOfDepots or selectedVehicleDepots should be set. Please check carrier "
 								+ carrier.getName());
-			if (carrier.getVehicleDepots() != null && (carrier.getNumberOfDepotsPerType() > carrier.getVehicleDepots().length) && carrier.getAreaOfAdditonalDepots() == null)
-				log.warn("No possible area for addional depot given. Random choice in the hole network of a possible position");
-			if (carrier.getVehicleDepots() == null && (carrier.getNumberOfDepotsPerType() > 0) && carrier.getAreaOfAdditonalDepots() == null)
-				log.warn("No possible area for addional depot given. Random choice in the hole network of a possible position");
+			if (carrier.getVehicleDepots() != null
+					&& (carrier.getNumberOfDepotsPerType() > carrier.getVehicleDepots().length)
+					&& carrier.getAreaOfAdditonalDepots() == null)
+				log.warn(
+						"No possible area for addional depot given. Random choice in the hole network of a possible position");
+			if (carrier.getVehicleDepots() == null && (carrier.getNumberOfDepotsPerType() > 0)
+					&& carrier.getAreaOfAdditonalDepots() == null)
+				log.warn(
+						"No possible area for addional depot given. Random choice in the hole network of a possible position");
 			if (carrier.getAreaOfAdditonalDepots() != null)
 				for (String depotArea : carrier.getAreaOfAdditonalDepots()) {
 					boolean isInShape = false;
@@ -798,9 +864,6 @@ public class GeneralDemandGeneration {
 
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 		switch (selectedVehicleInputOption) {
-		case createNewVehicles:
-			// TODO Or do not do this
-			break;
 		case readVehicleFile:
 			if (vehicleTypesFileLocation == "")
 				throw new RuntimeException("No path to the vehicleTypes selected");

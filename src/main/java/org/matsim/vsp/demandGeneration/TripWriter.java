@@ -22,7 +22,9 @@ package org.matsim.vsp.demandGeneration;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
+import org.matsim.contrib.freight.carrier.Carriers;
 import org.matsim.vehicles.VehicleType;
 
 import java.io.BufferedWriter;
@@ -124,8 +126,8 @@ import java.util.TreeMap;
 					+ "distance tour [km] ; "
 					+ "TravelTime tour [h] ;"
 					+ "ActivityTime tour [h] ;"
-					+ "Amount of Services ;"
-					+ "Amount of Shipments ;"
+					+ "# of Services ;"
+					+ "# of Shipments ;"
 					+ "Handled Demand"
 			);
 			bw.newLine();
@@ -373,6 +375,86 @@ import java.util.TreeMap;
 		}
 	}
 
+	/**
+	 *TODO
+	 * @param carriers 
+	 */
+	public void writeResultsAllCarrier(Carriers carriers) {
+		
+
+			String fileName = this.outputFolder + "total_infos_carriers.csv";
+			File file = new File(fileName);
+
+			try {
+				BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+				bw.write(fileName);
+				bw.newLine();
+				bw.write("____________________________________________________________________________");
+				bw.newLine();
+
+
+				bw.write("Carrier ID;" +
+						"#ofVehicles;" +
+						"distance [km];" +
+						"TravelTime [h]; " +
+						"ActivityDuration [h];" +
+						"# of Services;" +
+						"# of Shipments;" +
+						"Handled Demand"
+				);
+				bw.newLine();
+				
+				Map<Id<Person>, Double> personId2tourDistance = null;
+				Map<Id<Person>, Double> personId2tourTravelTimes = null;
+				Map<Id<Person>, Double> personId2tourActivityDurations = null;
+				Map<Id<Person>, Integer> personId2tourAmountServices = null;
+				Map<Id<Person>, Integer> personId2tourAmountShipments = null;
+//				Map<Id<Person>, Integer> personId2tourHandeledDemand = null;
+				
+				for (Carrier carrier : carriers.getCarriers().values()) {
+				personId2tourDistance = this.handler.getPersonId2TourDistances(carrier.getId().toString());
+				personId2tourTravelTimes = this.handler.getPersonId2TravelTimes(carrier.getId().toString());
+				personId2tourActivityDurations = this.handler.getPersonId2SumOfActivityDurations(carrier.getId().toString());
+				personId2tourAmountServices = this.handler.getPersonId2TourServices(carrier.getId().toString());
+				personId2tourAmountShipments = this.handler.getPersonId2TourShipments(carrier.getId().toString());
+//				personId2tourHandeledDemand = this.handler.getPersonId2TourHandledDemand(carrier.getId().toString());
+				
+				double totalTourDistanceInMeters = 0.0;
+				double totalTourTravelTimeInSeconds =0.0;
+				double totalTourActivityDurationInSeconds =0.0;
+				int totalNumberOfServices =0;
+				int totalNumberOfShipments =0;
+				int totalAmountOfHandeledDemand =0;
+
+				for (Id<Person> id :personId2tourDistance.keySet()) {
+					totalTourDistanceInMeters = totalTourDistanceInMeters + personId2tourDistance.get(id);
+					totalTourTravelTimeInSeconds = totalTourTravelTimeInSeconds + personId2tourTravelTimes.get(id);
+					totalTourActivityDurationInSeconds = totalTourActivityDurationInSeconds + personId2tourActivityDurations.get(id);
+					if (!personId2tourAmountServices.isEmpty())
+						totalNumberOfServices = totalNumberOfServices + personId2tourAmountServices.get(id);
+					if (!personId2tourAmountShipments.isEmpty())
+						totalNumberOfShipments = totalNumberOfShipments + personId2tourAmountShipments.get(id);
+//					totalAmountOfHandeledDemand = totalAmountOfHandeledDemand + personId2tourHandeledDemand.get(id);
+				}
+
+				bw.write(carrier.getId().toString() + ";"
+						+ personId2tourDistance.size() + ";"
+						+ totalTourDistanceInMeters/1000 + ";"
+						+ totalTourTravelTimeInSeconds/3600 + ";"
+						+ totalTourActivityDurationInSeconds/3600 +";"
+						+ totalNumberOfServices +";"
+						+ totalNumberOfShipments +";"
+						+ "TODO"//totalAmountOfHandeledDemand
+				);
+				bw.newLine();
+				}
+				log.info("Output written to " + fileName);
+				bw.close();
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 
 
 
