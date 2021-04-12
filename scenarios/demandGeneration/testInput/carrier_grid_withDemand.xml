@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 	<carriers>
 		<carrier id="TestCarrier1">
+		<attributes>
+				<attribute name="jspritIterations" class="java.lang.Integer">15</attribute>
+		</attributes>
 			<capabilities fleetSize="INFINITE">
 				<vehicles>
 					<vehicle id="heavy26t_i(5,1)R" depotLinkId="i(5,1)R" typeId="heavy26t" earliestStart="09:00:00" latestEnd="19:00:00"/>
@@ -17,6 +20,29 @@
 			<services>
 				<service id="Service_i(9,2)" to="i(9,2)" capacityDemand="8" earliestStart="06:00:00" latestEnd="14:00:00" serviceDuration="00:05:00"/>
 				<service id="Service_i(5,9)R" to="i(5,9)R" capacityDemand="9" earliestStart="06:00:00" latestEnd="14:00:00" serviceDuration="00:05:00"/>
+			</services>
+
+		</carrier>
+		<carrier id="TestCarrier2">
+		<attributes>
+				<attribute name="jspritIterations" class="java.lang.Integer">15</attribute>
+		</attributes>
+			<capabilities fleetSize="INFINITE">
+				<vehicles>
+					<vehicle id="heavy26t_i(5,1)R" depotLinkId="i(5,1)R" typeId="heavy26t" earliestStart="09:00:00" latestEnd="19:00:00"/>
+					<vehicle id="medium18t_i(5,1)R" depotLinkId="i(5,1)R" typeId="medium18t" earliestStart="09:00:00" latestEnd="19:00:00"/>
+					<vehicle id="heavy26t_electro_i(5,1)R" depotLinkId="i(5,1)R" typeId="heavy26t_electro" earliestStart="09:00:00" latestEnd="19:00:00"/>
+					<vehicle id="medium18t_electro_i(5,1)R" depotLinkId="i(5,1)R" typeId="medium18t_electro" earliestStart="09:00:00" latestEnd="19:00:00"/>
+				</vehicles>
+
+			</capabilities>
+
+			<shipments>
+			</shipments>
+
+			<services>
+				<service id="Service_i(9,2)" to="i(9,4)" capacityDemand="8" earliestStart="06:00:00" latestEnd="14:00:00" serviceDuration="00:05:00"/>
+				<service id="Service_i(5,9)R" to="i(5,7)R" capacityDemand="9" earliestStart="06:00:00" latestEnd="14:00:00" serviceDuration="00:05:00"/>
 			</services>
 
 		</carrier>
