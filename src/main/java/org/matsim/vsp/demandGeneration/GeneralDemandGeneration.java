@@ -38,6 +38,7 @@ import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.population.Population;
 import org.matsim.contrib.freight.Freight;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.Carrier;
@@ -61,6 +62,7 @@ import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
+import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.geotools.MGC;
@@ -97,7 +99,7 @@ public class GeneralDemandGeneration {
 	};
 
 	private enum DemandGenerationOptions {
-		useDemandFromCarrierFile, loadCSVData // here perhaps only options of generation (population, random, etc.)
+		useDemandFromCarrierFile, loadCSVData, usePopulationWithoutAgeGroups, usePopulationWithAgeGroups // TODO here perhaps only options of generation (population, random, etc.)
 	};
 
 	private enum OptionsOfVRPSolutions {
@@ -162,11 +164,10 @@ public class GeneralDemandGeneration {
 		// - if existing carrier was read and jobs can be added to this carrier
 		// -
 		// TODO add possible locations characteristics of links, speed, type etc.
-
-		// TODO check options (generateService and createFromCSV)
+		String populationFile = "../public-svn/matsim/scenarios/countries/de/episim/openDataModel/input/be_2020-week_snz_entirePopulation_emptyPlans_withDistricts_25pt_split.xml.gz";
 		DemandGenerationOptions selectedDemandGenerationOption = DemandGenerationOptions.loadCSVData;
 		createDemand(selectedDemandGenerationOption, scenario, allNewCarrier, useShapeFileforLocationsChoice,
-				polygonsInShape);
+				polygonsInShape, populationFile);
 
 // prepare the VRP and get a solution
 		OptionsOfVRPSolutions selectedSolution = OptionsOfVRPSolutions.runJspritAndMATSim;
@@ -207,7 +208,6 @@ public class GeneralDemandGeneration {
 			log.warn(
 					"##Finished with the jsprit solution. If you also want to run MATSim, please change  case of optionsOfVRPSolutions");
 			System.exit(0);
-			// TODO find perhaps better solution
 			break;
 		case createNoSolutionAndOnlyWriteCarrierFile:
 			new CarrierPlanXmlWriterV2((Carriers) controler.getScenario().getScenarioElement("carriers"))
@@ -215,7 +215,6 @@ public class GeneralDemandGeneration {
 			log.warn(
 					"##Finished without solution of the VRP. If you also want to run jsprit and/or MATSim, please change  case of optionsOfVRPSolutions");
 			System.exit(0);
-			// TODO find perhaps better solution
 			break;
 		default:
 			break;
@@ -228,11 +227,12 @@ public class GeneralDemandGeneration {
 	 * @param allNewCarrier
 	 * @param demandLocationsInShape
 	 * @param polygonsInShape
+	 * @param populationFile 
 	 * @param defaultJspritIterations 
 	 * @throws MalformedURLException
 	 */
 	private static void createDemand(DemandGenerationOptions selectedDemandGenerationOption, Scenario scenario,
-			Set<NewCarrier> allNewCarrier, boolean demandLocationsInShape, Collection<SimpleFeature> polygonsInShape)
+			Set<NewCarrier> allNewCarrier, boolean demandLocationsInShape, Collection<SimpleFeature> polygonsInShape, String populationFile)
 			throws MalformedURLException {
 
 		switch (selectedDemandGenerationOption) {
@@ -251,6 +251,12 @@ public class GeneralDemandGeneration {
 			}
 			if (!oneCarrierHasJobs)
 				throw new RuntimeException("Minimum one carrier has no jobs");
+			break;
+		case usePopulationWithoutAgeGroups:
+			Population population = PopulationUtils.readPopulation(populationFile);
+			break;
+		case usePopulationWithAgeGroups:
+//			Population population = PopulationUtils.readPopulation(populationFile); //TODO
 			break;
 		default:
 			break;
@@ -311,7 +317,6 @@ public class GeneralDemandGeneration {
 						if (count > linksInNetwork)
 							throw new RuntimeException("Not enough links in the shape file to distribute the demand");
 						Random rand = new Random();
-						// TODO check if a twice selection of a link is possible
 						Link link = scenario.getNetwork().getLinks().values().stream()
 								.skip(rand.nextInt(scenario.getNetwork().getLinks().size())).findFirst().get();
 						if (!link.getId().toString().contains("pt") && (!demandLocationsInShape
@@ -387,7 +392,6 @@ public class GeneralDemandGeneration {
 						throw new RuntimeException(
 								"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
 					Random rand = new Random();
-					// TODO check if a twice selection of a link is possible
 					Link link = scenario.getNetwork().getLinks().values().stream()
 							.skip(rand.nextInt(scenario.getNetwork().getLinks().size())).findFirst().get();
 					if (!link.getId().toString().contains("pt") && (!demandLocationsInShape
@@ -662,7 +666,7 @@ public class GeneralDemandGeneration {
 		for (Carrier carrier: carriers.getCarriers().values()) {
 			if (CarrierUtils.getJspritIterations(carrier)==Integer.MIN_VALUE) {
 				CarrierUtils.setJspritIterations(carrier, defaultJspritIterations);
-				log.warn("The jspritIterations war now set to the deafult value of "+defaultJspritIterations+" in this simulation");
+				log.warn("The jspritIterations are now set to the default value of "+defaultJspritIterations+" in this simulation!");
 				}
 		}
 		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(carrierVehicleTypes);
@@ -703,7 +707,7 @@ public class GeneralDemandGeneration {
 			int numberOfDepots = 0;
 			if (!record.get("numberOfDepots").isBlank())
 				numberOfDepots = Integer.parseInt(record.get("numberOfDepots"));
-			String[] vehicleDepots = null; // TODO add depots
+			String[] vehicleDepots = null;
 			if (!record.get("selectedVehicleDepots").isBlank())
 				vehicleDepots = record.get("selectedVehicleDepots").split(":");
 			String[] areaOfAdditonalDepots = null;
