@@ -23,10 +23,11 @@ final class NewCarrier {
 	private int numberOfJobs;
 	private int serviceTimePerUnit;
 	private TimeWindow serviceTimeWindow;
+	private Double shareOfPopulationWithThisDemand;
 
 	NewCarrier(String name, String[] vehilceTypes, int numberOfDepotsPerType, String[] vehicleDepots, String[] areaOfAdditonalDepots, FleetSize fleetSize, int vehicleStartTime,
 			int vehicleEndTime, int jspritIterations, String[] areasForTheDemand, int demandToDistribute, int numberOfJobs,
-			int serviceTimePerUnit, TimeWindow serviceTimeWindow) {
+			int serviceTimePerUnit, TimeWindow serviceTimeWindow, double shareOfPopulationWithThisDemand) {
 		this.setId(name);
 		this.setVehicleTypes(vehilceTypes);
 		this.setVehicleDepots(vehicleDepots);
@@ -41,6 +42,7 @@ final class NewCarrier {
 		this.setNumberOfJobs(numberOfJobs);
 		this.setServiceTimePerUnit(serviceTimePerUnit);
 		this.setServiceTimeWindow(serviceTimeWindow);
+		this.setShareOfPopulationWithThisDemand(shareOfPopulationWithThisDemand);
 	}
 
 	public NewCarrier(String name, String[] vehilceTypes, int numberOfDepotsPerType, String[] vehicleDepots, String[] areaOfAdditonalDepots, FleetSize fleetSize,
@@ -175,5 +177,12 @@ final class NewCarrier {
 
 	public void setAreaOfAdditonalDepots(String[] areaOfAdditonalDepots) {
 		this.areaOfAdditonalDepots = areaOfAdditonalDepots;
+	}
+	public double getShareOfPopulationWithThisDemand() {
+		return shareOfPopulationWithThisDemand;
+	}
+
+	public void setShareOfPopulationWithThisDemand(double shareOfPopulationWithThisDemand) {
+		this.shareOfPopulationWithThisDemand = shareOfPopulationWithThisDemand;
 	}
 }
