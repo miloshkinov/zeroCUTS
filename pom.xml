@@ -12,7 +12,7 @@
 	
 	<properties>
 	 <!--  <matsim.version>12.0-2019w45-SNAPSHOT</matsim.version>--> 
-	 <matsim.version>13.0-SNAPSHOT</matsim.version>
+	 <matsim.version>14.0-SNAPSHOT</matsim.version>
 	</properties>
 
 	<repositories>
@@ -33,7 +33,7 @@
 		<!-- Repository for MATSim releases (MATSim is not on Maven central) -->
 		<repository>
 			<id>matsim</id>
-			<url>https://dl.bintray.com/matsim/matsim</url>
+			<url>https://repo.matsim.org/repository/matsim/</url>
 		</repository>
 
 		<!-- For MATSim snapshots: -->
