@@ -51,7 +51,7 @@ public class FreightAnalyse {
 //			File populationFile = new File(RUN_DIR + "output_plans.xml.gz");
 		File networkFile = new File(RUN_DIR+ "output_network.xml.gz");
 		File carrierFile = new File(RUN_DIR+ "output_carriers.xml.gz");
-		File vehicleTypeFile = new File(RUN_DIR+ "output_vehicleTypes.xml.gz");
+		File vehicleTypeFile = new File(RUN_DIR+ "output_carriersVehicleTypes.xml.gz");
 
 		Network network = NetworkUtils.readNetwork(networkFile.getAbsolutePath());
 
