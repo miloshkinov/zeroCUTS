@@ -17,10 +17,11 @@ final class NewCarrier {
 	private int vehicleStartTime;
 	private int vehicleEndTime;
 	private int jspritIterations;
+	private int fixedNumberOfVehilcePerTypeAndLocation;
 
 	public NewCarrier(String name, String[] vehilceTypes, int numberOfDepotsPerType, String[] vehicleDepots,
 			String[] areaOfAdditonalDepots, FleetSize fleetSize, int vehicleStartTime, int vehicleEndTime,
-			int jspritIterations) {
+			int jspritIterations, int fixedNumberOfVehilcePerTypeAndLocation) {
 		this.setId(name);
 		this.setVehicleTypes(vehilceTypes);
 		this.setNumberOfDepotsPerType(numberOfDepotsPerType);
@@ -30,6 +31,7 @@ final class NewCarrier {
 		this.setFleetSize(fleetSize);
 		this.setVehicleStartTime(vehicleStartTime);
 		this.setVehicleEndTime(vehicleEndTime);
+		this.setFixedNumberOfVehilcePerTypeAndLocation(fixedNumberOfVehilcePerTypeAndLocation);
 	}
 
 	public String getName() {
@@ -113,4 +115,13 @@ final class NewCarrier {
 	public void setAreaOfAdditonalDepots(String[] areaOfAdditonalDepots) {
 		this.areaOfAdditonalDepots = areaOfAdditonalDepots;
 	}
+	
+	public int getFixedNumberOfVehilcePerTypeAndLocation() {
+		return fixedNumberOfVehilcePerTypeAndLocation;
+	}
+
+	public void setFixedNumberOfVehilcePerTypeAndLocation(int fixedNumberOfVehilcePerTypeAndLocation) {
+		this.fixedNumberOfVehilcePerTypeAndLocation = fixedNumberOfVehilcePerTypeAndLocation;
+	}
+	
 }

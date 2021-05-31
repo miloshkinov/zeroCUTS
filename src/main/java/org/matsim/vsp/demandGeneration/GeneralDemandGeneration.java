@@ -671,6 +671,10 @@ public class GeneralDemandGeneration {
 			if (!record.get("areaOfAdditonalDepots").isBlank())
 				areaOfAdditonalDepots = record.get("areaOfAdditonalDepots").split(":");
 			FleetSize fleetSize = null;
+			int fixedNumberOfVehilcePerTypeAndLocation = 0;
+			if (!record.get("fixedNumberOfVehilcePerTypeAndLocation").isBlank())
+				fixedNumberOfVehilcePerTypeAndLocation = Integer
+						.parseInt(record.get("fixedNumberOfVehilcePerTypeAndLocation"));
 			if (!record.get("fleetSize").isBlank() && record.get("fleetSize").contentEquals("infinite"))
 				fleetSize = FleetSize.INFINITE;
 			else if (!record.get("fleetSize").isBlank() && record.get("fleetSize").contentEquals("finite"))
@@ -688,7 +692,8 @@ public class GeneralDemandGeneration {
 			if (!record.get("jspritIterations").isBlank())
 				jspritIterations = Integer.parseInt(record.get("jspritIterations"));
 			NewCarrier newCarrier = new NewCarrier(carrierID, vehilceTypes, numberOfDepots, vehicleDepots,
-					areaOfAdditonalDepots, fleetSize, vehicleStartTime, vehicleEndTime, jspritIterations);
+					areaOfAdditonalDepots, fleetSize, vehicleStartTime, vehicleEndTime, jspritIterations,
+					fixedNumberOfVehilcePerTypeAndLocation);
 			allNewCarrier.add(newCarrier);
 		}
 		checkNewCarrier(allNewCarrier, freightConfigGroup, scenario, polygonsInShape);
@@ -764,7 +769,13 @@ public class GeneralDemandGeneration {
 						throw new RuntimeException("The area " + depotArea + " of the possible depots of carrier"
 								+ carrier.getName() + " is not part of the given shapeFile");
 				}
-
+			if (carrier.getFixedNumberOfVehilcePerTypeAndLocation() != 0)
+				for (NewCarrier existingCarrier : allNewCarrier)
+					if ((existingCarrier.getName().equals(carrier.getName())
+							&& existingCarrier.getFleetSize() == FleetSize.INFINITE)
+							|| carrier.getFleetSize() == FleetSize.INFINITE)
+						throw new RuntimeException("For the carrier " + carrier.getName()
+								+ " a infinite fleetSize configuration was set, although you want to set a fixed number of vehicles. Please check!");
 			if (carrier.getFleetSize() != null)
 				for (NewCarrier existingCarrier : allNewCarrier)
 					if (existingCarrier.getName().equals(carrier.getName()) && existingCarrier.getFleetSize() != null
@@ -847,16 +858,18 @@ public class GeneralDemandGeneration {
 							.get(Id.create(thisVehicleType, VehicleType.class));
 					usedCarrierVehicleTypes.getVehicleTypes().putIfAbsent(Id.create(thisVehicleType, VehicleType.class),
 							thisType);
-					CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder
-							.newInstance(Id.create(
-									thisType.getId().toString() + "_" + thisCarrier.getId().toString() + "_"
-											+ singleDepot + "_start" + singleNewCarrier.getVehicleStartTime(),
-									Vehicle.class), Id.createLinkId(singleDepot))
-							.setEarliestStart(singleNewCarrier.getVehicleStartTime())
-							.setLatestEnd(singleNewCarrier.getVehicleEndTime()).setTypeId(thisType.getId()).build();
-					carrierCapabilities.getCarrierVehicles().put(newCarrierVehicle.getId(), newCarrierVehicle);
-					if (!carrierCapabilities.getVehicleTypes().contains(thisType))
-						carrierCapabilities.getVehicleTypes().add(thisType);
+					for (int i = 0; i <= singleNewCarrier.getFixedNumberOfVehilcePerTypeAndLocation(); i++) {
+						CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder
+								.newInstance(Id.create(
+										thisType.getId().toString() + "_" + thisCarrier.getId().toString() + "_"
+												+ singleDepot + "_start" + singleNewCarrier.getVehicleStartTime() + "_"+ (i+1),
+										Vehicle.class), Id.createLinkId(singleDepot))
+								.setEarliestStart(singleNewCarrier.getVehicleStartTime())
+								.setLatestEnd(singleNewCarrier.getVehicleEndTime()).setTypeId(thisType.getId()).build();
+						carrierCapabilities.getCarrierVehicles().put(newCarrierVehicle.getId(), newCarrierVehicle);
+						if (!carrierCapabilities.getVehicleTypes().contains(thisType))
+							carrierCapabilities.getVehicleTypes().add(thisType);
+					}
 				}
 			}
 			thisCarrier.setCarrierCapabilities(carrierCapabilities);

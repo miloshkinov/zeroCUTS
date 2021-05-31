@@ -1,4 +1,4 @@
-carrierName;vehicleTypes;numberOfDepots;selectedVehicleDepots;areaOfAdditonalDepots;fleetSize;vehicleStartTime;vehicleEndTime;jspritIterations
-csvCarrier1;medium18t_electro:heavy40t;2;82185:3302;Mitte;infinite;3600;50000;10
-csvCarrier1;heavy40t_electro;2;3302;Mitte;;50000;80000;
-csvCarrier2;medium18t_electro;2;82185;Steglitz;finite;3600;50000;15
+carrierName;vehicleTypes;numberOfDepots;selectedVehicleDepots;areaOfAdditonalDepots;fixedNumberOfVehilcePerTypeAndLocation;fleetSize;vehicleStartTime;vehicleEndTime;jspritIterations
+csvCarrier1;medium18t_electro:heavy40t;2;82185:3302;Mitte;;infinite;3600;50000;10
+csvCarrier1;heavy40t_electro;2;3302;Mitte;;;50000;80000;
+csvCarrier2;medium18t_electro;2;82185;Steglitz;3;finite;3600;50000;15
