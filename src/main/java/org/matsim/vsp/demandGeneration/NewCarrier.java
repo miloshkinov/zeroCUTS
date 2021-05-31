@@ -1,7 +1,6 @@
 package org.matsim.vsp.demandGeneration;
 
 import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
-import org.matsim.contrib.freight.carrier.TimeWindow;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,37 +17,13 @@ final class NewCarrier {
 	private int vehicleStartTime;
 	private int vehicleEndTime;
 	private int jspritIterations;
-	private String[] areasForTheDemand;
-	private int demandToDistribute;
-	private int numberOfJobs;
-	private int serviceTimePerUnit;
-	private TimeWindow serviceTimeWindow;
-	private Double shareOfPopulationWithThisDemand;
 
-	NewCarrier(String name, String[] vehilceTypes, int numberOfDepotsPerType, String[] vehicleDepots, String[] areaOfAdditonalDepots, FleetSize fleetSize, int vehicleStartTime,
-			int vehicleEndTime, int jspritIterations, String[] areasForTheDemand, int demandToDistribute, int numberOfJobs,
-			int serviceTimePerUnit, TimeWindow serviceTimeWindow, double shareOfPopulationWithThisDemand) {
+	public NewCarrier(String name, String[] vehilceTypes, int numberOfDepotsPerType, String[] vehicleDepots,
+			String[] areaOfAdditonalDepots, FleetSize fleetSize, int vehicleStartTime, int vehicleEndTime,
+			int jspritIterations) {
 		this.setId(name);
 		this.setVehicleTypes(vehilceTypes);
-		this.setVehicleDepots(vehicleDepots);
 		this.setNumberOfDepotsPerType(numberOfDepotsPerType);
-		this.setAreaOfAdditonalDepots(areaOfAdditonalDepots);
-		this.setFleetSize(fleetSize);
-		this.setVehicleStartTime(vehicleStartTime);
-		this.setVehicleEndTime(vehicleEndTime);
-		this.setJspritIterations(jspritIterations);
-		this.setAreasForTheDemand(areasForTheDemand);
-		this.setDemandToDistribute(demandToDistribute);
-		this.setNumberOfJobs(numberOfJobs);
-		this.setServiceTimePerUnit(serviceTimePerUnit);
-		this.setServiceTimeWindow(serviceTimeWindow);
-		this.setShareOfPopulationWithThisDemand(shareOfPopulationWithThisDemand);
-	}
-
-	public NewCarrier(String name, String[] vehilceTypes, int numberOfDepotsPerType, String[] vehicleDepots, String[] areaOfAdditonalDepots, FleetSize fleetSize,
-			int vehicleStartTime, int vehicleEndTime, int jspritIterations) {
-		this.setId(name);
-		this.setVehicleTypes(vehilceTypes);
 		this.setVehicleDepots(vehicleDepots);
 		this.setAreaOfAdditonalDepots(areaOfAdditonalDepots);
 		this.setJspritIterations(jspritIterations);
@@ -80,14 +55,14 @@ final class NewCarrier {
 	public void setVehicleDepots(String[] vehicleDepots) {
 		this.vehicleDepots = vehicleDepots;
 	}
-	
+
 	public void addVehicleDepots(String[] vehicleDepots, String newDepot) {
-		String[] newdepotList = new String[vehicleDepots.length+1]; 
+		String[] newdepotList = new String[vehicleDepots.length + 1];
 		int count = 0;
-	    for(int cnt=0;cnt<vehicleDepots.length;cnt++, count++){  
-	        newdepotList[cnt] = vehicleDepots[cnt]; 
-	    }  
-	    newdepotList[count] = newDepot;
+		for (int cnt = 0; cnt < vehicleDepots.length; cnt++, count++) {
+			newdepotList[cnt] = vehicleDepots[cnt];
+		}
+		newdepotList[count] = newDepot;
 		this.vehicleDepots = newdepotList;
 	}
 
@@ -97,30 +72,6 @@ final class NewCarrier {
 
 	public void setFleetSize(FleetSize fleetSize) {
 		this.fleetSize = fleetSize;
-	}
-
-	public int getDemandToDistribute() {
-		return demandToDistribute;
-	}
-
-	public void setDemandToDistribute(int demandToDistribute) {
-		this.demandToDistribute = demandToDistribute;
-	}
-
-	public int getNumberOfJobs() {
-		return numberOfJobs;
-	}
-
-	public void setNumberOfJobs(int numberOfJobs) {
-		this.numberOfJobs = numberOfJobs;
-	}
-
-	public int getServiceTimePerUnit() {
-		return serviceTimePerUnit;
-	}
-
-	public void setServiceTimePerUnit(int serviceTimePerUnit) {
-		this.serviceTimePerUnit = serviceTimePerUnit;
 	}
 
 	public int getVehicleStartTime() {
@@ -137,22 +88,6 @@ final class NewCarrier {
 
 	public void setVehicleEndTime(int vehicleEndTime) {
 		this.vehicleEndTime = vehicleEndTime;
-	}
-
-	public String[] getAreasForTheDemand() {
-		return areasForTheDemand;
-	}
-
-	public void setAreasForTheDemand(String[] areasForTheDemand) {
-		this.areasForTheDemand = areasForTheDemand;
-	}
-
-	public TimeWindow getServiceTimeWindow() {
-		return serviceTimeWindow;
-	}
-
-	public void setServiceTimeWindow(TimeWindow serviceTimeWindow) {
-		this.serviceTimeWindow = serviceTimeWindow;
 	}
 
 	public int getJspritIterations() {
@@ -177,12 +112,5 @@ final class NewCarrier {
 
 	public void setAreaOfAdditonalDepots(String[] areaOfAdditonalDepots) {
 		this.areaOfAdditonalDepots = areaOfAdditonalDepots;
-	}
-	public double getShareOfPopulationWithThisDemand() {
-		return shareOfPopulationWithThisDemand;
-	}
-
-	public void setShareOfPopulationWithThisDemand(double shareOfPopulationWithThisDemand) {
-		this.shareOfPopulationWithThisDemand = shareOfPopulationWithThisDemand;
 	}
 }

@@ -76,7 +76,6 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.population.PopulationUtils;
-import org.matsim.core.population.io.PopulationWriter;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.geotools.MGC;
@@ -88,8 +87,6 @@ import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.ActivityFacilitiesFactory;
 import org.matsim.facilities.ActivityFacility;
 import org.matsim.facilities.ActivityOptionImpl;
-import org.matsim.facilities.FacilitiesUtils;
-import org.matsim.facilities.FacilitiesWriter;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.opengis.feature.simple.SimpleFeature;
@@ -170,7 +167,8 @@ public class GeneralDemandGeneration {
 		CarrierInputOptions selectedCarrierInputOption = CarrierInputOptions.createFromCSV;
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		String carriersFileLocation = "scenarios/demandGeneration/testInput/carrier_berlin_noDemand.xml";
-		String csvLocation = "scenarios/demandGeneration/testInput/testCarrierCSV.csv";
+		String csvLocationCarrier = "scenarios/demandGeneration/testInput/testCarrierCSV.csv";
+		String csvLocationDemand = "scenarios/demandGeneration/testInput/testDemandCSV.csv";
 		String shapeFileLocation = "scenarios/demandGeneration/shp_berlin_districts/Berlin_Ortsteile.shp";
 		int defaultJspritIterations = 3;
 		boolean useShapeFileforLocationsChoice = true;
@@ -179,7 +177,7 @@ public class GeneralDemandGeneration {
 		Collection<SimpleFeature> polygonsInShape = null;
 		if (useShapeFileforLocationsChoice)
 			polygonsInShape = ShapeFileReader.getAllFeatures(shapeFileLocation);
-		prepareCarrier(scenario, selectedCarrierInputOption, carriersFileLocation, allNewCarrier, csvLocation,
+		prepareCarrier(scenario, selectedCarrierInputOption, carriersFileLocation, allNewCarrier, csvLocationCarrier,
 				polygonsInShape, defaultJspritIterations, useShapeFileforLocationsChoice);
 
 		// create the demand
@@ -197,10 +195,10 @@ public class GeneralDemandGeneration {
 		// TODO add possible locations characteristics of links, speed, type etc.
 		String populationFile = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-1pct/input/berlin-v5.5-1pct.plans.xml.gz";
 
-		DemandGenerationOptions selectedDemandGenerationOption = DemandGenerationOptions.loadCSVDataAndUsePopulation;
+		DemandGenerationOptions selectedDemandGenerationOption = DemandGenerationOptions.loadCSVData;
 		PopulationOptions selectedPopulationOption = PopulationOptions.usePopulationInShape;
 		PopulationSamplingOption selectedSamplingOption = PopulationSamplingOption.increaseDemandOnLocation;
-		createDemand(selectedDemandGenerationOption, scenario, allNewCarrier, useShapeFileforLocationsChoice,
+		createDemand(selectedDemandGenerationOption, scenario, csvLocationDemand, useShapeFileforLocationsChoice,
 				polygonsInShape, populationFile, selectedSamplingOption, selectedPopulationOption);
 
 		// prepare the VRP and get a solution
@@ -247,7 +245,7 @@ public class GeneralDemandGeneration {
 					if (thisService.getAttributes().getAsMap().containsKey("relatedPerson"))
 						writer.write(thisCarrier.getId().toString() + thisService.getId().toString() + ";"
 								+ coord.getX() + ";" + coord.getY() + ";" + "Service" + ";"
-								+ thisService.getLocationLinkId().toString() +";"
+								+ thisService.getLocationLinkId().toString() + ";"
 								+ thisService.getAttributes().getAttribute("relatedPerson") + "\n");
 					else
 						writer.write(thisCarrier.getId().toString() + thisService.getId().toString() + ";"
@@ -355,12 +353,13 @@ public class GeneralDemandGeneration {
 	 * @param csvLocation
 	 * @param polygonsInShape
 	 * @param defaultJspritIterations
-	 * @param useShapeFileforLocationsChoice 
+	 * @param useShapeFileforLocationsChoice
 	 * @throws IOException
 	 */
 	private static void prepareCarrier(Scenario scenario, CarrierInputOptions selectedCarrierInputOption,
-			String carriersFileLocation, Set<NewCarrier> allNewCarrier, String csvLocation,
-			Collection<SimpleFeature> polygonsInShape, int defaultJspritIterations, boolean useShapeFileforLocationsChoice) throws IOException {
+			String carriersFileLocation, Set<NewCarrier> allNewCarrier, String csvLocationCarrier,
+			Collection<SimpleFeature> polygonsInShape, int defaultJspritIterations,
+			boolean useShapeFileforLocationsChoice) throws IOException {
 
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(scenario.getConfig(),
 				FreightConfigGroup.class);
@@ -372,8 +371,8 @@ public class GeneralDemandGeneration {
 				freightConfigGroup.setCarriersFile(carriersFileLocation);
 				FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 				log.info("Load carriers from: " + carriersFileLocation);
-				readAndCreateCarrierFromCSV(scenario, allNewCarrier, freightConfigGroup, csvLocation, polygonsInShape,
-						defaultJspritIterations, useShapeFileforLocationsChoice);
+				readAndCreateCarrierFromCSV(scenario, allNewCarrier, freightConfigGroup, csvLocationCarrier,
+						polygonsInShape, defaultJspritIterations, useShapeFileforLocationsChoice);
 			}
 			break;
 		case readCarrierFile:
@@ -386,8 +385,8 @@ public class GeneralDemandGeneration {
 			}
 			break;
 		case createFromCSV:
-			readAndCreateCarrierFromCSV(scenario, allNewCarrier, freightConfigGroup, csvLocation, polygonsInShape,
-					defaultJspritIterations, useShapeFileforLocationsChoice);
+			readAndCreateCarrierFromCSV(scenario, allNewCarrier, freightConfigGroup, csvLocationCarrier,
+					polygonsInShape, defaultJspritIterations, useShapeFileforLocationsChoice);
 			break;
 		default:
 			throw new RuntimeException("no methed to create or read carrier selected.");
@@ -404,22 +403,25 @@ public class GeneralDemandGeneration {
 	 * @param selectedSamplingOption2
 	 * @param selectedUpSamplingOption
 	 * @param defaultJspritIterations
-	 * @throws MalformedURLException
+	 * @throws IOException
 	 */
 	private static void createDemand(DemandGenerationOptions selectedDemandGenerationOption, Scenario scenario,
-			Set<NewCarrier> allNewCarrier, boolean demandLocationsInShape, Collection<SimpleFeature> polygonsInShape,
+			String csvLocationDemand, boolean demandLocationsInShape, Collection<SimpleFeature> polygonsInShape,
 			String populationFile, PopulationSamplingOption selectedSamplingOption,
-			PopulationOptions selectedPopulationOption) throws MalformedURLException {
+			PopulationOptions selectedPopulationOption) throws IOException {
 
+		Set<NewDemand> demandInformation = new HashSet<>();
 		switch (selectedDemandGenerationOption) {
 		case loadCSVData:
-			createServices(scenario, allNewCarrier, demandLocationsInShape, polygonsInShape, null);
+			demandInformation = readDemandInformation(csvLocationDemand, demandInformation, scenario, polygonsInShape);
+			createServices(scenario, demandInformation, demandLocationsInShape, polygonsInShape, null);
 			break;
 		case loadCSVDataAndUsePopulation:
 			Population population = PopulationUtils.readPopulation(populationFile);
 			double sampleSizeInputPopulation = 0.01;
 			double upSampleTo = 1;
 
+			demandInformation = readDemandInformation(csvLocationDemand, demandInformation, scenario, polygonsInShape);
 			switch (selectedSamplingOption) {
 			case createMoreLocations:
 				preparePopulation(population, sampleSizeInputPopulation, upSampleTo,
@@ -434,7 +436,7 @@ public class GeneralDemandGeneration {
 
 			switch (selectedPopulationOption) {
 			case usePopulationHolePopulation:
-				createServices(scenario, allNewCarrier, demandLocationsInShape, polygonsInShape, population);
+				createServices(scenario, demandInformation, demandLocationsInShape, polygonsInShape, population);
 				break;
 			case usePopulationInAgeGroups:
 				// TODO
@@ -445,7 +447,7 @@ public class GeneralDemandGeneration {
 				CoordinateTransformation crsTransformationPopulationAndShape = TransformationFactory
 						.getCoordinateTransformation(populationCRS, shapeCRS);
 				reducePopulationToShapeArea(population, crsTransformationPopulationAndShape, polygonsInShape);
-				createServices(scenario, allNewCarrier, demandLocationsInShape, polygonsInShape, population);
+				createServices(scenario, demandInformation, demandLocationsInShape, polygonsInShape, population);
 				break;
 			default:
 				break;
@@ -467,6 +469,87 @@ public class GeneralDemandGeneration {
 		default:
 			break;
 		}
+	}
+
+	private static Set<NewDemand> readDemandInformation(String csvLocationDemand, Set<NewDemand> demandInformation,
+			Scenario scenario, Collection<SimpleFeature> polygonsInShape) throws IOException {
+
+		CSVParser parse = CSVFormat.DEFAULT.withDelimiter(';').withFirstRecordAsHeader()
+				.parse(IOUtils.getBufferedReader(csvLocationDemand));
+
+		for (CSVRecord record : parse) {
+			String carrierID = null;
+			if (!record.get("carrierName").isBlank())
+				carrierID = record.get("carrierName");
+			String[] areasForTheDemand = null;
+			if (!record.get("demandAreas").isBlank())
+				areasForTheDemand = record.get("demandAreas").split(":");
+			int demandToDistribute = Integer.MAX_VALUE;
+			if (!record.get("demandToDistribute").isBlank())
+				demandToDistribute = Integer.parseInt(record.get("demandToDistribute"));
+			int numberOfJobs = Integer.MAX_VALUE;
+			if (!record.get("numberOfJobs").isBlank())
+				numberOfJobs = Integer.parseInt(record.get("numberOfJobs"));
+			int serviceTimePerUnit = Integer.MAX_VALUE;
+			if (!record.get("serviceTimePerUnit").isBlank())
+				serviceTimePerUnit = Integer.parseInt(record.get("serviceTimePerUnit"));
+			TimeWindow serviceTimeWindow = null;
+			if (!record.get("serviceStartTime").isBlank() || !record.get("serviceEndTime").isBlank())
+				serviceTimeWindow = TimeWindow.newInstance(Integer.parseInt(record.get("serviceStartTime")),
+						Integer.parseInt(record.get("serviceEndTime")));
+			double shareOfPopulationWithThisDemand = Double.MAX_VALUE;
+			if (!record.get("shareOfPopulationWithThisDemand").isBlank())
+				shareOfPopulationWithThisDemand = Double.parseDouble(record.get("shareOfPopulationWithThisDemand"));
+			NewDemand newDemand = new NewDemand(carrierID, areasForTheDemand, demandToDistribute, numberOfJobs,
+					serviceTimePerUnit, serviceTimeWindow, shareOfPopulationWithThisDemand);
+			demandInformation.add(newDemand);
+		}
+		checkNewDemand(scenario, demandInformation, polygonsInShape);
+		return demandInformation;
+	}
+
+	private static void checkNewDemand(Scenario scenario, Set<NewDemand> demandInformation,
+			Collection<SimpleFeature> polygonsInShape) {
+
+		for (NewDemand newDemand : demandInformation) {
+
+			if (newDemand.getName() == null || newDemand.getName().isBlank())
+				throw new RuntimeException(
+						"Minimum one demand is not related to a carrier. Every demand information has to be related to one carrier. Please check the input csv file!");
+
+			Carriers carriers = (Carriers) scenario.getScenarioElement("carriers");
+			if (!carriers.getCarriers().containsKey(Id.create(newDemand.getName(), Carrier.class))) {
+				throw new RuntimeException(
+						"The created demand is not create for an existing carrier. Please create the carrier first or relate the demand to another carrier");
+			}
+
+			if (newDemand.getAreasForTheDemand() != null)
+				for (String demand : newDemand.getAreasForTheDemand()) {
+					boolean isInShape = false;
+					for (SimpleFeature singlePolygon : polygonsInShape) {
+						if (singlePolygon.getAttribute("Ortsteil").equals(demand)) {
+							isInShape = true;
+							break;
+						}
+					}
+					if (!isInShape)
+						throw new RuntimeException("The area " + demand + " for the demand generation of carrier"
+								+ newDemand.getName() + " is not part of the given shapeFile");
+				}
+			if (newDemand.getShareOfPopulationWithThisDemand() != Double.MAX_VALUE)
+				if (newDemand.getShareOfPopulationWithThisDemand() > 100
+						|| newDemand.getShareOfPopulationWithThisDemand() <= 0)
+					throw new RuntimeException("For the carrier " + newDemand.getName()
+							+ ": The percentage of the population should be more than 0 and maximum 100pct. Please check!");
+			if (newDemand.getNumberOfJobs() != Integer.MAX_VALUE
+					&& newDemand.getShareOfPopulationWithThisDemand() != Double.MAX_VALUE)
+				throw new RuntimeException("For the carrier " + newDemand.getName()
+						+ ": Select either a numberOfJobs or a share of the population. Please check!");
+			if (newDemand.getNumberOfJobs() == 0)
+				throw new RuntimeException("For the carrier " + newDemand.getName()
+						+ ": The number of jobs can not be 0 !. Please check!");
+		}
+
 	}
 
 	private static void reducePopulationToShapeArea(Population population,
@@ -561,14 +644,14 @@ public class GeneralDemandGeneration {
 	 * @param csvLocation
 	 * @param polygonsInShape
 	 * @param defaultJspritIterations
-	 * @param useShapeFileforLocationsChoice 
+	 * @param useShapeFileforLocationsChoice
 	 * @throws IOException
 	 */
 	private static void readAndCreateCarrierFromCSV(Scenario scenario, Set<NewCarrier> allNewCarrier,
-			FreightConfigGroup freightConfigGroup, String csvLocation, Collection<SimpleFeature> polygonsInShape,
+			FreightConfigGroup freightConfigGroup, String csvLocationCarrier, Collection<SimpleFeature> polygonsInShape,
 			int defaultJspritIterations, boolean useShapeFileforLocationsChoice) throws IOException {
 		CSVParser parse = CSVFormat.DEFAULT.withDelimiter(';').withFirstRecordAsHeader()
-				.parse(IOUtils.getBufferedReader(csvLocation));
+				.parse(IOUtils.getBufferedReader(csvLocationCarrier));
 
 		for (CSVRecord record : parse) {
 
@@ -604,29 +687,8 @@ public class GeneralDemandGeneration {
 			int jspritIterations = 0;
 			if (!record.get("jspritIterations").isBlank())
 				jspritIterations = Integer.parseInt(record.get("jspritIterations"));
-			String[] areasForTheDemand = null;
-			if (!record.get("demandAreas").isBlank())
-				areasForTheDemand = record.get("demandAreas").split(":");
-			int demandToDistribute = Integer.MAX_VALUE;
-			if (!record.get("demandToDistribute").isBlank())
-				demandToDistribute = Integer.parseInt(record.get("demandToDistribute"));
-			int numberOfJobs = Integer.MAX_VALUE;
-			if (!record.get("numberOfJobs").isBlank())
-				numberOfJobs = Integer.parseInt(record.get("numberOfJobs"));
-			int serviceTimePerUnit = Integer.MAX_VALUE;
-			if (!record.get("serviceTimePerUnit").isBlank())
-				serviceTimePerUnit = Integer.parseInt(record.get("serviceTimePerUnit"));
-			TimeWindow serviceTimeWindow = null;
-			if (!record.get("serviceStartTime").isBlank() || !record.get("serviceEndTime").isBlank())
-				serviceTimeWindow = TimeWindow.newInstance(Integer.parseInt(record.get("serviceStartTime")),
-						Integer.parseInt(record.get("serviceEndTime")));
-			double shareOfPopulationWithThisDemand = Double.MAX_VALUE;
-			if (!record.get("shareOfPopulationWithThisDemand").isBlank())
-				shareOfPopulationWithThisDemand = Double.parseDouble(record.get("shareOfPopulationWithThisDemand"));
 			NewCarrier newCarrier = new NewCarrier(carrierID, vehilceTypes, numberOfDepots, vehicleDepots,
-					areaOfAdditonalDepots, fleetSize, vehicleStartTime, vehicleEndTime, jspritIterations,
-					areasForTheDemand, demandToDistribute, numberOfJobs, serviceTimePerUnit, serviceTimeWindow,
-					shareOfPopulationWithThisDemand);
+					areaOfAdditonalDepots, fleetSize, vehicleStartTime, vehicleEndTime, jspritIterations);
 			allNewCarrier.add(newCarrier);
 		}
 		checkNewCarrier(allNewCarrier, freightConfigGroup, scenario, polygonsInShape);
@@ -702,19 +764,7 @@ public class GeneralDemandGeneration {
 						throw new RuntimeException("The area " + depotArea + " of the possible depots of carrier"
 								+ carrier.getName() + " is not part of the given shapeFile");
 				}
-			if (carrier.getAreasForTheDemand() != null)
-				for (String demand : carrier.getAreasForTheDemand()) {
-					boolean isInShape = false;
-					for (SimpleFeature singlePolygon : polygonsInShape) {
-						if (singlePolygon.getAttribute("Ortsteil").equals(demand)) {
-							isInShape = true;
-							break;
-						}
-					}
-					if (!isInShape)
-						throw new RuntimeException("The area " + demand + " for the demand generation of carrier"
-								+ carrier.getName() + " is not part of the given shapeFile");
-				}
+
 			if (carrier.getFleetSize() != null)
 				for (NewCarrier existingCarrier : allNewCarrier)
 					if (existingCarrier.getName().equals(carrier.getName()) && existingCarrier.getFleetSize() != null
@@ -736,18 +786,6 @@ public class GeneralDemandGeneration {
 							&& existingCarrier.getJspritIterations() != carrier.getJspritIterations())
 						throw new RuntimeException("For the carrier " + carrier.getName()
 								+ " different number of jsprit iterations are set. Please check!");
-			if (carrier.getShareOfPopulationWithThisDemand() != Double.MAX_VALUE)
-				if (carrier.getShareOfPopulationWithThisDemand() > 100
-						|| carrier.getShareOfPopulationWithThisDemand() <= 0)
-					throw new RuntimeException("For the carrier " + carrier.getName()
-							+ ": The percentage of the population should be more than 0 and maximum 100pct. Please check!");
-			if (carrier.getNumberOfJobs() != Integer.MAX_VALUE
-					&& carrier.getShareOfPopulationWithThisDemand() != Double.MAX_VALUE)
-				throw new RuntimeException("For the carrier " + carrier.getName()
-						+ ": Select either a numberOfJobs or a share of the population. Please check!");
-			if (carrier.getNumberOfJobs() == 0)
-				throw new RuntimeException(
-						"For the carrier " + carrier.getName() + ": The number of jobs can not be 0 !. Please check!");
 		}
 	}
 
@@ -762,7 +800,7 @@ public class GeneralDemandGeneration {
 	 * @param freightConfigGroup
 	 * @param polygonsInShape
 	 * @param polygonsInShape
-	 * @param useShapeFileforLocationsChoice 
+	 * @param useShapeFileforLocationsChoice
 	 * @param CarrierVehicleTypes
 	 */
 	private static void createNewCarrierAndAddVehilceTypes(Scenario scenario, Set<NewCarrier> allNewCarrier,
@@ -798,8 +836,8 @@ public class GeneralDemandGeneration {
 				Random rand = new Random();
 				Link link = scenario.getNetwork().getLinks().values().stream()
 						.skip(rand.nextInt(scenario.getNetwork().getLinks().size())).findFirst().get();
-				if (!link.getId().toString().contains("pt")
-						&& checkPositionInShape(link, polygonsInShape, singleNewCarrier.getAreaOfAdditonalDepots(), useShapeFileforLocationsChoice)) {
+				if (!link.getId().toString().contains("pt") && checkPositionInShape(link, polygonsInShape,
+						singleNewCarrier.getAreaOfAdditonalDepots(), useShapeFileforLocationsChoice)) {
 					singleNewCarrier.addVehicleDepots(singleNewCarrier.getVehicleDepots(), link.getId().toString());
 				}
 			}
@@ -846,34 +884,34 @@ public class GeneralDemandGeneration {
 
 	/**
 	 * @param scenario
-	 * @param allNewCarrier
+	 * @param demandInformation
 	 * @param demandLocationsInShape
 	 * @param singlePolygons
 	 * @param polygonsInShape
 	 * @param defaultJspritIterations
 	 * @throws MalformedURLException
 	 */
-	private static void createServices(Scenario scenario, Set<NewCarrier> allNewCarrier, boolean demandLocationsInShape,
-			Collection<SimpleFeature> polygonsInShape, Population population) {
+	private static void createServices(Scenario scenario, Set<NewDemand> demandInformation,
+			boolean demandLocationsInShape, Collection<SimpleFeature> polygonsInShape, Population population) {
 
 		int linksInNetwork = scenario.getNetwork().getLinks().size();
-		for (NewCarrier singleCarrier : allNewCarrier) {
+		for (NewDemand newDemand : demandInformation) {
 			int countOfLinks = 1;
 			int possibleLinks = 0;
 			int distributedDemand = 0;
 			double roundingError = 0;
 			double sumOfLinkLenght = 0;
 			int count = 0;
-			double shareOfPopulationWithThisDemand = singleCarrier.getShareOfPopulationWithThisDemand();
+			double shareOfPopulationWithThisDemand = newDemand.getShareOfPopulationWithThisDemand();
 			HashMap<Id<Link>, Point> middlePointsLinks = new HashMap<Id<Link>, Point>();
 			int numberOfJobs = 0;
-			int demandToDistribute = singleCarrier.getDemandToDistribute();
+			int demandToDistribute = newDemand.getDemandToDistribute();
 
 			if (demandToDistribute == Integer.MAX_VALUE && shareOfPopulationWithThisDemand == Double.MAX_VALUE)
 				continue;
 
 			if (shareOfPopulationWithThisDemand == Double.MAX_VALUE)
-				numberOfJobs = singleCarrier.getNumberOfJobs();
+				numberOfJobs = newDemand.getNumberOfJobs();
 			else if (population == null)
 				throw new RuntimeException(
 						"No population found although input paramater <ShareOfPopulationWithThisDemand> is set");
@@ -900,7 +938,8 @@ public class GeneralDemandGeneration {
 
 			if (numberOfJobs == Integer.MAX_VALUE) {
 				for (Link link : scenario.getNetwork().getLinks().values()) {
-					if (!link.getId().toString().contains("pt") && checkPositionInShape(link, polygonsInShape, singleCarrier.getAreasForTheDemand(), demandLocationsInShape)) {
+					if (!link.getId().toString().contains("pt") && checkPositionInShape(link, polygonsInShape,
+							newDemand.getAreasForTheDemand(), demandLocationsInShape)) {
 						sumOfLinkLenght = sumOfLinkLenght + link.getLength();
 						possibleLinks++;
 					}
@@ -914,18 +953,18 @@ public class GeneralDemandGeneration {
 							throw new RuntimeException(
 									"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
 						Link link = findPossibleLinkForDemand(scenario, population, middlePointsLinks,
-								demandLocationsInShape, polygonsInShape, singleCarrier.getAreasForTheDemand());
-						double serviceTime = singleCarrier.getServiceTimePerUnit();
+								demandLocationsInShape, polygonsInShape, newDemand.getAreasForTheDemand());
+						double serviceTime = newDemand.getServiceTimePerUnit();
 						int demandForThisLink = 1;
 						CarrierService thisService = CarrierService.Builder
 								.newInstance(Id.create("Service_" + link.getId(), CarrierService.class), link.getId())
 								.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-								.setServiceStartTimeWindow(singleCarrier.getServiceTimeWindow()).build();
+								.setServiceStartTimeWindow(newDemand.getServiceTimeWindow()).build();
 						if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
 							thisService.getAttributes().putAttribute("relatedPerson",
 									link.getAttributes().getAttribute("lastPersonsWithDemand"));
 						FreightUtils.getCarriers(scenario).getCarriers()
-								.get(Id.create(singleCarrier.getName(), Carrier.class)).getServices()
+								.get(Id.create(newDemand.getName(), Carrier.class)).getServices()
 								.put(thisService.getId(), thisService);
 					}
 				} else
@@ -937,7 +976,8 @@ public class GeneralDemandGeneration {
 								"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
 
 					for (Link link : scenario.getNetwork().getLinks().values()) {
-						if (!link.getId().toString().contains("pt") && checkPositionInShape(link, polygonsInShape, singleCarrier.getAreasForTheDemand(), demandLocationsInShape)) {
+						if (!link.getId().toString().contains("pt") && checkPositionInShape(link, polygonsInShape,
+								newDemand.getAreasForTheDemand(), demandLocationsInShape)) {
 							int demandForThisLink;
 							if (countOfLinks == scenario.getNetwork().getLinks().size()) {
 								demandForThisLink = demandToDistribute - distributedDemand;
@@ -952,13 +992,13 @@ public class GeneralDemandGeneration {
 								}
 								countOfLinks++;
 							}
-							double serviceTime = singleCarrier.getServiceTimePerUnit() * demandForThisLink;
+							double serviceTime = newDemand.getServiceTimePerUnit() * demandForThisLink;
 							if (demandToDistribute > 0 && demandForThisLink > 0) {
 								CarrierService thisService = CarrierService.Builder
 										.newInstance(Id.create("Service_" + link.getId(), CarrierService.class),
 												link.getId())
 										.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-										.setServiceStartTimeWindow(singleCarrier.getServiceTimeWindow()).build();
+										.setServiceStartTimeWindow(newDemand.getServiceTimeWindow()).build();
 								FreightUtils.getCarriers(scenario).getCarriers().values().iterator().next()
 										.getServices().put(thisService.getId(), thisService);
 							} else if (demandToDistribute == 0) {
@@ -966,12 +1006,12 @@ public class GeneralDemandGeneration {
 										.newInstance(Id.create("Service_" + link.getId(), CarrierService.class),
 												link.getId())
 										.setServiceDuration(serviceTime)
-										.setServiceStartTimeWindow(singleCarrier.getServiceTimeWindow()).build();
+										.setServiceStartTimeWindow(newDemand.getServiceTimeWindow()).build();
 								if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
 									thisService.getAttributes().putAttribute("relatedPerson",
 											link.getAttributes().getAttribute("lastPersonsWithDemand"));
 								FreightUtils.getCarriers(scenario).getCarriers()
-										.get(Id.create(singleCarrier.getName(), Carrier.class)).getServices()
+										.get(Id.create(newDemand.getName(), Carrier.class)).getServices()
 										.put(thisService.getId(), thisService);
 							}
 							distributedDemand = distributedDemand + demandForThisLink;
@@ -990,7 +1030,7 @@ public class GeneralDemandGeneration {
 						throw new RuntimeException(
 								"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
 					Link link = findPossibleLinkForDemand(scenario, population, middlePointsLinks,
-							demandLocationsInShape, polygonsInShape, singleCarrier.getAreasForTheDemand());
+							demandLocationsInShape, polygonsInShape, newDemand.getAreasForTheDemand());
 					int demandForThisLink = (int) Math.ceil((double) demandToDistribute / (double) numberOfJobs);
 					if (numberOfJobs == (i + 1)) {
 						demandForThisLink = demandToDistribute - distributedDemand;
@@ -1002,18 +1042,17 @@ public class GeneralDemandGeneration {
 							roundingError = roundingError - 1;
 						}
 					}
-					double serviceTime = demandForThisLink * singleCarrier.getServiceTimePerUnit();
+					double serviceTime = demandForThisLink * newDemand.getServiceTimePerUnit();
 
 					CarrierService thisService = CarrierService.Builder
 							.newInstance(Id.create("Service_" + link.getId(), CarrierService.class), link.getId())
 							.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-							.setServiceStartTimeWindow(singleCarrier.getServiceTimeWindow()).build();
+							.setServiceStartTimeWindow(newDemand.getServiceTimeWindow()).build();
 					if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
 						thisService.getAttributes().putAttribute("relatedPerson",
 								link.getAttributes().getAttribute("lastPersonsWithDemand"));
-					FreightUtils.getCarriers(scenario).getCarriers()
-							.get(Id.create(singleCarrier.getName(), Carrier.class)).getServices()
-							.put(thisService.getId(), thisService);
+					FreightUtils.getCarriers(scenario).getCarriers().get(Id.create(newDemand.getName(), Carrier.class))
+							.getServices().put(thisService.getId(), thisService);
 
 					distributedDemand = distributedDemand + demandForThisLink;
 				}
@@ -1164,8 +1203,7 @@ public class GeneralDemandGeneration {
 							return isInShape;
 						}
 				}
-			}
-			else {
+			} else {
 				if (((Geometry) singlePolygon.getDefaultGeometry()).contains(p)) {
 					isInShape = true;
 					return isInShape;
@@ -1275,7 +1313,5 @@ public class GeneralDemandGeneration {
 			freightConfigGroup.setUseDistanceConstraintForTourPlanning(
 					FreightConfigGroup.UseDistanceConstraintForTourPlanning.basedOnEnergyConsumption);
 		FreightUtils.runJsprit(controler.getScenario());
-
 	}
-
 }
