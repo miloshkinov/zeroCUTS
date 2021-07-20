@@ -1,12 +1,8 @@
 package org.matsim.vsp.demandGeneration;
 
 import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 final class NewCarrier {
-
-	private static Logger log = LogManager.getLogger(NewCarrier.class);
 
 	private String name;
 	private String[] vehilceTypes;

@@ -1,29 +1,25 @@
 package org.matsim.vsp.demandGeneration;
 
 import org.matsim.contrib.freight.carrier.TimeWindow;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 final class NewDemand {
-
-	private static Logger log = LogManager.getLogger(NewDemand.class);
 
 	private String name;
 	private String[] areasForTheDemand;
 	private int demandToDistribute;
 	private int numberOfJobs;
-	private int serviceTimePerUnit;
-	private TimeWindow serviceTimeWindow;
+	private int firstJobTimePerUnit;
+	private TimeWindow firstJobTimeWindow;
 	private Double shareOfPopulationWithThisDemand;
 
 	NewDemand(String name, String[] areasForTheDemand, int demandToDistribute, int numberOfJobs,
-			int serviceTimePerUnit, TimeWindow serviceTimeWindow, double shareOfPopulationWithThisDemand) {
+			int firstJobTimePerUnit, TimeWindow firstJobTimeWindow, double shareOfPopulationWithThisDemand) {
 		this.setId(name);
 		this.setAreasForTheDemand(areasForTheDemand);
 		this.setDemandToDistribute(demandToDistribute);
 		this.setNumberOfJobs(numberOfJobs);
-		this.setServiceTimePerUnit(serviceTimePerUnit);
-		this.setServiceTimeWindow(serviceTimeWindow);
+		this.setFirstJobTimePerUnit(firstJobTimePerUnit);
+		this.setFirstJobTimeWindow(firstJobTimeWindow);
 		this.setShareOfPopulationWithThisDemand(shareOfPopulationWithThisDemand);
 	}
 
@@ -51,12 +47,12 @@ final class NewDemand {
 		this.numberOfJobs = numberOfJobs;
 	}
 
-	public int getServiceTimePerUnit() {
-		return serviceTimePerUnit;
+	public int getFirstJobTimePerUnit() {
+		return firstJobTimePerUnit;
 	}
 
-	public void setServiceTimePerUnit(int serviceTimePerUnit) {
-		this.serviceTimePerUnit = serviceTimePerUnit;
+	public void setFirstJobTimePerUnit(int firstJobTimePerUnit) {
+		this.firstJobTimePerUnit = firstJobTimePerUnit;
 	}
 
 	public String[] getAreasForTheDemand() {
@@ -67,12 +63,12 @@ final class NewDemand {
 		this.areasForTheDemand = areasForTheDemand;
 	}
 
-	public TimeWindow getServiceTimeWindow() {
-		return serviceTimeWindow;
+	public TimeWindow getFirstJobTimeWindow() {
+		return firstJobTimeWindow;
 	}
 
-	public void setServiceTimeWindow(TimeWindow serviceTimeWindow) {
-		this.serviceTimeWindow = serviceTimeWindow;
+	public void setFirstJobTimeWindow(TimeWindow firstJobTimeWindow) {
+		this.firstJobTimeWindow = firstJobTimeWindow;
 	}
 
 	public double getShareOfPopulationWithThisDemand() {

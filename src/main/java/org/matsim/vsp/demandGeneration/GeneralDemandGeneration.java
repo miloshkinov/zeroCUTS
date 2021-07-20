@@ -490,18 +490,18 @@ public class GeneralDemandGeneration {
 			int numberOfJobs = Integer.MAX_VALUE;
 			if (!record.get("numberOfJobs").isBlank())
 				numberOfJobs = Integer.parseInt(record.get("numberOfJobs"));
-			int serviceTimePerUnit = Integer.MAX_VALUE;
-			if (!record.get("serviceTimePerUnit").isBlank())
-				serviceTimePerUnit = Integer.parseInt(record.get("serviceTimePerUnit"));
-			TimeWindow serviceTimeWindow = null;
-			if (!record.get("serviceStartTime").isBlank() || !record.get("serviceEndTime").isBlank())
-				serviceTimeWindow = TimeWindow.newInstance(Integer.parseInt(record.get("serviceStartTime")),
-						Integer.parseInt(record.get("serviceEndTime")));
+			int firstJobTimePerUnit = Integer.MAX_VALUE;
+			if (!record.get("firstJobTimePerUnit").isBlank())
+				firstJobTimePerUnit = Integer.parseInt(record.get("firstJobTimePerUnit"));
+			TimeWindow firstJobTimeWindow = null;
+			if (!record.get("firstJobStartTime").isBlank() || !record.get("firstJobEndTime").isBlank())
+				firstJobTimeWindow = TimeWindow.newInstance(Integer.parseInt(record.get("firstJobStartTime")),
+						Integer.parseInt(record.get("firstJobEndTime")));
 			double shareOfPopulationWithThisDemand = Double.MAX_VALUE;
 			if (!record.get("shareOfPopulationWithThisDemand").isBlank())
 				shareOfPopulationWithThisDemand = Double.parseDouble(record.get("shareOfPopulationWithThisDemand"));
 			NewDemand newDemand = new NewDemand(carrierID, areasForTheDemand, demandToDistribute, numberOfJobs,
-					serviceTimePerUnit, serviceTimeWindow, shareOfPopulationWithThisDemand);
+					firstJobTimePerUnit, firstJobTimeWindow, shareOfPopulationWithThisDemand);
 			demandInformation.add(newDemand);
 		}
 		checkNewDemand(scenario, demandInformation, polygonsInShape);
@@ -967,12 +967,12 @@ public class GeneralDemandGeneration {
 									"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
 						Link link = findPossibleLinkForDemand(scenario, population, middlePointsLinks,
 								demandLocationsInShape, polygonsInShape, newDemand.getAreasForTheDemand());
-						double serviceTime = newDemand.getServiceTimePerUnit();
+						double serviceTime = newDemand.getFirstJobTimePerUnit();
 						int demandForThisLink = 1;
 						CarrierService thisService = CarrierService.Builder
 								.newInstance(Id.create("Service_" + link.getId(), CarrierService.class), link.getId())
 								.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-								.setServiceStartTimeWindow(newDemand.getServiceTimeWindow()).build();
+								.setServiceStartTimeWindow(newDemand.getFirstJobTimeWindow()).build();
 						if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
 							thisService.getAttributes().putAttribute("relatedPerson",
 									link.getAttributes().getAttribute("lastPersonsWithDemand"));
@@ -1005,13 +1005,13 @@ public class GeneralDemandGeneration {
 								}
 								countOfLinks++;
 							}
-							double serviceTime = newDemand.getServiceTimePerUnit() * demandForThisLink;
+							double serviceTime = newDemand.getFirstJobTimePerUnit() * demandForThisLink;
 							if (demandToDistribute > 0 && demandForThisLink > 0) {
 								CarrierService thisService = CarrierService.Builder
 										.newInstance(Id.create("Service_" + link.getId(), CarrierService.class),
 												link.getId())
 										.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-										.setServiceStartTimeWindow(newDemand.getServiceTimeWindow()).build();
+										.setServiceStartTimeWindow(newDemand.getFirstJobTimeWindow()).build();
 								FreightUtils.getCarriers(scenario).getCarriers().values().iterator().next()
 										.getServices().put(thisService.getId(), thisService);
 							} else if (demandToDistribute == 0) {
@@ -1019,7 +1019,7 @@ public class GeneralDemandGeneration {
 										.newInstance(Id.create("Service_" + link.getId(), CarrierService.class),
 												link.getId())
 										.setServiceDuration(serviceTime)
-										.setServiceStartTimeWindow(newDemand.getServiceTimeWindow()).build();
+										.setServiceStartTimeWindow(newDemand.getFirstJobTimeWindow()).build();
 								if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
 									thisService.getAttributes().putAttribute("relatedPerson",
 											link.getAttributes().getAttribute("lastPersonsWithDemand"));
@@ -1055,12 +1055,12 @@ public class GeneralDemandGeneration {
 							roundingError = roundingError - 1;
 						}
 					}
-					double serviceTime = demandForThisLink * newDemand.getServiceTimePerUnit();
+					double serviceTime = demandForThisLink * newDemand.getFirstJobTimePerUnit();
 
 					CarrierService thisService = CarrierService.Builder
 							.newInstance(Id.create("Service_" + link.getId(), CarrierService.class), link.getId())
 							.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-							.setServiceStartTimeWindow(newDemand.getServiceTimeWindow()).build();
+							.setServiceStartTimeWindow(newDemand.getFirstJobTimeWindow()).build();
 					if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
 						thisService.getAttributes().putAttribute("relatedPerson",
 								link.getAttributes().getAttribute("lastPersonsWithDemand"));
