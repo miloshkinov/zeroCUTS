@@ -484,24 +484,31 @@ public class GeneralDemandGeneration {
 			String[] areasForTheDemand = null;
 			if (!record.get("demandAreas").isBlank())
 				areasForTheDemand = record.get("demandAreas").split(":");
-			int demandToDistribute = Integer.MAX_VALUE;
+			Integer demandToDistribute = null;
 			if (!record.get("demandToDistribute").isBlank())
 				demandToDistribute = Integer.parseInt(record.get("demandToDistribute"));
-			int numberOfJobs = Integer.MAX_VALUE;
+			Integer numberOfJobs = null;
 			if (!record.get("numberOfJobs").isBlank())
 				numberOfJobs = Integer.parseInt(record.get("numberOfJobs"));
-			int firstJobTimePerUnit = Integer.MAX_VALUE;
+			Double shareOfPopulationWithThisDemand = null;
+			if (!record.get("shareOfPopulationWithThisDemand").isBlank())
+				shareOfPopulationWithThisDemand = Double.parseDouble(record.get("shareOfPopulationWithThisDemand"));
+			Integer firstJobTimePerUnit = null;
 			if (!record.get("firstJobTimePerUnit").isBlank())
 				firstJobTimePerUnit = Integer.parseInt(record.get("firstJobTimePerUnit"));
 			TimeWindow firstJobTimeWindow = null;
 			if (!record.get("firstJobStartTime").isBlank() || !record.get("firstJobEndTime").isBlank())
 				firstJobTimeWindow = TimeWindow.newInstance(Integer.parseInt(record.get("firstJobStartTime")),
 						Integer.parseInt(record.get("firstJobEndTime")));
-			double shareOfPopulationWithThisDemand = Double.MAX_VALUE;
-			if (!record.get("shareOfPopulationWithThisDemand").isBlank())
-				shareOfPopulationWithThisDemand = Double.parseDouble(record.get("shareOfPopulationWithThisDemand"));
+			Integer secondJobTimePerUnit = null;
+			if (!record.get("secondJobTimePerUnit").isBlank())
+				secondJobTimePerUnit = Integer.parseInt(record.get("secondJobTimePerUnit"));
+			TimeWindow secondJobTimeWindow = null;
+			if (!record.get("secondJobStartTime").isBlank() || !record.get("secondJobEndTime").isBlank())
+				secondJobTimeWindow = TimeWindow.newInstance(Integer.parseInt(record.get("secondJobStartTime")),
+						Integer.parseInt(record.get("secondJobEndTime")));
 			NewDemand newDemand = new NewDemand(carrierID, areasForTheDemand, demandToDistribute, numberOfJobs,
-					firstJobTimePerUnit, firstJobTimeWindow, shareOfPopulationWithThisDemand);
+					shareOfPopulationWithThisDemand, firstJobTimePerUnit, firstJobTimeWindow, secondJobTimePerUnit, secondJobTimeWindow);
 			demandInformation.add(newDemand);
 		}
 		checkNewDemand(scenario, demandInformation, polygonsInShape);
@@ -520,7 +527,7 @@ public class GeneralDemandGeneration {
 			Carriers carriers = (Carriers) scenario.getScenarioElement("carriers");
 			if (!carriers.getCarriers().containsKey(Id.create(newDemand.getName(), Carrier.class))) {
 				throw new RuntimeException(
-						"The created demand is not create for an existing carrier. Please create the carrier first or relate the demand to another carrier");
+						"The created demand is not created for an existing carrier. Please create the carrier first or relate the demand to another carrier");
 			}
 
 			if (newDemand.getAreasForTheDemand() != null)
@@ -536,13 +543,13 @@ public class GeneralDemandGeneration {
 						throw new RuntimeException("The area " + demand + " for the demand generation of carrier"
 								+ newDemand.getName() + " is not part of the given shapeFile");
 				}
-			if (newDemand.getShareOfPopulationWithThisDemand() != Double.MAX_VALUE)
+			if (newDemand.getShareOfPopulationWithThisDemand() != null)
 				if (newDemand.getShareOfPopulationWithThisDemand() > 100
 						|| newDemand.getShareOfPopulationWithThisDemand() <= 0)
 					throw new RuntimeException("For the carrier " + newDemand.getName()
 							+ ": The percentage of the population should be more than 0 and maximum 100pct. Please check!");
-			if (newDemand.getNumberOfJobs() != Integer.MAX_VALUE
-					&& newDemand.getShareOfPopulationWithThisDemand() != Double.MAX_VALUE)
+			if (newDemand.getNumberOfJobs() != null
+					&& newDemand.getShareOfPopulationWithThisDemand() != null)
 				throw new RuntimeException("For the carrier " + newDemand.getName()
 						+ ": Select either a numberOfJobs or a share of the population. Please check!");
 			if (newDemand.getNumberOfJobs() == 0)
@@ -859,11 +866,10 @@ public class GeneralDemandGeneration {
 					usedCarrierVehicleTypes.getVehicleTypes().putIfAbsent(Id.create(thisVehicleType, VehicleType.class),
 							thisType);
 					for (int i = 0; i <= singleNewCarrier.getFixedNumberOfVehilcePerTypeAndLocation(); i++) {
-						CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder
-								.newInstance(Id.create(
-										thisType.getId().toString() + "_" + thisCarrier.getId().toString() + "_"
-												+ singleDepot + "_start" + singleNewCarrier.getVehicleStartTime() + "_"+ (i+1),
-										Vehicle.class), Id.createLinkId(singleDepot))
+						CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder.newInstance(Id.create(
+								thisType.getId().toString() + "_" + thisCarrier.getId().toString() + "_" + singleDepot
+										+ "_start" + singleNewCarrier.getVehicleStartTime() + "_" + (i + 1),
+								Vehicle.class), Id.createLinkId(singleDepot))
 								.setEarliestStart(singleNewCarrier.getVehicleStartTime())
 								.setLatestEnd(singleNewCarrier.getVehicleEndTime()).setTypeId(thisType.getId()).build();
 						carrierCapabilities.getCarrierVehicles().put(newCarrierVehicle.getId(), newCarrierVehicle);
@@ -915,15 +921,15 @@ public class GeneralDemandGeneration {
 			double roundingError = 0;
 			double sumOfLinkLenght = 0;
 			int count = 0;
-			double shareOfPopulationWithThisDemand = newDemand.getShareOfPopulationWithThisDemand();
+			Double shareOfPopulationWithThisDemand = newDemand.getShareOfPopulationWithThisDemand();
 			HashMap<Id<Link>, Point> middlePointsLinks = new HashMap<Id<Link>, Point>();
-			int numberOfJobs = 0;
-			int demandToDistribute = newDemand.getDemandToDistribute();
+			Integer numberOfJobs = 0;
+			Integer demandToDistribute = newDemand.getDemandToDistribute();
 
-			if (demandToDistribute == Integer.MAX_VALUE && shareOfPopulationWithThisDemand == Double.MAX_VALUE)
+			if (demandToDistribute == null && shareOfPopulationWithThisDemand == null)
 				continue;
 
-			if (shareOfPopulationWithThisDemand == Double.MAX_VALUE)
+			if (shareOfPopulationWithThisDemand == null)
 				numberOfJobs = newDemand.getNumberOfJobs();
 			else if (population == null)
 				throw new RuntimeException(
@@ -949,7 +955,7 @@ public class GeneralDemandGeneration {
 				middlePointsLinks = createMapMiddlePointsLinks(scenario.getNetwork().getLinks().values());
 			}
 
-			if (numberOfJobs == Integer.MAX_VALUE) {
+			if (numberOfJobs == null) {
 				for (Link link : scenario.getNetwork().getLinks().values()) {
 					if (!link.getId().toString().contains("pt") && checkPositionInShape(link, polygonsInShape,
 							newDemand.getAreasForTheDemand(), demandLocationsInShape)) {

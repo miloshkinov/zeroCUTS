@@ -6,21 +6,26 @@ final class NewDemand {
 
 	private String name;
 	private String[] areasForTheDemand;
-	private int demandToDistribute;
-	private int numberOfJobs;
-	private int firstJobTimePerUnit;
-	private TimeWindow firstJobTimeWindow;
+	private Integer demandToDistribute;
+	private Integer numberOfJobs;
 	private Double shareOfPopulationWithThisDemand;
+	private Integer firstJobTimePerUnit;
+	private TimeWindow firstJobTimeWindow;
+	private Integer secondJobTimePerUnit;
+	private TimeWindow secondJobTimeWindow;
 
-	NewDemand(String name, String[] areasForTheDemand, int demandToDistribute, int numberOfJobs,
-			int firstJobTimePerUnit, TimeWindow firstJobTimeWindow, double shareOfPopulationWithThisDemand) {
+
+	NewDemand(String name, String[] areasForTheDemand, Integer demandToDistribute, Integer numberOfJobs,
+			Double shareOfPopulationWithThisDemand, Integer firstJobTimePerUnit, TimeWindow firstJobTimeWindow, Integer secondJobTimePerUnit, TimeWindow secondJobTimeWindow) {
 		this.setId(name);
 		this.setAreasForTheDemand(areasForTheDemand);
 		this.setDemandToDistribute(demandToDistribute);
 		this.setNumberOfJobs(numberOfJobs);
+		this.setShareOfPopulationWithThisDemand(shareOfPopulationWithThisDemand);
 		this.setFirstJobTimePerUnit(firstJobTimePerUnit);
 		this.setFirstJobTimeWindow(firstJobTimeWindow);
-		this.setShareOfPopulationWithThisDemand(shareOfPopulationWithThisDemand);
+		this.setSecondJobTimePerUnit(secondJobTimePerUnit);
+		this.setSecondJobTimeWindow(secondJobTimeWindow);
 	}
 
 	public String getName() {
@@ -31,27 +36,27 @@ final class NewDemand {
 		this.name = name;
 	}
 
-	public int getDemandToDistribute() {
+	public Integer getDemandToDistribute() {
 		return demandToDistribute;
 	}
 
-	public void setDemandToDistribute(int demandToDistribute) {
+	public void setDemandToDistribute(Integer demandToDistribute) {
 		this.demandToDistribute = demandToDistribute;
 	}
 
-	public int getNumberOfJobs() {
+	public Integer getNumberOfJobs() {
 		return numberOfJobs;
 	}
 
-	public void setNumberOfJobs(int numberOfJobs) {
+	public void setNumberOfJobs(Integer numberOfJobs) {
 		this.numberOfJobs = numberOfJobs;
 	}
 
-	public int getFirstJobTimePerUnit() {
+	public Integer getFirstJobTimePerUnit() {
 		return firstJobTimePerUnit;
 	}
 
-	public void setFirstJobTimePerUnit(int firstJobTimePerUnit) {
+	public void setFirstJobTimePerUnit(Integer firstJobTimePerUnit) {
 		this.firstJobTimePerUnit = firstJobTimePerUnit;
 	}
 
@@ -71,11 +76,27 @@ final class NewDemand {
 		this.firstJobTimeWindow = firstJobTimeWindow;
 	}
 
-	public double getShareOfPopulationWithThisDemand() {
+	public Double getShareOfPopulationWithThisDemand() {
 		return shareOfPopulationWithThisDemand;
 	}
 
-	public void setShareOfPopulationWithThisDemand(double shareOfPopulationWithThisDemand) {
+	public void setShareOfPopulationWithThisDemand(Double shareOfPopulationWithThisDemand) {
 		this.shareOfPopulationWithThisDemand = shareOfPopulationWithThisDemand;
+	}
+
+	public TimeWindow getSecondJobTimeWindow() {
+		return secondJobTimeWindow;
+	}
+
+	public void setSecondJobTimeWindow(TimeWindow secondJobTimeWindow) {
+		this.secondJobTimeWindow = secondJobTimeWindow;
+	}
+
+	public Integer getSecondJobTimePerUnit() {
+		return secondJobTimePerUnit;
+	}
+
+	public void setSecondJobTimePerUnit(Integer secondJobTimePerUnit) {
+		this.secondJobTimePerUnit = secondJobTimePerUnit;
 	}
 }
