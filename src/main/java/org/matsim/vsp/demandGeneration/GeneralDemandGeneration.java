@@ -483,7 +483,7 @@ public class GeneralDemandGeneration {
 				carrierID = record.get("carrierName");
 			String[] areasForTheDemand = null;
 			if (!record.get("demandAreas").isBlank())
-				areasForTheDemand = record.get("demandAreas").split(":");
+				areasForTheDemand = record.get("demandAreas").split(",");
 			Integer demandToDistribute = null;
 			if (!record.get("demandToDistribute").isBlank())
 				demandToDistribute = Integer.parseInt(record.get("demandToDistribute"));
@@ -508,7 +508,8 @@ public class GeneralDemandGeneration {
 				secondJobTimeWindow = TimeWindow.newInstance(Integer.parseInt(record.get("secondJobStartTime")),
 						Integer.parseInt(record.get("secondJobEndTime")));
 			NewDemand newDemand = new NewDemand(carrierID, areasForTheDemand, demandToDistribute, numberOfJobs,
-					shareOfPopulationWithThisDemand, firstJobTimePerUnit, firstJobTimeWindow, secondJobTimePerUnit, secondJobTimeWindow);
+					shareOfPopulationWithThisDemand, firstJobTimePerUnit, firstJobTimeWindow, secondJobTimePerUnit,
+					secondJobTimeWindow);
 			demandInformation.add(newDemand);
 		}
 		checkNewDemand(scenario, demandInformation, polygonsInShape);
@@ -548,8 +549,7 @@ public class GeneralDemandGeneration {
 						|| newDemand.getShareOfPopulationWithThisDemand() <= 0)
 					throw new RuntimeException("For the carrier " + newDemand.getName()
 							+ ": The percentage of the population should be more than 0 and maximum 100pct. Please check!");
-			if (newDemand.getNumberOfJobs() != null
-					&& newDemand.getShareOfPopulationWithThisDemand() != null)
+			if (newDemand.getNumberOfJobs() != null && newDemand.getShareOfPopulationWithThisDemand() != null)
 				throw new RuntimeException("For the carrier " + newDemand.getName()
 						+ ": Select either a numberOfJobs or a share of the population. Please check!");
 			if (newDemand.getNumberOfJobs() == 0)
@@ -667,16 +667,16 @@ public class GeneralDemandGeneration {
 				carrierID = record.get("carrierName");
 			String[] vehilceTypes = null;
 			if (!record.get("vehicleTypes").isBlank())
-				vehilceTypes = record.get("vehicleTypes").split(":");
+				vehilceTypes = record.get("vehicleTypes").split(",");
 			int numberOfDepots = 0;
 			if (!record.get("numberOfDepots").isBlank())
 				numberOfDepots = Integer.parseInt(record.get("numberOfDepots"));
 			String[] vehicleDepots = null;
 			if (!record.get("selectedVehicleDepots").isBlank())
-				vehicleDepots = record.get("selectedVehicleDepots").split(":");
+				vehicleDepots = record.get("selectedVehicleDepots").split(",");
 			String[] areaOfAdditonalDepots = null;
 			if (!record.get("areaOfAdditonalDepots").isBlank())
-				areaOfAdditonalDepots = record.get("areaOfAdditonalDepots").split(":");
+				areaOfAdditonalDepots = record.get("areaOfAdditonalDepots").split(",");
 			FleetSize fleetSize = null;
 			int fixedNumberOfVehilcePerTypeAndLocation = 0;
 			if (!record.get("fixedNumberOfVehilcePerTypeAndLocation").isBlank())
@@ -824,6 +824,7 @@ public class GeneralDemandGeneration {
 	private static void createNewCarrierAndAddVehilceTypes(Scenario scenario, Set<NewCarrier> allNewCarrier,
 			FreightConfigGroup freightConfigGroup, Collection<SimpleFeature> polygonsInShape,
 			int defaultJspritIterations, boolean useShapeFileforLocationsChoice) {
+
 		Carriers carriers = FreightUtils.addOrGetCarriers(scenario);
 		CarrierVehicleTypes carrierVehicleTypes = new CarrierVehicleTypes();
 		CarrierVehicleTypes usedCarrierVehicleTypes = new CarrierVehicleTypes();
@@ -865,7 +866,9 @@ public class GeneralDemandGeneration {
 							.get(Id.create(thisVehicleType, VehicleType.class));
 					usedCarrierVehicleTypes.getVehicleTypes().putIfAbsent(Id.create(thisVehicleType, VehicleType.class),
 							thisType);
-					for (int i = 0; i <= singleNewCarrier.getFixedNumberOfVehilcePerTypeAndLocation(); i++) {
+					if (singleNewCarrier.getFixedNumberOfVehilcePerTypeAndLocation() == 0)
+						singleNewCarrier.setFixedNumberOfVehilcePerTypeAndLocation(1);
+					for (int i = 0; i < singleNewCarrier.getFixedNumberOfVehilcePerTypeAndLocation(); i++) {
 						CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder.newInstance(Id.create(
 								thisType.getId().toString() + "_" + thisCarrier.getId().toString() + "_" + singleDepot
 										+ "_start" + singleNewCarrier.getVehicleStartTime() + "_" + (i + 1),
