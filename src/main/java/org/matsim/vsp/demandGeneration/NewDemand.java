@@ -18,6 +18,7 @@ final class NewDemand {
 	private String[] locationsOfSecondJobElement;
 	private Integer secondJobElementTimePerUnit;
 	private TimeWindow secondJobElementTimeWindow;
+	private String typeOfDemand;
 
 	NewDemand(String carrierID, Integer demandToDistribute, Integer numberOfJobs,
 			Double shareOfPopulationWithThisDemand, String[] areasFirstJobElement,
@@ -32,6 +33,7 @@ final class NewDemand {
 		this.setLocationsOfFirstJobElement(locationsOfFirstJobElement);
 		this.setFirstJobElementTimePerUnit(firstJobElementTimePerUnit);
 		this.setFirstJobElementTimeWindow(firstJobElementTimeWindow);
+		this.setTypeOfDemand("service");
 	}
 
 	NewDemand(String carrierID, Integer demandToDistribute, Integer numberOfJobs,
@@ -54,6 +56,7 @@ final class NewDemand {
 		this.setLocationsOfSecondJobElement(locationsOfSecondJobElement);
 		this.setSecondJobElementTimePerUnit(secondJobElementTimePerUnit);
 		this.setSecondJobElementTimeWindow(secondJobElementTimeWindow);
+		this.setTypeOfDemand("shipment");
 	}
 
 	public String getCarrierID() {
@@ -166,5 +169,13 @@ final class NewDemand {
 
 	public void setLocationsOfSecondJobElement(String[] locationsOfSecondJobElement) {
 		this.locationsOfSecondJobElement = locationsOfSecondJobElement;
+	}
+
+	public String getTypeOfDemand() {
+		return typeOfDemand;
+	}
+
+	public void setTypeOfDemand(String typeOfDemand) {
+		this.typeOfDemand = typeOfDemand;
 	}
 }
