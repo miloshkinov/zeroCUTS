@@ -219,6 +219,9 @@ public class GeneralDemandGeneration {
 		log.info("Finished");
 	}
 
+	/** Creates a csv file with the locations of all created demand elements.
+	 * @param controler
+	 */
 	private static void createFaciltyFile(Controler controler) {
 
 		Network network = controler.getScenario().getNetwork();
@@ -253,8 +256,8 @@ public class GeneralDemandGeneration {
 								+ thisService.getLocationLinkId().toString() + ";noPerson" + "\n");
 
 				}
+				//TODO Shipments
 			}
-//		new FacilitiesWriter(facilities).write(controler.getConfig().controler().getOutputDirectory()+"/outputFacilitiesFile.xml.gz");		
 
 			writer.flush();
 			writer.close();
@@ -264,7 +267,7 @@ public class GeneralDemandGeneration {
 		log.info("Wrote job locations file under " + "/outputLocationFile.xml.gz");
 	}
 
-	/**
+	/** Differs between the different options of the used network.
 	 * @param config
 	 * @param networkChoice
 	 * @param networkPathOfOtherNetwork
@@ -320,7 +323,7 @@ public class GeneralDemandGeneration {
 
 	}
 
-	/**
+	/** Differs between the different options of creating the vehicle.
 	 * @param config
 	 * @param selectedVehicleInputOption
 	 * @param vehicleTypesFileLocation
@@ -345,7 +348,7 @@ public class GeneralDemandGeneration {
 		}
 	}
 
-	/**
+	/** Differs between the different options of creating the carrier.
 	 * @param scenario
 	 * @param selectedCarrierInputOption
 	 * @param carriersFileLocation
@@ -393,7 +396,7 @@ public class GeneralDemandGeneration {
 		}
 	}
 
-	/**
+	/** Differs between the different options of creating the demand.
 	 * @param selectedDemandGenerationOption
 	 * @param scenario
 	 * @param allNewCarrier
@@ -473,6 +476,13 @@ public class GeneralDemandGeneration {
 		}
 	}
 
+	/** Creates for every demand information the services/shipments for the carriers
+	 * @param scenario
+	 * @param demandLocationsInShape
+	 * @param polygonsInShape
+	 * @param demandInformation
+	 * @param population
+	 */
 	private static void createDemandForCarriers(Scenario scenario, boolean demandLocationsInShape,
 			Collection<SimpleFeature> polygonsInShape, Set<NewDemand> demandInformation, Population population) {
 
@@ -490,6 +500,14 @@ public class GeneralDemandGeneration {
 
 	}
 
+	/** Reads the demand information from the csv file and checks if the information are consistent
+	 * @param csvLocationDemand
+	 * @param demandInformation
+	 * @param scenario
+	 * @param polygonsInShape
+	 * @return
+	 * @throws IOException
+	 */
 	private static Set<NewDemand> readDemandInformation(String csvLocationDemand, Set<NewDemand> demandInformation,
 			Scenario scenario, Collection<SimpleFeature> polygonsInShape) throws IOException {
 
@@ -637,9 +655,9 @@ public class GeneralDemandGeneration {
 					throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
 							+ ": For creating services it is not possible to have a diffenrent number of <numberOfJobs> and <numberOfFirstJobElementLocations>");
 				if (newDemand.getLocationsOfFirstJobElement() != null && newDemand.getNumberOfJobs() != null
-						&& newDemand.getLocationsOfFirstJobElement().length != newDemand.getNumberOfJobs())
+						&& newDemand.getLocationsOfFirstJobElement().length > newDemand.getNumberOfJobs())
 					throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
-							+ ": For creating services it is not possible to have a diffenrent number of <numberOfJobs> and <locationsOfFirstJobElement>");
+							+ ": For creating services it is not possible to have a higher number of <locationsOfFirstJobElement> than <numberOfJobs>");
 			}
 			// for shipments
 			if (newDemand.getTypeOfDemand().equals("shipment")) {
@@ -676,6 +694,11 @@ public class GeneralDemandGeneration {
 		}
 	}
 
+	/** Reduces the population to all persons having their home in the shape
+	 * @param population
+	 * @param crsTransformationPopulationAndShape
+	 * @param polygonsInShape
+	 */
 	private static void reducePopulationToShapeArea(Population population,
 			CoordinateTransformation crsTransformationPopulationAndShape, Collection<SimpleFeature> polygonsInShape) {
 
@@ -702,7 +725,7 @@ public class GeneralDemandGeneration {
 		}
 	}
 
-	/**
+	/** Differs between the different options for solving the VRP problem.
 	 * @param selectedSolution
 	 * @param config
 	 * @param nuOfJspritIteration
@@ -740,7 +763,7 @@ public class GeneralDemandGeneration {
 		}
 	}
 
-	/**
+	/** Differs between the different analyze options.
 	 * @param analyseOption
 	 * @param outputDirectory
 	 * @throws UncheckedIOException
@@ -761,7 +784,7 @@ public class GeneralDemandGeneration {
 		}
 	}
 
-	/**
+	/** Reads and create the carriers with reading the information from the csv file.
 	 * @param scenario
 	 * @param allNewCarrier
 	 * @param freightConfigGroup
@@ -826,7 +849,7 @@ public class GeneralDemandGeneration {
 
 	}
 
-	/**
+	/** Checks if the read carrier information are consistent.
 	 * @param allNewCarrier
 	 * @param freightConfigGroup
 	 * @param scenario
@@ -924,7 +947,7 @@ public class GeneralDemandGeneration {
 		}
 	}
 
-	/**
+	/** Read and creates teh carrier and the vehicle types.
 	 * @param freightConfigGroup
 	 * @param allNewCarrier
 	 * @param scenario
@@ -1021,7 +1044,7 @@ public class GeneralDemandGeneration {
 		}
 	}
 
-	/**
+	/** Creates the services.
 	 * @param scenario
 	 * @param demandInformation
 	 * @param demandLocationsInShape
@@ -1202,8 +1225,7 @@ public class GeneralDemandGeneration {
 		}
 	}
 
-	/**
-	 * Searches a possible link for the demand
+	/** Searches a possible link for the demand
 	 * 
 	 * @param scenario
 	 * @param population
@@ -1278,7 +1300,7 @@ public class GeneralDemandGeneration {
 		return MGC.xy2Point(x, y);
 	}
 
-	/**
+	/** Finds the nearest link of one certain location.
 	 * @param pointActivity
 	 * @param allLinks
 	 * @param middlePointsLinks
@@ -1305,7 +1327,7 @@ public class GeneralDemandGeneration {
 		return nearestLink;
 	}
 
-	/**
+	/** Checks if a link is one of the possible areas.
 	 * @param link
 	 * @param demandLocationsInShape
 	 * @param strings
@@ -1355,7 +1377,7 @@ public class GeneralDemandGeneration {
 		return isInShape;
 	}
 
-	/**
+	/** Prepares the controller.
 	 * @param scenario
 	 * @return
 	 */
@@ -1372,8 +1394,7 @@ public class GeneralDemandGeneration {
 		return controler;
 	}
 
-	/**
-	 * Deletes the existing output file and sets the number of the last iteration
+	/** Deletes the existing output file and sets the number of the last iteration
 	 * 
 	 * @param lastMATSimIteration
 	 * @param outputLocation
@@ -1399,8 +1420,7 @@ public class GeneralDemandGeneration {
 		return config;
 	}
 
-	/**
-	 * add the home coordinates to attributes and remove plans
+	/** add the home coordinates to attributes and remove plans
 	 * 
 	 * @param population
 	 * @param sampleTo
@@ -1439,7 +1459,7 @@ public class GeneralDemandGeneration {
 		}
 	}
 
-	/**
+	/** Runs jsprit
 	 * @param controler
 	 * @param nuOfJspritIteration
 	 * @param usingRangeRestriction
