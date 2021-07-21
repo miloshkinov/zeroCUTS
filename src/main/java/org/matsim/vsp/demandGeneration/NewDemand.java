@@ -4,36 +4,64 @@ import org.matsim.contrib.freight.carrier.TimeWindow;
 
 final class NewDemand {
 
-	private String name;
-	private String[] areasForTheDemand;
+	private String carrierID;
 	private Integer demandToDistribute;
 	private Integer numberOfJobs;
 	private Double shareOfPopulationWithThisDemand;
-	private Integer firstJobTimePerUnit;
-	private TimeWindow firstJobTimeWindow;
-	private Integer secondJobTimePerUnit;
-	private TimeWindow secondJobTimeWindow;
+	private String[] areasFirstJobElement;
+	private Integer numberOfFirstJobElementLocations;
+	private String[] locationsOfFirstJobElement;
+	private Integer firstJobElementTimePerUnit;
+	private TimeWindow firstJobElementTimeWindow;
+	private String[] areasSecondJobElement;
+	private Integer numberOfSecondJobElementLocations;
+	private String[] locationsOfSecondJobElement;
+	private Integer secondJobElementTimePerUnit;
+	private TimeWindow secondJobElementTimeWindow;
 
-
-	NewDemand(String name, String[] areasForTheDemand, Integer demandToDistribute, Integer numberOfJobs,
-			Double shareOfPopulationWithThisDemand, Integer firstJobTimePerUnit, TimeWindow firstJobTimeWindow, Integer secondJobTimePerUnit, TimeWindow secondJobTimeWindow) {
-		this.setId(name);
-		this.setAreasForTheDemand(areasForTheDemand);
+	NewDemand(String carrierID, Integer demandToDistribute, Integer numberOfJobs,
+			Double shareOfPopulationWithThisDemand, String[] areasFirstJobElement,
+			Integer numberOfFirstJobElementLocations, String[] locationsOfFirstJobElement,
+			Integer firstJobElementTimePerUnit, TimeWindow firstJobElementTimeWindow) {
+		this.setCarrierID(carrierID);
 		this.setDemandToDistribute(demandToDistribute);
 		this.setNumberOfJobs(numberOfJobs);
 		this.setShareOfPopulationWithThisDemand(shareOfPopulationWithThisDemand);
-		this.setFirstJobTimePerUnit(firstJobTimePerUnit);
-		this.setFirstJobTimeWindow(firstJobTimeWindow);
-		this.setSecondJobTimePerUnit(secondJobTimePerUnit);
-		this.setSecondJobTimeWindow(secondJobTimeWindow);
+		this.setAreasFirstJobElement(areasFirstJobElement);
+		this.setNumberOfFirstJobElementLocations(numberOfFirstJobElementLocations);
+		this.setLocationsOfFirstJobElement(locationsOfFirstJobElement);
+		this.setFirstJobElementTimePerUnit(firstJobElementTimePerUnit);
+		this.setFirstJobElementTimeWindow(firstJobElementTimeWindow);
 	}
 
-	public String getName() {
-		return name;
+	NewDemand(String carrierID, Integer demandToDistribute, Integer numberOfJobs,
+			Double shareOfPopulationWithThisDemand, String[] areasFirstJobElement,
+			Integer numberOfFirstJobElementLocations, String[] locationsOfFirstJobElement,
+			Integer firstJobElementTimePerUnit, TimeWindow firstJobElementTimeWindow, String[] areasSecondJobElement,
+			Integer numberOfSecondJobElementLocations, String[] locationsOfSecondJobElement,
+			Integer secondJobElementTimePerUnit, TimeWindow secondJobElementTimeWindow) {
+		this.setCarrierID(carrierID);
+		this.setDemandToDistribute(demandToDistribute);
+		this.setNumberOfJobs(numberOfJobs);
+		this.setShareOfPopulationWithThisDemand(shareOfPopulationWithThisDemand);
+		this.setAreasFirstJobElement(areasFirstJobElement);
+		this.setNumberOfFirstJobElementLocations(numberOfFirstJobElementLocations);
+		this.setLocationsOfFirstJobElement(locationsOfFirstJobElement);
+		this.setFirstJobElementTimePerUnit(firstJobElementTimePerUnit);
+		this.setFirstJobElementTimeWindow(firstJobElementTimeWindow);
+		this.setAreasSecondJobElement(areasSecondJobElement);
+		this.setNumberOfSecondJobElementLocations(numberOfSecondJobElementLocations);
+		this.setLocationsOfSecondJobElement(locationsOfSecondJobElement);
+		this.setSecondJobElementTimePerUnit(secondJobElementTimePerUnit);
+		this.setSecondJobElementTimeWindow(secondJobElementTimeWindow);
 	}
 
-	void setId(String name) {
-		this.name = name;
+	public String getCarrierID() {
+		return carrierID;
+	}
+
+	public void setCarrierID(String carrierID) {
+		this.carrierID = carrierID;
 	}
 
 	public Integer getDemandToDistribute() {
@@ -52,28 +80,28 @@ final class NewDemand {
 		this.numberOfJobs = numberOfJobs;
 	}
 
-	public Integer getFirstJobTimePerUnit() {
-		return firstJobTimePerUnit;
+	public Integer getFirstJobElementTimePerUnit() {
+		return firstJobElementTimePerUnit;
 	}
 
-	public void setFirstJobTimePerUnit(Integer firstJobTimePerUnit) {
-		this.firstJobTimePerUnit = firstJobTimePerUnit;
+	public void setFirstJobElementTimePerUnit(Integer firstJobElementTimePerUnit) {
+		this.firstJobElementTimePerUnit = firstJobElementTimePerUnit;
 	}
 
-	public String[] getAreasForTheDemand() {
-		return areasForTheDemand;
+	public String[] getAreasFirstJobElement() {
+		return areasFirstJobElement;
 	}
 
-	public void setAreasForTheDemand(String[] areasForTheDemand) {
-		this.areasForTheDemand = areasForTheDemand;
+	public void setAreasFirstJobElement(String[] areasFirstJobElement) {
+		this.areasFirstJobElement = areasFirstJobElement;
 	}
 
-	public TimeWindow getFirstJobTimeWindow() {
-		return firstJobTimeWindow;
+	public TimeWindow getFirstJobElementTimeWindow() {
+		return firstJobElementTimeWindow;
 	}
 
-	public void setFirstJobTimeWindow(TimeWindow firstJobTimeWindow) {
-		this.firstJobTimeWindow = firstJobTimeWindow;
+	public void setFirstJobElementTimeWindow(TimeWindow firstJobElementTimeWindow) {
+		this.firstJobElementTimeWindow = firstJobElementTimeWindow;
 	}
 
 	public Double getShareOfPopulationWithThisDemand() {
@@ -84,19 +112,59 @@ final class NewDemand {
 		this.shareOfPopulationWithThisDemand = shareOfPopulationWithThisDemand;
 	}
 
-	public TimeWindow getSecondJobTimeWindow() {
-		return secondJobTimeWindow;
+	public TimeWindow getSecondJobElementTimeWindow() {
+		return secondJobElementTimeWindow;
 	}
 
-	public void setSecondJobTimeWindow(TimeWindow secondJobTimeWindow) {
-		this.secondJobTimeWindow = secondJobTimeWindow;
+	public void setSecondJobElementTimeWindow(TimeWindow secondJobElementTimeWindow) {
+		this.secondJobElementTimeWindow = secondJobElementTimeWindow;
 	}
 
-	public Integer getSecondJobTimePerUnit() {
-		return secondJobTimePerUnit;
+	public Integer getSecondJobElementTimePerUnit() {
+		return secondJobElementTimePerUnit;
 	}
 
-	public void setSecondJobTimePerUnit(Integer secondJobTimePerUnit) {
-		this.secondJobTimePerUnit = secondJobTimePerUnit;
+	public void setSecondJobElementTimePerUnit(Integer secondJobElementTimePerUnit) {
+		this.secondJobElementTimePerUnit = secondJobElementTimePerUnit;
+	}
+
+	public Integer getNumberOfFirstJobElementLocations() {
+		return numberOfFirstJobElementLocations;
+	}
+
+	public void setNumberOfFirstJobElementLocations(Integer numberOfFirstJobElementLocations) {
+		this.numberOfFirstJobElementLocations = numberOfFirstJobElementLocations;
+	}
+
+	public String[] getLocationsOfFirstJobElement() {
+		return locationsOfFirstJobElement;
+	}
+
+	public void setLocationsOfFirstJobElement(String[] locationsOfFirstJobElement) {
+		this.locationsOfFirstJobElement = locationsOfFirstJobElement;
+	}
+
+	public String[] getAreasSecondJobElement() {
+		return areasSecondJobElement;
+	}
+
+	public void setAreasSecondJobElement(String[] areasSecondJobElement) {
+		this.areasSecondJobElement = areasSecondJobElement;
+	}
+
+	public Integer getNumberOfSecondJobElementLocations() {
+		return numberOfSecondJobElementLocations;
+	}
+
+	public void setNumberOfSecondJobElementLocations(Integer numberOfSecondJobElementLocations) {
+		this.numberOfSecondJobElementLocations = numberOfSecondJobElementLocations;
+	}
+
+	public String[] getLocationsOfSecondJobElement() {
+		return locationsOfSecondJobElement;
+	}
+
+	public void setLocationsOfSecondJobElement(String[] locationsOfSecondJobElement) {
+		this.locationsOfSecondJobElement = locationsOfSecondJobElement;
 	}
 }

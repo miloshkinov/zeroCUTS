@@ -1,4 +1,4 @@
-carrierName;demandAreas;demandToDistribute;numberOfJobs;shareOfPopulationWithThisDemand;firstJobTimePerUnit;firstJobStartTime;firstJobEndTime;secondJobTimePerUnit;secondJobStartTime;secondJobEndTime
-csvCarrier1;;20;2;;180;3000;13000;180;3000;13000
-csvCarrier1;;12;10;;100;5000;20000;100;5000;20000
-csvCarrier2;;80;4;;300;10000;15000;300;10000;15000
+carrierName;demandToDistribute;numberOfJobs;shareOfPopulationWithThisDemand;areasFirstJobElement;numberOfFirstJobElementLocations;locationsOfFirstJobElement;firstJobElementTimePerUnit;firstJobElementStartTime;firstJobElementEndTime;areasSecondJobElement;numberOfSecondJobElementLocations;locationsOfSecondJobElement;secondJobElementTimePerUnit;secondJobElementStartTime;secondJobElementEndTime
+csvCarrier1;20;2;;;;;180;3000;13000;;;;;;
+csvCarrier1;12;10;;;;;100;5000;20000;;;;;;
+csvCarrier2;80;4;;;;;300;10000;15000;;;;;;

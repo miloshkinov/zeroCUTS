@@ -414,7 +414,7 @@ public class GeneralDemandGeneration {
 		switch (selectedDemandGenerationOption) {
 		case loadCSVData:
 			demandInformation = readDemandInformation(csvLocationDemand, demandInformation, scenario, polygonsInShape);
-			createServices(scenario, demandInformation, demandLocationsInShape, polygonsInShape, null);
+			createDemandForCarriers(scenario, demandLocationsInShape, polygonsInShape, demandInformation, null);
 			break;
 		case loadCSVDataAndUsePopulation:
 			Population population = PopulationUtils.readPopulation(populationFile);
@@ -436,7 +436,8 @@ public class GeneralDemandGeneration {
 
 			switch (selectedPopulationOption) {
 			case usePopulationHolePopulation:
-				createServices(scenario, demandInformation, demandLocationsInShape, polygonsInShape, population);
+				createDemandForCarriers(scenario, demandLocationsInShape, polygonsInShape, demandInformation,
+						population);
 				break;
 			case usePopulationInAgeGroups:
 				// TODO
@@ -447,7 +448,8 @@ public class GeneralDemandGeneration {
 				CoordinateTransformation crsTransformationPopulationAndShape = TransformationFactory
 						.getCoordinateTransformation(populationCRS, shapeCRS);
 				reducePopulationToShapeArea(population, crsTransformationPopulationAndShape, polygonsInShape);
-				createServices(scenario, demandInformation, demandLocationsInShape, polygonsInShape, population);
+				createDemandForCarriers(scenario, demandLocationsInShape, polygonsInShape, demandInformation,
+						population);
 				break;
 			default:
 				break;
@@ -471,6 +473,12 @@ public class GeneralDemandGeneration {
 		}
 	}
 
+	private static void createDemandForCarriers(Scenario scenario, boolean demandLocationsInShape,
+			Collection<SimpleFeature> polygonsInShape, Set<NewDemand> demandInformation, Population population) {
+
+		createServices(scenario, demandInformation, demandLocationsInShape, polygonsInShape, population);
+	}
+
 	private static Set<NewDemand> readDemandInformation(String csvLocationDemand, Set<NewDemand> demandInformation,
 			Scenario scenario, Collection<SimpleFeature> polygonsInShape) throws IOException {
 
@@ -481,9 +489,6 @@ public class GeneralDemandGeneration {
 			String carrierID = null;
 			if (!record.get("carrierName").isBlank())
 				carrierID = record.get("carrierName");
-			String[] areasForTheDemand = null;
-			if (!record.get("demandAreas").isBlank())
-				areasForTheDemand = record.get("demandAreas").split(",");
 			Integer demandToDistribute = null;
 			if (!record.get("demandToDistribute").isBlank())
 				demandToDistribute = Integer.parseInt(record.get("demandToDistribute"));
@@ -493,24 +498,58 @@ public class GeneralDemandGeneration {
 			Double shareOfPopulationWithThisDemand = null;
 			if (!record.get("shareOfPopulationWithThisDemand").isBlank())
 				shareOfPopulationWithThisDemand = Double.parseDouble(record.get("shareOfPopulationWithThisDemand"));
-			Integer firstJobTimePerUnit = null;
-			if (!record.get("firstJobTimePerUnit").isBlank())
-				firstJobTimePerUnit = Integer.parseInt(record.get("firstJobTimePerUnit"));
-			TimeWindow firstJobTimeWindow = null;
-			if (!record.get("firstJobStartTime").isBlank() || !record.get("firstJobEndTime").isBlank())
-				firstJobTimeWindow = TimeWindow.newInstance(Integer.parseInt(record.get("firstJobStartTime")),
-						Integer.parseInt(record.get("firstJobEndTime")));
-			Integer secondJobTimePerUnit = null;
-			if (!record.get("secondJobTimePerUnit").isBlank())
-				secondJobTimePerUnit = Integer.parseInt(record.get("secondJobTimePerUnit"));
-			TimeWindow secondJobTimeWindow = null;
-			if (!record.get("secondJobStartTime").isBlank() || !record.get("secondJobEndTime").isBlank())
-				secondJobTimeWindow = TimeWindow.newInstance(Integer.parseInt(record.get("secondJobStartTime")),
-						Integer.parseInt(record.get("secondJobEndTime")));
-			NewDemand newDemand = new NewDemand(carrierID, areasForTheDemand, demandToDistribute, numberOfJobs,
-					shareOfPopulationWithThisDemand, firstJobTimePerUnit, firstJobTimeWindow, secondJobTimePerUnit,
-					secondJobTimeWindow);
-			demandInformation.add(newDemand);
+			String[] areasFirstJobElement = null;
+			if (!record.get("areasFirstJobElement").isBlank())
+				areasFirstJobElement = record.get("areasFirstJobElement").split(",");
+			Integer numberOfFirstJobElementLocations = null;
+			if (!record.get("numberOfFirstJobElementLocations").isBlank())
+				numberOfFirstJobElementLocations = Integer.parseInt(record.get("numberOfFirstJobElementLocations"));
+			String[] locationsOfFirstJobElement = null;
+			if (!record.get("locationsOfFirstJobElement").isBlank())
+				locationsOfFirstJobElement = record.get("locationsOfFirstJobElement").split(",");
+			Integer firstJobElementTimePerUnit = null;
+			if (!record.get("firstJobElementTimePerUnit").isBlank())
+				firstJobElementTimePerUnit = Integer.parseInt(record.get("firstJobElementTimePerUnit"));
+			TimeWindow firstJobElementTimeWindow = null;
+			if (!record.get("firstJobElementStartTime").isBlank() || !record.get("firstJobElementEndTime").isBlank())
+				firstJobElementTimeWindow = TimeWindow.newInstance(
+						Integer.parseInt(record.get("firstJobElementStartTime")),
+						Integer.parseInt(record.get("firstJobElementEndTime")));
+			String[] areasSecondJobElement = null;
+			if (!record.get("areasSecondJobElement").isBlank())
+				areasFirstJobElement = record.get("areasSecondJobElement").split(",");
+			Integer numberOfSecondJobElementLocations = null;
+			if (!record.get("numberOfSecondJobElementLocations").isBlank())
+				numberOfSecondJobElementLocations = Integer.parseInt(record.get("numberOfSecondJobElementLocations"));
+			String[] locationsOfSecondJobElement = null;
+			if (!record.get("locationsOfSecondJobElement").isBlank())
+				locationsOfFirstJobElement = record.get("locationsOfSecondJobElement").split(",");
+			Integer secondJobElementTimePerUnit = null;
+			if (!record.get("secondJobElementTimePerUnit").isBlank())
+				secondJobElementTimePerUnit = Integer.parseInt(record.get("secondJobElementTimePerUnit"));
+			TimeWindow secondJobElementTimeWindow = null;
+			if (!record.get("secondJobElementStartTime").isBlank() || !record.get("secondJobElementEndTime").isBlank())
+				secondJobElementTimeWindow = TimeWindow.newInstance(
+						Integer.parseInt(record.get("secondJobElementStartTime")),
+						Integer.parseInt(record.get("secondJobElementEndTime")));
+
+			if (areasSecondJobElement != null || numberOfSecondJobElementLocations != null
+					|| locationsOfSecondJobElement != null || secondJobElementTimePerUnit != null
+					|| secondJobElementTimeWindow != null) {
+				NewDemand newShipmentDemand = new NewDemand(carrierID, demandToDistribute, numberOfJobs, shareOfPopulationWithThisDemand,
+						areasFirstJobElement, numberOfFirstJobElementLocations, locationsOfFirstJobElement,
+						firstJobElementTimePerUnit, firstJobElementTimeWindow, areasSecondJobElement,
+						numberOfSecondJobElementLocations, locationsOfSecondJobElement, secondJobElementTimePerUnit,
+						secondJobElementTimeWindow);
+				demandInformation.add(newShipmentDemand);
+			}
+			else {
+				NewDemand newServiceDemand = new NewDemand(carrierID, demandToDistribute, numberOfJobs, shareOfPopulationWithThisDemand,
+						areasFirstJobElement, numberOfFirstJobElementLocations, locationsOfFirstJobElement,
+						firstJobElementTimePerUnit, firstJobElementTimeWindow);
+				demandInformation.add(newServiceDemand);
+			}
+
 		}
 		checkNewDemand(scenario, demandInformation, polygonsInShape);
 		return demandInformation;
@@ -521,18 +560,18 @@ public class GeneralDemandGeneration {
 
 		for (NewDemand newDemand : demandInformation) {
 
-			if (newDemand.getName() == null || newDemand.getName().isBlank())
+			if (newDemand.getCarrierID() == null || newDemand.getCarrierID().isBlank())
 				throw new RuntimeException(
 						"Minimum one demand is not related to a carrier. Every demand information has to be related to one carrier. Please check the input csv file!");
 
 			Carriers carriers = (Carriers) scenario.getScenarioElement("carriers");
-			if (!carriers.getCarriers().containsKey(Id.create(newDemand.getName(), Carrier.class))) {
+			if (!carriers.getCarriers().containsKey(Id.create(newDemand.getCarrierID(), Carrier.class))) {
 				throw new RuntimeException(
 						"The created demand is not created for an existing carrier. Please create the carrier first or relate the demand to another carrier");
 			}
 
-			if (newDemand.getAreasForTheDemand() != null)
-				for (String demand : newDemand.getAreasForTheDemand()) {
+			if (newDemand.getAreasFirstJobElement() != null)
+				for (String demand : newDemand.getAreasFirstJobElement()) {
 					boolean isInShape = false;
 					for (SimpleFeature singlePolygon : polygonsInShape) {
 						if (singlePolygon.getAttribute("Ortsteil").equals(demand)) {
@@ -542,18 +581,18 @@ public class GeneralDemandGeneration {
 					}
 					if (!isInShape)
 						throw new RuntimeException("The area " + demand + " for the demand generation of carrier"
-								+ newDemand.getName() + " is not part of the given shapeFile");
+								+ newDemand.getCarrierID() + " is not part of the given shapeFile");
 				}
 			if (newDemand.getShareOfPopulationWithThisDemand() != null)
 				if (newDemand.getShareOfPopulationWithThisDemand() > 100
 						|| newDemand.getShareOfPopulationWithThisDemand() <= 0)
-					throw new RuntimeException("For the carrier " + newDemand.getName()
+					throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
 							+ ": The percentage of the population should be more than 0 and maximum 100pct. Please check!");
 			if (newDemand.getNumberOfJobs() != null && newDemand.getShareOfPopulationWithThisDemand() != null)
-				throw new RuntimeException("For the carrier " + newDemand.getName()
+				throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
 						+ ": Select either a numberOfJobs or a share of the population. Please check!");
 			if (newDemand.getNumberOfJobs() == 0)
-				throw new RuntimeException("For the carrier " + newDemand.getName()
+				throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
 						+ ": The number of jobs can not be 0 !. Please check!");
 		}
 
@@ -961,7 +1000,7 @@ public class GeneralDemandGeneration {
 			if (numberOfJobs == null) {
 				for (Link link : scenario.getNetwork().getLinks().values()) {
 					if (!link.getId().toString().contains("pt") && checkPositionInShape(link, polygonsInShape,
-							newDemand.getAreasForTheDemand(), demandLocationsInShape)) {
+							newDemand.getAreasFirstJobElement(), demandLocationsInShape)) {
 						sumOfLinkLenght = sumOfLinkLenght + link.getLength();
 						possibleLinks++;
 					}
@@ -975,18 +1014,18 @@ public class GeneralDemandGeneration {
 							throw new RuntimeException(
 									"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
 						Link link = findPossibleLinkForDemand(scenario, population, middlePointsLinks,
-								demandLocationsInShape, polygonsInShape, newDemand.getAreasForTheDemand());
-						double serviceTime = newDemand.getFirstJobTimePerUnit();
+								demandLocationsInShape, polygonsInShape, newDemand.getAreasFirstJobElement());
+						double serviceTime = newDemand.getFirstJobElementTimePerUnit();
 						int demandForThisLink = 1;
 						CarrierService thisService = CarrierService.Builder
 								.newInstance(Id.create("Service_" + link.getId(), CarrierService.class), link.getId())
 								.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-								.setServiceStartTimeWindow(newDemand.getFirstJobTimeWindow()).build();
+								.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
 						if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
 							thisService.getAttributes().putAttribute("relatedPerson",
 									link.getAttributes().getAttribute("lastPersonsWithDemand"));
 						FreightUtils.getCarriers(scenario).getCarriers()
-								.get(Id.create(newDemand.getName(), Carrier.class)).getServices()
+								.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
 								.put(thisService.getId(), thisService);
 					}
 				} else
@@ -999,7 +1038,7 @@ public class GeneralDemandGeneration {
 
 					for (Link link : scenario.getNetwork().getLinks().values()) {
 						if (!link.getId().toString().contains("pt") && checkPositionInShape(link, polygonsInShape,
-								newDemand.getAreasForTheDemand(), demandLocationsInShape)) {
+								newDemand.getAreasFirstJobElement(), demandLocationsInShape)) {
 							int demandForThisLink;
 							if (countOfLinks == scenario.getNetwork().getLinks().size()) {
 								demandForThisLink = demandToDistribute - distributedDemand;
@@ -1014,13 +1053,13 @@ public class GeneralDemandGeneration {
 								}
 								countOfLinks++;
 							}
-							double serviceTime = newDemand.getFirstJobTimePerUnit() * demandForThisLink;
+							double serviceTime = newDemand.getFirstJobElementTimePerUnit() * demandForThisLink;
 							if (demandToDistribute > 0 && demandForThisLink > 0) {
 								CarrierService thisService = CarrierService.Builder
 										.newInstance(Id.create("Service_" + link.getId(), CarrierService.class),
 												link.getId())
 										.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-										.setServiceStartTimeWindow(newDemand.getFirstJobTimeWindow()).build();
+										.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
 								FreightUtils.getCarriers(scenario).getCarriers().values().iterator().next()
 										.getServices().put(thisService.getId(), thisService);
 							} else if (demandToDistribute == 0) {
@@ -1028,12 +1067,12 @@ public class GeneralDemandGeneration {
 										.newInstance(Id.create("Service_" + link.getId(), CarrierService.class),
 												link.getId())
 										.setServiceDuration(serviceTime)
-										.setServiceStartTimeWindow(newDemand.getFirstJobTimeWindow()).build();
+										.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
 								if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
 									thisService.getAttributes().putAttribute("relatedPerson",
 											link.getAttributes().getAttribute("lastPersonsWithDemand"));
 								FreightUtils.getCarriers(scenario).getCarriers()
-										.get(Id.create(newDemand.getName(), Carrier.class)).getServices()
+										.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
 										.put(thisService.getId(), thisService);
 							}
 							distributedDemand = distributedDemand + demandForThisLink;
@@ -1052,7 +1091,7 @@ public class GeneralDemandGeneration {
 						throw new RuntimeException(
 								"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
 					Link link = findPossibleLinkForDemand(scenario, population, middlePointsLinks,
-							demandLocationsInShape, polygonsInShape, newDemand.getAreasForTheDemand());
+							demandLocationsInShape, polygonsInShape, newDemand.getAreasFirstJobElement());
 					int demandForThisLink = (int) Math.ceil((double) demandToDistribute / (double) numberOfJobs);
 					if (numberOfJobs == (i + 1)) {
 						demandForThisLink = demandToDistribute - distributedDemand;
@@ -1064,17 +1103,18 @@ public class GeneralDemandGeneration {
 							roundingError = roundingError - 1;
 						}
 					}
-					double serviceTime = demandForThisLink * newDemand.getFirstJobTimePerUnit();
+					double serviceTime = demandForThisLink * newDemand.getFirstJobElementTimePerUnit();
 
 					CarrierService thisService = CarrierService.Builder
 							.newInstance(Id.create("Service_" + link.getId(), CarrierService.class), link.getId())
 							.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-							.setServiceStartTimeWindow(newDemand.getFirstJobTimeWindow()).build();
+							.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
 					if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
 						thisService.getAttributes().putAttribute("relatedPerson",
 								link.getAttributes().getAttribute("lastPersonsWithDemand"));
-					FreightUtils.getCarriers(scenario).getCarriers().get(Id.create(newDemand.getName(), Carrier.class))
-							.getServices().put(thisService.getId(), thisService);
+					FreightUtils.getCarriers(scenario).getCarriers()
+							.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
+							.put(thisService.getId(), thisService);
 
 					distributedDemand = distributedDemand + demandForThisLink;
 				}
