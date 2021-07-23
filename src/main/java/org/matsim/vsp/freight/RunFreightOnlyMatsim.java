@@ -243,7 +243,7 @@ public class RunFreightOnlyMatsim {
 		FreightConfigGroup freightConfig = ConfigUtils.addOrGetModule( scenario.getConfig(), FreightConfigGroup.class );
 		freightConfig.setTimeWindowHandling(FreightConfigGroup.TimeWindowHandling.enforceBeginnings);
 
-		CarrierModule listener = new CarrierModule(carriers, planStrategyManagerFactory, scoringFunctionFactory) ;
+		CarrierModule listener = new CarrierModule(planStrategyManagerFactory, scoringFunctionFactory) ;
 		controler.addOverridingModule(listener) ;
 		controler.run();
 	}
