@@ -25,7 +25,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -87,8 +86,6 @@ import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.io.UncheckedIOException;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.ActivityFacilitiesFactory;
-import org.matsim.facilities.ActivityFacility;
-import org.matsim.facilities.ActivityOptionImpl;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.opengis.feature.simple.SimpleFeature;
@@ -552,7 +549,8 @@ public class GeneralDemandGeneration {
 		double roundingError = 0;
 		double sumOfPossibleLinkLenghtPickup = 0;
 		double sumOfPossibleLinkLenghtDelivery = 0;
-		Double shareOfPopulationWithThisDemand = newDemand.getShareOfPopulationWithThisDemand();
+		Double shareOfPopulationWithThisPickup = newDemand.getShareOfPopulationWithFirstJobElement();
+		Double shareOfPopulationWithThisDelivery = newDemand.getShareOfPopulationWithSecondJobElement();
 		Integer numberOfJobs = 0;
 		Integer demandToDistribute = newDemand.getDemandToDistribute();
 		Integer numberOfPickupLocations = newDemand.getNumberOfFirstJobElementLocations();
@@ -563,10 +561,10 @@ public class GeneralDemandGeneration {
 		String[] locationsOfDelivery = newDemand.getLocationsOfSecondJobElement();
 		ArrayList<String> usedPickupLocations = new ArrayList<String>();
 		ArrayList<String> usedDeliveryLocations = new ArrayList<String>();
-		int numberOfLinksInNetwork = scenario.getNetwork().getLinks().size();
 		HashMap<Id<Person>, Person> possiblePersonsPickup = new HashMap<Id<Person>, Person>();
 		HashMap<Id<Person>, Person> possiblePersonsDelivery = new HashMap<Id<Person>, Person>();
-		HashMap<Id<Link>, Point> middlePointsLinks = new HashMap<Id<Link>, Point>();
+		HashMap<Id<Link>, Point> middlePointsLinksPickup = new HashMap<Id<Link>, Point>();
+		HashMap<Id<Link>, Point> middlePointsLinksDelivery = new HashMap<Id<Link>, Point>();
 
 		for (Link link : scenario.getNetwork().getLinks().values()) {
 			if (!link.getId().toString().contains("pt") && checkPositionInShape(link, null, polygonsInShape,
@@ -582,7 +580,7 @@ public class GeneralDemandGeneration {
 		}
 
 		// set number of jobs
-		if (shareOfPopulationWithThisDemand == null)
+		if (shareOfPopulationWithThisPickup == null && shareOfPopulationWithThisDelivery == null)
 			numberOfJobs = newDemand.getNumberOfJobs();
 		else if (population == null)
 			throw new RuntimeException(
@@ -607,37 +605,86 @@ public class GeneralDemandGeneration {
 			} else
 				possiblePersonsDelivery.putAll(population.getPersons());
 
-			if (sampleSizeInputPopulation == sampleTo)
-				numberOfJobs = (int) Math
-						.round(shareOfPopulationWithThisDemand * population.getPersons().values().size());
-			else if (samplingOption.equals("changeNumberOfLocationsWithDemand"))
-				numberOfJobs = (int) Math.round((sampleTo / sampleSizeInputPopulation)
-						* (shareOfPopulationWithThisDemand * population.getPersons().values().size()));
-			else if (samplingOption.equals("changeDemandOnLocation")) {
-				demandToDistribute = (int) Math.round((sampleTo / sampleSizeInputPopulation) * demandToDistribute);
-				numberOfJobs = (int) Math
-						.round(shareOfPopulationWithThisDemand * population.getPersons().values().size());
-			} else
-				throw new RuntimeException(
-						"Error with the sampling of the demand based on the population. Please check sampling sizes and sampling options!!");
-			middlePointsLinks = createMapMiddlePointsLinks(scenario.getNetwork().getLinks().values());
+			int numberPossibleJobsPickup = 0;
+			int numberPossibleJobsDelivery = 0;
+			if (shareOfPopulationWithThisPickup != null)
+				numberPossibleJobsPickup = (int) Math
+						.round(shareOfPopulationWithThisPickup * possiblePersonsPickup.size());
+			if (shareOfPopulationWithThisDelivery != null)
+				numberPossibleJobsDelivery = (int) Math
+						.round(shareOfPopulationWithThisDelivery * possiblePersonsDelivery.size());
+
+			if (numberPossibleJobsPickup > numberPossibleJobsDelivery) {
+				if (sampleSizeInputPopulation == sampleTo) {
+					numberOfJobs = (int) Math.round(shareOfPopulationWithThisPickup * numberPossibleJobsPickup);
+					numberPossibleJobsPickup = numberOfJobs;
+					numberPossibleJobsDelivery = (int) Math
+							.round(shareOfPopulationWithThisDelivery * numberPossibleJobsDelivery);
+				} else if (samplingOption.equals("changeNumberOfLocationsWithDemand")) {
+					numberOfJobs = (int) Math.round((sampleTo / sampleSizeInputPopulation)
+							* (shareOfPopulationWithThisPickup * numberPossibleJobsPickup));
+					numberPossibleJobsPickup = numberOfJobs;
+					numberPossibleJobsDelivery = (int) Math.round((sampleTo / sampleSizeInputPopulation)
+							* (shareOfPopulationWithThisDelivery * numberPossibleJobsDelivery));
+				} else if (samplingOption.equals("changeDemandOnLocation")) {
+					demandToDistribute = (int) Math.round((sampleTo / sampleSizeInputPopulation) * demandToDistribute);
+					numberOfJobs = (int) Math.round(shareOfPopulationWithThisPickup * numberPossibleJobsPickup);
+					numberPossibleJobsPickup = numberOfJobs;
+				} else
+					throw new RuntimeException(
+							"Error with the sampling of the demand based on the population. Please check sampling sizes and sampling options!!");
+			} else {
+				if (sampleSizeInputPopulation == sampleTo) {
+					numberOfJobs = (int) Math.round(shareOfPopulationWithThisDelivery * numberPossibleJobsDelivery);
+					numberPossibleJobsDelivery = numberOfJobs;
+					numberPossibleJobsPickup = (int) Math
+							.round(shareOfPopulationWithThisPickup * numberPossibleJobsPickup);
+				} else if (samplingOption.equals("changeNumberOfLocationsWithDemand")) {
+					numberOfJobs = (int) Math.round((sampleTo / sampleSizeInputPopulation)
+							* (shareOfPopulationWithThisDelivery * numberPossibleJobsDelivery));
+					numberPossibleJobsDelivery = numberOfJobs;
+					numberPossibleJobsPickup = (int) Math.round((sampleTo / sampleSizeInputPopulation)
+							* (shareOfPopulationWithThisPickup * numberPossibleJobsPickup));
+				} else if (samplingOption.equals("changeDemandOnLocation")) {
+					demandToDistribute = (int) Math.round((sampleTo / sampleSizeInputPopulation) * demandToDistribute);
+					numberOfJobs = (int) Math.round(shareOfPopulationWithThisDelivery * numberPossibleJobsDelivery);
+					numberPossibleJobsDelivery = numberOfJobs;
+				} else
+					throw new RuntimeException(
+							"Error with the sampling of the demand based on the population. Please check sampling sizes and sampling options!!");
+			}
+			if (numberPossibleJobsPickup != 0)
+				numberOfPickupLocations = numberPossibleJobsPickup;
+			if (numberPossibleJobsDelivery != 0)
+				numberOfDeliveryLocations = numberPossibleJobsDelivery;
+
+			middlePointsLinksPickup = createMapMiddlePointsLinks(possibleLinksPickup.values());
+			middlePointsLinksDelivery = createMapMiddlePointsLinks(possibleLinksDelivery.values());
 		}
+		if (locationsOfPickup != null)
+			for (String selectedLinkIdPickups : locationsOfPickup)
+				if (!possibleLinksPickup.containsKey(Id.createLinkId(selectedLinkIdPickups)))
+					throw new RuntimeException("The min the selected link " + selectedLinkIdPickups
+							+ " for pickup is not part of the possible links for pickup. Plaese check!");
+
+		if (locationsOfDelivery != null)
+			for (String selectedLinkIdDelivery : locationsOfDelivery)
+				if (!possibleLinksPickup.containsKey(Id.createLinkId(selectedLinkIdDelivery)))
+					throw new RuntimeException("The min the selected link " + selectedLinkIdDelivery
+							+ " for pickup is not part of the possible links for pickup. Plaese check!");
 
 		// distribute the demand over the network because no number of jobs are selected
 		if (numberOfJobs == null) {
 			// creates shipments with a demand of 1
 			if (possibleLinksPickup.size() > demandToDistribute || possibleLinksDelivery.size() > demandToDistribute) {
 				for (int i = 0; i < demandToDistribute; i++) {
-					if (i * 2 > numberOfLinksInNetwork)
-						throw new RuntimeException(
-								"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
 					Link linkPickup = null;
 					if (numberOfPickupLocations == null || usedPickupLocations.size() < numberOfPickupLocations) {
 						if (locationsOfPickup != null && locationsOfPickup.length > i) {
 							linkPickup = scenario.getNetwork().getLinks().get(Id.createLinkId(locationsOfPickup[i]));
 						} else
 							linkPickup = findPossibleLinkForDemand(possibleLinksPickup, possiblePersonsPickup,
-									middlePointsLinks, demandLocationsInShape, polygonsInShape,
+									middlePointsLinksPickup, demandLocationsInShape, polygonsInShape,
 									areasForPickupLocations);
 					} else {
 						Random rand = new Random();
@@ -651,7 +698,7 @@ public class GeneralDemandGeneration {
 									.get(Id.createLinkId(locationsOfDelivery[i]));
 						} else
 							linkDelivery = findPossibleLinkForDemand(possibleLinksDelivery, possiblePersonsDelivery,
-									middlePointsLinks, demandLocationsInShape, polygonsInShape,
+									middlePointsLinksDelivery, demandLocationsInShape, polygonsInShape,
 									areasForDeliveryLocations);
 						// TODO perhaps other strategies e.g. nearestLinkToPickup
 					} else {
@@ -697,48 +744,40 @@ public class GeneralDemandGeneration {
 					throw new RuntimeException(
 							"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
 
-//				for (Link link : scenario.getNetwork().getLinks().values()) {
-//					if (!link.getId().toString().contains("pt") && checkPositionInShape(link, null, polygonsInShape,
-//							areasForServiceLocations, demandLocationsInShape)) {
-//						int demandForThisLink;
-//						if (countOfLinks == scenario.getNetwork().getLinks().size()) {
-//							demandForThisLink = demandToDistribute - distributedDemand;
-//						} else {
-//							demandForThisLink = (int) Math.ceil(
-//									link.getLength() / sumOfPossibleLinkLenghtPickup * (double) demandToDistribute);
-//							roundingError = roundingError + ((double) demandForThisLink
-//									- (link.getLength() / sumOfPossibleLinkLenghtPickup * (double) demandToDistribute));
-//							if (roundingError > 1) {
-//								demandForThisLink = demandForThisLink - 1;
-//								roundingError = roundingError - 1;
-//							}
-//							countOfLinks++;
-//						}
-//						double serviceTime = newDemand.getFirstJobElementTimePerUnit() * demandForThisLink;
-//						if (demandToDistribute > 0 && demandForThisLink > 0) {
-//							CarrierService thisService = CarrierService.Builder
-//									.newInstance(Id.create("Service_" + link.getId(), CarrierService.class),
-//											link.getId())
-//									.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-//									.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
-//							FreightUtils.getCarriers(scenario).getCarriers().values().iterator().next().getServices()
-//									.put(thisService.getId(), thisService);
-//						} else if (demandToDistribute == 0) {
-//							CarrierService thisService = CarrierService.Builder
-//									.newInstance(Id.create("Service_" + link.getId(), CarrierService.class),
-//											link.getId())
-//									.setServiceDuration(serviceTime)
-//									.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
+				for (Link link : possibleLinksPickup.values()) {
+					int demandForThisLink;
+					if (countOfLinks == scenario.getNetwork().getLinks().size()) {
+						demandForThisLink = demandToDistribute - distributedDemand;
+					} else {
+						demandForThisLink = (int) Math
+								.ceil(link.getLength() / sumOfPossibleLinkLenghtPickup * (double) demandToDistribute);
+						roundingError = roundingError + ((double) demandForThisLink
+								- (link.getLength() / sumOfPossibleLinkLenghtPickup * (double) demandToDistribute));
+						if (roundingError > 1) {
+							demandForThisLink = demandForThisLink - 1;
+							roundingError = roundingError - 1;
+						}
+						countOfLinks++;
+					}
+					double serviceTimePickup = newDemand.getFirstJobElementTimePerUnit() * demandForThisLink;
+					double sericeTimeDelivery = newDemand.getSecondJobElementTimePerUnit() * demandForThisLink;
+					TimeWindow timeWindowPickup = newDemand.getFirstJobElementTimeWindow();
+					TimeWindow timeWindowDelivery = newDemand.getSecondJobElementTimeWindow();
+					if (demandToDistribute > 0 && demandForThisLink > 0) {
+						CarrierShipment thisShipment = null;
+						FreightUtils.getCarriers(scenario).getCarriers().values().iterator().next().getShipments()
+								.put(thisShipment.getId(), thisShipment);
+					} else if (demandToDistribute == 0) {
+						CarrierShipment thisShipment = null;
 //							if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
 //								thisService.getAttributes().putAttribute("relatedPerson",
 //										link.getAttributes().getAttribute("lastPersonsWithDemand"));
-//							FreightUtils.getCarriers(scenario).getCarriers()
-//									.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
-//									.put(thisService.getId(), thisService);
-//						}
-//						distributedDemand = distributedDemand + demandForThisLink;
-//					}
-//				}
+						FreightUtils.getCarriers(scenario).getCarriers()
+								.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getShipments()
+								.put(thisShipment.getId(), thisShipment);
+					}
+					distributedDemand = distributedDemand + demandForThisLink;
+				}
 			}
 		} else
 		// if a certain number of services is selected
@@ -812,9 +851,10 @@ public class GeneralDemandGeneration {
 			Integer numberOfJobs = null;
 			if (!record.get("numberOfJobs").isBlank())
 				numberOfJobs = Integer.parseInt(record.get("numberOfJobs"));
-			Double shareOfPopulationWithThisDemand = null;
-			if (!record.get("shareOfPopulationWithThisDemand").isBlank())
-				shareOfPopulationWithThisDemand = Double.parseDouble(record.get("shareOfPopulationWithThisDemand"));
+			Double shareOfPopulationWithFirstJobElement = null;
+			if (!record.get("shareOfPopulationWithFirstJobElement").isBlank())
+				shareOfPopulationWithFirstJobElement = Double
+						.parseDouble(record.get("shareOfPopulationWithFirstJobElement"));
 			String[] areasFirstJobElement = null;
 			if (!record.get("areasFirstJobElement").isBlank())
 				areasFirstJobElement = record.get("areasFirstJobElement").split(",");
@@ -832,6 +872,10 @@ public class GeneralDemandGeneration {
 				firstJobElementTimeWindow = TimeWindow.newInstance(
 						Integer.parseInt(record.get("firstJobElementStartTime")),
 						Integer.parseInt(record.get("firstJobElementEndTime")));
+			Double shareOfPopulationWithSecondJobElement = null;
+			if (!record.get("shareOfPopulationWithSecondJobElement").isBlank())
+				shareOfPopulationWithSecondJobElement = Double
+						.parseDouble(record.get("shareOfPopulationWithSecondJobElement"));
 			String[] areasSecondJobElement = null;
 			if (!record.get("areasSecondJobElement").isBlank())
 				areasSecondJobElement = record.get("areasSecondJobElement").split(",");
@@ -854,14 +898,14 @@ public class GeneralDemandGeneration {
 					|| locationsOfSecondJobElement != null || secondJobElementTimePerUnit != null
 					|| secondJobElementTimeWindow != null) {
 				NewDemand newShipmentDemand = new NewDemand(carrierID, demandToDistribute, numberOfJobs,
-						shareOfPopulationWithThisDemand, areasFirstJobElement, numberOfFirstJobElementLocations,
+						shareOfPopulationWithFirstJobElement, areasFirstJobElement, numberOfFirstJobElementLocations,
 						locationsOfFirstJobElement, firstJobElementTimePerUnit, firstJobElementTimeWindow,
-						areasSecondJobElement, numberOfSecondJobElementLocations, locationsOfSecondJobElement,
-						secondJobElementTimePerUnit, secondJobElementTimeWindow);
+						shareOfPopulationWithSecondJobElement, areasSecondJobElement, numberOfSecondJobElementLocations,
+						locationsOfSecondJobElement, secondJobElementTimePerUnit, secondJobElementTimeWindow);
 				demandInformation.add(newShipmentDemand);
 			} else {
 				NewDemand newServiceDemand = new NewDemand(carrierID, demandToDistribute, numberOfJobs,
-						shareOfPopulationWithThisDemand, areasFirstJobElement, numberOfFirstJobElementLocations,
+						shareOfPopulationWithFirstJobElement, areasFirstJobElement, numberOfFirstJobElementLocations,
 						locationsOfFirstJobElement, firstJobElementTimePerUnit, firstJobElementTimeWindow);
 				demandInformation.add(newServiceDemand);
 			}
@@ -894,9 +938,6 @@ public class GeneralDemandGeneration {
 			if (newDemand.getDemandToDistribute() == null)
 				throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
 						+ ": No demand information found. You must add 0 as demand if you want no demand. Please check!");
-			if (newDemand.getNumberOfJobs() != null && newDemand.getShareOfPopulationWithThisDemand() != null)
-				throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
-						+ ": Select either a numberOfJobs or a share of the population. Please check!");
 			if (newDemand.getNumberOfJobs() != null && newDemand.getDemandToDistribute() != 0
 					&& newDemand.getDemandToDistribute() < newDemand.getNumberOfJobs())
 				throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
@@ -904,11 +945,15 @@ public class GeneralDemandGeneration {
 			if (newDemand.getNumberOfJobs() != null && newDemand.getNumberOfJobs() == 0)
 				throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
 						+ ": The number of jobs can not be 0 !. Please check!");
-			if (newDemand.getShareOfPopulationWithThisDemand() != null)
-				if (newDemand.getShareOfPopulationWithThisDemand() > 100
-						|| newDemand.getShareOfPopulationWithThisDemand() <= 0)
+			if (newDemand.getShareOfPopulationWithFirstJobElement() != null)
+				if (newDemand.getShareOfPopulationWithFirstJobElement() > 1
+						|| newDemand.getShareOfPopulationWithFirstJobElement() <= 0)
 					throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
 							+ ": The percentage of the population should be more than 0 and maximum 100pct. Please check!");
+			if (newDemand.getShareOfPopulationWithFirstJobElement() != null
+					&& newDemand.getNumberOfFirstJobElementLocations() != null)
+				throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
+						+ ": Select either share of population or number of locations");
 			if (newDemand.getAreasFirstJobElement() != null) {
 				if (polygonsInShape == null)
 					throw new RuntimeException("You selected a certain area for the carrier" + newDemand.getCarrierID()
@@ -941,6 +986,9 @@ public class GeneralDemandGeneration {
 
 			// for service
 			if (newDemand.getTypeOfDemand().equals("service")) {
+				if (newDemand.getNumberOfJobs() != null && newDemand.getShareOfPopulationWithFirstJobElement() != null)
+					throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
+							+ ": Select either a numberOfJobs or a share of the population. Please check!");
 				if (newDemand.getLocationsOfFirstJobElement() != null && newDemand.getNumberOfJobs() != null
 						&& newDemand.getLocationsOfFirstJobElement().length > newDemand.getNumberOfJobs())
 					throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
@@ -954,6 +1002,19 @@ public class GeneralDemandGeneration {
 			}
 			// for shipments
 			if (newDemand.getTypeOfDemand().equals("shipment")) {
+				if (newDemand.getShareOfPopulationWithSecondJobElement() != null
+						&& newDemand.getNumberOfSecondJobElementLocations() != null)
+					throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
+							+ ": Select either share of population or number of locations");
+				if (newDemand.getNumberOfJobs() != null && newDemand.getShareOfPopulationWithFirstJobElement() != null
+						&& newDemand.getShareOfPopulationWithSecondJobElement() != null)
+					throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
+							+ ": Select either a numberOfJobs or a share of the population. Please check!");
+				if (newDemand.getShareOfPopulationWithSecondJobElement() != null)
+					if (newDemand.getShareOfPopulationWithSecondJobElement() > 1
+							|| newDemand.getShareOfPopulationWithSecondJobElement() <= 0)
+						throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
+								+ ": The percentage of the population should be more than 0 and maximum 100pct. Please check!");
 				if (newDemand.getAreasSecondJobElement() != null) {
 					if (polygonsInShape == null)
 						throw new RuntimeException("You selected a certain area for the carrier"
@@ -1367,11 +1428,11 @@ public class GeneralDemandGeneration {
 			Collection<SimpleFeature> polygonsInShape, Population population) {
 
 		int countOfLinks = 1;
-		HashMap<Id<Link>, Link> possibleLinks = new HashMap<Id<Link>, Link>();
+		HashMap<Id<Link>, Link> possibleLinksForService = new HashMap<Id<Link>, Link>();
 		int distributedDemand = 0;
 		double roundingError = 0;
 		double sumOfPossibleLinkLenght = 0;
-		Double shareOfPopulationWithThisDemand = newDemand.getShareOfPopulationWithThisDemand();
+		Double shareOfPopulationWithThisService = newDemand.getShareOfPopulationWithFirstJobElement();
 		Integer numberOfJobs = 0;
 		Integer demandToDistribute = newDemand.getDemandToDistribute();
 		String[] areasForServiceLocations = newDemand.getAreasFirstJobElement();
@@ -1386,11 +1447,11 @@ public class GeneralDemandGeneration {
 			if (!link.getId().toString().contains("pt") && checkPositionInShape(link, null, polygonsInShape,
 					areasForServiceLocations, demandLocationsInShape)) {
 				sumOfPossibleLinkLenght = sumOfPossibleLinkLenght + link.getLength();
-				possibleLinks.put(link.getId(), link);
+				possibleLinksForService.put(link.getId(), link);
 			}
 		}
 
-		if (shareOfPopulationWithThisDemand == null)
+		if (shareOfPopulationWithThisService == null)
 			numberOfJobs = newDemand.getNumberOfJobs();
 		else if (population == null)
 			throw new RuntimeException(
@@ -1408,33 +1469,38 @@ public class GeneralDemandGeneration {
 			} else
 				possiblePersons.putAll(population.getPersons());
 			if (sampleSizeInputPopulation == sampleTo)
-				numberOfJobs = (int) Math.round(shareOfPopulationWithThisDemand * numberOfPersonsInPopulation);
+				numberOfJobs = (int) Math.round(shareOfPopulationWithThisService * numberOfPersonsInPopulation);
 			else if (samplingOption.equals("changeNumberOfLocationsWithDemand"))
 				numberOfJobs = (int) Math.round((sampleTo / sampleSizeInputPopulation)
-						* (shareOfPopulationWithThisDemand * numberOfPersonsInPopulation));
+						* (shareOfPopulationWithThisService * numberOfPersonsInPopulation));
 			else if (samplingOption.equals("changeDemandOnLocation")) {
 				demandToDistribute = (int) Math.round((sampleTo / sampleSizeInputPopulation) * demandToDistribute);
-				numberOfJobs = (int) Math.round(shareOfPopulationWithThisDemand * numberOfPersonsInPopulation);
+				numberOfJobs = (int) Math.round(shareOfPopulationWithThisService * numberOfPersonsInPopulation);
 			} else
 				throw new RuntimeException(
 						"Error with the sampling of the demand based on the population. Please check sampling sizes and sampling options!!");
-			middlePointsLinks = createMapMiddlePointsLinks(possibleLinks.values());
+			middlePointsLinks = createMapMiddlePointsLinks(possibleLinksForService.values());
 		}
+
+		if (locationsOfServices != null)
+			for (String selectedLinkIdService : locationsOfServices)
+				if (!possibleLinksForService.containsKey(Id.createLinkId(selectedLinkIdService)))
+					throw new RuntimeException("The min the selected link " + selectedLinkIdService
+							+ " for the service is not part of the possible links. Plaese check!");
 
 		if (numberOfJobs == null) {
 			// creates services with a demand of 1
-			if (possibleLinks.size() > demandToDistribute) {
+			if (possibleLinksForService.size() > demandToDistribute) {
 				for (int i = 0; i < demandToDistribute; i++) {
-					if (i * 2 > numberOfLinksInNetwork)
-						throw new RuntimeException(
-								"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
+
 					Link link = null;
 					if (numberOfServiceLocations == null || usedServiceLocations.size() < numberOfServiceLocations) {
 						if (locationsOfServices != null && locationsOfServices.length > i) {
 							link = scenario.getNetwork().getLinks().get(Id.createLinkId(locationsOfServices[i]));
 						} else
-							link = findPossibleLinkForDemand(possibleLinks, possiblePersons, middlePointsLinks,
-									demandLocationsInShape, polygonsInShape, areasForServiceLocations);
+							link = findPossibleLinkForDemand(possibleLinksForService, possiblePersons,
+									middlePointsLinks, demandLocationsInShape, polygonsInShape,
+									areasForServiceLocations);
 					} else {
 						Random rand = new Random();
 						link = scenario.getNetwork().getLinks().get(Id.createLinkId(usedServiceLocations.stream()
@@ -1472,7 +1538,7 @@ public class GeneralDemandGeneration {
 				if (numberOfServiceLocations != null)
 					throw new RuntimeException(
 							"Because the demand is higher than the number of links, the demand will be distrubted evenly over all links. You selected a certain number of service locations, which is not possible here!");
-				for (Link link : possibleLinks.values()) {
+				for (Link link : possibleLinksForService.values()) {
 					int demandForThisLink;
 					if (countOfLinks == scenario.getNetwork().getLinks().size()) {
 						demandForThisLink = demandToDistribute - distributedDemand;
@@ -1526,7 +1592,7 @@ public class GeneralDemandGeneration {
 					if (locationsOfServices != null && locationsOfServices.length > i) {
 						link = scenario.getNetwork().getLinks().get(Id.createLinkId(locationsOfServices[i]));
 					} else
-						link = findPossibleLinkForDemand(possibleLinks, possiblePersons, middlePointsLinks,
+						link = findPossibleLinkForDemand(possibleLinksForService, possiblePersons, middlePointsLinks,
 								demandLocationsInShape, polygonsInShape, areasForServiceLocations);
 				} else {
 					Random rand = new Random();

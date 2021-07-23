@@ -7,12 +7,13 @@ final class NewDemand {
 	private String carrierID;
 	private Integer demandToDistribute;
 	private Integer numberOfJobs;
-	private Double shareOfPopulationWithThisDemand;
+	private Double shareOfPopulationWithFirstJobElement;
 	private String[] areasFirstJobElement;
 	private Integer numberOfFirstJobElementLocations;
 	private String[] locationsOfFirstJobElement;
 	private Integer firstJobElementTimePerUnit;
 	private TimeWindow firstJobElementTimeWindow;
+	private Double shareOfPopulationWithSecondJobElement;
 	private String[] areasSecondJobElement;
 	private Integer numberOfSecondJobElementLocations;
 	private String[] locationsOfSecondJobElement;
@@ -21,13 +22,13 @@ final class NewDemand {
 	private String typeOfDemand;
 
 	NewDemand(String carrierID, Integer demandToDistribute, Integer numberOfJobs,
-			Double shareOfPopulationWithThisDemand, String[] areasFirstJobElement,
+			Double shareOfPopulationWithFirstJobElement, String[] areasFirstJobElement,
 			Integer numberOfFirstJobElementLocations, String[] locationsOfFirstJobElement,
 			Integer firstJobElementTimePerUnit, TimeWindow firstJobElementTimeWindow) {
 		this.setCarrierID(carrierID);
 		this.setDemandToDistribute(demandToDistribute);
 		this.setNumberOfJobs(numberOfJobs);
-		this.setShareOfPopulationWithThisDemand(shareOfPopulationWithThisDemand);
+		this.setShareOfPopulationWithFirstJobElement(shareOfPopulationWithFirstJobElement);
 		this.setAreasFirstJobElement(areasFirstJobElement);
 		this.setNumberOfFirstJobElementLocations(numberOfFirstJobElementLocations);
 		this.setLocationsOfFirstJobElement(locationsOfFirstJobElement);
@@ -37,20 +38,22 @@ final class NewDemand {
 	}
 
 	NewDemand(String carrierID, Integer demandToDistribute, Integer numberOfJobs,
-			Double shareOfPopulationWithThisDemand, String[] areasFirstJobElement,
+			Double shareOfPopulationWithFirstJobElement, String[] areasFirstJobElement,
 			Integer numberOfFirstJobElementLocations, String[] locationsOfFirstJobElement,
-			Integer firstJobElementTimePerUnit, TimeWindow firstJobElementTimeWindow, String[] areasSecondJobElement,
+			Integer firstJobElementTimePerUnit, TimeWindow firstJobElementTimeWindow,
+			Double shareOfPopulationWithSecondJobElement, String[] areasSecondJobElement,
 			Integer numberOfSecondJobElementLocations, String[] locationsOfSecondJobElement,
 			Integer secondJobElementTimePerUnit, TimeWindow secondJobElementTimeWindow) {
 		this.setCarrierID(carrierID);
 		this.setDemandToDistribute(demandToDistribute);
 		this.setNumberOfJobs(numberOfJobs);
-		this.setShareOfPopulationWithThisDemand(shareOfPopulationWithThisDemand);
+		this.setShareOfPopulationWithFirstJobElement(shareOfPopulationWithFirstJobElement);
 		this.setAreasFirstJobElement(areasFirstJobElement);
 		this.setNumberOfFirstJobElementLocations(numberOfFirstJobElementLocations);
 		this.setLocationsOfFirstJobElement(locationsOfFirstJobElement);
 		this.setFirstJobElementTimePerUnit(firstJobElementTimePerUnit);
 		this.setFirstJobElementTimeWindow(firstJobElementTimeWindow);
+		this.setShareOfPopulationWithSecondJobElement(shareOfPopulationWithSecondJobElement);
 		this.setAreasSecondJobElement(areasSecondJobElement);
 		this.setNumberOfSecondJobElementLocations(numberOfSecondJobElementLocations);
 		this.setLocationsOfSecondJobElement(locationsOfSecondJobElement);
@@ -107,12 +110,12 @@ final class NewDemand {
 		this.firstJobElementTimeWindow = firstJobElementTimeWindow;
 	}
 
-	public Double getShareOfPopulationWithThisDemand() {
-		return shareOfPopulationWithThisDemand;
+	public Double getShareOfPopulationWithFirstJobElement() {
+		return shareOfPopulationWithFirstJobElement;
 	}
 
-	public void setShareOfPopulationWithThisDemand(Double shareOfPopulationWithThisDemand) {
-		this.shareOfPopulationWithThisDemand = shareOfPopulationWithThisDemand;
+	public void setShareOfPopulationWithFirstJobElement(Double shareOfPopulationWithFirstJobElement) {
+		this.shareOfPopulationWithFirstJobElement = shareOfPopulationWithFirstJobElement;
 	}
 
 	public TimeWindow getSecondJobElementTimeWindow() {
@@ -177,5 +180,13 @@ final class NewDemand {
 
 	public void setTypeOfDemand(String typeOfDemand) {
 		this.typeOfDemand = typeOfDemand;
+	}
+
+	public Double getShareOfPopulationWithSecondJobElement() {
+		return shareOfPopulationWithSecondJobElement;
+	}
+
+	public void setShareOfPopulationWithSecondJobElement(Double shareOfPopulationWithSecondJobElement) {
+		this.shareOfPopulationWithSecondJobElement = shareOfPopulationWithSecondJobElement;
 	}
 }
