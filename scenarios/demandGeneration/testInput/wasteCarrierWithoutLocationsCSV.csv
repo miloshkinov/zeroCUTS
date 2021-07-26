@@ -1,0 +1,2 @@
+carrierName;vehicleTypes;numberOfDepots;selectedVehicleDepots;areaOfAdditonalDepots;fixedNumberOfVehilcePerTypeAndLocation;fleetSize;vehicleStartTime;vehicleEndTime;jspritIterations
+csvCarrier1;diesel_waste_vehicle;4;;;;infinite;21600;50400;3
