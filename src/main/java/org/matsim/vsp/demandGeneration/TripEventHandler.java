@@ -104,7 +104,7 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 			else 
 				personId2AmountServices.put(personId, 1);
 		}
-		if (event.getActType().equals("shipment")) {
+		if (event.getActType().equals("pickup")) {
 			if (personId2AmountShipments.containsKey(personId))
 				personId2AmountShipments.put(personId, personId2AmountShipments.get(personId)+1);
 			else
