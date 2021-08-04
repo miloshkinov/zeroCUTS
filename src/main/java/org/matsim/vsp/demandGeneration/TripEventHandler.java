@@ -42,8 +42,8 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 	private Map<Id<Person>,Double> driverId2totalDistance = new HashMap<>();
 	private Map<Id<Person>,Double> personId2ActivityDurations = new HashMap<>(); //Calculating the duration of all activities of that agent.
 	private Map<Id<Person>,Double> personId2DurationFromStartToEnd = new HashMap<>(); // Calculation of duration of whole tour (from start to the end)
-	private Map<Id<Person>,Integer> personId2AmountServices = new HashMap<>();	// Counts the services of a tour
-	private Map<Id<Person>,Integer> personId2AmountShipments = new HashMap<>();	// Counts the shipments of a tour
+	private Map<Id<Person>,Integer> personId2NumberServices = new HashMap<>();	// Counts the services of a tour
+	private Map<Id<Person>,Integer> personId2NumberShipments = new HashMap<>();	// Counts the shipments of a tour
 
 	public TripEventHandler(Network network, CarrierVehicleTypes vehicleTypes) {
 		this.network = network;
@@ -99,16 +99,16 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 			}
 		}
 		if (event.getActType().equals("service")) {
-			if (personId2AmountServices.containsKey(personId))
-				personId2AmountServices.put(personId, personId2AmountServices.get(personId)+1);
+			if (personId2NumberServices.containsKey(personId))
+				personId2NumberServices.put(personId, personId2NumberServices.get(personId)+1);
 			else 
-				personId2AmountServices.put(personId, 1);
+				personId2NumberServices.put(personId, 1);
 		}
 		if (event.getActType().equals("pickup")) {
-			if (personId2AmountShipments.containsKey(personId))
-				personId2AmountShipments.put(personId, personId2AmountShipments.get(personId)+1);
+			if (personId2NumberShipments.containsKey(personId))
+				personId2NumberShipments.put(personId, personId2NumberShipments.get(personId)+1);
 			else
-				personId2AmountShipments.put(personId, 1);
+				personId2NumberShipments.put(personId, 1);
 		}
 	}
 
@@ -198,9 +198,9 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 	 */
 	/*package-private*/ Map<Id<Person>,Integer> getPersonId2TourServices(String carrierIdString) {
 		Map<Id<Person>,Integer> personId2listOfTourServices = new HashMap<>();
-		for(Id<Person> personId: personId2AmountServices.keySet()){
+		for(Id<Person> personId: personId2NumberServices.keySet()){
 				if(personId.toString().contains("_"+carrierIdString+"_")){
-					int service = personId2AmountServices.get(personId);
+					int service = personId2NumberServices.get(personId);
 					if (personId2listOfTourServices.containsKey(personId)){
 						personId2listOfTourServices.put(personId, personId2listOfTourServices.get(personId));
 					} else {
@@ -211,15 +211,15 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 		return personId2listOfTourServices;
 	}
 	/**
-	 * Counts the amount of shipments of a tour for all persons (driver) of the specified carrier.
+	 * Counts the number of shipments of a tour for all persons (driver) of the specified carrier.
 	 * @param carrierIdString
 	 * @return
 	 */
 	/*package-private*/ Map<Id<Person>,Integer> getPersonId2TourShipments(String carrierIdString) {
 		Map<Id<Person>,Integer> personId2listOfTourShipments = new HashMap<>();
-		for(Id<Person> personId: personId2AmountShipments.keySet()){
+		for(Id<Person> personId: personId2NumberShipments.keySet()){
 				if(personId.toString().contains("_"+carrierIdString+"_")){
-					int service = personId2AmountShipments.get(personId);
+					int service = personId2NumberShipments.get(personId);
 					if (personId2listOfTourShipments.containsKey(personId)){
 						personId2listOfTourShipments.put(personId, personId2listOfTourShipments.get(personId));
 					} else {

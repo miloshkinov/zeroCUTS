@@ -136,8 +136,8 @@ import java.util.TreeMap;
 			Map<Id<Person>, Double> personId2tourDistance = this.handler.getPersonId2TourDistances(carrierIdString);
 			Map<Id<Person>, Double> personId2tourTravelTimes = this.handler.getPersonId2TravelTimes(carrierIdString);
 			Map<Id<Person>, Double> personId2tourActivityDurations = this.handler.getPersonId2SumOfActivityDurations(carrierIdString);
-			Map<Id<Person>, Integer> personId2tourAmountServices = this.handler.getPersonId2TourServices(carrierIdString);
-			Map<Id<Person>, Integer> personId2tourAmountShipments = this.handler.getPersonId2TourShipments(carrierIdString);
+			Map<Id<Person>, Integer> personId2tourNumberServices = this.handler.getPersonId2TourServices(carrierIdString);
+			Map<Id<Person>, Integer> personId2tourNumberShipments = this.handler.getPersonId2TourShipments(carrierIdString);
 //			Map<Id<Person>, Integer> personId2tourHandeledDemand = this.handler.getPersonId2TourHandledDemand(carrierIdString);
 
 			//Summe für gesammten Carrier
@@ -152,10 +152,10 @@ import java.util.TreeMap;
 				totalTourDistanceInMeters = totalTourDistanceInMeters + personId2tourDistance.get(id);
 				totalTourTravelTimeInSeconds = totalTourTravelTimeInSeconds + personId2tourTravelTimes.get(id);
 				totalTourActivityDurationInSeconds = totalTourActivityDurationInSeconds + personId2tourActivityDurations.get(id);
-				if (!personId2tourAmountServices.isEmpty())
-					totalAmountOfServices = totalAmountOfServices + personId2tourAmountServices.get(id);
-				if (!personId2tourAmountShipments.isEmpty())
-					totalAmountOfShipments = totalAmountOfShipments + personId2tourAmountShipments.get(id);
+				if (!personId2tourNumberServices.isEmpty())
+					totalAmountOfServices = totalAmountOfServices + personId2tourNumberServices.get(id);
+				if (!personId2tourNumberShipments.isEmpty())
+					totalAmountOfShipments = totalAmountOfShipments + personId2tourNumberShipments.get(id);
 //				totalAmountOfHandeledDemand = totalAmountOfHandeledDemand + personId2tourHandeledDemand.get(id);
 			}
 
@@ -175,16 +175,20 @@ import java.util.TreeMap;
 				Double tourDistanceInMeters = personId2tourDistance.get(id);
 				Double tourTravelTimeInSeconds = personId2tourTravelTimes.get(id);
 				Double tourActivityDurationInSeconds = personId2tourActivityDurations.get(id);
-				Integer tourAmountOfServices = personId2tourAmountServices.get(id);
-				Integer tourAmountOfShipments = personId2tourAmountShipments.get(id);
+				Integer tourNumberOfServices = personId2tourNumberServices.get(id);
+				Integer tourNumberOfShipments = personId2tourNumberShipments.get(id);
 //				Integer tourAmountOfHandledDemand = personId2tourHandeledDemand.get(id);
+				if (tourNumberOfServices == null)
+					tourNumberOfServices = 0;
+				if (tourNumberOfShipments == null)
+					tourNumberOfShipments = 0;
 
 				bw.write(id + ";"
 						+ tourDistanceInMeters/1000 + ";"
 						+ tourTravelTimeInSeconds/3600 + ";"
 						+ tourActivityDurationInSeconds/3600 +";"
-						+ totalAmountOfServices +";"
-						+ totalAmountOfShipments +";"
+						+ tourNumberOfServices +";"
+						+ tourNumberOfShipments +";"
 						+ "TODO"
 				);
 				bw.newLine();
