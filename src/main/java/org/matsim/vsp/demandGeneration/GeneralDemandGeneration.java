@@ -85,8 +85,6 @@ import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.io.UncheckedIOException;
-import org.matsim.facilities.ActivityFacilities;
-import org.matsim.facilities.ActivityFacilitiesFactory;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.opengis.feature.simple.SimpleFeature;
@@ -149,7 +147,7 @@ public class GeneralDemandGeneration {
 		String shapeCRS = "EPSG:3857";
 		if (args.length == 0) {
 			outputLocation = "output/demandGeneration/Waste4";
-			vehicleTypesFileLocation = "scenarios/demandGeneration/testInput/vehicleTypes_waste.xml";
+			vehicleTypesFileLocation = "scenarios/demandGeneration/testInput/vehicleTypes_default.xml";
 			carriersFileLocation = "scenarios/demandGeneration/testInput/carrier_berlin_noDemand.xml";
 			shapeFileLocation = "scenarios/demandGeneration/shp_berlin_districts/Berlin_Ortsteile.shp";
 			populationFile = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-1pct/input/berlin-v5.5-1pct.plans.xml.gz";
@@ -182,36 +180,34 @@ public class GeneralDemandGeneration {
 		prepareVehicles(config, selectedVehicleInputOption, vehicleTypesFileLocation);
 
 		// load or create carrier
-		CarrierInputOptions selectedCarrierInputOption = CarrierInputOptions.readCarrierFile;
+		CarrierInputOptions selectedCarrierInputOption = CarrierInputOptions.createFromCSV;
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 
-		String csvLocationCarrier = "scenarios/demandGeneration/testInput/wasteCarrierWithoutLocationsCSV.csv";
-		String csvLocationDemand = "scenarios/demandGeneration/testInput/wasteDemandCSV.csv";
-//		String csvLocationCarrier = "input/wasteCarrierWithoutLocationsCSV.csv";
-//		String csvLocationDemand = "input/wasteDemandCSV.csv";
+		String csvLocationCarrier = "scenarios/demandGeneration/testInput/testCarrierCSV.csv";
+		String csvLocationDemand = "scenarios/demandGeneration/testInput/testDemandCSV.csv";
 		int defaultJspritIterations = 3;
 		boolean useShapeFileforLocationsChoice = false;
 
-		Set<NewCarrier> allNewCarrier = new HashSet<>(); // can move to prepareCarrier
 		Collection<SimpleFeature> polygonsInShape = null;
 		if (useShapeFileforLocationsChoice)
 			polygonsInShape = ShapeFileReader.getAllFeatures(shapeFileLocation);
-		prepareCarrier(scenario, selectedCarrierInputOption, carriersFileLocation, allNewCarrier, csvLocationCarrier,
-				polygonsInShape, defaultJspritIterations, useShapeFileforLocationsChoice);
+		prepareCarrier(scenario, selectedCarrierInputOption, carriersFileLocation, csvLocationCarrier, polygonsInShape,
+				defaultJspritIterations, useShapeFileforLocationsChoice);
 
 		// create the demand
 		// TODO add possible locations characteristics of links, speed, type etc.
 		// demand per person
 
-		DemandGenerationOptions selectedDemandGenerationOption = DemandGenerationOptions.useDemandFromCarrierFile;
+		DemandGenerationOptions selectedDemandGenerationOption = DemandGenerationOptions.loadCSVData;
 		PopulationOptions selectedPopulationOption = PopulationOptions.usePopulationInShape;
 		PopulationSamplingOption selectedSamplingOption = PopulationSamplingOption.createMoreLocations;
+		boolean reduceNumberOfJobs = false;
 		createDemand(selectedDemandGenerationOption, scenario, csvLocationDemand, useShapeFileforLocationsChoice,
-				polygonsInShape, populationFile, selectedSamplingOption, selectedPopulationOption);
+				polygonsInShape, populationFile, selectedSamplingOption, selectedPopulationOption, reduceNumberOfJobs);
 
 		// prepare the VRP and get a solution
 		outputSummaryShipments(scenario);
-		OptionsOfVRPSolutions selectedSolution = OptionsOfVRPSolutions.runJspritAndMATSim;
+		OptionsOfVRPSolutions selectedSolution = OptionsOfVRPSolutions.createNoSolutionAndOnlyWriteCarrierFile;
 		boolean usingRangeRestriction = false;
 		Controler controler = prepareControler(scenario);
 		createFaciltyFile(controler);
@@ -221,9 +217,6 @@ public class GeneralDemandGeneration {
 
 		AnalyseOptions analyseOption = AnalyseOptions.withAnalyseOutput;
 		analyseResult(analyseOption, config.controler().getOutputDirectory());
-
-		// TODO add service/Shipment ID to events to also analyze the jobs or add the
-		// carrierFile to the analyzes
 
 		log.info("Finished");
 	}
@@ -236,58 +229,33 @@ public class GeneralDemandGeneration {
 	private static void createFaciltyFile(Controler controler) {
 
 		Network network = controler.getScenario().getNetwork();
-		ActivityFacilities facilities = controler.getScenario().getActivityFacilities();
 
 		FileWriter writer;
 		File file;
 		file = new File(controler.getConfig().controler().getOutputDirectory() + "/outputFacilitiesFile.csv");
 		try {
 			writer = new FileWriter(file, true);
-			writer.write("id;x;y;type;linkID;personID;pickupLocation;deliveryLocation\n");
+			writer.write("id;x;y;type;ServiceLocation;pickupLocation;deliveryLocation\n");
 
 			for (Carrier thisCarrier : FreightUtils.getCarriers(controler.getScenario()).getCarriers().values()) {
 				for (CarrierService thisService : thisCarrier.getServices().values()) {
-					Coord coord = MGC
-							.point2Coord(middlePointOfLink(network.getLinks().get(thisService.getLocationLinkId())));
-					if (thisService.getAttributes().getAsMap().containsKey("relatedPerson"))
-						writer.write(thisCarrier.getId().toString() + thisService.getId().toString() + ";"
-								+ coord.getX() + ";" + coord.getY() + ";" + "Service" + ";"
-								+ thisService.getLocationLinkId().toString() + ";"
-								+ thisService.getAttributes().getAttribute("relatedPerson;;") + "\n");
-					else
-						writer.write(thisCarrier.getId().toString() + thisService.getId().toString() + ";"
-								+ coord.getX() + ";" + coord.getY() + ";" + "Service" + ";"
-								+ thisService.getLocationLinkId().toString() + ";noPerson;;" + "\n");
-
+					Coord coord = middlePointOfLink(network.getLinks().get(thisService.getLocationLinkId()));
+					writer.write(thisCarrier.getId().toString() + thisService.getId().toString() + ";" + coord.getX()
+							+ ";" + coord.getY() + ";" + "Service" + ";" + thisService.getLocationLinkId().toString()
+							+ ";;" + "\n");
 				}
 				for (CarrierShipment thisShipment : thisCarrier.getShipments().values()) {
-					Coord coordFrom = MGC
-							.point2Coord(middlePointOfLink(network.getLinks().get(thisShipment.getFrom())));
-					Coord coordTo = MGC.point2Coord(middlePointOfLink(network.getLinks().get(thisShipment.getTo())));
-					if (thisShipment.getAttributes().getAsMap().containsKey("relatedPerson")) {
-						writer.write(thisCarrier.getId().toString() + thisShipment.getId().toString() + ";"
-								+ coordFrom.getX() + ";" + coordFrom.getY() + ";" + "Pickup" + ";"
-								+ thisShipment.getFrom().toString() + ";"
-								+ thisShipment.getAttributes().getAttribute("relatedPerson") + ";"
-								+ thisShipment.getFrom().toString() + ";" + thisShipment.getTo().toString() + "\n");
-						writer.write(thisCarrier.getId().toString() + thisShipment.getId().toString() + ";"
-								+ coordTo.getX() + ";" + coordTo.getY() + ";" + "Delivery" + ";"
-								+ thisShipment.getTo().toString() + ";"
-								+ thisShipment.getAttributes().getAttribute("relatedPerson") + ";"
-								+ thisShipment.getFrom().toString() + ";" + thisShipment.getTo().toString() + "\n");
-					} else {
-						writer.write(thisCarrier.getId().toString() + thisShipment.getId().toString() + ";"
-								+ coordFrom.getX() + ";" + coordFrom.getY() + ";" + "Pickup" + ";"
-								+ thisShipment.getFrom().toString() + ";noPerson" + ";"
-								+ thisShipment.getFrom().toString() + ";" + thisShipment.getTo().toString() + "\n");
-						writer.write(thisCarrier.getId().toString() + thisShipment.getId().toString() + ";"
-								+ coordTo.getX() + ";" + coordTo.getY() + ";" + "Delivery" + ";"
-								+ thisShipment.getTo().toString() + ";noPerson" + ";"
-								+ thisShipment.getFrom().toString() + ";" + thisShipment.getTo().toString() + "\n");
-					}
+					Coord coordFrom = middlePointOfLink(network.getLinks().get(thisShipment.getFrom()));
+					Coord coordTo = middlePointOfLink(network.getLinks().get(thisShipment.getTo()));
+
+					writer.write(thisCarrier.getId().toString() + thisShipment.getId().toString() + ";"
+							+ coordFrom.getX() + ";" + coordFrom.getY() + ";" + "Pickup" + ";;"
+							+ thisShipment.getFrom().toString() + ";" + thisShipment.getTo().toString() + "\n");
+					writer.write(thisCarrier.getId().toString() + thisShipment.getId().toString() + ";" + coordTo.getX()
+							+ ";" + coordTo.getY() + ";" + "Delivery" + ";;" + thisShipment.getFrom().toString() + ";"
+							+ thisShipment.getTo().toString() + "\n");
 				}
 			}
-
 			writer.flush();
 			writer.close();
 		} catch (IOException e) {
@@ -395,10 +363,10 @@ public class GeneralDemandGeneration {
 	 * @throws IOException
 	 */
 	private static void prepareCarrier(Scenario scenario, CarrierInputOptions selectedCarrierInputOption,
-			String carriersFileLocation, Set<NewCarrier> allNewCarrier, String csvLocationCarrier,
-			Collection<SimpleFeature> polygonsInShape, int defaultJspritIterations,
-			boolean useShapeFileforLocationsChoice) throws IOException {
+			String carriersFileLocation, String csvLocationCarrier, Collection<SimpleFeature> polygonsInShape,
+			int defaultJspritIterations, boolean useShapeFileforLocationsChoice) throws IOException {
 
+		Set<NewCarrier> allNewCarrier = new HashSet<>();
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(scenario.getConfig(),
 				FreightConfigGroup.class);
 		switch (selectedCarrierInputOption) {
@@ -448,13 +416,14 @@ public class GeneralDemandGeneration {
 	private static void createDemand(DemandGenerationOptions selectedDemandGenerationOption, Scenario scenario,
 			String csvLocationDemand, boolean demandLocationsInShape, Collection<SimpleFeature> polygonsInShape,
 			String populationFile, PopulationSamplingOption selectedSamplingOption,
-			PopulationOptions selectedPopulationOption) throws IOException {
+			PopulationOptions selectedPopulationOption, boolean reduceNumberOfJobs) throws IOException {
 
 		Set<NewDemand> demandInformation = new HashSet<>();
 		switch (selectedDemandGenerationOption) {
 		case loadCSVData:
 			demandInformation = readDemandInformation(csvLocationDemand, demandInformation, scenario, polygonsInShape);
-			createDemandForCarriers(scenario, demandLocationsInShape, polygonsInShape, demandInformation, null);
+			createDemandForCarriers(scenario, demandLocationsInShape, polygonsInShape, demandInformation, null,
+					reduceNumberOfJobs);
 			break;
 		case loadCSVDataAndUsePopulation:
 			Population population = PopulationUtils.readPopulation(populationFile);
@@ -477,7 +446,7 @@ public class GeneralDemandGeneration {
 			switch (selectedPopulationOption) {
 			case usePopulationHolePopulation:
 				createDemandForCarriers(scenario, demandLocationsInShape, polygonsInShape, demandInformation,
-						population);
+						population, reduceNumberOfJobs);
 				break;
 			case usePopulationInAgeGroups:
 				// TODO
@@ -489,7 +458,7 @@ public class GeneralDemandGeneration {
 						.getCoordinateTransformation(populationCRS, shapeCRS);
 				reducePopulationToShapeArea(population, crsTransformationPopulationAndShape, polygonsInShape);
 				createDemandForCarriers(scenario, demandLocationsInShape, polygonsInShape, demandInformation,
-						population);
+						population, reduceNumberOfJobs);
 				break;
 			default:
 				break;
@@ -523,19 +492,22 @@ public class GeneralDemandGeneration {
 	 * @param population
 	 */
 	private static void createDemandForCarriers(Scenario scenario, boolean demandLocationsInShape,
-			Collection<SimpleFeature> polygonsInShape, Set<NewDemand> demandInformation, Population population) {
+			Collection<SimpleFeature> polygonsInShape, Set<NewDemand> demandInformation, Population population,
+			boolean reduceNumberOfJobs) {
 
 		for (NewDemand newDemand : demandInformation) {
 			if (newDemand.getTypeOfDemand().equals("service"))
-				createServices(scenario, newDemand, demandLocationsInShape, polygonsInShape, population);
+				createServices(scenario, newDemand, demandLocationsInShape, polygonsInShape, population,
+						reduceNumberOfJobs);
 			else if (newDemand.getTypeOfDemand().equals("shipment"))
-				createShipments(scenario, newDemand, demandLocationsInShape, polygonsInShape, population);
+				createShipments(scenario, newDemand, demandLocationsInShape, polygonsInShape, population,
+						reduceNumberOfJobs);
 		}
 
 	}
 
 	private static void createShipments(Scenario scenario, NewDemand newDemand, boolean demandLocationsInShape,
-			Collection<SimpleFeature> polygonsInShape, Population population) {
+			Collection<SimpleFeature> polygonsInShape, Population population, boolean reduceNumberOfShipments) {
 
 		int countOfLinks = 1;
 		HashMap<Id<Link>, Link> possibleLinksPickup = new HashMap<Id<Link>, Link>();
@@ -558,8 +530,8 @@ public class GeneralDemandGeneration {
 		ArrayList<String> usedDeliveryLocations = new ArrayList<String>();
 		HashMap<Id<Person>, Person> possiblePersonsPickup = new HashMap<Id<Person>, Person>();
 		HashMap<Id<Person>, Person> possiblePersonsDelivery = new HashMap<Id<Person>, Person>();
-		HashMap<Id<Link>, Point> middlePointsLinksPickup = new HashMap<Id<Link>, Point>();
-		HashMap<Id<Link>, Point> middlePointsLinksDelivery = new HashMap<Id<Link>, Point>();
+		HashMap<Id<Link>, Coord> middlePointsLinksPickup = new HashMap<Id<Link>, Coord>();
+		HashMap<Id<Link>, Coord> middlePointsLinksDelivery = new HashMap<Id<Link>, Coord>();
 
 		// set number of jobs
 		if (shareOfPopulationWithThisPickup == null && shareOfPopulationWithThisDelivery == null)
@@ -646,7 +618,7 @@ public class GeneralDemandGeneration {
 			} else if (numberOfPickupLocations != null) {
 				Link newPossibleLink = null;
 				while (possibleLinksPickup.size() < numberOfPickupLocations) {
-					newPossibleLink = findPossibleLinkForDemand(possibleLinksPickup, possiblePersonsPickup, middlePointsLinksPickup,
+					newPossibleLink = findPossibleLinkForDemand(null, possiblePersonsPickup, middlePointsLinksPickup,
 							demandLocationsInShape, polygonsInShape, areasForPickupLocations, numberOfPickupLocations,
 							scenario, locationsOfPickup);
 					sumOfPossibleLinkLenghtPickup = sumOfPossibleLinkLenghtPickup + newPossibleLink.getLength();
@@ -660,7 +632,7 @@ public class GeneralDemandGeneration {
 			} else if (numberOfDeliveryLocations != null) {
 				Link newPossibleLink = null;
 				while (possibleLinksDelivery.size() < numberOfDeliveryLocations) {
-					newPossibleLink = findPossibleLinkForDemand(possibleLinksDelivery, possiblePersonsDelivery,
+					newPossibleLink = findPossibleLinkForDemand(null, possiblePersonsDelivery,
 							middlePointsLinksDelivery, demandLocationsInShape, polygonsInShape,
 							areasForDeliveryLocations, numberOfDeliveryLocations, scenario, locationsOfDelivery);
 					sumOfPossibleLinkLenghtDelivery = sumOfPossibleLinkLenghtDelivery + newPossibleLink.getLength();
@@ -669,9 +641,9 @@ public class GeneralDemandGeneration {
 			}
 		}
 		if (shareOfPopulationWithThisPickup != null)
-			middlePointsLinksPickup = createMapMiddlePointsLinks(possibleLinksPickup.values());
+			middlePointsLinksPickup = createMapMiddleCoordsLinks(possibleLinksPickup.values());
 		if (shareOfPopulationWithThisDelivery != null)
-			middlePointsLinksDelivery = createMapMiddlePointsLinks(possibleLinksDelivery.values());
+			middlePointsLinksDelivery = createMapMiddleCoordsLinks(possibleLinksDelivery.values());
 		if (sumOfPossibleLinkLenghtPickup == 0)
 			throw new RuntimeException(
 					"Not enough possible links to distribute teh pickups. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
@@ -715,16 +687,14 @@ public class GeneralDemandGeneration {
 						usedPickupLocations.add(linkPickup.getId().toString());
 					if (!usedDeliveryLocations.contains(linkDelivery.getId().toString()))
 						usedDeliveryLocations.add(linkDelivery.getId().toString());
-					Id<CarrierShipment> idNewShipment = createJobId(scenario, newDemand, linkPickup.getId(),
-							linkDelivery.getId());
+					Id<CarrierShipment> idNewShipment = Id.create(
+							createJobId(scenario, newDemand, linkPickup.getId(), linkDelivery.getId()),
+							CarrierShipment.class);
 					CarrierShipment thisShipment = CarrierShipment.Builder
 							.newInstance(idNewShipment, linkPickup.getId(), linkDelivery.getId(), demandForThisLink)
 							.setPickupServiceTime(serviceTimePickup).setPickupTimeWindow(timeWindowPickup)
 							.setDeliveryServiceTime(serviceTimeDelivery).setDeliveryTimeWindow(timeWindowDelivery)
 							.build();
-//					if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
-//						thisService.getAttributes().putAttribute("relatedPerson",
-//								link.getAttributes().getAttribute("lastPersonsWithDemand"));
 					FreightUtils.getCarriers(scenario).getCarriers()
 							.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getShipments()
 							.put(thisShipment.getId(), thisShipment);
@@ -822,8 +792,9 @@ public class GeneralDemandGeneration {
 					double serviceTimeDelivery = newDemand.getSecondJobElementTimePerUnit() * demandForThisLink;
 					TimeWindow timeWindowPickup = newDemand.getFirstJobElementTimeWindow();
 					TimeWindow timeWindowDelivery = newDemand.getSecondJobElementTimeWindow();
-					Id<CarrierShipment> idNewShipment = createJobId(scenario, newDemand, linkPickup.getId(),
-							linkDelivery.getId());
+					Id<CarrierShipment> idNewShipment = Id.create(
+							createJobId(scenario, newDemand, linkPickup.getId(), linkDelivery.getId()),
+							CarrierShipment.class);
 					if (demandForThisLink > 0) {
 						CarrierShipment thisShipment = CarrierShipment.Builder
 								.newInstance(idNewShipment, linkPickup.getId(), linkDelivery.getId(), demandForThisLink)
@@ -834,10 +805,6 @@ public class GeneralDemandGeneration {
 								.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getShipments()
 								.put(thisShipment.getId(), thisShipment);
 					}
-//							if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
-//								thisService.getAttributes().putAttribute("relatedPerson",
-//										link.getAttributes().getAttribute("lastPersonsWithDemand"));
-
 					distributedDemand = distributedDemand + demandForThisLink;
 				}
 			}
@@ -908,80 +875,346 @@ public class GeneralDemandGeneration {
 				double serviceTimeDelivery = newDemand.getSecondJobElementTimePerUnit() * demandForThisLink;
 				TimeWindow timeWindowPickup = newDemand.getFirstJobElementTimeWindow();
 				TimeWindow timeWindowDelivery = newDemand.getSecondJobElementTimeWindow();
-				Id<CarrierShipment> idNewShipment = createJobId(scenario, newDemand, linkPickup.getId(),
-						linkDelivery.getId());
+				Id<CarrierShipment> idNewShipment = Id.create(
+						createJobId(scenario, newDemand, linkPickup.getId(), linkDelivery.getId()),
+						CarrierShipment.class);
 				CarrierShipment thisShipment = CarrierShipment.Builder
 						.newInstance(idNewShipment, linkPickup.getId(), linkDelivery.getId(), demandForThisLink)
 						.setPickupServiceTime(serviceTimePickup).setPickupTimeWindow(timeWindowPickup)
 						.setDeliveryServiceTime(serviceTimeDelivery).setDeliveryTimeWindow(timeWindowDelivery).build();
 				FreightUtils.getCarriers(scenario).getCarriers().get(Id.create(newDemand.getCarrierID(), Carrier.class))
 						.getShipments().put(thisShipment.getId(), thisShipment);
-//				if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
-//					thisService.getAttributes().putAttribute("relatedPerson",
-//							link.getAttributes().getAttribute("lastPersonsWithDemand"));
-
-				log.info("Generated Shipment number : " + i);
 				distributedDemand = distributedDemand + demandForThisLink;
 			}
 		}
-		// TODO Perhaps add this to creating part and make this as option
-		int connectedShipments = 0;
-		int checkedShipment = 0;
-		HashMap<Id<CarrierShipment>, CarrierShipment> shipmentsToRemove = new HashMap<Id<CarrierShipment>, CarrierShipment>();
-		ArrayList<CarrierShipment> shipmentsToAdd = new ArrayList<CarrierShipment>();
-		Carrier thisCarrier = FreightUtils.getCarriers(scenario).getCarriers()
-				.get(Id.create(newDemand.getCarrierID(), Carrier.class));
-		for (Id<CarrierShipment> baseShipmentId : thisCarrier.getShipments().keySet()) {
-			checkedShipment++;
-			log.info("Checked Shipment " + checkedShipment);
-			if (!shipmentsToRemove.containsKey(baseShipmentId)) {
-				CarrierShipment baseShipment = thisCarrier.getShipments().get(baseShipmentId);
-				HashMap<Id<CarrierShipment>, CarrierShipment> shipmentsToConnect = new HashMap<Id<CarrierShipment>, CarrierShipment>();
-				shipmentsToConnect.put(baseShipmentId, baseShipment);
-				for (Id<CarrierShipment> thisShipmentId : thisCarrier.getShipments().keySet()) {
-					if (!shipmentsToRemove.containsKey(thisShipmentId)) {
-						CarrierShipment thisShipment = thisCarrier.getShipments().get(thisShipmentId);
-						if (baseShipment.getId() != thisShipment.getId()
-								&& baseShipment.getFrom() == thisShipment.getFrom()
-								&& baseShipment.getTo() == thisShipment.getTo()
-								&& baseShipment.getPickupTimeWindow() == thisShipment.getPickupTimeWindow()
-								&& baseShipment.getDeliveryTimeWindow() == thisShipment.getDeliveryTimeWindow())
-							shipmentsToConnect.put(thisShipmentId, thisShipment);
-					}
-				}
-				Id<CarrierShipment> idNewShipment = baseShipment.getId();
-				int demandForThisLink = 0;
-				double serviceTimePickup = 0;
-				double serviceTimeDelivery = 0;
-				for (CarrierShipment carrierShipment : shipmentsToConnect.values()) {
-					demandForThisLink = demandForThisLink + carrierShipment.getSize();
-					serviceTimePickup = serviceTimePickup + carrierShipment.getPickupServiceTime();
-					serviceTimeDelivery = serviceTimeDelivery + carrierShipment.getDeliveryServiceTime();
-					shipmentsToRemove.put(carrierShipment.getId(), carrierShipment);
-					connectedShipments++;
-				}
-
-				CarrierShipment newShipment = CarrierShipment.Builder
-						.newInstance(idNewShipment, baseShipment.getFrom(), baseShipment.getTo(), demandForThisLink)
-						.setPickupServiceTime(serviceTimePickup).setPickupTimeWindow(baseShipment.getPickupTimeWindow())
-						.setDeliveryServiceTime(serviceTimeDelivery)
-						.setDeliveryTimeWindow(baseShipment.getDeliveryTimeWindow()).build();
-
-				shipmentsToAdd.add(newShipment);
-				connectedShipments++;
-			}
-
-		}
-
-		for (CarrierShipment id : shipmentsToRemove.values())
-			thisCarrier.getShipments().remove(id.getId(), id);
-
-		for (CarrierShipment carrierShipment : shipmentsToAdd) {
-			thisCarrier.getShipments().put(carrierShipment.getId(), carrierShipment);
-		}
-		log.warn("Number of reduzed shipments: " + connectedShipments);
+		if (reduceNumberOfShipments)
+			reduceNumberOfJobsIfSameCharacteristics(scenario, newDemand);
 	}
 
+	/**
+	 * @param scenario
+	 * @param newDemand
+	 */
+	private static void reduceNumberOfJobsIfSameCharacteristics(Scenario scenario, NewDemand newDemand) {
+
+		log.warn(
+				"The number of Jobs will be reduzed if jobs have the same characteristics (e.g. time, location, carrier)");
+		int connectedJobs = 0;
+		if (newDemand.getTypeOfDemand().equals("shipment")) {
+			HashMap<Id<CarrierShipment>, CarrierShipment> shipmentsToRemove = new HashMap<Id<CarrierShipment>, CarrierShipment>();
+			ArrayList<CarrierShipment> shipmentsToAdd = new ArrayList<CarrierShipment>();
+			Carrier thisCarrier = FreightUtils.getCarriers(scenario).getCarriers()
+					.get(Id.create(newDemand.getCarrierID(), Carrier.class));
+			for (Id<CarrierShipment> baseShipmentId : thisCarrier.getShipments().keySet()) {
+				if (!shipmentsToRemove.containsKey(baseShipmentId)) {
+					CarrierShipment baseShipment = thisCarrier.getShipments().get(baseShipmentId);
+					HashMap<Id<CarrierShipment>, CarrierShipment> shipmentsToConnect = new HashMap<Id<CarrierShipment>, CarrierShipment>();
+					shipmentsToConnect.put(baseShipmentId, baseShipment);
+					for (Id<CarrierShipment> thisShipmentId : thisCarrier.getShipments().keySet()) {
+						if (!shipmentsToRemove.containsKey(thisShipmentId)) {
+							CarrierShipment thisShipment = thisCarrier.getShipments().get(thisShipmentId);
+							if (baseShipment.getId() != thisShipment.getId()
+									&& baseShipment.getFrom() == thisShipment.getFrom()
+									&& baseShipment.getTo() == thisShipment.getTo()
+									&& baseShipment.getPickupTimeWindow() == thisShipment.getPickupTimeWindow()
+									&& baseShipment.getDeliveryTimeWindow() == thisShipment.getDeliveryTimeWindow())
+								shipmentsToConnect.put(thisShipmentId, thisShipment);
+						}
+					}
+					Id<CarrierShipment> idNewShipment = baseShipment.getId();
+					int demandForThisLink = 0;
+					double serviceTimePickup = 0;
+					double serviceTimeDelivery = 0;
+					for (CarrierShipment carrierShipment : shipmentsToConnect.values()) {
+						demandForThisLink = demandForThisLink + carrierShipment.getSize();
+						serviceTimePickup = serviceTimePickup + carrierShipment.getPickupServiceTime();
+						serviceTimeDelivery = serviceTimeDelivery + carrierShipment.getDeliveryServiceTime();
+						shipmentsToRemove.put(carrierShipment.getId(), carrierShipment);
+						connectedJobs++;
+					}
+
+					CarrierShipment newShipment = CarrierShipment.Builder
+							.newInstance(idNewShipment, baseShipment.getFrom(), baseShipment.getTo(), demandForThisLink)
+							.setPickupServiceTime(serviceTimePickup)
+							.setPickupTimeWindow(baseShipment.getPickupTimeWindow())
+							.setDeliveryServiceTime(serviceTimeDelivery)
+							.setDeliveryTimeWindow(baseShipment.getDeliveryTimeWindow()).build();
+
+					shipmentsToAdd.add(newShipment);
+					connectedJobs++;
+				}
+
+			}
+
+			for (CarrierShipment id : shipmentsToRemove.values())
+				thisCarrier.getShipments().remove(id.getId(), id);
+
+			for (CarrierShipment carrierShipment : shipmentsToAdd) {
+				thisCarrier.getShipments().put(carrierShipment.getId(), carrierShipment);
+			}
+			log.warn("Number of reduzed shipments: " + connectedJobs);
+		}
+		if (newDemand.getTypeOfDemand().equals("service")) {
+			HashMap<Id<CarrierService>, CarrierService> servicesToRemove = new HashMap<Id<CarrierService>, CarrierService>();
+			ArrayList<CarrierService> servicesToAdd = new ArrayList<CarrierService>();
+			Carrier thisCarrier = FreightUtils.getCarriers(scenario).getCarriers()
+					.get(Id.create(newDemand.getCarrierID(), Carrier.class));
+			for (Id<CarrierService> baseServiceId : thisCarrier.getServices().keySet()) {
+				if (!servicesToRemove.containsKey(baseServiceId)) {
+					CarrierService baseService = thisCarrier.getServices().get(baseServiceId);
+					HashMap<Id<CarrierService>, CarrierService> servicesToConnect = new HashMap<Id<CarrierService>, CarrierService>();
+					servicesToConnect.put(baseServiceId, baseService);
+					for (Id<CarrierService> thisServiceId : thisCarrier.getServices().keySet()) {
+						if (!servicesToRemove.containsKey(thisServiceId)) {
+							CarrierService thisService = thisCarrier.getServices().get(thisServiceId);
+							if (baseService.getId() != thisService.getId()
+									&& baseService.getLocationLinkId() == thisService.getLocationLinkId() && baseService
+											.getServiceStartTimeWindow() == thisService.getServiceStartTimeWindow())
+								servicesToConnect.put(thisServiceId, thisService);
+						}
+					}
+					Id<CarrierService> idNewService = baseService.getId();
+					int demandForThisLink = 0;
+					double serviceTimeService = 0;
+					for (CarrierService carrierService : servicesToConnect.values()) {
+						demandForThisLink = demandForThisLink + carrierService.getCapacityDemand();
+						serviceTimeService = serviceTimeService + carrierService.getServiceDuration();
+						servicesToRemove.put(carrierService.getId(), carrierService);
+						connectedJobs++;
+					}
+
+					CarrierService newService = CarrierService.Builder
+							.newInstance(idNewService, baseService.getLocationLinkId())
+							.setServiceDuration(serviceTimeService)
+							.setServiceStartTimeWindow(baseService.getServiceStartTimeWindow())
+							.setCapacityDemand(demandForThisLink).build();
+
+					servicesToAdd.add(newService);
+					connectedJobs++;
+				}
+
+			}
+
+			for (CarrierService id : servicesToRemove.values())
+				thisCarrier.getServices().remove(id.getId(), id);
+
+			for (CarrierService carrierService : servicesToAdd) {
+				thisCarrier.getServices().put(carrierService.getId(), carrierService);
+			}
+			log.warn("Number of reduzed shipments: " + connectedJobs);
+		}
+	}
+
+	/**
+	 * Creates the services.
+	 * 
+	 * @param scenario
+	 * @param demandInformation
+	 * @param demandLocationsInShape
+	 * @param singlePolygons
+	 * @param polygonsInShape
+	 * @param defaultJspritIterations
+	 * @throws MalformedURLException
+	 */
+
+	private static void createServices(Scenario scenario, NewDemand newDemand, boolean demandLocationsInShape,
+			Collection<SimpleFeature> polygonsInShape, Population population, boolean reduceNumberOfShipments) {
+
+		int countOfLinks = 1;
+		HashMap<Id<Link>, Link> possibleLinksForService = new HashMap<Id<Link>, Link>();
+		int distributedDemand = 0;
+		double roundingError = 0;
+		double sumOfPossibleLinkLenght = 0;
+		Double shareOfPopulationWithThisService = newDemand.getShareOfPopulationWithFirstJobElement();
+		Integer numberOfJobs = 0;
+		Integer demandToDistribute = newDemand.getDemandToDistribute();
+		String[] areasForServiceLocations = newDemand.getAreasFirstJobElement();
+		String[] locationsOfServices = newDemand.getLocationsOfFirstJobElement();
+		Integer numberOfServiceLocations = newDemand.getNumberOfFirstJobElementLocations();
+		ArrayList<String> usedServiceLocations = new ArrayList<String>();
+		int numberOfLinksInNetwork = scenario.getNetwork().getLinks().size();
+		HashMap<Id<Person>, Person> possiblePersonsForService = new HashMap<Id<Person>, Person>();
+		HashMap<Id<Link>, Coord> middlePointsLinksForService = new HashMap<Id<Link>, Coord>();
+
+		// set number of jobs
+		if (shareOfPopulationWithThisService == null)
+			numberOfJobs = newDemand.getNumberOfJobs();
+		else if (population == null)
+			throw new RuntimeException(
+					"No population found although input paramater <ShareOfPopulationWithThisDemand> is set");
+		else {
+			double sampleSizeInputPopulation = (double) population.getAttributes().getAttribute("sampleSize");
+			double sampleTo = (double) population.getAttributes().getAttribute("samplingTo");
+			String samplingOption = String.valueOf(population.getAttributes().getAttribute("samplingOption"));
+
+			if (areasForServiceLocations != null)
+				possiblePersonsForService = findPossiblePersons(population, areasForServiceLocations, polygonsInShape,
+						demandLocationsInShape);
+			else
+				possiblePersonsForService.putAll(population.getPersons());
+			int numberPossibleServices = 0;
+			if (shareOfPopulationWithThisService != null)
+				numberPossibleServices = (int) Math
+						.round(shareOfPopulationWithThisService * possiblePersonsForService.size());
+			if (sampleSizeInputPopulation == sampleTo)
+				numberOfJobs = (int) Math.round(shareOfPopulationWithThisService * possiblePersonsForService.size());
+			else if (samplingOption.equals("changeNumberOfLocationsWithDemand"))
+				numberOfJobs = (int) Math.round((sampleTo / sampleSizeInputPopulation)
+						* (shareOfPopulationWithThisService * possiblePersonsForService.size()));
+			else if (samplingOption.equals("changeDemandOnLocation")) {
+				demandToDistribute = (int) Math.round((sampleTo / sampleSizeInputPopulation) * demandToDistribute);
+				numberOfJobs = (int) Math.round(shareOfPopulationWithThisService * possiblePersonsForService.size());
+			} else
+				throw new RuntimeException(
+						"Error with the sampling of the demand based on the population. Please check sampling sizes and sampling options!!");
+			if (numberPossibleServices != 0)
+				numberOfServiceLocations = numberPossibleServices;
+		}
+
+		for (Link link : scenario.getNetwork().getLinks().values()) {
+			if (numberOfServiceLocations == null && !link.getId().toString().contains("pt") && checkPositionInShape(
+					link, null, polygonsInShape, areasForServiceLocations, demandLocationsInShape)) {
+				sumOfPossibleLinkLenght = sumOfPossibleLinkLenght + link.getLength();
+				possibleLinksForService.put(link.getId(), link);
+			} else if (numberOfServiceLocations != null) {
+				Link newPossibleLink = null;
+				while (possibleLinksForService.size() < numberOfServiceLocations) {
+					newPossibleLink = findPossibleLinkForDemand(null, possiblePersonsForService,
+							middlePointsLinksForService, demandLocationsInShape, polygonsInShape,
+							areasForServiceLocations, numberOfServiceLocations, scenario, locationsOfServices);
+					sumOfPossibleLinkLenght = sumOfPossibleLinkLenght + newPossibleLink.getLength();
+					possibleLinksForService.put(newPossibleLink.getId(), newPossibleLink);
+				}
+			}
+		}
+
+		if (shareOfPopulationWithThisService != null)
+			middlePointsLinksForService = createMapMiddleCoordsLinks(possibleLinksForService.values());
+		if (locationsOfServices != null)
+			for (String selectedLinkIdService : locationsOfServices)
+				if (!possibleLinksForService.containsKey(Id.createLinkId(selectedLinkIdService)))
+					throw new RuntimeException("The selected link " + selectedLinkIdService
+							+ " for the service is not part of the possible links. Plaese check!");
+
+		if (numberOfJobs == null) {
+			// creates services with a demand of 1
+			if (possibleLinksForService.size() > demandToDistribute) {
+				for (int i = 0; i < demandToDistribute; i++) {
+
+					Link link = findNextUsedLink(scenario, demandLocationsInShape, polygonsInShape,
+							possibleLinksForService, numberOfJobs, areasForServiceLocations, locationsOfServices,
+							usedServiceLocations, possiblePersonsForService, middlePointsLinksForService, i);
+					double serviceTime = newDemand.getFirstJobElementTimePerUnit();
+					int demandForThisLink = 1;
+					usedServiceLocations.add(link.getId().toString());
+					Id<CarrierService> idNewService = Id.create(createJobId(scenario, newDemand, link.getId(), null),
+							CarrierService.class);
+					CarrierService thisService = CarrierService.Builder.newInstance(idNewService, link.getId())
+							.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
+							.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
+					FreightUtils.getCarriers(scenario).getCarriers()
+							.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
+							.put(thisService.getId(), thisService);
+				}
+			} else
+			// creates a demand on each link, demand depends on the length of the link
+			{
+				if (sumOfPossibleLinkLenght == 0)
+					throw new RuntimeException(
+							"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
+				if (numberOfServiceLocations != null) // TODO check if there is another solution
+					throw new RuntimeException(
+							"Because the demand is higher than the number of links, the demand will be distrubted evenly over all links. You selected a certain number of service locations, which is not possible here!");
+				for (Link link : possibleLinksForService.values()) {
+					int demandForThisLink;
+					if (countOfLinks == scenario.getNetwork().getLinks().size()) {
+						demandForThisLink = demandToDistribute - distributedDemand;
+					} else {
+						demandForThisLink = (int) Math
+								.ceil(link.getLength() / sumOfPossibleLinkLenght * (double) demandToDistribute);
+						roundingError = roundingError + ((double) demandForThisLink
+								- (link.getLength() / sumOfPossibleLinkLenght * (double) demandToDistribute));
+						if (roundingError > 1) {
+							demandForThisLink = demandForThisLink - 1;
+							roundingError = roundingError - 1;
+						}
+						countOfLinks++;
+					}
+					double serviceTime = newDemand.getFirstJobElementTimePerUnit() * demandForThisLink;
+					Id<CarrierService> idNewService = Id.create(createJobId(scenario, newDemand, link.getId(), null),
+							CarrierService.class);
+					if (demandToDistribute > 0 && demandForThisLink > 0) {
+						CarrierService thisService = CarrierService.Builder.newInstance(idNewService, link.getId())
+								.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
+								.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
+						FreightUtils.getCarriers(scenario).getCarriers().values().iterator().next().getServices()
+								.put(thisService.getId(), thisService);
+					} else if (demandToDistribute == 0) {
+						CarrierService thisService = CarrierService.Builder.newInstance(idNewService, link.getId())
+								.setServiceDuration(serviceTime)
+								.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
+						FreightUtils.getCarriers(scenario).getCarriers()
+								.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
+								.put(thisService.getId(), thisService);
+					}
+					distributedDemand = distributedDemand + demandForThisLink;
+				}
+			}
+		} else
+		// if a certain number of services is selected
+		{
+			for (int i = 0; i < numberOfJobs; i++) {
+
+				if (i * 2 > numberOfLinksInNetwork)
+					throw new RuntimeException(
+							"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
+				Link link = null;
+				if (numberOfServiceLocations == null || usedServiceLocations.size() < numberOfServiceLocations) {
+					if (locationsOfServices != null && locationsOfServices.length > i) {
+						link = scenario.getNetwork().getLinks().get(Id.createLinkId(locationsOfServices[i]));
+					} else
+						link = findNextUsedLink(scenario, demandLocationsInShape, polygonsInShape,
+								possibleLinksForService, numberOfServiceLocations, areasForServiceLocations,
+								locationsOfServices, usedServiceLocations, possiblePersonsForService,
+								middlePointsLinksForService, i);
+				} else {
+					Random rand = new Random();
+					link = scenario.getNetwork().getLinks().get(Id.createLinkId(usedServiceLocations.stream()
+							.skip(rand.nextInt(usedServiceLocations.size() - 1)).findFirst().get()));
+				}
+				int demandForThisLink = (int) Math.ceil((double) demandToDistribute / (double) numberOfJobs);
+				if (numberOfJobs == (i + 1)) {
+					demandForThisLink = demandToDistribute - distributedDemand;
+				} else {
+					roundingError = roundingError
+							+ ((double) demandForThisLink - ((double) demandToDistribute / (double) numberOfJobs));
+					if (roundingError > 1) {
+						demandForThisLink = demandForThisLink - 1;
+						roundingError = roundingError - 1;
+					}
+				}
+				double serviceTime = demandForThisLink * newDemand.getFirstJobElementTimePerUnit();
+				usedServiceLocations.add(link.getId().toString());
+				Id<CarrierService> idNewService = Id.create(createJobId(scenario, newDemand, link.getId(), null),
+						CarrierService.class);
+				CarrierService thisService = CarrierService.Builder.newInstance(idNewService, link.getId())
+						.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
+						.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
+				FreightUtils.getCarriers(scenario).getCarriers().get(Id.create(newDemand.getCarrierID(), Carrier.class))
+						.getServices().put(thisService.getId(), thisService);
+
+				distributedDemand = distributedDemand + demandForThisLink;
+			}
+		}
+		if (reduceNumberOfShipments)
+			reduceNumberOfJobsIfSameCharacteristics(scenario, newDemand);
+	}
+
+	/**
+	 * @param link
+	 * @param possibleLinks
+	 * @return
+	 */
 	private static Link findNearestJobElement(Link link, HashMap<Id<Link>, Link> possibleLinks) {
 		Link nearestLink = null;
 		double distance;
@@ -998,28 +1231,48 @@ public class GeneralDemandGeneration {
 
 	}
 
-	private static Id<CarrierShipment> createJobId(Scenario scenario, NewDemand newDemand, Id<Link> linkPickup,
+	/**
+	 * Creates a job Id for a new job. If a certain Id is already used a number will
+	 * be added at the end until no existing job was the same Id.
+	 * 
+	 * @param scenario
+	 * @param newDemand
+	 * @param linkPickup
+	 * @param linkDelivery
+	 * @return
+	 */
+	private static String createJobId(Scenario scenario, NewDemand newDemand, Id<Link> linkPickup,
 			Id<Link> linkDelivery) {
-		// TODO also for service
-		Id<CarrierShipment> idNewService = Id.create("Shipment_" + linkPickup + "_" + linkDelivery,
-				CarrierShipment.class);
-		if (FreightUtils.getCarriers(scenario).getCarriers().get(Id.create(newDemand.getCarrierID(), Carrier.class))
-				.getShipments().containsKey(idNewService)) {
-			for (int x = 1; FreightUtils.getCarriers(scenario).getCarriers()
-					.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getShipments()
-					.containsKey(idNewService); x++) {
-				idNewService = Id.create("Shipment_" + linkPickup + "_" + linkDelivery + "_" + x,
-						CarrierShipment.class);
+		String newJobId = null;
+		if (linkDelivery != null) {
+			newJobId = "Shipment_" + linkPickup + "_" + linkDelivery;
+			if (FreightUtils.getCarriers(scenario).getCarriers().get(Id.create(newDemand.getCarrierID(), Carrier.class))
+					.getShipments().containsKey(Id.create(newJobId, CarrierShipment.class))) {
+				for (int x = 1; FreightUtils.getCarriers(scenario).getCarriers()
+						.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getShipments()
+						.containsKey(Id.create(newJobId, CarrierShipment.class)); x++) {
+					newJobId = "Shipment_" + linkPickup + "_" + linkDelivery + "_" + x;
+				}
+			}
+		} else {
+			newJobId = "Service_" + linkPickup;
+			if (FreightUtils.getCarriers(scenario).getCarriers().get(Id.create(newDemand.getCarrierID(), Carrier.class))
+					.getServices().containsKey(Id.create(newJobId, CarrierShipment.class))) {
+				for (int x = 1; FreightUtils.getCarriers(scenario).getCarriers()
+						.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
+						.containsKey(Id.create(newJobId, CarrierShipment.class)); x++) {
+					newJobId = "Service_" + linkPickup + "_" + x;
+				}
 			}
 		}
-		return idNewService;
+		return newJobId.toString();
 	}
 
 	private static Link findNextUsedLink(Scenario scenario, boolean demandLocationsInShape,
 			Collection<SimpleFeature> polygonsInShape, HashMap<Id<Link>, Link> possibleLinks,
 			Integer selectedNumberOfLocations, String[] areasForLocations, String[] selectedLocations,
 			ArrayList<String> usedLocations, HashMap<Id<Person>, Person> possiblePersonsPickup,
-			HashMap<Id<Link>, Point> middlePointsLinksPickup, int i) {
+			HashMap<Id<Link>, Coord> middlePointsLinksPickup, int i) {
 		Link link;
 
 		if (selectedNumberOfLocations == null || usedLocations.size() < selectedNumberOfLocations) {
@@ -1185,7 +1438,8 @@ public class GeneralDemandGeneration {
 			Carriers carriers = (Carriers) scenario.getScenarioElement("carriers");
 			if (!carriers.getCarriers().containsKey(Id.create(newDemand.getCarrierID(), Carrier.class)))
 				throw new RuntimeException(
-						"The created demand is not created for an existing carrier. Please create the carrier first or relate the demand to another carrier");
+						"The created demand is not created for an existing carrier. Please create the carrier "
+								+ newDemand.getCarrierID() + " first or relate the demand to another carrier");
 			if (newDemand.getDemandToDistribute() == null)
 				throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
 						+ ": No demand information found. You must add 0 as demand if you want no demand. Please check!");
@@ -1670,220 +1924,7 @@ public class GeneralDemandGeneration {
 	}
 
 	/**
-	 * Creates the services.
-	 * 
-	 * @param scenario
-	 * @param demandInformation
-	 * @param demandLocationsInShape
-	 * @param singlePolygons
-	 * @param polygonsInShape
-	 * @param defaultJspritIterations
-	 * @throws MalformedURLException
-	 */
-
-	private static void createServices(Scenario scenario, NewDemand newDemand, boolean demandLocationsInShape,
-			Collection<SimpleFeature> polygonsInShape, Population population) {
-
-		int countOfLinks = 1;
-		HashMap<Id<Link>, Link> possibleLinksForService = new HashMap<Id<Link>, Link>();
-		int distributedDemand = 0;
-		double roundingError = 0;
-		double sumOfPossibleLinkLenght = 0;
-		Double shareOfPopulationWithThisService = newDemand.getShareOfPopulationWithFirstJobElement();
-		Integer numberOfJobs = 0;
-		Integer demandToDistribute = newDemand.getDemandToDistribute();
-		String[] areasForServiceLocations = newDemand.getAreasFirstJobElement();
-		String[] locationsOfServices = newDemand.getLocationsOfFirstJobElement();
-		Integer numberOfServiceLocations = newDemand.getNumberOfFirstJobElementLocations();
-		ArrayList<String> usedServiceLocations = new ArrayList<String>();
-		int numberOfLinksInNetwork = scenario.getNetwork().getLinks().size();
-		HashMap<Id<Person>, Person> possiblePersons = new HashMap<Id<Person>, Person>();
-		HashMap<Id<Link>, Point> middlePointsLinks = new HashMap<Id<Link>, Point>();
-
-		if (shareOfPopulationWithThisService == null)
-			numberOfJobs = newDemand.getNumberOfJobs();
-		else if (population == null)
-			throw new RuntimeException(
-					"No population found although input paramater <ShareOfPopulationWithThisDemand> is set");
-		else {
-			double sampleSizeInputPopulation = (double) population.getAttributes().getAttribute("sampleSize");
-			double sampleTo = (double) population.getAttributes().getAttribute("samplingTo");
-			String samplingOption = String.valueOf(population.getAttributes().getAttribute("samplingOption"));
-
-			if (areasForServiceLocations != null)
-				possiblePersons = findPossiblePersons(population, areasForServiceLocations, polygonsInShape,
-						demandLocationsInShape);
-			else
-				possiblePersons.putAll(population.getPersons());
-			if (sampleSizeInputPopulation == sampleTo)
-				numberOfJobs = (int) Math.round(shareOfPopulationWithThisService * possiblePersons.size());
-			else if (samplingOption.equals("changeNumberOfLocationsWithDemand"))
-				numberOfJobs = (int) Math.round((sampleTo / sampleSizeInputPopulation)
-						* (shareOfPopulationWithThisService * possiblePersons.size()));
-			else if (samplingOption.equals("changeDemandOnLocation")) {
-				demandToDistribute = (int) Math.round((sampleTo / sampleSizeInputPopulation) * demandToDistribute);
-				numberOfJobs = (int) Math.round(shareOfPopulationWithThisService * possiblePersons.size());
-			} else
-				throw new RuntimeException(
-						"Error with the sampling of the demand based on the population. Please check sampling sizes and sampling options!!");
-			middlePointsLinks = createMapMiddlePointsLinks(possibleLinksForService.values());
-		}
-
-		for (Link link : scenario.getNetwork().getLinks().values()) { // TODO check shipments involve persons
-			if (numberOfServiceLocations == null && !link.getId().toString().contains("pt") && checkPositionInShape(
-					link, null, polygonsInShape, areasForServiceLocations, demandLocationsInShape)) {
-				sumOfPossibleLinkLenght = sumOfPossibleLinkLenght + link.getLength();
-				possibleLinksForService.put(link.getId(), link);
-			} else if (numberOfServiceLocations != null) {
-				Link newPossibleLink = null;
-				while (possibleLinksForService.size() < numberOfServiceLocations) {
-					newPossibleLink = findPossibleLinkForDemand(null, possiblePersons, middlePointsLinks,
-							demandLocationsInShape, polygonsInShape, areasForServiceLocations, numberOfServiceLocations,
-							scenario, locationsOfServices);
-					sumOfPossibleLinkLenght = sumOfPossibleLinkLenght + newPossibleLink.getLength();
-					possibleLinksForService.put(newPossibleLink.getId(), newPossibleLink);
-				}
-			}
-		}
-
-		if (locationsOfServices != null)
-			for (String selectedLinkIdService : locationsOfServices)
-				if (!possibleLinksForService.containsKey(Id.createLinkId(selectedLinkIdService)))
-					throw new RuntimeException("The selected link " + selectedLinkIdService
-							+ " for the service is not part of the possible links. Plaese check!");
-
-		if (numberOfJobs == null) {
-			// creates services with a demand of 1
-			if (possibleLinksForService.size() > demandToDistribute) {
-				for (int i = 0; i < demandToDistribute; i++) {
-
-					Link link = findNextUsedLink(scenario, demandLocationsInShape, polygonsInShape,
-							possibleLinksForService, numberOfJobs, areasForServiceLocations, locationsOfServices,
-							usedServiceLocations, possiblePersons, middlePointsLinks, i);
-					double serviceTime = newDemand.getFirstJobElementTimePerUnit();
-					int demandForThisLink = 1;
-					usedServiceLocations.add(link.getId().toString());
-					Id<CarrierService> idNewService = Id.create("Service_" + link.getId(), CarrierService.class);
-					if (FreightUtils.getCarriers(scenario).getCarriers()
-							.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
-							.containsKey(idNewService)) {
-						for (int x = 1; FreightUtils.getCarriers(scenario).getCarriers()
-								.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
-								.containsKey(idNewService); x++) {
-							idNewService = Id.create("Service_" + link.getId() + "_" + x, CarrierService.class);
-						}
-					}
-					CarrierService thisService = CarrierService.Builder.newInstance(idNewService, link.getId())
-							.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-							.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
-					FreightUtils.getCarriers(scenario).getCarriers()
-							.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
-							.put(thisService.getId(), thisService);
-				}
-			} else
-			// creates a demand on each link, demand depends on the length of the link
-			{
-				if (sumOfPossibleLinkLenght == 0)
-					throw new RuntimeException(
-							"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
-				if (numberOfServiceLocations != null) // TODO check if there is another solution
-					throw new RuntimeException(
-							"Because the demand is higher than the number of links, the demand will be distrubted evenly over all links. You selected a certain number of service locations, which is not possible here!");
-				for (Link link : possibleLinksForService.values()) {
-					int demandForThisLink;
-					if (countOfLinks == scenario.getNetwork().getLinks().size()) {
-						demandForThisLink = demandToDistribute - distributedDemand;
-					} else {
-						demandForThisLink = (int) Math
-								.ceil(link.getLength() / sumOfPossibleLinkLenght * (double) demandToDistribute);
-						roundingError = roundingError + ((double) demandForThisLink
-								- (link.getLength() / sumOfPossibleLinkLenght * (double) demandToDistribute));
-						if (roundingError > 1) {
-							demandForThisLink = demandForThisLink - 1;
-							roundingError = roundingError - 1;
-						}
-						countOfLinks++;
-					}
-					double serviceTime = newDemand.getFirstJobElementTimePerUnit() * demandForThisLink;
-					if (demandToDistribute > 0 && demandForThisLink > 0) {
-						CarrierService thisService = CarrierService.Builder
-								.newInstance(Id.create("Service_" + link.getId(), CarrierService.class), link.getId())
-								.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-								.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
-						FreightUtils.getCarriers(scenario).getCarriers().values().iterator().next().getServices()
-								.put(thisService.getId(), thisService);
-					} else if (demandToDistribute == 0) {
-						CarrierService thisService = CarrierService.Builder
-								.newInstance(Id.create("Service_" + link.getId(), CarrierService.class), link.getId())
-								.setServiceDuration(serviceTime)
-								.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
-						FreightUtils.getCarriers(scenario).getCarriers()
-								.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
-								.put(thisService.getId(), thisService);
-					}
-					distributedDemand = distributedDemand + demandForThisLink;
-				}
-			}
-		} else
-		// if a certain number of services is selected
-		{
-			for (int i = 0; i < numberOfJobs; i++) {
-
-				if (i * 2 > numberOfLinksInNetwork)
-					throw new RuntimeException(
-							"Not enough links in the shape file to distribute the demand. Select an different shapefile or check if shapefile and network has the same coordinateSystem.");
-				Link link = null;
-				if (numberOfServiceLocations == null || usedServiceLocations.size() < numberOfServiceLocations) {
-					if (locationsOfServices != null && locationsOfServices.length > i) {
-						link = scenario.getNetwork().getLinks().get(Id.createLinkId(locationsOfServices[i]));
-					} else
-						link = findPossibleLinkForDemand(possibleLinksForService, possiblePersons, middlePointsLinks,
-								demandLocationsInShape, polygonsInShape, areasForServiceLocations,
-								numberOfServiceLocations, scenario, locationsOfServices);
-				} else {
-					Random rand = new Random();
-					link = scenario.getNetwork().getLinks().get(Id.createLinkId(usedServiceLocations.stream()
-							.skip(rand.nextInt(usedServiceLocations.size() - 1)).findFirst().get()));
-				}
-				int demandForThisLink = (int) Math.ceil((double) demandToDistribute / (double) numberOfJobs);
-				if (numberOfJobs == (i + 1)) {
-					demandForThisLink = demandToDistribute - distributedDemand;
-				} else {
-					roundingError = roundingError
-							+ ((double) demandForThisLink - ((double) demandToDistribute / (double) numberOfJobs));
-					if (roundingError > 1) {
-						demandForThisLink = demandForThisLink - 1;
-						roundingError = roundingError - 1;
-					}
-				}
-				double serviceTime = demandForThisLink * newDemand.getFirstJobElementTimePerUnit();
-				usedServiceLocations.add(link.getId().toString());
-				Id<CarrierService> idNewService = Id.create("Service_" + link.getId(), CarrierService.class);
-				if (FreightUtils.getCarriers(scenario).getCarriers()
-						.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
-						.containsKey(idNewService)) {
-					for (int x = 1; FreightUtils.getCarriers(scenario).getCarriers()
-							.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
-							.containsKey(idNewService); x++) {
-						idNewService = Id.create("Service_" + link.getId() + "_" + x, CarrierService.class);
-					}
-				}
-				CarrierService thisService = CarrierService.Builder.newInstance(idNewService, link.getId())
-						.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-						.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
-				if (link.getAttributes().getAsMap().containsKey("lastPersonsWithDemand"))
-					thisService.getAttributes().putAttribute("relatedPerson",
-							link.getAttributes().getAttribute("lastPersonsWithDemand"));
-				FreightUtils.getCarriers(scenario).getCarriers().get(Id.create(newDemand.getCarrierID(), Carrier.class))
-						.getServices().put(thisService.getId(), thisService);
-
-				distributedDemand = distributedDemand + demandForThisLink;
-			}
-		}
-	}
-
-	/**
-	 * Finds all persons which are possible for the demand
+	 * Finds all persons which are possible for the demand.
 	 * 
 	 * @param population
 	 * @param areasForServiceLocations
@@ -1910,7 +1951,7 @@ public class GeneralDemandGeneration {
 	}
 
 	/**
-	 * Searches a possible link for the demand
+	 * Searches a possible link for the demand.
 	 * 
 	 * @param scenario
 	 * @param population
@@ -1921,28 +1962,24 @@ public class GeneralDemandGeneration {
 	 * @return
 	 */
 	private static Link findPossibleLinkForDemand(HashMap<Id<Link>, Link> possibleLinks,
-			HashMap<Id<Person>, Person> possiblePersons, HashMap<Id<Link>, Point> middlePointsLinks,
+			HashMap<Id<Person>, Person> possiblePersons, HashMap<Id<Link>, Coord> middlePointsLinks,
 			boolean demandLocationsInShape, Collection<SimpleFeature> polygonsInShape, String[] areasForTheDemand,
 			Integer selectedNumberOfLocations, Scenario scenario, String[] selectedLocations) {
 		Random rand = new Random();
 		Link selectedlink = null;
 		Link newLink = null;
+		if (selectedNumberOfLocations == null)
+			selectedNumberOfLocations = 0;
 		while (selectedlink == null) {
 			if (possibleLinks == null || possibleLinks.size() < selectedNumberOfLocations) {
-//				if (possibleLinks == null) {
-//					newLink = scenario.getNetwork().getLinks()
-//							.get(Id.createLinkId(selectedLocations[possibleLinks.size()]));
-//					
-//				}else {
-					if (selectedLocations != null && selectedLocations.length > possibleLinks.size()) {
-						newLink = scenario.getNetwork().getLinks()
-								.get(Id.createLinkId(selectedLocations[possibleLinks.size()]));
-					} else {
-						Random randLink = new Random();
-						newLink = scenario.getNetwork().getLinks().values().stream()
-								.skip(randLink.nextInt(scenario.getNetwork().getLinks().size())).findFirst().get();
-					}
-//				}
+				if (selectedLocations != null && selectedLocations.length > possibleLinks.size()) {
+					newLink = scenario.getNetwork().getLinks()
+							.get(Id.createLinkId(selectedLocations[possibleLinks.size()]));
+				} else {
+					Random randLink = new Random();
+					newLink = scenario.getNetwork().getLinks().values().stream()
+							.skip(randLink.nextInt(scenario.getNetwork().getLinks().size())).findFirst().get();
+				}
 			} else {
 				if (middlePointsLinks.isEmpty()) {
 					newLink = possibleLinks.values().stream().skip(rand.nextInt(possibleLinks.size())).findFirst()
@@ -1952,8 +1989,7 @@ public class GeneralDemandGeneration {
 							.findFirst().get();
 					Point homePoint = MGC.xy2Point((double) person.getAttributes().getAttribute("homeX"),
 							(double) person.getAttributes().getAttribute("homeY"));
-					newLink = possibleLinks.get(findNearestLink(homePoint, middlePointsLinks));
-					newLink.getAttributes().putAttribute("lastPersonsWithDemand", person.getId().toString());
+					newLink = possibleLinks.get(findNearestLink(MGC.point2Coord(homePoint), middlePointsLinks));
 				}
 			}
 			if (!newLink.getId().toString().contains("pt") && (!demandLocationsInShape
@@ -1970,8 +2006,8 @@ public class GeneralDemandGeneration {
 	 * @param values
 	 * @return
 	 */
-	private static HashMap<Id<Link>, Point> createMapMiddlePointsLinks(Collection<? extends Link> allLinks) {
-		HashMap<Id<Link>, Point> middlePointsLinks = new HashMap<Id<Link>, Point>();
+	private static HashMap<Id<Link>, Coord> createMapMiddleCoordsLinks(Collection<? extends Link> allLinks) {
+		HashMap<Id<Link>, Coord> middlePointsLinks = new HashMap<Id<Link>, Coord>();
 		for (Link link : allLinks) {
 			middlePointsLinks.put(link.getId(), middlePointOfLink(link));
 		}
@@ -1980,12 +2016,12 @@ public class GeneralDemandGeneration {
 	}
 
 	/**
-	 * Creates the middle point of a link.
+	 * Creates the middle coord of a link.
 	 * 
 	 * @param link
-	 * @return Middle Point of the Link
+	 * @return Middle coord of the Link
 	 */
-	private static Point middlePointOfLink(Link link) {
+	private static Coord middlePointOfLink(Link link) {
 
 		double x, y, xCoordFrom, xCoordTo, yCoordFrom, yCoordTo;
 		xCoordFrom = link.getFromNode().getCoord().getX();
@@ -2001,7 +2037,7 @@ public class GeneralDemandGeneration {
 		else
 			y = yCoordTo - ((yCoordTo - yCoordFrom) / 2);
 
-		return MGC.xy2Point(x, y);
+		return MGC.point2Coord(MGC.xy2Point(x, y));
 	}
 
 	/**
@@ -2012,18 +2048,15 @@ public class GeneralDemandGeneration {
 	 * @param middlePointsLinks
 	 * @return
 	 */
-	private static Id<Link> findNearestLink(Point pointActivity, HashMap<Id<Link>, Point> middlePointsLinks) {
+	private static Id<Link> findNearestLink(Coord pointActivity, HashMap<Id<Link>, Coord> middlePointsLinks) {
 
 		Id<Link> nearestLink = null;
 		double distance;
 		double minDistance = -1;
-		// TODO replace by NetworkUtils method
+
 		for (Id<Link> link : middlePointsLinks.keySet()) {
-			Point middlePointLink = middlePointsLinks.get(link);
-			distance = Math.sqrt(
-					(middlePointLink.getX() - pointActivity.getX()) * (middlePointLink.getX() - pointActivity.getX())
-							+ (middlePointLink.getY() - pointActivity.getY())
-									* (middlePointLink.getY() - pointActivity.getY()));
+			Coord middlePointLink = middlePointsLinks.get(link);
+			distance = NetworkUtils.getEuclideanDistance(pointActivity, middlePointLink);
 
 			if (minDistance == -1 || distance < minDistance) {
 				minDistance = distance;
