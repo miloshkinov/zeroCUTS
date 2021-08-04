@@ -186,7 +186,7 @@ public class GeneralDemandGeneration {
 		String csvLocationCarrier = "scenarios/demandGeneration/testInput/testCarrierCSV.csv";
 		String csvLocationDemand = "scenarios/demandGeneration/testInput/testDemandCSV.csv";
 		int defaultJspritIterations = 3;
-		boolean useShapeFileforLocationsChoice = false;
+		boolean useShapeFileforLocationsChoice = true;
 
 		Collection<SimpleFeature> polygonsInShape = null;
 		if (useShapeFileforLocationsChoice)
@@ -207,7 +207,7 @@ public class GeneralDemandGeneration {
 
 		// prepare the VRP and get a solution
 		outputSummaryShipments(scenario);
-		OptionsOfVRPSolutions selectedSolution = OptionsOfVRPSolutions.createNoSolutionAndOnlyWriteCarrierFile;
+		OptionsOfVRPSolutions selectedSolution = OptionsOfVRPSolutions.runJspritAndMATSim;
 		boolean usingRangeRestriction = false;
 		Controler controler = prepareControler(scenario);
 		createFaciltyFile(controler);
@@ -1777,7 +1777,10 @@ public class GeneralDemandGeneration {
 					&& carrier.getAreaOfAdditonalDepots() == null)
 				log.warn(
 						"No possible area for addional depot given. Random choice in the hole network of a possible position");
-			if (carrier.getAreaOfAdditonalDepots() != null)
+			if (carrier.getAreaOfAdditonalDepots() != null) {
+				if (polygonsInShape == null)
+					throw new RuntimeException("For carrier " + carrier.getName()
+							+ " a certain area for depots is selected, but no shape is read in. Plaese check.");
 				for (String depotArea : carrier.getAreaOfAdditonalDepots()) {
 					boolean isInShape = false;
 					for (SimpleFeature singlePolygon : polygonsInShape) {
@@ -1791,6 +1794,7 @@ public class GeneralDemandGeneration {
 						throw new RuntimeException("The area " + depotArea + " of the possible depots of carrier"
 								+ carrier.getName() + " is not part of the given shapeFile");
 				}
+			}
 			if (carrier.getFixedNumberOfVehilcePerTypeAndLocation() != 0)
 				for (NewCarrier existingCarrier : allNewCarrier)
 					if ((existingCarrier.getName().equals(carrier.getName())
