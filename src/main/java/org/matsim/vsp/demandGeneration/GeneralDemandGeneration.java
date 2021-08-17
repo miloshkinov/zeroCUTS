@@ -1848,7 +1848,7 @@ public class GeneralDemandGeneration {
 
 		Carriers carriers = FreightUtils.addOrGetCarriers(scenario);
 		CarrierVehicleTypes carrierVehicleTypes = new CarrierVehicleTypes();
-		CarrierVehicleTypes usedCarrierVehicleTypes = new CarrierVehicleTypes();
+		CarrierVehicleTypes usedCarrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
 		new CarrierVehicleTypeReader(carrierVehicleTypes).readFile(freightConfigGroup.getCarriersVehicleTypesFile());
 
 		for (NewCarrier singleNewCarrier : allNewCarrier) {
@@ -1914,17 +1914,6 @@ public class GeneralDemandGeneration {
 			}
 		}
 		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(carrierVehicleTypes);
-		if (scenario.getScenarioElement("carrierVehicleTypes") == null)
-			scenario.addScenarioElement("carrierVehicleTypes", usedCarrierVehicleTypes); // TODO add to FreightUtils
-		else {
-			CarrierVehicleTypes existingCarrierVehicleTypes = (CarrierVehicleTypes) scenario
-					.getScenarioElement("carrierVehicleTypes");
-			for (VehicleType newType : usedCarrierVehicleTypes.getVehicleTypes().values()) {
-				if (!existingCarrierVehicleTypes.getVehicleTypes().containsKey(newType.getId()))
-					existingCarrierVehicleTypes.getVehicleTypes().put(newType.getId(), newType);
-			}
-
-		}
 	}
 
 	/**
