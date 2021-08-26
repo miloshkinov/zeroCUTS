@@ -508,7 +508,7 @@ public class GeneralDemandGeneration {
 
 	private static void createShipments(Scenario scenario, NewDemand newDemand, boolean demandLocationsInShape,
 			Collection<SimpleFeature> polygonsInShape, Population population, boolean reduceNumberOfShipments) {
-
+		//TODO check if demand = 0
 		int countOfLinks = 1;
 		HashMap<Id<Link>, Link> possibleLinksPickup = new HashMap<Id<Link>, Link>();
 		HashMap<Id<Link>, Link> possibleLinksDelivery = new HashMap<Id<Link>, Link>();
@@ -1151,7 +1151,7 @@ public class GeneralDemandGeneration {
 								.put(thisService.getId(), thisService);
 					} else if (demandToDistribute == 0) {
 						CarrierService thisService = CarrierService.Builder.newInstance(idNewService, link.getId())
-								.setServiceDuration(serviceTime)
+								.setServiceDuration(newDemand.getFirstJobElementTimePerUnit())
 								.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
 						FreightUtils.getCarriers(scenario).getCarriers()
 								.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
@@ -1195,14 +1195,24 @@ public class GeneralDemandGeneration {
 				}
 				double serviceTime = demandForThisLink * newDemand.getFirstJobElementTimePerUnit();
 				usedServiceLocations.add(link.getId().toString());
+
 				Id<CarrierService> idNewService = Id.create(createJobId(scenario, newDemand, link.getId(), null),
 						CarrierService.class);
-				CarrierService thisService = CarrierService.Builder.newInstance(idNewService, link.getId())
-						.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
-						.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
-				FreightUtils.getCarriers(scenario).getCarriers().get(Id.create(newDemand.getCarrierID(), Carrier.class))
-						.getServices().put(thisService.getId(), thisService);
-
+				if (demandToDistribute > 0 && demandForThisLink > 0) {
+					CarrierService thisService = CarrierService.Builder.newInstance(idNewService, link.getId())
+							.setCapacityDemand(demandForThisLink).setServiceDuration(serviceTime)
+							.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
+					FreightUtils.getCarriers(scenario).getCarriers()
+							.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
+							.put(thisService.getId(), thisService);
+				} else if (demandToDistribute == 0) {
+					CarrierService thisService = CarrierService.Builder.newInstance(idNewService, link.getId())
+							.setServiceDuration(newDemand.getFirstJobElementTimePerUnit())
+							.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
+					FreightUtils.getCarriers(scenario).getCarriers()
+							.get(Id.create(newDemand.getCarrierID(), Carrier.class)).getServices()
+							.put(thisService.getId(), thisService);
+				}
 				distributedDemand = distributedDemand + demandForThisLink;
 			}
 		}
