@@ -32,6 +32,7 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.consistency.VspConfigConsistencyCheckerImpl;
 import org.matsim.core.config.groups.ControlerConfigGroup.CompressionType;
+import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.config.groups.StrategyConfigGroup.StrategySettings;
@@ -71,19 +72,22 @@ public class RunFreightOnlyMatsim {
 	private final static CostsModififier costsModififier = null;
 
 	//Beginn Namesdefinition KT Für Berlin-Szenario 
-	private static final String INPUT_DIR = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBln_oneTW/output/I-Base_NwCE_BVWP_Pickup_10000it/";
+	private static final String INPUT_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/08_ICEVBEV_NwCE_BVWP_2000it_Tax300/";
 
-	private static final String OUTPUT_DIR = "../outputKMT/zerocuts/BerlinFood/I_Base_allVehicles/output/" ;
+	private static final String OUTPUT_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/newMATSimRun/08_ICEVBEV_NwCE_BVWP_2000it_Tax300/" ;
 	private static final String LOG_DIR = OUTPUT_DIR + "Logs/";
 
 	//Dateinamen
 	private static final String NETFILE_NAME = "output_network.xml.gz" ;
-	private static final String CARRIERFILE_NAME = "output_carriers.xml.gz";
+	private static final String CARRIERFILE_NAME = "output_carriers2.xml.gz";
 	private static final String VEHTYPEFILE_NAME = "output_vehicleTypes.xml" ;
+	private static final String NWCEFILE_NAME = "output_change_events.xml.gz";
 
 	private static final String NETFILE = INPUT_DIR + NETFILE_NAME ;
 	private static final String VEHTYPEFILE = INPUT_DIR + VEHTYPEFILE_NAME;
 	private static final String CARRIERFILE = INPUT_DIR + CARRIERFILE_NAME;
+
+	private static final String NETWORKCHANGEEVENTFILE = INPUT_DIR + NWCEFILE_NAME;
 
 	// Einstellungen für den Run	
 	private static final boolean runMatsim = true;	 //when false only jsprit run will be performed
@@ -133,6 +137,9 @@ public class RunFreightOnlyMatsim {
 		config.controler().setLastIteration(LAST_MATSIM_ITERATION);	
 		config.network().setInputFile(NETFILE);
 
+		config.network().setChangeEventsInputFile(NETWORKCHANGEEVENTFILE);
+		config.network().setTimeVariantNetwork(true);
+
 		//Damit nicht alle um Mitternacht losfahren
 		config.plans().setActivityDurationInterpretation(PlansConfigGroup.ActivityDurationInterpretation.tryEndTimeThenDuration ); 
 
@@ -140,7 +147,7 @@ public class RunFreightOnlyMatsim {
 		//therefore no need for e.g. a strategy! KMT jan/18
 		config.planCalcScore().setFractionOfIterationsToStartScoreMSA(0.8);
 		config.plans().setRemovingUnneccessaryPlanAttributes(true);
-		config.plansCalcRoute().setInsertingAccessEgressWalk(true);
+		config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
 		config.qsim().setUsingTravelTimeCheckInTeleportation(true);
 		config.qsim().setTrafficDynamics(TrafficDynamics.kinematicWaves);
 		config.strategy().setFractionOfIterationsToDisableInnovation(0.8);
@@ -229,7 +236,6 @@ public class RunFreightOnlyMatsim {
 	 */
 	private static void matsimRun(Scenario scenario, Carriers carriers) {
 		final Controler controler = new Controler( scenario ) ;
-
 
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2(scenario);
 		CarrierPlanStrategyManagerFactory planStrategyManagerFactory =  createMyStrategymanager(); //Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
