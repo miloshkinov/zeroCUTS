@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
-import org.jgrapht.alg.cycle.SzwarcfiterLauerSimpleCycles;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Id;
@@ -29,7 +28,6 @@ import org.matsim.contrib.freight.carrier.CarrierPlan;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
 import org.matsim.contrib.freight.carrier.CarrierShipment;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
-import org.matsim.contrib.freight.carrier.CarrierVehicle;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.contrib.freight.carrier.Carriers;
 import org.matsim.contrib.freight.carrier.ScheduledTour;
@@ -53,7 +51,6 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
-import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.vehicles.VehicleType;
@@ -96,16 +93,8 @@ class AbfallUtils {
 	static List<String> districtsWithShipments = new ArrayList<String>();
 	static List<String> districtsWithNoShipments = new ArrayList<String>();
 	static HashMap<String, String> dataEnt = new HashMap<String, String>();
-	static CarrierVehicleTypes vehicleTypes = null;
-	static VehicleType carrierVehType = null;
-//	static int capacityTruck = 0;
-	static double energyConsumptionPerWeight = 0;
-	static double energyConsumptionPerDistance = 0;
-	static CarrierVehicle vehicleAtDepot = null;
 	static Multimap<String, String> linksInDistricts;
 	static boolean streetAlreadyInGarbageLinks = false;
-	static boolean oneCarrierForEachDistrict = false;
-//	static String vehicleTypeId;
 
 	/**
 	 * Creates a map for getting the name of the attribute, where you can find the
@@ -410,11 +399,12 @@ class AbfallUtils {
 	static void createShipmentsForSelectedDay(Collection<SimpleFeature> districtsWithGarbage, String day,
 			HashMap<String, Id<Link>> garbageDumps, Scenario scenario, Carriers carriers,
 			HashMap<String, Carrier> carrierMap, Map<Id<Link>, ? extends Link> allLinks, double volumeBigTrashcan,
-			double serviceTimePerBigDustbin) {
+			double serviceTimePerBigDustbin, boolean oneCarrierForEachDistrict) {
 		Id<Link> dumpId = null;
 		double distanceWithShipments = 0;
 		int garbageToCollect = 0;
-		String depot = null;
+		String usedCarrier = null;
+		String district = null;
 		Map<Id<Link>, Link> garbageLinks = new HashMap<Id<Link>, Link>();
 		createMapEnt();
 //		carrierMap.clear();
@@ -422,8 +412,13 @@ class AbfallUtils {
 			if ((double) districtInformation.getAttribute(day) > 0) {
 				garbageToCollect = (int) ((double) districtInformation.getAttribute(day) * 1000);
 				dumpId = garbageDumps.get(districtInformation.getAttribute(dataEnt.get(day)));
-				depot = districtInformation.getAttribute("Depot").toString();
-
+				usedCarrier = districtInformation.getAttribute("Depot").toString();
+				if (oneCarrierForEachDistrict == true) {
+					district = districtInformation.getAttribute("Ortsteil").toString();
+					Carrier newCarrier = createSingleCarrier(usedCarrier, carrierMap, district);
+					carrierMap.put(district, newCarrier);
+					usedCarrier = district;
+				}
 				for (Link link : allLinks.values()) {
 					for (String linkInDistrict : linksInDistricts
 							.get(districtInformation.getAttribute("Ortsteil").toString())) {
@@ -455,14 +450,37 @@ class AbfallUtils {
 
 				createShipmentsForCarrierII(garbageToCollect, volumeBigTrashcan, serviceTimePerBigDustbin,
 						distanceWithShipments, garbageLinks, scenario,
-						carrierMap.get(depot), dumpId, carriers);
+						carrierMap.get(usedCarrier), dumpId, carriers);
 			}
 			distanceWithShipments = 0;
 			garbageLinks.clear();
 		}
-		oneCarrierForEachDistrict = true;
-		for (Carrier carrier : carrierMap.values())
+		if (oneCarrierForEachDistrict == true) {
+			carrierMap.remove("Nordring");
+			carrierMap.remove("MalmoeerStr");
+			carrierMap.remove("Forckenbeck");
+			carrierMap.remove("Gradestrasse");
+		}
+		carriers.getCarriers().clear();
+		for (Carrier carrier : carrierMap.values()) {
 			carriers.addCarrier(carrier);
+		}
+	}
+
+	private static Carrier createSingleCarrier(String depot, HashMap<String, Carrier> carrierMap, String district) {
+		Carrier newCarrier = CarrierUtils.createCarrier(Id.create("Carrier " + district, Carrier.class));
+		for (Carrier originalCarrier : carrierMap.values()) {
+			if (originalCarrier.getId().toString().contains(depot)) {
+				newCarrier.getCarrierCapabilities()
+						.setFleetSize(originalCarrier.getCarrierCapabilities().getFleetSize());
+				newCarrier.getCarrierCapabilities().getCarrierVehicles()
+						.putAll(originalCarrier.getCarrierCapabilities().getCarrierVehicles());
+				newCarrier.getCarrierCapabilities().getVehicleTypes()
+						.addAll(originalCarrier.getCarrierCapabilities().getVehicleTypes());
+			}
+		}
+
+		return newCarrier;
 	}
 
 	/**
@@ -564,88 +582,6 @@ class AbfallUtils {
 		if (garbageDumpId.equals(Id.createLinkId(linkUmladestationGradestrasse)))
 			garbageGradestr = garbageGradestr + volumeGarbage;
 	}
-
-	/**
-	 * Creates the vehicles at the depots, ads this vehicles to the carriers and
-	 * sets the capabilities. This method is for the Berlin network and creates the
-	 * vehicles for the 4 different depots.
-	 * 
-	 * @param
-	 */
-//	static void createCarriersBerlin(Collection<SimpleFeature> districtsWithGarbage, Carriers carriers,
-//			HashMap<String, Carrier> carrierMap, FleetSize fleetSize) {
-//		String depotForckenbeck = "27766";
-//		String depotMalmoeerStr = "116212";
-//		String depotNordring = "42882";
-//		String depotGradestrasse = "71781";
-//
-//		String vehicleIdForckenbeck = "TruckForckenbeck";
-//		String vehicleIdMalmoeer = "TruckMalmoeer";
-//		String vehicleIdNordring = "TruckNordring";
-//		String vehicleIdGradestrasse = "TruckGradestrasse";
-//		double earliestStartingTime = 6 * 3600;
-//		double latestFinishingTime = 14 * 3600;
-//
-//		HashMap<String, CarrierVehicle> depotMap = new HashMap<String, CarrierVehicle>();
-//
-//		CarrierVehicle vehicleForckenbeck = createGarbageTruck(vehicleIdForckenbeck, depotForckenbeck,
-//				earliestStartingTime, latestFinishingTime);
-//		CarrierVehicle vehicleMalmoeerStr = createGarbageTruck(vehicleIdMalmoeer, depotMalmoeerStr,
-//				earliestStartingTime, latestFinishingTime);
-//		CarrierVehicle vehicleNordring = createGarbageTruck(vehicleIdNordring, depotNordring, earliestStartingTime,
-//				latestFinishingTime);
-//		CarrierVehicle vehicleGradestrasse = createGarbageTruck(vehicleIdGradestrasse, depotGradestrasse,
-//				earliestStartingTime, latestFinishingTime);
-//		depotMap.put("Forckenbeck", vehicleForckenbeck);
-//		depotMap.put("MalmoeerStr", vehicleMalmoeerStr);
-//		depotMap.put("Nordring", vehicleNordring);
-//		depotMap.put("Gradestrasse", vehicleGradestrasse);
-//
-//		// define Carriers
-//
-//		defineCarriersBerlin(depotMap, districtsWithGarbage, carriers, carrierMap, vehicleForckenbeck,
-//				vehicleMalmoeerStr, vehicleNordring, vehicleGradestrasse, fleetSize);
-//	}
-//
-//	/**
-//	 * Defines and sets the Capabilities of the Carrier, including the vehicleTypes
-//	 * for the carriers for the Berlin network
-//	 * 
-//	 * @param
-//	 * 
-//	 */
-//	private static void defineCarriersBerlin(HashMap<String, CarrierVehicle> depotMap,
-//			Collection<SimpleFeature> districtsWithGarbage, Carriers carriers, HashMap<String, Carrier> carrierMap,
-//			CarrierVehicle vehicleForckenbeck, CarrierVehicle vehicleMalmoeerStr, CarrierVehicle vehicleNordring,
-//			CarrierVehicle vehicleGradestrasse, FleetSize fleetSize) {
-//
-//		if (oneCarrierForEachDistrict == false) {
-//			CarrierCapabilities carrierCapabilities = CarrierCapabilities.Builder.newInstance().addType(carrierVehType)
-//					.addVehicle(vehicleForckenbeck).setFleetSize(fleetSize).build();
-//			carrierMap.get("Forckenbeck").setCarrierCapabilities(carrierCapabilities);
-//			carrierCapabilities = CarrierCapabilities.Builder.newInstance().addType(carrierVehType)
-//					.addVehicle(vehicleMalmoeerStr).setFleetSize(fleetSize).build();
-//			carrierMap.get("MalmoeerStr").setCarrierCapabilities(carrierCapabilities);
-//			carrierCapabilities = CarrierCapabilities.Builder.newInstance().addType(carrierVehType)
-//					.addVehicle(vehicleNordring).setFleetSize(fleetSize).build();
-//			carrierMap.get("Nordring").setCarrierCapabilities(carrierCapabilities);
-//			carrierCapabilities = CarrierCapabilities.Builder.newInstance().addType(carrierVehType)
-//					.addVehicle(vehicleGradestrasse).setFleetSize(fleetSize).build();
-//			carrierMap.get("Gradestrasse").setCarrierCapabilities(carrierCapabilities);
-//		} else {
-//			for (Carrier carrier : carrierMap.values()) {
-//				for (SimpleFeature simpleFeature : districtsWithGarbage) {
-//					if (carrier.getId().toString().equals("Carrier " + simpleFeature.getAttribute("Ortsteil"))) {
-//						carrier.setCarrierCapabilities(CarrierCapabilities.Builder.newInstance().addType(carrierVehType)
-//								.addVehicle(depotMap.get(simpleFeature.getAttribute("Depot"))).setFleetSize(fleetSize)
-//								.build());
-//					}
-//				}
-//			}
-//		}
-//		// Fahrzeugtypen den Anbietern zuordenen
-//		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(vehicleTypes);
-//	}
 
 	/**
 	 * Solves with jsprit and gives a xml output of the plans and a plot of the
@@ -850,12 +786,18 @@ class AbfallUtils {
 		boolean electricCar = false;
 		double capacityTruck = 0;
 		String vehicleTypeId = null;
+		double energyConsumptionPerDistance = 0;
+		double energyConsumptionPerWeight = 0;
 
 		Carriers allCarriers = (Carriers) scenario.getScenarioElement("carriers");
 		Carrier testCarrier = allCarriers.getCarriers().values().iterator().next();
 		for (VehicleType usedType : testCarrier.getCarrierCapabilities().getVehicleTypes()) {
-			if (usedType.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electric"))
+			if (usedType.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electric")) {
 				electricCar = true;
+				energyConsumptionPerDistance = (double) usedType.getEngineInformation().getAttributes()
+						.getAttribute("engeryConsumptionPerKm");
+				energyConsumptionPerWeight = 1.4;
+			}
 			capacityTruck = usedType.getCapacity().getOther();
 			vehicleTypeId = usedType.getId().toString();
 		}
@@ -881,23 +823,23 @@ class AbfallUtils {
 					if (element instanceof Pickup) {
 						Pickup pickupElement = (Pickup) element;
 						String pickupShipmentId = pickupElement.getShipment().getId().toString();
-						if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckForckenbeck")) {
+						if (scheduledTour.getVehicle().getId().toString().contains("TruckForckenbeck")) {
 							sizeForckenbeck = sizeForckenbeck + (shipmentSizes.get(pickupShipmentId));
 							sizeTour = sizeTour + (shipmentSizes.get(pickupShipmentId));
 						}
-						if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckMalmoeer")) {
+						if (scheduledTour.getVehicle().getId().toString().contains("TruckMalmoeer")) {
 							sizeMalmooer = sizeMalmooer + (shipmentSizes.get(pickupShipmentId));
 							sizeTour = sizeTour + (shipmentSizes.get(pickupShipmentId));
 						}
-						if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckNordring")) {
+						if (scheduledTour.getVehicle().getId().toString().contains("TruckNordring")) {
 							sizeNordring = sizeNordring + (shipmentSizes.get(pickupShipmentId));
 							sizeTour = sizeTour + (shipmentSizes.get(pickupShipmentId));
 						}
-						if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckGradestrasse")) {
+						if (scheduledTour.getVehicle().getId().toString().contains("TruckGradestrasse")) {
 							sizeGradestrasse = sizeGradestrasse + (shipmentSizes.get(pickupShipmentId));
 							sizeTour = sizeTour + (shipmentSizes.get(pickupShipmentId));
 						}
-						if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckChessboard")) {
+						if (scheduledTour.getVehicle().getId().toString().contains("TruckChessboard")) {
 							sizeChessboard = sizeChessboard + (shipmentSizes.get(pickupShipmentId));
 							sizeTour = sizeTour + (shipmentSizes.get(pickupShipmentId));
 						}
@@ -921,7 +863,7 @@ class AbfallUtils {
 						if (deliveryElement.getLocation() == Id.createLinkId(linkGruenauerStr)) {
 							sizeGruenauerStr = sizeGruenauerStr + (shipmentSizes.get(deliveryShipmentId));
 						}
-						if (scheduledTour.getVehicle().getVehicleId() == Id.createVehicleId("TruckChessboard")) {
+						if (scheduledTour.getVehicle().getId() == Id.createVehicleId("TruckChessboard")) {
 							sizeChessboardDelivery = sizeChessboardDelivery + (shipmentSizes.get(deliveryShipmentId));
 						}
 					}
@@ -937,28 +879,28 @@ class AbfallUtils {
 				powerConsumptionTour = (double) (distanceTour / 1000) * energyConsumptionPerDistance
 						+ (double) (sizeTour / 1000) * energyConsumptionPerWeight;
 
-				if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckForckenbeck")) {
+				if (scheduledTour.getVehicle().getId().toString().contains("TruckForckenbeck")) {
 					tourDistancesForckenbeck.add(vehiclesForckenbeck, (double) Math.round(distanceTour / 1000));
 					powerConsumptionTourForckenbeck.add(vehiclesForckenbeck, (double) Math.round(powerConsumptionTour));
 					vehiclesForckenbeck++;
 				}
-				if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckMalmoeer")) {
+				if (scheduledTour.getVehicle().getId().toString().contains("TruckMalmoeer")) {
 					tourDistancesMalmoeerStr.add(vehiclesMalmoeer, (double) Math.round(distanceTour / 1000));
 					powerConsumptionTourMalmoeerStr.add(vehiclesMalmoeer, (double) Math.round(powerConsumptionTour));
 					vehiclesMalmoeer++;
 				}
-				if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckNordring")) {
+				if (scheduledTour.getVehicle().getId().toString().contains("TruckNordring")) {
 					tourDistancesNordring.add(vehiclesNordring, (double) Math.round(distanceTour / 1000));
 					powerConsumptionTourNordring.add(vehiclesNordring, (double) Math.round(powerConsumptionTour));
 					vehiclesNordring++;
 				}
-				if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckGradestrasse")) {
+				if (scheduledTour.getVehicle().getId().toString().contains("TruckGradestrasse")) {
 					tourDistancesGradestrasse.add(vehiclesGradestrasse, (double) Math.round(distanceTour / 1000));
 					powerConsumptionTourGradestrasse.add(vehiclesGradestrasse,
 							(double) Math.round(powerConsumptionTour));
 					vehiclesGradestrasse++;
 				}
-				if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckChessboard")) {
+				if (scheduledTour.getVehicle().getId().toString().contains("TruckChessboard")) {
 					tourDistancesChessboard.add(vehiclesChessboard, (double) Math.round(distanceTour / 1000));
 					tourDistanceChessboard = tourDistanceChessboard + tourDistancesChessboard.get(vehiclesChessboard);
 					powerConsumptionTourChessboard.add(vehiclesChessboard, (double) Math.round(powerConsumptionTour));
@@ -1270,7 +1212,6 @@ class AbfallUtils {
 		Map<Id<Person>, Double> personId2tourDistance = new HashMap<>();
 		Map<Id<Person>, Double> personId2tourConsumptionkWh = new HashMap<>();
 		Map<String, Integer> usedNumberPerVehicleType = new HashMap<>();
-		Map<Id<Person>, Integer> personId2tourDurations = new HashMap<>();
 		ArrayList<String> toursWithOverconsumption = new ArrayList<>();
 		CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes();
 
@@ -1302,12 +1243,9 @@ class AbfallUtils {
 
 			for (ScheduledTour scheduledTour : singleCarrier.getSelectedPlan().getScheduledTours()) {
 				distanceTour = 0.0;
-				int startTime = 10000000;
-				int endTime = 0;
-
 				for (VehicleType vt2 : singleCarrier.getCarrierCapabilities().getVehicleTypes()) {
 					if (vt2.getId().toString()
-							.contains(scheduledTour.getVehicle().getVehicleType().getId().toString())) {
+							.contains(scheduledTour.getVehicle().getType().getId().toString())) {
 
 						vt = vt2;
 						break;
@@ -1315,8 +1253,8 @@ class AbfallUtils {
 				}
 
 				int vehicleTypeCount = usedNumberPerVehicleType
-						.get(scheduledTour.getVehicle().getVehicleType().getId().toString());
-				usedNumberPerVehicleType.replace(scheduledTour.getVehicle().getVehicleType().getId().toString(),
+						.get(scheduledTour.getVehicle().getType().getId().toString());
+				usedNumberPerVehicleType.replace(scheduledTour.getVehicle().getType().getId().toString(),
 						vehicleTypeCount + 1);
 
 				List<Tour.TourElement> elements = scheduledTour.getTour().getTourElements();
@@ -1330,19 +1268,12 @@ class AbfallUtils {
 						if (legElement.getRoute().getDistance() != 0)
 							distanceTour = distanceTour
 									+ RouteUtils.calcDistance((NetworkRoute) legElement.getRoute(), 0, 0, network);
-						if (startTime > legElement.getExpectedDepartureTime())
-							startTime = (int) legElement.getExpectedDepartureTime();
-						if (endTime < (legElement.getExpectedDepartureTime() + legElement.getExpectedTransportTime()))
-							endTime = (int) (legElement.getExpectedDepartureTime()
-									+ legElement.getExpectedTransportTime());
-
 					}
 				}
 				Id<Person> personId = Id.create(
-						scheduledTour.getVehicle().getVehicleType().getId() + "-Tour " + tourNumberCarrier,
+						scheduledTour.getVehicle().getType().getId() + "-Tour " + tourNumberCarrier,
 						Person.class);
 				personId2tourDistance.put(personId, distanceTour);
-				personId2tourDurations.put(personId, endTime - startTime);
 				if (vt.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electricity")) {
 					personId2tourConsumptionkWh.put(personId, (distanceTour / 1000) * (double) vt.getEngineInformation()
 							.getAttributes().getAttribute("engeryConsumptionPerKm"));
@@ -1389,13 +1320,11 @@ class AbfallUtils {
 					writer.write("\n");
 
 			}
-			writer.write("\n\n"
-					+ "\tTourID\t\t\t\t\t\tdistance (max Distance) (km)\tduration \tconsumption (capacity) (kWh)\n\n");
+			writer.write("\n\n" + "\tTourID\t\t\t\t\t\tdistance (max Distance) (km)\tconsumption (capacity) (kWh)\n\n");
 
 			for (Id<Person> id : personId2tourDistance.keySet()) {
 
 				int tourDistance = (int) Math.round(personId2tourDistance.get(id) / 1000);
-				int duration = personId2tourDurations.get(id);
 				int consumption = 0;
 				double distanceRange = 0;
 				double electricityCapacityinkWh = 0;
@@ -1418,9 +1347,9 @@ class AbfallUtils {
 					}
 				}
 
-				writer.write("\t" + id + "\t\t" + tourDistance + "\t\t\t\t\t\t" + timeTransmission(duration));
+				writer.write("\t" + id + "\t\t" + tourDistance);
 				if (distanceRange > 0) {
-					writer.write(" (" + distanceRange + ")\t\t\t" + consumption + " (" + electricityCapacityinkWh
+					writer.write(" (" + distanceRange + ")\t\t\t\t\t\t" + consumption + " (" + electricityCapacityinkWh
 							+ ")");
 				} else
 					writer.write("\t\t\t\t\t\t\t\t\t\t");
@@ -1438,13 +1367,6 @@ class AbfallUtils {
 			throw new Exception("The tour(s) " + toursWithOverconsumption.toString()
 					+ " have a higher consumption then their capacity");
 
-	}
-
-	public static String timeTransmission(int duration) {
-		int stunden = (int) duration / 3600;
-		int minuten = (int) (duration - stunden * 3600) / 60;
-		int sekunden = duration - stunden * 3600 - minuten * 60;
-		return stunden + ":" + minuten + ":" + sekunden;
 	}
 
 }
