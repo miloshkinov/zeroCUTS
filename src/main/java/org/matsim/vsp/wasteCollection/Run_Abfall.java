@@ -25,8 +25,7 @@ import org.matsim.core.utils.gis.ShapeFileReader;
 import org.opengis.feature.simple.SimpleFeature;
 
 /**
- * @author Ricardo Ewert MA: Modellierung und Simulation der staedtischen
- *         Abfallwirtschaft am Beispiel Berlins
+ * @author Ricardo Ewert
  *
  */
 public class Run_Abfall {
@@ -35,11 +34,11 @@ public class Run_Abfall {
 
 	private static final String original_Chessboard = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 	private static final String berlin = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.2-1pct/output-berlin-v5.2-1pct/berlin-v5.2-1pct.output_network.xml.gz";
-	private static final String berlinDistrictsWithGarbageInformations = "scenarios/berlin-v5.5-10pct/input/wasteCollection/garbageInput/districtsWithGarbageInformations.shp";
-	private static final String inputVehicleTypes = "scenarios/berlin-v5.5-10pct/input/wasteCollection/vehicleTypes.xml";
-	private static final String inputCarriersWithDieselVehicle = "scenarios/berlin-v5.5-10pct/input/wasteCollection/carriers_diesel_vehicle.xml";
-	private static final String inputCarriersWithMediumBatteryVehicle = "scenarios/berlin-v5.5-10pct/input/wasteCollection/carriers_medium_EV.xml";
-	private static final String inputCarriersWithSmallBatteryVehicle = "scenarios/berlin-v5.5-10pct/input/wasteCollection/carriers_small_EV.xml";
+	private static final String berlinDistrictsWithGarbageInformations = "scenarios/wasteCollection/garbageInput/districtsWithGarbageInformations.shp";
+	private static final String inputVehicleTypes = "scenarios/wasteCollection/vehicleTypes.xml";
+	private static final String inputCarriersWithDieselVehicle = "scenarios/wasteCollection/carriers_diesel_vehicle.xml";
+	private static final String inputCarriersWithMediumBatteryVehicle = "scenarios/wasteCollection/carriers_medium_EV.xml";
+	private static final String inputCarriersWithSmallBatteryVehicle = "scenarios/wasteCollection/carriers_small_EV.xml";
 
 	private enum netzwerkAuswahl {
 		originalChessboard, berlinNetwork
