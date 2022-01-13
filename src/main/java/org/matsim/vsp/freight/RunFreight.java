@@ -37,6 +37,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.contrib.freight.Freight;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
@@ -57,6 +58,7 @@ import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
 import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
 import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts;
 import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts.Builder;
+import org.matsim.contrib.freight.usecases.chessboard.CarrierScoringFunctionFactoryImpl;
 import org.matsim.contrib.freight.jsprit.NetworkRouter;
 import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
@@ -68,6 +70,7 @@ import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.config.groups.StrategyConfigGroup.StrategySettings;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup.VspDefaultsCheckingLevel;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.ControlerUtils;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -400,16 +403,22 @@ public class RunFreight {
 	private static void matsimRun(Scenario scenario, Carriers carriers) {
 		final Controler controler = new Controler( scenario ) ;
 
-
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2(scenario);
 		CarrierPlanStrategyManagerFactory planStrategyManagerFactory =  createMyStrategymanager(); //Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
 
 		FreightConfigGroup freightConfig = ConfigUtils.addOrGetModule( scenario.getConfig(), FreightConfigGroup.class );
 		freightConfig.setTimeWindowHandling(FreightConfigGroup.TimeWindowHandling.enforceBeginnings);
-
-		FreightUtils.getCarriers(scenario);
-		CarrierModule listener = new CarrierModule() ; //add scoringFunctionFactory and planStrategyManagerFactory again
-		controler.addOverridingModule(listener) ;
+		
+		FreightUtils.addOrGetCarriers(scenario);
+		CarrierModule listener = new CarrierModule();
+		controler.addOverridingModule( new AbstractModule(){
+			@Override
+			public void install(){
+				bind( CarrierScoringFunctionFactory.class ).toInstance(scoringFunctionFactory) ;
+				bind( CarrierPlanStrategyManagerFactory.class ).toInstance(planStrategyManagerFactory);
+			}
+		} ) ;
+		controler.addOverridingModule(listener);
 		controler.run();
 	}
 

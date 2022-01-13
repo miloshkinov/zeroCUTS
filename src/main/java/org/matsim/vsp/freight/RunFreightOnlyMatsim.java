@@ -38,6 +38,7 @@ import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.config.groups.StrategyConfigGroup.StrategySettings;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup.VspDefaultsCheckingLevel;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.ControlerUtils;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -244,8 +245,15 @@ public class RunFreightOnlyMatsim {
 		FreightConfigGroup freightConfig = ConfigUtils.addOrGetModule( scenario.getConfig(), FreightConfigGroup.class );
 		freightConfig.setTimeWindowHandling(FreightConfigGroup.TimeWindowHandling.enforceBeginnings);
 
-		FreightUtils.getCarriers(scenario);
-		CarrierModule listener = new CarrierModule() ; //add scoringFunctionFactory and planStrategyManagerFactory again
+		FreightUtils.addOrGetCarriers(scenario);
+		CarrierModule listener = new CarrierModule();
+		controler.addOverridingModule( new AbstractModule(){
+			@Override
+			public void install(){
+				bind( CarrierScoringFunctionFactory.class ).toInstance(scoringFunctionFactory) ;
+				bind( CarrierPlanStrategyManagerFactory.class ).toInstance(planStrategyManagerFactory);
+			}
+		} ) ;
 		controler.addOverridingModule(listener) ;
 		controler.run();
 	}
