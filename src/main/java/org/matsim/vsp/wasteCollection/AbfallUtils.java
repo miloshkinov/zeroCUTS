@@ -823,23 +823,23 @@ class AbfallUtils {
 					if (element instanceof Pickup) {
 						Pickup pickupElement = (Pickup) element;
 						String pickupShipmentId = pickupElement.getShipment().getId().toString();
-						if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckForckenbeck")) {
+						if (scheduledTour.getVehicle().getId().toString().contains("TruckForckenbeck")) {
 							sizeForckenbeck = sizeForckenbeck + (shipmentSizes.get(pickupShipmentId));
 							sizeTour = sizeTour + (shipmentSizes.get(pickupShipmentId));
 						}
-						if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckMalmoeer")) {
+						if (scheduledTour.getVehicle().getId().toString().contains("TruckMalmoeer")) {
 							sizeMalmooer = sizeMalmooer + (shipmentSizes.get(pickupShipmentId));
 							sizeTour = sizeTour + (shipmentSizes.get(pickupShipmentId));
 						}
-						if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckNordring")) {
+						if (scheduledTour.getVehicle().getId().toString().contains("TruckNordring")) {
 							sizeNordring = sizeNordring + (shipmentSizes.get(pickupShipmentId));
 							sizeTour = sizeTour + (shipmentSizes.get(pickupShipmentId));
 						}
-						if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckGradestrasse")) {
+						if (scheduledTour.getVehicle().getId().toString().contains("TruckGradestrasse")) {
 							sizeGradestrasse = sizeGradestrasse + (shipmentSizes.get(pickupShipmentId));
 							sizeTour = sizeTour + (shipmentSizes.get(pickupShipmentId));
 						}
-						if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckChessboard")) {
+						if (scheduledTour.getVehicle().getId().toString().contains("TruckChessboard")) {
 							sizeChessboard = sizeChessboard + (shipmentSizes.get(pickupShipmentId));
 							sizeTour = sizeTour + (shipmentSizes.get(pickupShipmentId));
 						}
@@ -863,7 +863,7 @@ class AbfallUtils {
 						if (deliveryElement.getLocation() == Id.createLinkId(linkGruenauerStr)) {
 							sizeGruenauerStr = sizeGruenauerStr + (shipmentSizes.get(deliveryShipmentId));
 						}
-						if (scheduledTour.getVehicle().getVehicleId() == Id.createVehicleId("TruckChessboard")) {
+						if (scheduledTour.getVehicle().getId() == Id.createVehicleId("TruckChessboard")) {
 							sizeChessboardDelivery = sizeChessboardDelivery + (shipmentSizes.get(deliveryShipmentId));
 						}
 					}
@@ -879,28 +879,28 @@ class AbfallUtils {
 				powerConsumptionTour = (double) (distanceTour / 1000) * energyConsumptionPerDistance
 						+ (double) (sizeTour / 1000) * energyConsumptionPerWeight;
 
-				if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckForckenbeck")) {
+				if (scheduledTour.getVehicle().getId().toString().contains("TruckForckenbeck")) {
 					tourDistancesForckenbeck.add(vehiclesForckenbeck, (double) Math.round(distanceTour / 1000));
 					powerConsumptionTourForckenbeck.add(vehiclesForckenbeck, (double) Math.round(powerConsumptionTour));
 					vehiclesForckenbeck++;
 				}
-				if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckMalmoeer")) {
+				if (scheduledTour.getVehicle().getId().toString().contains("TruckMalmoeer")) {
 					tourDistancesMalmoeerStr.add(vehiclesMalmoeer, (double) Math.round(distanceTour / 1000));
 					powerConsumptionTourMalmoeerStr.add(vehiclesMalmoeer, (double) Math.round(powerConsumptionTour));
 					vehiclesMalmoeer++;
 				}
-				if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckNordring")) {
+				if (scheduledTour.getVehicle().getId().toString().contains("TruckNordring")) {
 					tourDistancesNordring.add(vehiclesNordring, (double) Math.round(distanceTour / 1000));
 					powerConsumptionTourNordring.add(vehiclesNordring, (double) Math.round(powerConsumptionTour));
 					vehiclesNordring++;
 				}
-				if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckGradestrasse")) {
+				if (scheduledTour.getVehicle().getId().toString().contains("TruckGradestrasse")) {
 					tourDistancesGradestrasse.add(vehiclesGradestrasse, (double) Math.round(distanceTour / 1000));
 					powerConsumptionTourGradestrasse.add(vehiclesGradestrasse,
 							(double) Math.round(powerConsumptionTour));
 					vehiclesGradestrasse++;
 				}
-				if (scheduledTour.getVehicle().getVehicleId().toString().contains("TruckChessboard")) {
+				if (scheduledTour.getVehicle().getId().toString().contains("TruckChessboard")) {
 					tourDistancesChessboard.add(vehiclesChessboard, (double) Math.round(distanceTour / 1000));
 					tourDistanceChessboard = tourDistanceChessboard + tourDistancesChessboard.get(vehiclesChessboard);
 					powerConsumptionTourChessboard.add(vehiclesChessboard, (double) Math.round(powerConsumptionTour));
@@ -1245,7 +1245,7 @@ class AbfallUtils {
 				distanceTour = 0.0;
 				for (VehicleType vt2 : singleCarrier.getCarrierCapabilities().getVehicleTypes()) {
 					if (vt2.getId().toString()
-							.contains(scheduledTour.getVehicle().getVehicleType().getId().toString())) {
+							.contains(scheduledTour.getVehicle().getType().getId().toString())) {
 
 						vt = vt2;
 						break;
@@ -1253,8 +1253,8 @@ class AbfallUtils {
 				}
 
 				int vehicleTypeCount = usedNumberPerVehicleType
-						.get(scheduledTour.getVehicle().getVehicleType().getId().toString());
-				usedNumberPerVehicleType.replace(scheduledTour.getVehicle().getVehicleType().getId().toString(),
+						.get(scheduledTour.getVehicle().getType().getId().toString());
+				usedNumberPerVehicleType.replace(scheduledTour.getVehicle().getType().getId().toString(),
 						vehicleTypeCount + 1);
 
 				List<Tour.TourElement> elements = scheduledTour.getTour().getTourElements();
@@ -1271,7 +1271,7 @@ class AbfallUtils {
 					}
 				}
 				Id<Person> personId = Id.create(
-						scheduledTour.getVehicle().getVehicleType().getId() + "-Tour " + tourNumberCarrier,
+						scheduledTour.getVehicle().getType().getId() + "-Tour " + tourNumberCarrier,
 						Person.class);
 				personId2tourDistance.put(personId, distanceTour);
 				if (vt.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electricity")) {
