@@ -14,7 +14,6 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
-import org.matsim.contrib.freight.carrier.CarrierUtils;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.contrib.freight.carrier.Carriers;
 import org.matsim.contrib.freight.utils.FreightUtils;
@@ -23,12 +22,10 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.gis.ShapeFileReader;
-import org.matsim.vehicles.VehicleUtils;
 import org.opengis.feature.simple.SimpleFeature;
 
 /**
- * @author Ricardo Ewert MA: Modellierung und Simulation der staedtischen
- *         Abfallwirtschaft am Beispiel Berlins
+ * @author Ricardo Ewert
  *
  */
 public class Run_Abfall {
@@ -87,16 +84,15 @@ public class Run_Abfall {
 		}
 		if (args.length == 0) {
 			chosenCarrier = carrierChoice.carriersWithDieselVehicle;
-			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay;
+			scenarioWahl = scenarioAuswahl.berlinSelectedDistricts;
 			shapeFileLocation = berlinDistrictsWithGarbageInformations;
 			oneCarrierForOneDistrict = true;
 			jspritIterations = 100;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
-			outputLocation = "output/wasteCollection/Test1";
+			outputLocation = "output/wasteCollection/Scenario1";
 			day = "MO";
 			networkChangeEventsFileLocation = "";
-	//		networkChangeEventsFileLocation = "T:/Shared/vsp_zerocuts/scenarios/Fracht_LEH_OpenBln_oneTW/input/networkChangeEvents.xml.gz";
 		} else {
 			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay;
 			jspritIterations = Integer.parseInt(args[0]);
@@ -158,7 +154,7 @@ public class Run_Abfall {
 		FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 
 		// creates carrier
-		Carriers carriers = FreightUtils.getOrCreateCarriers(scenario);
+		Carriers carriers = FreightUtils.addOrGetCarriers(scenario);
 		HashMap<String, Carrier> carrierMap = AbfallUtils.createCarrier(carriers);
 
 		Map<Id<Link>, ? extends Link> allLinks = scenario.getNetwork().getLinks();
