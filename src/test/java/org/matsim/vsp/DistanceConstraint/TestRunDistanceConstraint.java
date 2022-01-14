@@ -31,9 +31,11 @@ import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts;
 import org.matsim.contrib.freight.jsprit.NetworkRouter;
 import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts.Builder;
 import org.matsim.contrib.freight.usecases.chessboard.CarrierScoringFunctionFactoryImpl;
+import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControlerConfigGroup.CompressionType;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
@@ -587,7 +589,15 @@ public class TestRunDistanceConstraint {
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2(scenario);
 		CarrierPlanStrategyManagerFactory planStrategyManagerFactory = createMyStrategymanager();
 
-		CarrierModule listener = new CarrierModule(carriers, planStrategyManagerFactory, scoringFunctionFactory);
+		FreightUtils.addOrGetCarriers(scenario);
+		CarrierModule listener = new CarrierModule();
+		controler.addOverridingModule( new AbstractModule(){
+			@Override
+			public void install(){
+				bind( CarrierScoringFunctionFactory.class ).toInstance(scoringFunctionFactory) ;
+				bind( CarrierPlanStrategyManagerFactory.class ).toInstance(planStrategyManagerFactory);
+			}
+		} ) ;
 		controler.addOverridingModule(listener);
 	}
 
