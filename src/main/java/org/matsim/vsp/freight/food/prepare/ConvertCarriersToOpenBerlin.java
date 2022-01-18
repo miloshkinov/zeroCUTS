@@ -62,7 +62,7 @@ class ConvertCarriersToOpenBerlin {
 	}
 
 	private Network filterNetwork(Network openBerlinNet) {
-		NetworkFilterManager mng = new NetworkFilterManager(openBerlinNet);
+		NetworkFilterManager mng = new NetworkFilterManager(openBerlinNet, null);
 
 		//allowedMode is at least car
 		mng.addLinkFilter(link -> link.getAllowedModes().contains("car"));
