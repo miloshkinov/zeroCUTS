@@ -1,14 +1,16 @@
 package org.matsim.vsp.demandGeneration.smallScaleCommercialTraffic;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.csv.CSVFormat;
@@ -25,11 +27,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.geometry.DirectPosition;
-
 import com.google.common.base.Joiner;
-import com.opencsv.CSVWriter;
-
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 
@@ -56,7 +54,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--sample", defaultValue = "1", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
-	@CommandLine.Option(names = "--output", description = "Path to output population", required = true, defaultValue = "output/SmallScaleBusiness/test.csv")
+	@CommandLine.Option(names = "--output", description = "Path to output population", required = true, defaultValue = "output/SmallScaleBusiness/")
 	private Path output;
 
 	@CommandLine.Mixin
@@ -65,6 +63,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Mixin
 	private CrsOptions crs = new CrsOptions();
 
+	private enum landuseConfiguration {
+		useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
+	}
+
+	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useExistingDataDistribution", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse")
+	private landuseConfiguration usedLanduseConfiguration;
 //	    private final SplittableRandom rnd = new SplittableRandom(4711);
 
 	public static void main(String[] args) {
@@ -74,19 +78,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@Override
 	public Integer call() throws Exception {
 
-		Path shapeFileLandusePath = rawDataDirectory.resolve("shp").resolve("landuse")
-				.resolve("gis_osm_landuse_a_free_1.shp");
-		Path shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse")
-				.resolve("gis_osm_buildings_a_free_1");
-//		Path shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
-//				.resolve("bezirksgrenzen_Berlin.shp");
 		Path shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
-				.resolve("verkehrszellen_Berlin.shp");
-		Path areaDataPath = rawDataDirectory.resolve("investigationAreaData.csv");
-
-		if (!Files.exists(shapeFileLandusePath)) {
-			log.error("Required landuse shape file {} not found", shapeFileLandusePath);
-		}
+				.resolve("bezirksgrenzen_Berlin.shp");
+//		Path shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
+//				.resolve("verkehrszellen_Berlin.shp");
 
 		if (!Files.exists(shapeFileZonePath)) {
 			log.error("Required distrcits shape file {} not found", shapeFileZonePath);
@@ -97,30 +92,94 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		config.global().setCoordinateSystem(crs.getInputCRS()); // "EPSG:4326"
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 
-		// TODO benötigte categorien filtern
-		HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone = new HashMap<String, Object2DoubleMap<String>>();
-		createLanduseDistribution(shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, landuseCategoriesPerZone);
+		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = createInputDataDistribution(shapeFileZonePath);
+		
+		return 0;
 
-		HashMap<String, HashMap<String, Integer>> investigationAreaData = new HashMap<String, HashMap<String, Integer>>();
-		readAreaData(areaDataPath, investigationAreaData);
+	}
+
+	/**
+	 * Creates a distribution of the given input data for each zone based on the
+	 * used OSM data.
+	 * 
+	 * @param shapeFileZonePath
+	 * @return
+	 * @throws IOException
+	 * @throws MalformedURLException
+	 */
+	@SuppressWarnings("deprecation")
+	private HashMap<String, Object2DoubleMap<String>> createInputDataDistribution(Path shapeFileZonePath)
+			throws IOException, MalformedURLException {
 
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = new HashMap<String, Object2DoubleMap<String>>();
 
-		createResultingDataForLanduseInZones(landuseCategoriesPerZone, investigationAreaData, resultingDataPerZone);
+		switch (usedLanduseConfiguration) {
+		case useExistingDataDistribution:
+			Path existingDataDistribution = rawDataDirectory.resolve("dataDistributionPerZone.csv");
 
-		BufferedWriter writer = IOUtils.getBufferedWriter(output.toUri().toURL(), StandardCharsets.UTF_8, true);
+			if (!Files.exists(existingDataDistribution)) {
+				log.error("Required data per zone file {} not found", existingDataDistribution);
+			}
+			try (BufferedReader reader = IOUtils.getBufferedReader(existingDataDistribution.toString())) {
+				CSVParser parse = CSVFormat.DEFAULT.withDelimiter('\t').withFirstRecordAsHeader().parse(reader);
+
+				for (CSVRecord record : parse) {
+					String zoneID = record.get("areaID");
+					resultingDataPerZone.put(zoneID, new Object2DoubleOpenHashMap<>());
+					for (int n = 1; n<parse.getHeaderMap().size(); n++) {
+						resultingDataPerZone.get(zoneID).mergeDouble(parse.getHeaderNames().get(n), Double.valueOf(record.get(n)), Double::sum);
+					}
+				}
+			}
+			break;
+
+		default:
+
+			HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone = new HashMap<String, Object2DoubleMap<String>>();
+			createLanduseDistribution(shapeFileZonePath, landuseCategoriesPerZone);
+
+			HashMap<String, HashMap<String, Integer>> investigationAreaData = new HashMap<String, HashMap<String, Integer>>();
+			readAreaData(investigationAreaData);
+
+			createResultingDataForLanduseInZones(landuseCategoriesPerZone, investigationAreaData, resultingDataPerZone);
+
+			writeResultOfDataDistribution(resultingDataPerZone);
+		}
+		return resultingDataPerZone;
+	}
+
+	/**
+	 * Writes a csv file with result of the distribution per zone of the input data.
+	 * 
+	 * @param resultingDataPerZone
+	 * @throws IOException
+	 * @throws MalformedURLException
+	 */
+	private void writeResultOfDataDistribution(HashMap<String, Object2DoubleMap<String>> resultingDataPerZone)
+			throws IOException, MalformedURLException {
+
+		Path outputFile = rawDataDirectory.resolve("dataDistributionPerZone.csv");
+
+		if (Files.exists(outputFile)) {
+			Path oldFile = Path.of(outputFile.toString().replace(".csv", "_old.csv"));
+			log.warn("The result of data distribution already exists. The existing data will be moved to: " + oldFile);
+			Files.deleteIfExists(oldFile);
+			Files.move(outputFile, oldFile, StandardCopyOption.REPLACE_EXISTING);
+		}
+
+		BufferedWriter writer = IOUtils.getBufferedWriter(outputFile.toUri().toURL(), StandardCharsets.UTF_8, true);
 		try {
 			String[] header = new String[] { "areaID", "Inhabitants", "Employee", "Employee Primary Sector",
 					"Employee Construction", "Employee Secondary Sector Rest", "Employee Retail",
 					"Employee Traffic/Parcels", "Employee Tertiär Rest" };
 			JOIN.appendTo(writer, header);
 			writer.write("\n");
-			for (String s : resultingDataPerZone.keySet()) {
+			for (String zone : resultingDataPerZone.keySet()) {
 				List<String> row = new ArrayList<>();
-				row.add(s);
-				for (String r : header) {
-					if (!r.equals("areaID")) {
-						row.add(String.valueOf(resultingDataPerZone.get(s).getDouble(r)));
+				row.add(zone);
+				for (String category : header) {
+					if (!category.equals("areaID")) {
+						row.add(String.valueOf((int) resultingDataPerZone.get(zone).getDouble(category)));
 					}
 				}
 				JOIN.appendTo(writer, row);
@@ -131,8 +190,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return 0;
-
 	}
 
 	/**
@@ -145,15 +202,30 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			HashMap<String, HashMap<String, Integer>> investigationAreaData,
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) {
 		HashMap<String, List<String>> landuseCategoriesAndDataConnection = new HashMap<String, List<String>>();
-		landuseCategoriesAndDataConnection.put("Inhabitants", List.of("residential"));
+		landuseCategoriesAndDataConnection.put("Inhabitants", List.of("residential", "apartments", "dormitory",
+				"dwelling_house", "house", "retirement_home", "semidetached_house"));
+		landuseCategoriesAndDataConnection.put("Employee Primary Sector",
+				List.of("farmyard", "farmland", "farm", "farm_auxiliary", "greenhouse"));
+		landuseCategoriesAndDataConnection.put("Employee Construction", List.of("construction"));
+		landuseCategoriesAndDataConnection.put("Employee Secondary Sector Rest",
+				List.of("industrial", "factory", "manufacture"));
+		landuseCategoriesAndDataConnection.put("Employee Retail",
+				List.of("retail", "kiosk", "mall", "shop", "supermarket"));
+		landuseCategoriesAndDataConnection.put("Employee Traffic/Parcels",
+				List.of("commercial", "post_office", "storage", "storage_tank", "warehouse"));
+		landuseCategoriesAndDataConnection.put("Employee Tertiär Rest",
+				List.of("commercial", "embassy", "foundation", "government", "office", "townhall"));
 		landuseCategoriesAndDataConnection.put("Employee",
-				List.of("farmyard", "farmland", "industrial", "retail", "commercial"));
-		landuseCategoriesAndDataConnection.put("Employee Primary Sector", List.of("farmyard", "farmland"));
-		landuseCategoriesAndDataConnection.put("Employee Construction", List.of("")); // TODO
-		landuseCategoriesAndDataConnection.put("Employee Secondary Sector Rest", List.of("industrial"));
-		landuseCategoriesAndDataConnection.put("Employee Retail", List.of("retail"));
-		landuseCategoriesAndDataConnection.put("Employee Traffic/Parcels", List.of("commercial"));
-		landuseCategoriesAndDataConnection.put("Employee Tertiär Rest", List.of("commercial"));
+				landuseCategoriesAndDataConnection.get("Employee Primary Sector"));
+		landuseCategoriesAndDataConnection.put("Employee",
+				landuseCategoriesAndDataConnection.get("Employee Construction"));
+		landuseCategoriesAndDataConnection.put("Employee",
+				landuseCategoriesAndDataConnection.get("Employee Secondary Sector Rest"));
+		landuseCategoriesAndDataConnection.put("Employee", landuseCategoriesAndDataConnection.get("Employee Retail"));
+		landuseCategoriesAndDataConnection.put("Employee",
+				landuseCategoriesAndDataConnection.get("Employee Traffic/Parcels"));
+		landuseCategoriesAndDataConnection.put("Employee",
+				landuseCategoriesAndDataConnection.get("Employee Tertiär Rest"));
 
 		for (String zoneID : landuseCategoriesPerZone.keySet()) {
 			resultingDataPerZone.put(zoneID, new Object2DoubleOpenHashMap<>());
@@ -164,7 +236,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 								.mergeDouble(categoryNameData,
 										(landuseCategoriesPerZone.get(zoneID).getDouble(category))
 												/ landuseCategoriesAndDataConnection.get(categoryNameData).size(),
-										Double::sum); // TODO Aufteilung commercial
+										Double::sum);
 				}
 			}
 		}
@@ -192,8 +264,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param areaData
 	 * @throws IOException
 	 */
-	private void readAreaData(Path areaDataPath, HashMap<String, HashMap<String, Integer>> areaData)
-			throws IOException {
+	private void readAreaData(HashMap<String, HashMap<String, Integer>> areaData) throws IOException {
+
+		Path areaDataPath = rawDataDirectory.resolve("investigationAreaData.csv");
+		if (!Files.exists(areaDataPath)) {
+			log.error("Required input data file {} not found", areaDataPath);
+		}
 		try (CSVParser parser = new CSVParser(Files.newBufferedReader(areaDataPath),
 				CSVFormat.TDF.withFirstRecordAsHeader())) {
 
@@ -218,17 +294,25 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param landuseCategoriesPerZone
 	 * 
 	 */
-	private void createLanduseDistribution(Path shapeFileLandusePath, Path shapeFileZonesPath, Path shapeFileBuildingPath,
+	private void createLanduseDistribution(Path shapeFileZonesPath,
 			HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone) {
 
 		List<String> neededLanduseCategories = List.of("residential", "industrial", "commercial", "retail", "farmyard",
-				"farmland");
+				"farmland", "construction");
+		Path shapeFileLandusePath = rawDataDirectory.resolve("shp").resolve("landuse")
+				.resolve("gis_osm_landuse_a_free_1.shp");
+		Path shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse")
+				.resolve("gis_osm_buildings_a_free_1.shp");
+		if (!Files.exists(shapeFileLandusePath)) {
+			log.error("Required landuse shape file {} not found", shapeFileLandusePath);
+		}
+		if (!Files.exists(shapeFileBuildingsPath)) {
+			log.error("Required OSM buildings shape file {} not found", shapeFileBuildingsPath);
+		}
 		ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, null, StandardCharsets.UTF_8);
-		ShpOptions shpBuildings = new ShpOptions(shapeFileLandusePath, null, StandardCharsets.UTF_8);
 		ShpOptions shpZones = new ShpOptions(shapeFileZonesPath, null, StandardCharsets.UTF_8);
 
 		List<SimpleFeature> landuseFeatures = shpLanduse.readFeatures();
-		List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
 		List<SimpleFeature> zonesFeatures = shpZones.readFeatures();
 
 		for (SimpleFeature districId : zonesFeatures) {
@@ -238,23 +322,93 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		double totalSquareMeters = 0;
 		Object2DoubleMap<String> totalSquareMetersPerCategory = new Object2DoubleOpenHashMap<>();
+		int countOSMObjects = 0;
 
-		for (SimpleFeature singleLanduseFeature : landuseFeatures) {
-			if (!neededLanduseCategories.contains((String) singleLanduseFeature.getAttribute("fclass")))
-				continue;
-			Point centroidPointOfLandusePolygon = ((Geometry) singleLanduseFeature.getDefaultGeometry()).getCentroid();
+		switch (usedLanduseConfiguration) {
+		case useOSMBuildingsAndLanduse:
 
-			for (SimpleFeature singleZone : zonesFeatures) {
-				if (((Geometry) singleZone.getDefaultGeometry()).contains(centroidPointOfLandusePolygon)) {
-					landuseCategoriesPerZone.get(singleZone.getAttribute("gml_id")).mergeDouble(
-							(String) singleLanduseFeature.getAttribute("fclass"),
-							(double) singleLanduseFeature.getAttribute("area"), Double::sum);
-					totalSquareMetersPerCategory.mergeDouble((String) singleLanduseFeature.getAttribute("fclass"),
-							(double) singleLanduseFeature.getAttribute("area"), Double::sum);
-					totalSquareMeters = totalSquareMeters + (double) singleLanduseFeature.getAttribute("area");
+			List<String> neededBuildingCategories = List.of("residential", "apartments", "dormitory", "dwelling_house",
+					"house", "retirement_home", "semidetached_house", "farm", "farm_auxiliary", "greenhouse",
+					"construction", "industrial", "factory", "manufacture", "retail", "kiosk", "mall", "shop",
+					"supermarket", "commercial", "post_office", "storage", "storage_tank", "warehouse", "embassy",
+					"foundation", "government", "office", "townhall");
+			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, null, StandardCharsets.UTF_8);
+			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
+			for (SimpleFeature singleBuildingFeature : buildingsFeatures) {
+				countOSMObjects++;
+				if (countOSMObjects % 10000 == 0)
+					log.info("Investigate Building " + countOSMObjects + " of " + buildingsFeatures.size()
+							+ " buildings: " + Math.round((double) countOSMObjects / buildingsFeatures.size() * 100)
+							+ " %");
+				String buildingType = String.valueOf(singleBuildingFeature.getAttribute("type"));
+
+				List<String> buildingCategories = new ArrayList<String>();
+				Point centroidPointOfBuildingPolygon = null;
+				boolean neededType = false;
+				if (!buildingType.equals("")) {
+					for (String categoryName : neededBuildingCategories) {
+						if (buildingType.contains(categoryName)) {
+							buildingCategories.add(categoryName);
+							neededType = true;
+						}
+					}
+				} else {
+					centroidPointOfBuildingPolygon = ((Geometry) singleBuildingFeature.getDefaultGeometry())
+							.getCentroid();
+					for (SimpleFeature singleLanduseFeature : landuseFeatures) {
+						if (!neededLanduseCategories.contains((String) singleLanduseFeature.getAttribute("fclass")))
+							continue;
+						if (!neededType && ((Geometry) singleLanduseFeature.getDefaultGeometry())
+								.contains(centroidPointOfBuildingPolygon)) {
+							buildingCategories.add((String) singleLanduseFeature.getAttribute("fclass"));
+							neededType = true;
+						}
+					}
+				}
+				if (!neededType)
 					continue;
+
+				if (centroidPointOfBuildingPolygon == null)
+					centroidPointOfBuildingPolygon = ((Geometry) singleBuildingFeature.getDefaultGeometry())
+							.getCentroid();
+
+				for (SimpleFeature singleZone : zonesFeatures) {
+					if (((Geometry) singleZone.getDefaultGeometry()).contains(centroidPointOfBuildingPolygon)) {
+						for (String singleCategory : buildingCategories) {
+							double area = (double) ((long) singleBuildingFeature.getAttribute("area"));
+							landuseCategoriesPerZone.get(singleZone.getAttribute("gml_id")).mergeDouble(singleCategory,
+									area, Double::sum);
+							totalSquareMetersPerCategory.mergeDouble(singleCategory, area, Double::sum);
+							totalSquareMeters = totalSquareMeters + area;
+						}
+						break;
+					}
 				}
 			}
+			break;
+		case useOnlyOSMLanduse:
+			for (SimpleFeature singleLanduseFeature : landuseFeatures) {
+				if (!neededLanduseCategories.contains((String) singleLanduseFeature.getAttribute("fclass")))
+					continue;
+				Point centroidPointOfLandusePolygon = ((Geometry) singleLanduseFeature.getDefaultGeometry())
+						.getCentroid();
+
+				for (SimpleFeature singleZone : zonesFeatures) {
+					if (((Geometry) singleZone.getDefaultGeometry()).contains(centroidPointOfLandusePolygon)) {
+						landuseCategoriesPerZone.get(singleZone.getAttribute("gml_id")).mergeDouble(
+								(String) singleLanduseFeature.getAttribute("fclass"),
+								(double) singleLanduseFeature.getAttribute("area"), Double::sum);
+						totalSquareMetersPerCategory.mergeDouble((String) singleLanduseFeature.getAttribute("fclass"),
+								(double) singleLanduseFeature.getAttribute("area"), Double::sum);
+						totalSquareMeters = totalSquareMeters + (double) singleLanduseFeature.getAttribute("area");
+						continue;
+					}
+				}
+			}
+			break;
+
+		default:
+			throw new RuntimeException("No possible option for the use of OSM data selected");
 		}
 
 		for (String landuseCategoriesForSingleZone : landuseCategoriesPerZone.keySet()) {
