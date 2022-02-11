@@ -9,6 +9,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -67,7 +70,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
 	}
 
-	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useExistingDataDistribution", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse")
+	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useOSMBuildingsAndLanduse", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse")
 	private landuseConfiguration usedLanduseConfiguration;
 //	    private final SplittableRandom rnd = new SplittableRandom(4711);
 
@@ -78,10 +81,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@Override
 	public Integer call() throws Exception {
 
-		Path shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
-				.resolve("bezirksgrenzen_Berlin.shp");
 //		Path shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
-//				.resolve("verkehrszellen_Berlin.shp");
+//				.resolve("bezirksgrenzen_Berlin.shp");
+		Path shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
+				.resolve("verkehrszellen_Berlin.shp");
 
 		if (!Files.exists(shapeFileZonePath)) {
 			log.error("Required distrcits shape file {} not found", shapeFileZonePath);
@@ -93,7 +96,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = createInputDataDistribution(shapeFileZonePath);
-		
+
 		return 0;
 
 	}
@@ -107,7 +110,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @throws IOException
 	 * @throws MalformedURLException
 	 */
-	@SuppressWarnings("deprecation")
 	private HashMap<String, Object2DoubleMap<String>> createInputDataDistribution(Path shapeFileZonePath)
 			throws IOException, MalformedURLException {
 
@@ -120,21 +122,25 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			if (!Files.exists(existingDataDistribution)) {
 				log.error("Required data per zone file {} not found", existingDataDistribution);
 			}
+			
 			try (BufferedReader reader = IOUtils.getBufferedReader(existingDataDistribution.toString())) {
 				CSVParser parse = CSVFormat.DEFAULT.withDelimiter('\t').withFirstRecordAsHeader().parse(reader);
 
 				for (CSVRecord record : parse) {
 					String zoneID = record.get("areaID");
 					resultingDataPerZone.put(zoneID, new Object2DoubleOpenHashMap<>());
-					for (int n = 1; n<parse.getHeaderMap().size(); n++) {
-						resultingDataPerZone.get(zoneID).mergeDouble(parse.getHeaderNames().get(n), Double.valueOf(record.get(n)), Double::sum);
+					for (int n = 1; n < parse.getHeaderMap().size(); n++) {
+						resultingDataPerZone.get(zoneID).mergeDouble(parse.getHeaderNames().get(n),
+								Double.valueOf(record.get(n)), Double::sum);
 					}
 				}
 			}
+			log.info("Data distribution for "+ resultingDataPerZone.size()+" zones was imported from ", existingDataDistribution);
 			break;
 
 		default:
 
+			log.info("New analyze for data distribution is started. The used method is: "+usedLanduseConfiguration);
 			HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone = new HashMap<String, Object2DoubleMap<String>>();
 			createLanduseDistribution(shapeFileZonePath, landuseCategoriesPerZone);
 
@@ -171,7 +177,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		try {
 			String[] header = new String[] { "areaID", "Inhabitants", "Employee", "Employee Primary Sector",
 					"Employee Construction", "Employee Secondary Sector Rest", "Employee Retail",
-					"Employee Traffic/Parcels", "Employee Tertiär Rest" };
+					"Employee Traffic/Parcels", "Employee Tertiary Sector Rest" };
 			JOIN.appendTo(writer, header);
 			writer.write("\n");
 			for (String zone : resultingDataPerZone.keySet()) {
@@ -187,6 +193,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			}
 
 			writer.close();
+			log.info("The data distribution is finished and written to: "+outputFile);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -201,58 +208,73 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone,
 			HashMap<String, HashMap<String, Integer>> investigationAreaData,
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) {
-		HashMap<String, List<String>> landuseCategoriesAndDataConnection = new HashMap<String, List<String>>();
-		landuseCategoriesAndDataConnection.put("Inhabitants", List.of("residential", "apartments", "dormitory",
-				"dwelling_house", "house", "retirement_home", "semidetached_house"));
+		HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
+		landuseCategoriesAndDataConnection.put("Inhabitants", new ArrayList<String>(Arrays.asList("residential",
+				"apartments", "dormitory", "dwelling_house", "house", "retirement_home", "semidetached_house")));
 		landuseCategoriesAndDataConnection.put("Employee Primary Sector",
-				List.of("farmyard", "farmland", "farm", "farm_auxiliary", "greenhouse"));
-		landuseCategoriesAndDataConnection.put("Employee Construction", List.of("construction"));
+				new ArrayList<String>(Arrays.asList("farmyard", "farmland", "farm", "farm_auxiliary", "greenhouse")));
+		landuseCategoriesAndDataConnection.put("Employee Construction",
+				new ArrayList<String>(Arrays.asList("construction")));
 		landuseCategoriesAndDataConnection.put("Employee Secondary Sector Rest",
-				List.of("industrial", "factory", "manufacture"));
+				new ArrayList<String>(Arrays.asList("industrial", "factory", "manufacture")));
 		landuseCategoriesAndDataConnection.put("Employee Retail",
-				List.of("retail", "kiosk", "mall", "shop", "supermarket"));
-		landuseCategoriesAndDataConnection.put("Employee Traffic/Parcels",
-				List.of("commercial", "post_office", "storage", "storage_tank", "warehouse"));
-		landuseCategoriesAndDataConnection.put("Employee Tertiär Rest",
-				List.of("commercial", "embassy", "foundation", "government", "office", "townhall"));
-		landuseCategoriesAndDataConnection.put("Employee",
-				landuseCategoriesAndDataConnection.get("Employee Primary Sector"));
-		landuseCategoriesAndDataConnection.put("Employee",
-				landuseCategoriesAndDataConnection.get("Employee Construction"));
-		landuseCategoriesAndDataConnection.put("Employee",
-				landuseCategoriesAndDataConnection.get("Employee Secondary Sector Rest"));
-		landuseCategoriesAndDataConnection.put("Employee", landuseCategoriesAndDataConnection.get("Employee Retail"));
-		landuseCategoriesAndDataConnection.put("Employee",
-				landuseCategoriesAndDataConnection.get("Employee Traffic/Parcels"));
-		landuseCategoriesAndDataConnection.put("Employee",
-				landuseCategoriesAndDataConnection.get("Employee Tertiär Rest"));
+				new ArrayList<String>(Arrays.asList("retail", "kiosk", "mall", "shop", "supermarket")));
+		landuseCategoriesAndDataConnection.put("Employee Traffic/Parcels", new ArrayList<String>(
+				Arrays.asList("commercial", "post_office", "storage", "storage_tank", "warehouse")));
+		landuseCategoriesAndDataConnection.put("Employee Tertiary Sector Rest", new ArrayList<String>(
+				Arrays.asList("commercial", "embassy", "foundation", "government", "office", "townhall")));
+		landuseCategoriesAndDataConnection.put("Employee", new ArrayList<String>());
+		landuseCategoriesAndDataConnection.get("Employee")
+				.addAll(landuseCategoriesAndDataConnection.get("Employee Primary Sector"));
+		landuseCategoriesAndDataConnection.get("Employee")
+				.addAll(landuseCategoriesAndDataConnection.get("Employee Construction"));
+		landuseCategoriesAndDataConnection.get("Employee")
+				.addAll(landuseCategoriesAndDataConnection.get("Employee Secondary Sector Rest"));
+		landuseCategoriesAndDataConnection.get("Employee")
+				.addAll(landuseCategoriesAndDataConnection.get("Employee Retail"));
+		landuseCategoriesAndDataConnection.get("Employee")
+				.addAll(landuseCategoriesAndDataConnection.get("Employee Traffic/Parcels"));
+		landuseCategoriesAndDataConnection.get("Employee")
+				.addAll(landuseCategoriesAndDataConnection.get("Employee Tertiary Sector Rest"));
+
+		Object2DoubleMap<String> totalSquareMetersPerCategory = new Object2DoubleOpenHashMap<>();
 
 		for (String zoneID : landuseCategoriesPerZone.keySet()) {
 			resultingDataPerZone.put(zoneID, new Object2DoubleOpenHashMap<>());
 			for (String category : landuseCategoriesPerZone.get(zoneID).keySet()) {
 				for (String categoryNameData : landuseCategoriesAndDataConnection.keySet()) {
-					if (landuseCategoriesAndDataConnection.get(categoryNameData).contains(category))
-						resultingDataPerZone.get(zoneID)
-								.mergeDouble(categoryNameData,
-										(landuseCategoriesPerZone.get(zoneID).getDouble(category))
-												/ landuseCategoriesAndDataConnection.get(categoryNameData).size(),
-										Double::sum);
+					if (landuseCategoriesAndDataConnection.get(categoryNameData).contains(category)) {
+						double addiotionalArea = landuseCategoriesPerZone.get(zoneID).getDouble(category);
+						resultingDataPerZone.get(zoneID).mergeDouble(categoryNameData, addiotionalArea, Double::sum);
+						totalSquareMetersPerCategory.mergeDouble(categoryNameData, addiotionalArea, Double::sum);
+					}
 				}
 			}
 		}
+
+		for (String zoneID : resultingDataPerZone.keySet()) {
+			for (String category : resultingDataPerZone.get(zoneID).keySet()) {
+				resultingDataPerZone.get(zoneID).replace(category, resultingDataPerZone.get(zoneID).getDouble(category),
+						resultingDataPerZone.get(zoneID).getDouble(category)
+								/ totalSquareMetersPerCategory.getDouble(category));
+			}
+		}
+
+		Object2DoubleMap<String> checkPercentages = new Object2DoubleOpenHashMap<>();
+
+		for (String landuseCategoriesForSingleZone : resultingDataPerZone.keySet()) {
+			for (String category : resultingDataPerZone.get(landuseCategoriesForSingleZone).keySet()) {
+				checkPercentages.mergeDouble(category,
+						resultingDataPerZone.get(landuseCategoriesForSingleZone).getDouble(category), Double::sum);
+			}
+		}
+
 		for (String zoneId : resultingDataPerZone.keySet()) {
 			for (String categoryNameData : resultingDataPerZone.get(zoneId).keySet()) {
 				double percentageValue = resultingDataPerZone.get(zoneId).getDouble(categoryNameData);
 				int resultingNumberPerCategory = (int) Math
 						.round(percentageValue * investigationAreaData.get("Berlin").get(categoryNameData));
 				resultingDataPerZone.get(zoneId).replace(categoryNameData, percentageValue, resultingNumberPerCategory);
-			}
-		}
-		// Check can be deleted
-		Object2DoubleMap<String> checkSums = new Object2DoubleOpenHashMap<>();
-		for (Object2DoubleMap<String> sumPerZone : resultingDataPerZone.values()) {
-			for (String category : sumPerZone.keySet()) {
-				checkSums.mergeDouble(category, sumPerZone.getDouble(category), Double::sum);
 			}
 		}
 	}
@@ -301,8 +323,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				"farmland", "construction");
 		Path shapeFileLandusePath = rawDataDirectory.resolve("shp").resolve("landuse")
 				.resolve("gis_osm_landuse_a_free_1.shp");
-		Path shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse")
-				.resolve("gis_osm_buildings_a_free_1.shp");
+//		Path shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse")
+//				.resolve("gis_osm_buildings_a_free_1.shp");
+//		Path shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse")
+//				.resolve("allBuildingsWithLevels.shp");
+		Path shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse").resolve("buildingSample.shp");
+
 		if (!Files.exists(shapeFileLandusePath)) {
 			log.error("Required landuse shape file {} not found", shapeFileLandusePath);
 		}
@@ -320,8 +346,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			landuseCategoriesPerZone.put((String) districId.getAttribute("gml_id"), landusePerCategory);
 		}
 
-		double totalSquareMeters = 0;
-		Object2DoubleMap<String> totalSquareMetersPerCategory = new Object2DoubleOpenHashMap<>();
 		int countOSMObjects = 0;
 
 		switch (usedLanduseConfiguration) {
@@ -345,6 +369,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				List<String> buildingCategories = new ArrayList<String>();
 				Point centroidPointOfBuildingPolygon = null;
 				boolean neededType = false;
+
 				if (!buildingType.equals("")) {
 					for (String categoryName : neededBuildingCategories) {
 						if (buildingType.contains(categoryName)) {
@@ -375,11 +400,15 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				for (SimpleFeature singleZone : zonesFeatures) {
 					if (((Geometry) singleZone.getDefaultGeometry()).contains(centroidPointOfBuildingPolygon)) {
 						for (String singleCategory : buildingCategories) {
-							double area = (double) ((long) singleBuildingFeature.getAttribute("area"));
+							int buildingLevels = 0;
+							if (singleBuildingFeature.getAttribute("levels") == null)
+								buildingLevels = 1;
+							else
+								buildingLevels = (int) (long) singleBuildingFeature.getAttribute("levels");
+							double area = (double) ((long) singleBuildingFeature.getAttribute("area")) * buildingLevels;
+
 							landuseCategoriesPerZone.get(singleZone.getAttribute("gml_id")).mergeDouble(singleCategory,
 									area, Double::sum);
-							totalSquareMetersPerCategory.mergeDouble(singleCategory, area, Double::sum);
-							totalSquareMeters = totalSquareMeters + area;
 						}
 						break;
 					}
@@ -398,9 +427,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						landuseCategoriesPerZone.get(singleZone.getAttribute("gml_id")).mergeDouble(
 								(String) singleLanduseFeature.getAttribute("fclass"),
 								(double) singleLanduseFeature.getAttribute("area"), Double::sum);
-						totalSquareMetersPerCategory.mergeDouble((String) singleLanduseFeature.getAttribute("fclass"),
-								(double) singleLanduseFeature.getAttribute("area"), Double::sum);
-						totalSquareMeters = totalSquareMeters + (double) singleLanduseFeature.getAttribute("area");
 						continue;
 					}
 				}
@@ -410,24 +436,5 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		default:
 			throw new RuntimeException("No possible option for the use of OSM data selected");
 		}
-
-		for (String landuseCategoriesForSingleZone : landuseCategoriesPerZone.keySet()) {
-			for (String category : landuseCategoriesPerZone.get(landuseCategoriesForSingleZone).keySet()) {
-				landuseCategoriesPerZone.get(landuseCategoriesForSingleZone).replace(category,
-						landuseCategoriesPerZone.get(landuseCategoriesForSingleZone).getDouble(category),
-						landuseCategoriesPerZone.get(landuseCategoriesForSingleZone).getDouble(category)
-								/ totalSquareMetersPerCategory.getDouble(category));
-			}
-		}
-
-		// To Delete
-		Object2DoubleMap<String> checkPercentages = new Object2DoubleOpenHashMap<>();
-		for (String landuseCategoriesForSingleZone : landuseCategoriesPerZone.keySet()) {
-			for (String category : landuseCategoriesPerZone.get(landuseCategoriesForSingleZone).keySet()) {
-				checkPercentages.mergeDouble(category,
-						landuseCategoriesPerZone.get(landuseCategoriesForSingleZone).getDouble(category), Double::sum);
-			}
-		}
-		System.out.println("Berlin total: " + totalSquareMeters / 1000000);
 	}
 }
