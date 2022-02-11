@@ -40,6 +40,10 @@ import picocli.CommandLine;
  * 
  * Author: Ricardo Ewert
  */
+/**
+ * @author Ricardo
+ *
+ */
 @CommandLine.Command(name = "generate-german-freight-trips", description = "Generate german wide freight population", showDefaultValues = true)
 public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer> {
 
@@ -101,6 +105,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		readInputParamters();
 
+		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = createTrafficVolume_start(
+				resultingDataPerZone);
+		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = createTrafficVolume_stop(
+				resultingDataPerZone);
+
 		return 0;
 
 	}
@@ -160,26 +169,49 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	}
 
 	private void readInputParamters() throws IOException {
-	
+
 		// Read generation rates for start potentials
 		Path generationRatesStartPath = rawDataDirectory.resolve("parameters").resolve("generationRates_start.csv");
 		generationRatesStart = readGenerationRates(generationRatesStartPath);
 		log.info("Read generations rates (start)");
-	
+
 		// Read generation rates for stop potentials
 		Path generationRatesStopPath = rawDataDirectory.resolve("parameters").resolve("generationRates_stop.csv");
 		generationRatesStop = readGenerationRates(generationRatesStopPath);
 		log.info("Read generations rates (stop)");
-		
+
 		// read commitment rates for start potentials
 		Path commitmentRatesStartPath = rawDataDirectory.resolve("parameters").resolve("commitmentRates_start.csv");
 		commitmentRatesStart = readCommitmentRates(commitmentRatesStartPath);
 		log.info("Read commitment rates (start)");
-		
+
 		// read commitment rates for stop potentials
 		Path commitmentRatesStopPath = rawDataDirectory.resolve("parameters").resolve("commitmentRates_stop.csv");
 		commitmentRatesStop = readCommitmentRates(commitmentRatesStopPath);
 		log.info("Read commitment rates (stop)");
+	}
+
+	/** Creates the traffic volume (start) for each zone separated in the 3 modes and the 5 purposes.
+	 * @param resultingDataPerZone
+	 * @return
+	 */
+	private HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_start( HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) {
+	
+		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
+		calculateTrafficVolumePerZone(trafficVolumePerTypeAndZone_start, resultingDataPerZone, "start");
+		return trafficVolumePerTypeAndZone_start;
+	}
+
+	/** Creates the traffic volume (stop) for each zone separated in the 3 modes and the 5 purposes.
+	 * @param resultingDataPerZone
+	 * @return
+	 */
+	private HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_stop(
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) {
+	
+		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
+		calculateTrafficVolumePerZone(trafficVolumePerTypeAndZone_stop, resultingDataPerZone, "stop");
+		return trafficVolumePerTypeAndZone_stop;
 	}
 
 	/**
@@ -482,7 +514,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 		try (CSVParser parser = new CSVParser(Files.newBufferedReader(generationRatesPath),
 				CSVFormat.TDF.withFirstRecordAsHeader())) {
-	
+
 			for (CSVRecord record : parser) {
 				HashMap<String, Double> lookUpTable = new HashMap<>();
 				for (String category : parser.getHeaderMap().keySet()) {
@@ -496,31 +528,75 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	}
 
 	/**
-	 * Reads the data for the commitment rates.
-	 * For modes: pt = public transport; it = individual traffic; op = elective (wahlfrei)
+	 * Reads the data for the commitment rates. For modes: pt = public transport; it
+	 * = individual traffic; op = elective (wahlfrei)
+	 * 
 	 * @param generationRatesPath
 	 * @return
 	 * @throws IOException
 	 */
-	private HashMap<String, HashMap<String, Double>> readCommitmentRates(Path commitmentRatesPath)
-			throws IOException {
+	private HashMap<String, HashMap<String, Double>> readCommitmentRates(Path commitmentRatesPath) throws IOException {
 		HashMap<String, HashMap<String, Double>> commitmentRates = new HashMap<String, HashMap<String, Double>>();
 		if (!Files.exists(commitmentRatesPath)) {
 			log.error("Required input data file {} not found", commitmentRatesPath);
 		}
 		try (CSVParser parser = new CSVParser(Files.newBufferedReader(commitmentRatesPath),
 				CSVFormat.TDF.withFirstRecordAsHeader())) {
-	
+
 			for (CSVRecord record : parser) {
 				HashMap<String, Double> lookUpTable = new HashMap<>();
 				for (String category : parser.getHeaderMap().keySet()) {
-					if (!category.equals("purpose") && !category.equals("mode") )
+					if (!category.equals("purpose") && !category.equals("mode"))
 						lookUpTable.put(category, Double.valueOf(record.get(category)));
 				}
-				commitmentRates.put((record.get(0)+"_"+record.get(1)), lookUpTable);
+				commitmentRates.put((record.get(0) + "_" + record.get(1)), lookUpTable);
 			}
-		
+
 		}
 		return commitmentRates;
 	}
+
+	/** Calculates the traffic volume for each zone and purpose.
+	 * @param trafficVolumePerZone
+	 * @param resultingDataPerZone
+	 * @param volumeType
+	 * @return
+	 */
+	private HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> calculateTrafficVolumePerZone(
+				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerZone,
+				HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String volumeType) {
+	
+			HashMap<Integer, HashMap<String, Double>> generationRates = new HashMap<Integer, HashMap<String, Double>>();
+			HashMap<String, HashMap<String, Double>> commitmentRates = new HashMap<String, HashMap<String, Double>>();
+	
+			ArrayList<String> modes = new ArrayList<String>(Arrays.asList("pt", "it", "op"));
+	
+			if (volumeType.equals("start")) {
+				generationRates = generationRatesStart;
+				commitmentRates = commitmentRatesStart;
+			} else if (volumeType.equals("stop")) {
+				generationRates = generationRatesStop;
+				commitmentRates = commitmentRatesStop;
+			} else
+				throw new RuntimeException("No generation and commitment rates selected. Please check!");
+	
+			for (String zoneId : resultingDataPerZone.keySet()) {
+				HashMap<String, Object2DoubleMap<Integer>> valuesForZone = new HashMap<String, Object2DoubleMap<Integer>>();
+				for (String mode : modes) {
+					Object2DoubleMap<Integer> trafficValuesPerPurpose = new Object2DoubleOpenHashMap<>();
+					for (Integer purpose : generationRates.keySet()) {
+						for (String category : resultingDataPerZone.get(zoneId).keySet()) {
+							double generationFactor = generationRates.get(purpose).get(category);
+							double commitmentFactor = commitmentRates.get(purpose + "_" + mode).get(category);
+							double newValue = resultingDataPerZone.get(zoneId).getDouble(category) * generationFactor
+									* commitmentFactor;
+							trafficValuesPerPurpose.merge(purpose, newValue, Double::sum);
+						}
+					}
+					valuesForZone.put(mode, trafficValuesPerPurpose);
+				}
+				trafficVolumePerZone.put(zoneId, valuesForZone);
+			}
+			return trafficVolumePerZone;
+		}
 }
