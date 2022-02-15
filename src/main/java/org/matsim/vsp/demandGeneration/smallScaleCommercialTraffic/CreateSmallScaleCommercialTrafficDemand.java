@@ -38,6 +38,8 @@ import org.locationtech.jts.geom.Point;
 
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import picocli.CommandLine;
 
 /**
@@ -214,7 +216,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
 		calculateTrafficVolumePerZone(trafficVolumePerTypeAndZone_start, resultingDataPerZone, "start");
 		Path outputFileStart = output.resolve("caculatedData").resolve("TrafficVolume_startPerZone.csv");
-		writeCSVWithCategoryHeader(resultingDataPerZone, outputFileStart);
+		writeCSVWithTrafficVolumeperZoneAndModes(trafficVolumePerTypeAndZone_start, outputFileStart);
 		log.info("Write traffic volume for start trips per zone in CSV: " + outputFileStart);
 		return trafficVolumePerTypeAndZone_start;
 	}
@@ -233,7 +235,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
 		calculateTrafficVolumePerZone(trafficVolumePerTypeAndZone_stop, resultingDataPerZone, "stop");
 		Path outputFileStop = output.resolve("caculatedData").resolve("TrafficVolume_stopPerZone.csv");
-		writeCSVWithCategoryHeader(resultingDataPerZone, outputFileStop);
+		writeCSVWithTrafficVolumeperZoneAndModes(trafficVolumePerTypeAndZone_stop, outputFileStop);
 		log.info("Write traffic volume for stop trips per zone in CSV: " + outputFileStop);
 		return trafficVolumePerTypeAndZone_stop;
 	}
@@ -407,7 +409,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone,
 			HashMap<String, HashMap<String, Integer>> investigationAreaData,
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) {
-		
+
 		HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
 		landuseCategoriesAndDataConnection.put("Inhabitants", new ArrayList<String>(Arrays.asList("residential",
 				"apartments", "dormitory", "dwelling_house", "house", "retirement_home", "semidetached_house")));
@@ -538,6 +540,41 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	}
 
 	/**
+	 * @param trafficVolumePerTypeAndZone
+	 * @param outputFileInInputFolder
+	 * @throws MalformedURLException
+	 */
+	private void writeCSVWithTrafficVolumeperZoneAndModes(
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone,
+			Path outputFileInInputFolder) throws MalformedURLException {
+		BufferedWriter writer = IOUtils.getBufferedWriter(outputFileInInputFolder.toUri().toURL(),
+				StandardCharsets.UTF_8, true);
+		try {
+			String[] header = new String[] { "areaID", "mode", "1", "2", "3", "4", "5" };
+			JOIN.appendTo(writer, header);
+			writer.write("\n");
+			for (String zoneID : trafficVolumePerTypeAndZone.keySet()) {
+				for (String mode : trafficVolumePerTypeAndZone.get(zoneID).keySet()) {
+					List<String> row = new ArrayList<>();
+					row.add(zoneID);
+					row.add(mode);
+					Integer count = 1;
+					while (count < 6) {
+						row.add(String.valueOf(Math.round(trafficVolumePerTypeAndZone.get(zoneID).get(mode).getDouble(count))));
+						count++;
+					}
+					JOIN.appendTo(writer, row);
+					writer.write("\n");
+				}
+			}
+			writer.close();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * Reads the data for the generation rates.
 	 * 
 	 * @param generationRatesPath
@@ -629,7 +666,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						double commitmentFactor = commitmentRates.get(purpose + "_" + mode).get(category);
 						double newValue = resultingDataPerZone.get(zoneId).getDouble(category) * generationFactor
 								* commitmentFactor;
-						trafficValuesPerPurpose.merge(purpose, newValue, Double::sum);
+						trafficValuesPerPurpose.merge(purpose, (int)Math.round(newValue), Double::sum);
 					}
 				}
 				valuesForZone.put(mode, trafficValuesPerPurpose);
