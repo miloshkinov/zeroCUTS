@@ -2,6 +2,7 @@ package org.matsim.vsp.demandGeneration.smallScaleCommercialTraffic;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
@@ -25,6 +26,9 @@ import org.matsim.application.options.LanduseOptions;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.ControlerConfigGroup;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.opengis.feature.simple.SimpleFeature;
@@ -37,14 +41,10 @@ import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 import picocli.CommandLine;
 
 /**
- * 
- * Author: Ricardo Ewert
- */
-/**
- * @author Ricardo
+ * @author Ricardo Ewert
  *
  */
-@CommandLine.Command(name = "generate-german-freight-trips", description = "Generate german wide freight population", showDefaultValues = true)
+@CommandLine.Command(name = "generate-business-passenger-traffic", description = "Generate business passenger traffic model", showDefaultValues = true)
 public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer> {
 
 	private static final Logger log = LogManager.getLogger(CreateSmallScaleCommercialTrafficDemand.class);
@@ -63,7 +63,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--sample", defaultValue = "1", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
-	@CommandLine.Option(names = "--output", description = "Path to output population", required = true, defaultValue = "output/SmallScaleBusiness/")
+	@CommandLine.Option(names = "--output", description = "Path to output population", required = true, defaultValue = "output/BusinessPassengerTraffic/")
 	private Path output;
 
 	@CommandLine.Mixin
@@ -95,10 +95,17 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		if (!Files.exists(shapeFileZonePath)) {
 			log.error("Required distrcits shape file {} not found", shapeFileZonePath);
 		}
+		output = output.resolve(java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay());
 
 		// Load config, scenario and network
 		Config config = ConfigUtils.createConfig();
 		config.global().setCoordinateSystem(crs.getInputCRS()); // "EPSG:4326"
+		config.controler().setOutputDirectory(output.toString());
+		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
+		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
+				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
+		new File(output.resolve("caculatedData").toString()).mkdir();
+
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = createInputDataDistribution(shapeFileZonePath);
@@ -127,7 +134,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			throws IOException, MalformedURLException {
 
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = new HashMap<String, Object2DoubleMap<String>>();
-
+		Path outputFileInOutputFolder = output.resolve("caculatedData").resolve("dataDistributionPerZone.csv");
 		switch (usedLanduseConfiguration) {
 		case useExistingDataDistribution:
 			Path existingDataDistribution = rawDataDirectory.resolve("dataDistributionPerZone.csv");
@@ -150,6 +157,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			}
 			log.info("Data distribution for " + resultingDataPerZone.size() + " zones was imported from ",
 					existingDataDistribution);
+			Files.copy(existingDataDistribution, outputFileInOutputFolder, StandardCopyOption.COPY_ATTRIBUTES);
 			break;
 
 		default:
@@ -163,8 +171,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 			createResultingDataForLanduseInZones(landuseCategoriesPerZone, investigationAreaData, resultingDataPerZone);
 
-			writeResultOfDataDistribution(resultingDataPerZone);
+			writeResultOfDataDistribution(resultingDataPerZone, outputFileInOutputFolder);
 		}
+
 		return resultingDataPerZone;
 	}
 
@@ -191,26 +200,41 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		log.info("Read commitment rates (stop)");
 	}
 
-	/** Creates the traffic volume (start) for each zone separated in the 3 modes and the 5 purposes.
+	/**
+	 * Creates the traffic volume (start) for each zone separated in the 3 modes and
+	 * the 5 purposes.
+	 * 
 	 * @param resultingDataPerZone
 	 * @return
+	 * @throws MalformedURLException
 	 */
-	private HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_start( HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) {
-	
+	private HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_start(
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) throws MalformedURLException {
+
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
 		calculateTrafficVolumePerZone(trafficVolumePerTypeAndZone_start, resultingDataPerZone, "start");
+		Path outputFileStart = output.resolve("caculatedData").resolve("TrafficVolume_startPerZone.csv");
+		writeCSVWithCategoryHeader(resultingDataPerZone, outputFileStart);
+		log.info("Write traffic volume for start trips per zone in CSV: " + outputFileStart);
 		return trafficVolumePerTypeAndZone_start;
 	}
 
-	/** Creates the traffic volume (stop) for each zone separated in the 3 modes and the 5 purposes.
+	/**
+	 * Creates the traffic volume (stop) for each zone separated in the 3 modes and
+	 * the 5 purposes.
+	 * 
 	 * @param resultingDataPerZone
 	 * @return
+	 * @throws MalformedURLException
 	 */
 	private HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_stop(
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) {
-	
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) throws MalformedURLException {
+
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
 		calculateTrafficVolumePerZone(trafficVolumePerTypeAndZone_stop, resultingDataPerZone, "stop");
+		Path outputFileStop = output.resolve("caculatedData").resolve("TrafficVolume_stopPerZone.csv");
+		writeCSVWithCategoryHeader(resultingDataPerZone, outputFileStop);
+		log.info("Write traffic volume for stop trips per zone in CSV: " + outputFileStop);
 		return trafficVolumePerTypeAndZone_stop;
 	}
 
@@ -234,10 +258,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		// Path shapeFileBuildingsPath =
 		// rawDataDirectory.resolve("shp").resolve("landuse")
 		// .resolve("gis_osm_buildings_a_free_1.shp");
-		// Path shapeFileBuildingsPath =
-		// rawDataDirectory.resolve("shp").resolve("landuse")
-		// .resolve("allBuildingsWithLevels.shp");
-		Path shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse").resolve("buildingSample.shp");
+		Path shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse")
+				.resolve("allBuildingsWithLevels.shp");
+//		Path shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse").resolve("buildingSample.shp");
 
 		if (!Files.exists(shapeFileLandusePath)) {
 			log.error("Required landuse shape file {} not found", shapeFileLandusePath);
@@ -384,6 +407,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone,
 			HashMap<String, HashMap<String, Integer>> investigationAreaData,
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) {
+		
 		HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
 		landuseCategoriesAndDataConnection.put("Inhabitants", new ArrayList<String>(Arrays.asList("residential",
 				"apartments", "dormitory", "dwelling_house", "house", "retirement_home", "semidetached_house")));
@@ -462,19 +486,32 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @throws IOException
 	 * @throws MalformedURLException
 	 */
-	private void writeResultOfDataDistribution(HashMap<String, Object2DoubleMap<String>> resultingDataPerZone)
-			throws IOException, MalformedURLException {
+	private void writeResultOfDataDistribution(HashMap<String, Object2DoubleMap<String>> resultingDataPerZone,
+			Path outputFileInOutputFolder) throws IOException, MalformedURLException {
 
-		Path outputFile = rawDataDirectory.resolve("dataDistributionPerZone.csv");
+		Path outputFileInInputFolder = rawDataDirectory.resolve("dataDistributionPerZone.csv");
 
-		if (Files.exists(outputFile)) {
-			Path oldFile = Path.of(outputFile.toString().replace(".csv", "_old.csv"));
+		if (Files.exists(outputFileInInputFolder)) {
+			Path oldFile = Path.of(outputFileInInputFolder.toString().replace(".csv", "_old.csv"));
 			log.warn("The result of data distribution already exists. The existing data will be moved to: " + oldFile);
 			Files.deleteIfExists(oldFile);
-			Files.move(outputFile, oldFile, StandardCopyOption.REPLACE_EXISTING);
+			Files.move(outputFileInInputFolder, oldFile, StandardCopyOption.REPLACE_EXISTING);
 		}
 
-		BufferedWriter writer = IOUtils.getBufferedWriter(outputFile.toUri().toURL(), StandardCharsets.UTF_8, true);
+		writeCSVWithCategoryHeader(resultingDataPerZone, outputFileInInputFolder);
+		log.info("The data distribution is finished and written to: " + outputFileInInputFolder);
+		Files.copy(outputFileInInputFolder, outputFileInOutputFolder, StandardCopyOption.COPY_ATTRIBUTES);
+	}
+
+	/**
+	 * @param resultingDataPerZone
+	 * @param outputFileInInputFolder
+	 * @throws MalformedURLException
+	 */
+	private void writeCSVWithCategoryHeader(HashMap<String, Object2DoubleMap<String>> resultingDataPerZone,
+			Path outputFileInInputFolder) throws MalformedURLException {
+		BufferedWriter writer = IOUtils.getBufferedWriter(outputFileInInputFolder.toUri().toURL(),
+				StandardCharsets.UTF_8, true);
 		try {
 			String[] header = new String[] { "areaID", "Inhabitants", "Employee", "Employee Primary Sector",
 					"Employee Construction", "Employee Secondary Sector Rest", "Employee Retail",
@@ -494,7 +531,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			}
 
 			writer.close();
-			log.info("The data distribution is finished and written to: " + outputFile);
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -556,47 +593,49 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		return commitmentRates;
 	}
 
-	/** Calculates the traffic volume for each zone and purpose.
+	/**
+	 * Calculates the traffic volume for each zone and purpose.
+	 * 
 	 * @param trafficVolumePerZone
 	 * @param resultingDataPerZone
 	 * @param volumeType
 	 * @return
 	 */
 	private HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> calculateTrafficVolumePerZone(
-				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerZone,
-				HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String volumeType) {
-	
-			HashMap<Integer, HashMap<String, Double>> generationRates = new HashMap<Integer, HashMap<String, Double>>();
-			HashMap<String, HashMap<String, Double>> commitmentRates = new HashMap<String, HashMap<String, Double>>();
-	
-			ArrayList<String> modes = new ArrayList<String>(Arrays.asList("pt", "it", "op"));
-	
-			if (volumeType.equals("start")) {
-				generationRates = generationRatesStart;
-				commitmentRates = commitmentRatesStart;
-			} else if (volumeType.equals("stop")) {
-				generationRates = generationRatesStop;
-				commitmentRates = commitmentRatesStop;
-			} else
-				throw new RuntimeException("No generation and commitment rates selected. Please check!");
-	
-			for (String zoneId : resultingDataPerZone.keySet()) {
-				HashMap<String, Object2DoubleMap<Integer>> valuesForZone = new HashMap<String, Object2DoubleMap<Integer>>();
-				for (String mode : modes) {
-					Object2DoubleMap<Integer> trafficValuesPerPurpose = new Object2DoubleOpenHashMap<>();
-					for (Integer purpose : generationRates.keySet()) {
-						for (String category : resultingDataPerZone.get(zoneId).keySet()) {
-							double generationFactor = generationRates.get(purpose).get(category);
-							double commitmentFactor = commitmentRates.get(purpose + "_" + mode).get(category);
-							double newValue = resultingDataPerZone.get(zoneId).getDouble(category) * generationFactor
-									* commitmentFactor;
-							trafficValuesPerPurpose.merge(purpose, newValue, Double::sum);
-						}
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerZone,
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String volumeType) {
+
+		HashMap<Integer, HashMap<String, Double>> generationRates = new HashMap<Integer, HashMap<String, Double>>();
+		HashMap<String, HashMap<String, Double>> commitmentRates = new HashMap<String, HashMap<String, Double>>();
+
+		ArrayList<String> modes = new ArrayList<String>(Arrays.asList("pt", "it", "op"));
+
+		if (volumeType.equals("start")) {
+			generationRates = generationRatesStart;
+			commitmentRates = commitmentRatesStart;
+		} else if (volumeType.equals("stop")) {
+			generationRates = generationRatesStop;
+			commitmentRates = commitmentRatesStop;
+		} else
+			throw new RuntimeException("No generation and commitment rates selected. Please check!");
+
+		for (String zoneId : resultingDataPerZone.keySet()) {
+			HashMap<String, Object2DoubleMap<Integer>> valuesForZone = new HashMap<String, Object2DoubleMap<Integer>>();
+			for (String mode : modes) {
+				Object2DoubleMap<Integer> trafficValuesPerPurpose = new Object2DoubleOpenHashMap<>();
+				for (Integer purpose : generationRates.keySet()) {
+					for (String category : resultingDataPerZone.get(zoneId).keySet()) {
+						double generationFactor = generationRates.get(purpose).get(category);
+						double commitmentFactor = commitmentRates.get(purpose + "_" + mode).get(category);
+						double newValue = resultingDataPerZone.get(zoneId).getDouble(category) * generationFactor
+								* commitmentFactor;
+						trafficValuesPerPurpose.merge(purpose, newValue, Double::sum);
 					}
-					valuesForZone.put(mode, trafficValuesPerPurpose);
 				}
-				trafficVolumePerZone.put(zoneId, valuesForZone);
+				valuesForZone.put(mode, trafficValuesPerPurpose);
 			}
-			return trafficVolumePerZone;
+			trafficVolumePerZone.put(zoneId, valuesForZone);
 		}
+		return trafficVolumePerZone;
+	}
 }
