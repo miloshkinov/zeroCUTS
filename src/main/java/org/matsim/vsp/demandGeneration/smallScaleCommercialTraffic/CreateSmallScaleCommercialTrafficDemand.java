@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -31,6 +30,7 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
+import org.matsim.core.utils.io.UncheckedIOException;
 import org.opengis.feature.simple.SimpleFeature;
 import com.google.common.base.Joiner;
 import org.locationtech.jts.geom.Geometry;
@@ -38,8 +38,6 @@ import org.locationtech.jts.geom.Point;
 
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import picocli.CommandLine;
 
 /**
@@ -59,10 +57,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/small-scale-commercial-traffic/input")
 	private Path rawDataDirectory;
 
-//	    @CommandLine.Option(names = "--network", description = "Path to desired network file", required = true)
-//	    private Path networkPath;
+	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
+	private Path networkPath;
 
-	@CommandLine.Option(names = "--sample", defaultValue = "1", description = "Scaling factor of the freight traffic (0, 1)", required = true)
+	@CommandLine.Option(names = "--sample", defaultValue = "0.25", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
 	@CommandLine.Option(names = "--output", description = "Path to output population", required = true, defaultValue = "output/BusinessPassengerTraffic/")
@@ -89,10 +87,14 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@Override
 	public Integer call() throws Exception {
 
-//		Path shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
-//				.resolve("bezirksgrenzen_Berlin.shp");
+		/*
+		 * Fragen: wann den sample hinzufügen (output oder table)
+		 */
+
 		Path shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
-				.resolve("verkehrszellen_Berlin.shp");
+				.resolve("bezirksgrenzen_Berlin.shp");
+//		Path shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
+//				.resolve("verkehrszellen_Berlin.shp");
 
 		if (!Files.exists(shapeFileZonePath)) {
 			log.error("Required distrcits shape file {} not found", shapeFileZonePath);
@@ -102,6 +104,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		// Load config, scenario and network
 		Config config = ConfigUtils.createConfig();
 		config.global().setCoordinateSystem(crs.getInputCRS()); // "EPSG:4326"
+//		config.network().setInputFile(networkPath.toString());
 		config.controler().setOutputDirectory(output.toString());
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
@@ -109,6 +112,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		new File(output.resolve("caculatedData").toString()).mkdir();
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
+//		Network network = scenario.getNetwork();
 
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = createInputDataDistribution(shapeFileZonePath);
 
@@ -119,8 +123,121 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = createTrafficVolume_stop(
 				resultingDataPerZone);
 
+		HashMap<TripDistributionMatrixKey, Integer> odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
+				trafficVolumePerTypeAndZone_stop, shapeFileZonePath);
+
 		return 0;
 
+	}
+
+	/**
+	 * Creates the number of trips between the zones for each mode and purpose.
+	 * 
+	 * @param trafficVolumePerTypeAndZone_start
+	 * @param trafficVolumePerTypeAndZone_stop
+	 * @param shapeFileZonesPath
+	 * @return
+	 * @throws MalformedURLException
+	 * @throws UncheckedIOException
+	 */
+	private HashMap<TripDistributionMatrixKey, Integer> createTripDistribution(
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start,
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop,
+			Path shapeFileZonesPath) throws UncheckedIOException, MalformedURLException {
+
+		HashMap<TripDistributionMatrixKey, Integer> odMatrix = new HashMap<TripDistributionMatrixKey, Integer>();
+
+		ShpOptions shpZones = new ShpOptions(shapeFileZonesPath, null, StandardCharsets.UTF_8);
+		ArrayList<String> usedModes = new ArrayList<String>();
+		ArrayList<Integer> usedPurposes = new ArrayList<Integer>();
+		ArrayList<String> usedZones = new ArrayList<String>();
+
+		List<SimpleFeature> zonesFeatures = shpZones.readFeatures();
+
+		for (String startZone : trafficVolumePerTypeAndZone_start.keySet()) {
+			for (String mode : trafficVolumePerTypeAndZone_start.get(startZone).keySet()) {
+				for (Integer purpose : trafficVolumePerTypeAndZone_start.get(startZone).get(mode).keySet()) {
+					for (String stopZone : trafficVolumePerTypeAndZone_stop.keySet()) {
+						double volumeStart = trafficVolumePerTypeAndZone_start.get(startZone).get(mode)
+								.getDouble(purpose);
+						double volumeStop = trafficVolumePerTypeAndZone_stop.get(stopZone).get(mode).getDouble(purpose);
+
+						Point geometryStartZone = ((Geometry) zonesFeatures.stream()
+								.filter(l -> l.getAttribute("gml_id").equals(startZone)).iterator().next()
+								.getDefaultGeometry()).getCentroid();
+						Point geometryStopZone = ((Geometry) zonesFeatures.stream()
+								.filter(l -> l.getAttribute("gml_id").equals(stopZone)).iterator().next()
+								.getDefaultGeometry()).getCentroid();
+
+						double distance = geometryStartZone.distance(geometryStopZone);
+						/* 
+						 * gravity model
+						 * Anpassungen: Faktor anpassen, z.B. reale Reisezeiten im Netz, auch besonders für ÖV
+						 */
+						double volume = volumeStart * volumeStop * Math.exp(-distance);
+						int sampleVolume = (int) Math.round(sample * volume);
+						odMatrix.put(makeKey(startZone, stopZone, mode, purpose), sampleVolume);
+						if (!usedModes.contains(mode))
+							usedModes.add(mode);
+						if (!usedPurposes.contains(purpose))
+							usedPurposes.add(purpose);
+						if (!usedZones.contains(startZone))
+							usedZones.add(startZone);
+						if (!usedZones.contains(stopZone))
+							usedZones.add(stopZone);
+					}
+				}
+			}
+		}
+		writeODMatrices(odMatrix, usedModes, usedPurposes, usedZones);
+		return odMatrix;
+	}
+
+	/** Writes every matrix for each mode and purpose.
+	 * @param odMatrix
+	 * @param usedModes
+	 * @param usedPurposes
+	 * @param usedZones
+	 * @throws UncheckedIOException
+	 * @throws MalformedURLException
+	 */
+	private void writeODMatrices(HashMap<TripDistributionMatrixKey, Integer> odMatrix, ArrayList<String> usedModes,
+			ArrayList<Integer> usedPurposes, ArrayList<String> usedZones)
+			throws UncheckedIOException, MalformedURLException {
+
+		for (String mode : usedModes) {
+			for (int purpose : usedPurposes) {
+
+				Path outputFolder = output.resolve("caculatedData")
+						.resolve("odMatrix_" + mode + "_" + purpose + ".csv");
+
+				BufferedWriter writer = IOUtils.getBufferedWriter(outputFolder.toUri().toURL(), StandardCharsets.UTF_8,
+						true);
+				try {
+					List<String> headerRow = new ArrayList<>();
+					headerRow.add("");
+					for (int i = 0; i < usedZones.size(); i++) {
+						headerRow.add(usedZones.get(i));
+					}
+					JOIN.appendTo(writer, headerRow);
+					writer.write("\n");
+
+					for (String startZone : usedZones) {
+						List<String> row = new ArrayList<>();
+						row.add(startZone);
+						for (String stopZone : usedZones) {
+							row.add(String.valueOf(odMatrix.get(makeKey(startZone, stopZone, mode, purpose))));
+						}
+						JOIN.appendTo(writer, row);
+						writer.write("\n");
+					}
+					writer.close();
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 	/**
@@ -215,7 +332,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
 		calculateTrafficVolumePerZone(trafficVolumePerTypeAndZone_start, resultingDataPerZone, "start");
-		Path outputFileStart = output.resolve("caculatedData").resolve("TrafficVolume_startPerZone.csv");
+		Path outputFileStart = output.resolve("caculatedData")
+				.resolve("TrafficVolume_startPerZone_" + (int) (sample * 100) + "pt.csv");
 		writeCSVWithTrafficVolumeperZoneAndModes(trafficVolumePerTypeAndZone_start, outputFileStart);
 		log.info("Write traffic volume for start trips per zone in CSV: " + outputFileStart);
 		return trafficVolumePerTypeAndZone_start;
@@ -234,7 +352,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
 		calculateTrafficVolumePerZone(trafficVolumePerTypeAndZone_stop, resultingDataPerZone, "stop");
-		Path outputFileStop = output.resolve("caculatedData").resolve("TrafficVolume_stopPerZone.csv");
+		Path outputFileStop = output.resolve("caculatedData")
+				.resolve("TrafficVolume_stopPerZone_" + (int) (sample * 100) + "pt.csv");
 		writeCSVWithTrafficVolumeperZoneAndModes(trafficVolumePerTypeAndZone_stop, outputFileStop);
 		log.info("Write traffic volume for stop trips per zone in CSV: " + outputFileStop);
 		return trafficVolumePerTypeAndZone_stop;
@@ -299,20 +418,13 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					log.info("Investigate Building " + countOSMObjects + " of " + buildingsFeatures.size()
 							+ " buildings: " + Math.round((double) countOSMObjects / buildingsFeatures.size() * 100)
 							+ " %");
-				String buildingType = String.valueOf(singleBuildingFeature.getAttribute("type"));
+				String allBuildingType = String.valueOf(singleBuildingFeature.getAttribute("type"));
 
-				List<String> buildingCategories = new ArrayList<String>();
+				List<String> categoriesOfBuilding = new ArrayList<String>();
 				Point centroidPointOfBuildingPolygon = null;
 				boolean neededType = false;
 
-				if (!buildingType.equals("")) {
-					for (String categoryName : neededBuildingCategories) {
-						if (buildingType.contains(categoryName)) {
-							buildingCategories.add(categoryName);
-							neededType = true;
-						}
-					}
-				} else {
+				if (allBuildingType.equals("")) {
 					centroidPointOfBuildingPolygon = ((Geometry) singleBuildingFeature.getDefaultGeometry())
 							.getCentroid();
 					for (SimpleFeature singleLanduseFeature : landuseFeatures) {
@@ -320,8 +432,19 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							continue;
 						if (!neededType && ((Geometry) singleLanduseFeature.getDefaultGeometry())
 								.contains(centroidPointOfBuildingPolygon)) {
-							buildingCategories.add((String) singleLanduseFeature.getAttribute("fclass"));
+							categoriesOfBuilding.add((String) singleLanduseFeature.getAttribute("fclass"));
 							neededType = true;
+						}
+					}
+				} else {
+					allBuildingType.replace(" ", "");
+					String[] buildingType = allBuildingType.split(";");
+					for (String categoryName : neededBuildingCategories) {
+						for (String singleBuildingType : buildingType) {
+							if (singleBuildingType.equals(categoryName)) {
+								categoriesOfBuilding.add(categoryName);
+								neededType = true;
+							}
 						}
 					}
 				}
@@ -334,16 +457,17 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 				for (SimpleFeature singleZone : zonesFeatures) {
 					if (((Geometry) singleZone.getDefaultGeometry()).contains(centroidPointOfBuildingPolygon)) {
-						for (String singleCategory : buildingCategories) {
-							int buildingLevels = 0;
+						for (String singleCategoryOfBuilding : categoriesOfBuilding) {
+							double buildingLevels;
 							if (singleBuildingFeature.getAttribute("levels") == null)
 								buildingLevels = 1;
 							else
-								buildingLevels = (int) (long) singleBuildingFeature.getAttribute("levels");
+								buildingLevels = (long) singleBuildingFeature.getAttribute("levels")
+										/ categoriesOfBuilding.size();
 							double area = (double) ((long) singleBuildingFeature.getAttribute("area")) * buildingLevels;
 
-							landuseCategoriesPerZone.get(singleZone.getAttribute("gml_id")).mergeDouble(singleCategory,
-									area, Double::sum);
+							landuseCategoriesPerZone.get(singleZone.getAttribute("gml_id"))
+									.mergeDouble(singleCategoryOfBuilding, area, Double::sum);
 						}
 						break;
 					}
@@ -404,11 +528,13 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param landuseCategoriesPerZone
 	 * @param investigationAreaData
 	 * @param resultingDataPerZone
+	 * @throws IOException
+	 * @throws MalformedURLException
 	 */
 	private void createResultingDataForLanduseInZones(
 			HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone,
 			HashMap<String, HashMap<String, Integer>> investigationAreaData,
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) {
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) throws MalformedURLException, IOException {
 
 		HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
 		landuseCategoriesAndDataConnection.put("Inhabitants", new ArrayList<String>(Arrays.asList("residential",
@@ -440,43 +566,64 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				.addAll(landuseCategoriesAndDataConnection.get("Employee Tertiary Sector Rest"));
 
 		Object2DoubleMap<String> totalSquareMetersPerCategory = new Object2DoubleOpenHashMap<>();
+		Object2DoubleMap<String> totalEmployeesInCategoriesPerZone = new Object2DoubleOpenHashMap<>();
 
+		// connects the collected landuse data with the needed categories
 		for (String zoneID : landuseCategoriesPerZone.keySet()) {
 			resultingDataPerZone.put(zoneID, new Object2DoubleOpenHashMap<>());
-			for (String category : landuseCategoriesPerZone.get(zoneID).keySet()) {
-				for (String categoryNameData : landuseCategoriesAndDataConnection.keySet()) {
-					if (landuseCategoriesAndDataConnection.get(categoryNameData).contains(category)) {
-						double addiotionalArea = landuseCategoriesPerZone.get(zoneID).getDouble(category);
-						resultingDataPerZone.get(zoneID).mergeDouble(categoryNameData, addiotionalArea, Double::sum);
-						totalSquareMetersPerCategory.mergeDouble(categoryNameData, addiotionalArea, Double::sum);
+			for (String categoryLanduse : landuseCategoriesPerZone.get(zoneID).keySet()) {
+				for (String categoryData : landuseCategoriesAndDataConnection.keySet()) {
+					if (landuseCategoriesAndDataConnection.get(categoryData).contains(categoryLanduse)) {
+						double additionalArea = landuseCategoriesPerZone.get(zoneID).getDouble(categoryLanduse);
+						resultingDataPerZone.get(zoneID).mergeDouble(categoryData, additionalArea, Double::sum);
+						totalSquareMetersPerCategory.mergeDouble(categoryData, additionalArea, Double::sum);
 					}
 				}
 			}
 		}
 
-		for (String zoneID : resultingDataPerZone.keySet()) {
-			for (String category : resultingDataPerZone.get(zoneID).keySet()) {
-				resultingDataPerZone.get(zoneID).replace(category, resultingDataPerZone.get(zoneID).getDouble(category),
-						resultingDataPerZone.get(zoneID).getDouble(category)
-								/ totalSquareMetersPerCategory.getDouble(category));
+		/*
+		 * creates the percentages of each category and zones based on the sum in this
+		 * category
+		 */
+		for (String zoneId : resultingDataPerZone.keySet()) {
+			for (String categoryData : resultingDataPerZone.get(zoneId).keySet()) {
+				double newValue = resultingDataPerZone.get(zoneId).getDouble(categoryData)
+						/ totalSquareMetersPerCategory.getDouble(categoryData);
+				resultingDataPerZone.get(zoneId).replace(categoryData,
+						resultingDataPerZone.get(zoneId).getDouble(categoryData), newValue);
 			}
 		}
-
+		// can be deleted or used as test
 		Object2DoubleMap<String> checkPercentages = new Object2DoubleOpenHashMap<>();
-
 		for (String landuseCategoriesForSingleZone : resultingDataPerZone.keySet()) {
 			for (String category : resultingDataPerZone.get(landuseCategoriesForSingleZone).keySet()) {
 				checkPercentages.mergeDouble(category,
 						resultingDataPerZone.get(landuseCategoriesForSingleZone).getDouble(category), Double::sum);
 			}
 		}
-
+		// calculates the data per zone and category data
 		for (String zoneId : resultingDataPerZone.keySet()) {
-			for (String categoryNameData : resultingDataPerZone.get(zoneId).keySet()) {
-				double percentageValue = resultingDataPerZone.get(zoneId).getDouble(categoryNameData);
-				int resultingNumberPerCategory = (int) Math
-						.round(percentageValue * investigationAreaData.get("Berlin").get(categoryNameData));
-				resultingDataPerZone.get(zoneId).replace(categoryNameData, percentageValue, resultingNumberPerCategory);
+			for (String categoryData : resultingDataPerZone.get(zoneId).keySet()) {
+				double percentageValue = resultingDataPerZone.get(zoneId).getDouble(categoryData);
+				int inputDataForCategory = investigationAreaData.get("Berlin").get(categoryData);
+				double resultingNumberPerCategory = percentageValue * inputDataForCategory;
+				resultingDataPerZone.get(zoneId).replace(categoryData, percentageValue, resultingNumberPerCategory);
+				if (!categoryData.equals("Employee") && !categoryData.equals("Inhabitants"))
+					totalEmployeesInCategoriesPerZone.mergeDouble(zoneId, resultingNumberPerCategory, Double::sum);
+			}
+		}
+		// corrects the number of employees in the categories so that the sum is correct
+		for (String zoneId : resultingDataPerZone.keySet()) {
+			for (String categoryData : resultingDataPerZone.get(zoneId).keySet()) {
+				if (!categoryData.equals("Employee") && !categoryData.equals("Inhabitants")) {
+					double correctionFactor = resultingDataPerZone.get(zoneId).getDouble("Employee")
+							/ totalEmployeesInCategoriesPerZone.getDouble(zoneId);
+					double resultingNumberPerCategory = correctionFactor
+							* resultingDataPerZone.get(zoneId).getDouble(categoryData);
+					resultingDataPerZone.get(zoneId).replace(categoryData,
+							resultingDataPerZone.get(zoneId).getDouble(categoryData), resultingNumberPerCategory);
+				}
 			}
 		}
 	}
@@ -525,7 +672,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				row.add(zone);
 				for (String category : header) {
 					if (!category.equals("areaID")) {
-						row.add(String.valueOf((int) resultingDataPerZone.get(zone).getDouble(category)));
+						row.add(String.valueOf((int) Math.round(resultingDataPerZone.get(zone).getDouble(category))));
+//						row.add(String.valueOf(resultingDataPerZone.get(zone).getDouble(category)));
 					}
 				}
 				JOIN.appendTo(writer, row);
@@ -560,7 +708,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					row.add(mode);
 					Integer count = 1;
 					while (count < 6) {
-						row.add(String.valueOf(Math.round(trafficVolumePerTypeAndZone.get(zoneID).get(mode).getDouble(count))));
+						row.add(String.valueOf(Math
+								.round(trafficVolumePerTypeAndZone.get(zoneID).get(mode).getDouble(count) * sample)));
 						count++;
 					}
 					JOIN.appendTo(writer, row);
@@ -666,13 +815,95 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						double commitmentFactor = commitmentRates.get(purpose + "_" + mode).get(category);
 						double newValue = resultingDataPerZone.get(zoneId).getDouble(category) * generationFactor
 								* commitmentFactor;
-						trafficValuesPerPurpose.merge(purpose, (int)Math.round(newValue), Double::sum);
+						trafficValuesPerPurpose.merge(purpose, newValue, Double::sum);
 					}
+					trafficValuesPerPurpose.replace(purpose, trafficValuesPerPurpose.getDouble(purpose));
 				}
 				valuesForZone.put(mode, trafficValuesPerPurpose);
 			}
 			trafficVolumePerZone.put(zoneId, valuesForZone);
 		}
 		return trafficVolumePerZone;
+	}
+
+	/**
+	 * @author Ricardo
+	 *
+	 */
+	static class TripDistributionMatrixKey {
+		private final String fromZone;
+		private final String toZone;
+		private final String mode;
+		private final int purpose;
+
+		public TripDistributionMatrixKey(String fromZone, String toZone, String mode, int purpose) {
+			super();
+			this.fromZone = fromZone;
+			this.toZone = toZone;
+			this.mode = mode;
+			this.purpose = purpose;
+		}
+
+		public String getFromZone() {
+			return fromZone;
+		}
+
+		public String getToZone() {
+			return toZone;
+		}
+
+		public String getMode() {
+			return mode;
+		}
+
+		public int getPurpose() {
+			return purpose;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((fromZone == null) ? 0 : fromZone.hashCode());
+			long temp;
+			temp = Double.doubleToLongBits(purpose);
+			result = prime * result + (int) (temp ^ (temp >>> 32));
+			result = prime * result + ((toZone == null) ? 0 : toZone.hashCode());
+			result = prime * result + ((mode == null) ? 0 : mode.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			TripDistributionMatrixKey other = (TripDistributionMatrixKey) obj;
+			if (fromZone == null) {
+				if (other.fromZone != null)
+					return false;
+			} else if (!fromZone.equals(other.fromZone))
+				return false;
+			if (Double.doubleToLongBits(purpose) != Double.doubleToLongBits(other.purpose))
+				return false;
+			if (toZone == null) {
+				if (other.toZone != null)
+					return false;
+			} else if (!toZone.equals(other.toZone))
+				return false;
+			if (mode == null) {
+				if (other.mode != null)
+					return false;
+			} else if (!mode.equals(other.mode))
+				return false;
+			return true;
+		}
+	}
+
+	private TripDistributionMatrixKey makeKey(String fromZone, String toZone, String mode, int purpose) {
+		return new TripDistributionMatrixKey(fromZone, toZone, mode, purpose);
 	}
 }
