@@ -148,52 +148,91 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		HashMap<TripDistributionMatrixKey, Integer> odMatrix = new HashMap<TripDistributionMatrixKey, Integer>();
 
 		ShpOptions shpZones = new ShpOptions(shapeFileZonesPath, null, StandardCharsets.UTF_8);
-		ArrayList<String> usedModes = new ArrayList<String>();
-		ArrayList<Integer> usedPurposes = new ArrayList<Integer>();
-		ArrayList<String> usedZones = new ArrayList<String>();
-
 		List<SimpleFeature> zonesFeatures = shpZones.readFeatures();
+		HashMap<ResistanceFunktionKey, Double> resistanceFunktionValues = createResistanceFunktionValues(zonesFeatures);
 
 		for (String startZone : trafficVolumePerTypeAndZone_start.keySet()) {
 			for (String mode : trafficVolumePerTypeAndZone_start.get(startZone).keySet()) {
 				for (Integer purpose : trafficVolumePerTypeAndZone_start.get(startZone).get(mode).keySet()) {
 					for (String stopZone : trafficVolumePerTypeAndZone_stop.keySet()) {
+
 						double volumeStart = trafficVolumePerTypeAndZone_start.get(startZone).get(mode)
 								.getDouble(purpose);
 						double volumeStop = trafficVolumePerTypeAndZone_stop.get(stopZone).get(mode).getDouble(purpose);
-
-						Point geometryStartZone = ((Geometry) zonesFeatures.stream()
-								.filter(l -> l.getAttribute("gml_id").equals(startZone)).iterator().next()
-								.getDefaultGeometry()).getCentroid();
-						Point geometryStopZone = ((Geometry) zonesFeatures.stream()
-								.filter(l -> l.getAttribute("gml_id").equals(stopZone)).iterator().next()
-								.getDefaultGeometry()).getCentroid();
-
-						double distance = geometryStartZone.distance(geometryStopZone);
-						/* 
-						 * gravity model
-						 * Anpassungen: Faktor anpassen, z.B. reale Reisezeiten im Netz, auch besonders für ÖV
+						double resitanceValue = resistanceFunktionValues
+								.get(makeResistanceFunktionKey(startZone, stopZone));
+						double gravityConstantA = getGravityConstant(startZone, trafficVolumePerTypeAndZone_stop,
+								resistanceFunktionValues, mode, purpose);
+//						double gravityConstantB= getGravityConstant(stopZone, trafficVolumePerTypeAndZone_start,
+//								resistanceFunktionValues, mode, purpose);;
+						/*
+						 * gravity model Anpassungen: Faktor anpassen, z.B. reale Reisezeiten im Netz,
+						 * auch besonders für ÖV
+						 * Bisher: Gravity model mit fixem Zielverkehr
 						 */
-						double volume = volumeStart * volumeStop * Math.exp(-distance);
-						int sampleVolume = (int) Math.round(sample * volume);
-						odMatrix.put(makeKey(startZone, stopZone, mode, purpose), sampleVolume);
-						if (!usedModes.contains(mode))
-							usedModes.add(mode);
-						if (!usedPurposes.contains(purpose))
-							usedPurposes.add(purpose);
-						if (!usedZones.contains(startZone))
-							usedZones.add(startZone);
-						if (!usedZones.contains(stopZone))
-							usedZones.add(stopZone);
+						double volume = gravityConstantA * volumeStart * volumeStop * resitanceValue;
+						int sampledVolume = (int) Math.round(sample * volume);
+						odMatrix.put(makeKey(startZone, stopZone, mode, purpose), sampledVolume);
 					}
 				}
 			}
 		}
-		writeODMatrices(odMatrix, usedModes, usedPurposes, usedZones);
+		writeODMatrices(odMatrix);
 		return odMatrix;
 	}
 
-	/** Writes every matrix for each mode and purpose.
+	/** Calculates the gravity constant.
+	 * @param baseZone
+	 * @param trafficVolumePerTypeAndZone
+	 * @param resistanceFunktionValues
+	 * @param mode
+	 * @param purpose
+	 * @return
+	 */
+	private double getGravityConstant(String baseZone,
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone,
+			HashMap<ResistanceFunktionKey, Double> resistanceFunktionValues, String mode, Integer purpose) {
+
+		double sum = 0;
+
+		for (String zone : trafficVolumePerTypeAndZone.keySet()) {
+			double volume = trafficVolumePerTypeAndZone.get(zone).get(mode).getDouble(purpose);
+			double resistanceFunktionValue = resistanceFunktionValues.get(makeResistanceFunktionKey(baseZone, zone));
+			sum = sum + (volume*resistanceFunktionValue);
+		}
+		double getGravityCostant = 1/sum;
+		return getGravityCostant;
+	}
+
+	/**
+	 * Creates a map of the values of the resistance function between two zones.
+	 * 
+	 * @param zonesFeatures
+	 * @return
+	 */
+	private HashMap<ResistanceFunktionKey, Double> createResistanceFunktionValues(List<SimpleFeature> zonesFeatures) {
+		HashMap<ResistanceFunktionKey, Double> resistanceFunktionValues = new HashMap<ResistanceFunktionKey, Double>();
+		for (SimpleFeature startZoneFeature : zonesFeatures) {
+			for (SimpleFeature stopZoneFeature : zonesFeatures) {
+				String startZone = String.valueOf(startZoneFeature.getAttribute("gml_id"));
+				String stopZone = String.valueOf(stopZoneFeature.getAttribute("gml_id"));
+
+				Point geometryStartZone = ((Geometry) startZoneFeature.getDefaultGeometry()).getCentroid();
+				Point geometryStopZone = ((Geometry) stopZoneFeature.getDefaultGeometry()).getCentroid();
+
+				double distance = geometryStartZone.distance(geometryStopZone);
+
+				double resistanceFunktionResult = Math.exp(-distance);
+				resistanceFunktionValues.put(makeResistanceFunktionKey(startZone, stopZone), resistanceFunktionResult);
+			}
+		}
+
+		return resistanceFunktionValues;
+	}
+
+	/**
+	 * Writes every matrix for each mode and purpose.
+	 * 
 	 * @param odMatrix
 	 * @param usedModes
 	 * @param usedPurposes
@@ -201,9 +240,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @throws UncheckedIOException
 	 * @throws MalformedURLException
 	 */
-	private void writeODMatrices(HashMap<TripDistributionMatrixKey, Integer> odMatrix, ArrayList<String> usedModes,
-			ArrayList<Integer> usedPurposes, ArrayList<String> usedZones)
+	private void writeODMatrices(HashMap<TripDistributionMatrixKey, Integer> odMatrix)
 			throws UncheckedIOException, MalformedURLException {
+
+		ArrayList<String> usedModes = getListOfModes(odMatrix);
+		ArrayList<String> usedZones = getListOfZones(odMatrix);
+		ArrayList<Integer> usedPurposes = getListOfPurposes(odMatrix);
 
 		for (String mode : usedModes) {
 			for (int purpose : usedPurposes) {
@@ -214,6 +256,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				BufferedWriter writer = IOUtils.getBufferedWriter(outputFolder.toUri().toURL(), StandardCharsets.UTF_8,
 						true);
 				try {
+
 					List<String> headerRow = new ArrayList<>();
 					headerRow.add("");
 					for (int i = 0; i < usedZones.size(); i++) {
@@ -903,7 +946,127 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 	}
 
+	/**
+	 * Creates a key for the tripDistributionMatrix.
+	 * 
+	 * @param fromZone
+	 * @param toZone
+	 * @param mode
+	 * @param purpose
+	 * @return
+	 */
 	private TripDistributionMatrixKey makeKey(String fromZone, String toZone, String mode, int purpose) {
 		return new TripDistributionMatrixKey(fromZone, toZone, mode, purpose);
+	}
+
+	/**
+	 * Returns all zones being used as a start and/or stop location
+	 * 
+	 * @param odMatrix
+	 * @return
+	 */
+	private ArrayList<String> getListOfZones(HashMap<TripDistributionMatrixKey, Integer> odMatrix) {
+		ArrayList<String> usedZones = new ArrayList<String>();
+		for (TripDistributionMatrixKey key : odMatrix.keySet()) {
+			if (!usedZones.contains(key.getFromZone()))
+				usedZones.add(key.getFromZone());
+			if (!usedZones.contains(key.getToZone()))
+				usedZones.add(key.getToZone());
+		}
+		return usedZones;
+	}
+
+	/**
+	 * Returns all modes being used.
+	 * 
+	 * @param odMatrix
+	 * @return
+	 */
+	private ArrayList<String> getListOfModes(HashMap<TripDistributionMatrixKey, Integer> odMatrix) {
+		ArrayList<String> usedModes = new ArrayList<String>();
+		for (TripDistributionMatrixKey key : odMatrix.keySet()) {
+			if (!usedModes.contains(key.getMode()))
+				usedModes.add(key.getMode());
+		}
+		return usedModes;
+	}
+
+	/**
+	 * Returns all purposes being used.
+	 * 
+	 * @param odMatrix
+	 * @return
+	 */
+	private ArrayList<Integer> getListOfPurposes(HashMap<TripDistributionMatrixKey, Integer> odMatrix) {
+		ArrayList<Integer> usedPurposes = new ArrayList<Integer>();
+		for (TripDistributionMatrixKey key : odMatrix.keySet()) {
+			if (!usedPurposes.contains(key.getPurpose()))
+				usedPurposes.add(key.getPurpose());
+		}
+		return usedPurposes;
+	}
+
+	static class ResistanceFunktionKey {
+		private final String fromZone;
+		private final String toZone;
+
+		public ResistanceFunktionKey(String fromZone, String toZone) {
+			super();
+			this.fromZone = fromZone;
+			this.toZone = toZone;
+
+		}
+
+		public String getFromZone() {
+			return fromZone;
+		}
+
+		public String getToZone() {
+			return toZone;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((fromZone == null) ? 0 : fromZone.hashCode());
+			result = prime * result + ((toZone == null) ? 0 : toZone.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			ResistanceFunktionKey other = (ResistanceFunktionKey) obj;
+			if (fromZone == null) {
+				if (other.fromZone != null)
+					return false;
+			} else if (!fromZone.equals(other.fromZone))
+				return false;
+			if (toZone == null) {
+				if (other.toZone != null)
+					return false;
+			} else if (!toZone.equals(other.toZone))
+				return false;
+			return true;
+		}
+	}
+
+	/**
+	 * Creates a key for the tripDistributionMatrix.
+	 * 
+	 * @param fromZone
+	 * @param toZone
+	 * @param mode
+	 * @param purpose
+	 * @return
+	 */
+	private ResistanceFunktionKey makeResistanceFunktionKey(String fromZone, String toZone) {
+		return new ResistanceFunktionKey(fromZone, toZone);
 	}
 }
