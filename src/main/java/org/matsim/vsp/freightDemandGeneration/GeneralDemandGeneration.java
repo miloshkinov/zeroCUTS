@@ -18,7 +18,7 @@
  *                                                                         *
  * *********************************************************************** */
 
-package org.matsim.vsp.demandGeneration;
+package org.matsim.vsp.freightDemandGeneration;
 
 import java.io.File;
 import java.io.FileWriter;

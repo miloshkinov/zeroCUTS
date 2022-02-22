@@ -1,4 +1,4 @@
-package org.matsim.vsp.demandGeneration;
+package org.matsim.vsp.freightDemandGeneration;
 
 import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
 
