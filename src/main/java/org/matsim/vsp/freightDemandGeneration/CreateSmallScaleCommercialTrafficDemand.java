@@ -23,6 +23,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -33,14 +34,29 @@ import org.matsim.application.options.CrsOptions;
 import org.matsim.application.options.LanduseOptions;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.contrib.freight.FreightConfigGroup;
+import org.matsim.contrib.freight.carrier.Carrier;
+import org.matsim.contrib.freight.carrier.CarrierCapabilities;
+import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
+import org.matsim.contrib.freight.carrier.CarrierUtils;
+import org.matsim.contrib.freight.carrier.CarrierVehicle;
+import org.matsim.contrib.freight.carrier.CarrierVehicleTypeLoader;
+import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
+import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
+import org.matsim.contrib.freight.carrier.Carriers;
+import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
+import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControlerConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
+import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.io.UncheckedIOException;
+import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.VehicleType;
 import org.opengis.feature.simple.SimpleFeature;
 import com.google.common.base.Joiner;
 import org.locationtech.jts.geom.Geometry;
@@ -63,6 +79,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private static HashMap<Integer, HashMap<String, Double>> generationRatesStop = new HashMap<Integer, HashMap<String, Double>>();
 	private static HashMap<String, HashMap<String, Double>> commitmentRatesStart = new HashMap<String, HashMap<String, Double>>();
 	private static HashMap<String, HashMap<String, Double>> commitmentRatesStop = new HashMap<String, HashMap<String, Double>>();
+
+	private static HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
 
 	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/small-scale-commercial-traffic/input")
 	private Path rawDataDirectory;
@@ -89,7 +107,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useExistingDataDistribution", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse")
 	private landuseConfiguration usedLanduseConfiguration;
 
-	private final SplittableRandom rnd = new SplittableRandom(4711);
+	private final static SplittableRandom rnd = new SplittableRandom(4711);
 
 	public static void main(String[] args) {
 		System.exit(new CommandLine(new CreateSmallScaleCommercialTrafficDemand()).execute(args));
@@ -99,7 +117,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	public Integer call() throws Exception {
 
 		/*
-		 * Fragen: wann den sample hinzufügen (output oder table)
+		 * Fragen: wann den sample hinzufügen (output oder table) bei only landuse; was
+		 * passiert mit construction?
 		 */
 
 		Path shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
@@ -135,16 +154,16 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
 				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
 		new File(output.resolve("caculatedData").toString()).mkdir();
-		
+
 		String vehicleTypesFileLocation = "scenarios/demandGeneration/testInput/vehicleTypes_default.xml";
 		prepareVehicles(config, vehicleTypesFileLocation);
-		
+
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Network network = scenario.getNetwork();
-		
-        Population population = scenario.getPopulation();
-        PopulationFactory populationFactory = population.getFactory();
-        
+
+		Population population = scenario.getPopulation();
+		PopulationFactory populationFactory = population.getFactory();
+
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = createInputDataDistribution(shapeFileZonePath,
 				shapeFileLandusePath, shapeFileBuildingsPath);
 
@@ -159,14 +178,133 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				trafficVolumePerTypeAndZone_stop, shapeFileZonePath);
 
 		Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap = findLinksInLanduseCategoriesPerZone(
-				shapeFileZonePath, shapeFileLandusePath, network);
+				shapeFileZonePath, shapeFileLandusePath, shapeFileBuildingsPath, network);
 
-		for (Integer purpose : getListOfPurposes(odMatrix)) {
-			NewCarrier newCarrier; 
-		}
-		
+		createCarriers(config, scenario, odMatrix, regionLinksMap);
 		return 0;
+	}
 
+	/**
+	 * @param config
+	 * @param scenario
+	 * @param odMatrix
+	 * @param regionLinksMap
+	 */
+	private void createCarriers(Config config, Scenario scenario, HashMap<TripDistributionMatrixKey, Integer> odMatrix,
+			Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap) {
+		for (Integer purpose : getListOfPurposes(odMatrix)) {
+			for (String startZone : getListOfZones(odMatrix)) {
+				boolean isStartingLocation = false;
+				for (String possibleStopZone : getListOfZones(odMatrix)) {
+					if (odMatrix.get(makeKey(startZone, possibleStopZone, "it", purpose)) != 0) {
+						isStartingLocation = true;
+						break;
+					}
+				}
+				if (isStartingLocation) {
+					String carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
+					String[] vehilceTypes = new String[] { "heavy26t" };
+					int numberOfDepots = 5;
+					String[] vehicleDepots = new String[] {};
+//				String[] areaOfAdditonalDepots;
+					FleetSize fleetSize = FleetSize.FINITE;
+					int vehicleStartTime = rnd.nextInt(6 * 3600, 16 * 3600);
+					int vehicleEndTime = vehicleStartTime + 8 * 3600;
+					int jspritIterations = 10;
+					int fixedNumberOfVehilcePerTypeAndLocation = 1;
+					NewCarrier newCarrier = new NewCarrier(carrierName, vehilceTypes, numberOfDepots, vehicleDepots,
+							null, fleetSize, vehicleStartTime, vehicleEndTime, jspritIterations,
+							fixedNumberOfVehilcePerTypeAndLocation);
+					createNewCarrierAndAddVehilceTypes(scenario, newCarrier, purpose, startZone,
+							ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), regionLinksMap, 15);
+				}
+			}
+		}
+		new CarrierPlanXmlWriterV2(FreightUtils.addOrGetCarriers(scenario))
+				.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierPlans.xml");
+	}
+
+	private static void createNewCarrierAndAddVehilceTypes(Scenario scenario, NewCarrier newCarrier, Integer purpose,
+			String startZone, FreightConfigGroup freightConfigGroup,
+			Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap, int defaultJspritIterations) {
+
+		ArrayList<String> startCategory = new ArrayList<String>();
+		if (purpose == 1 || purpose == 2)
+			startCategory.add("Employee Secondary Sector Rest");
+		else if (purpose == 3) {
+			startCategory.add("Employee Retail");
+			startCategory.add("Employee Tertiary Sector Rest");
+		} else if (purpose == 4)
+			startCategory.add("Employee Traffic/Parcels");
+		else if (purpose == 5)
+			startCategory.add("Employee Construction");
+		else
+			throw new RuntimeException("No possible purpose selected");
+
+		Carriers carriers = FreightUtils.addOrGetCarriers(scenario);
+		CarrierVehicleTypes carrierVehicleTypes = new CarrierVehicleTypes();
+		CarrierVehicleTypes usedCarrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
+		new CarrierVehicleTypeReader(carrierVehicleTypes).readFile(freightConfigGroup.getCarriersVehicleTypesFile());
+
+		CarrierCapabilities carrierCapabilities = null;
+
+		Carrier thisCarrier = CarrierUtils.createCarrier(Id.create(newCarrier.getName(), Carrier.class));
+		if (newCarrier.getJspritIterations() > 0)
+			CarrierUtils.setJspritIterations(thisCarrier, newCarrier.getJspritIterations());
+		carrierCapabilities = CarrierCapabilities.Builder.newInstance().setFleetSize(newCarrier.getFleetSize()).build();
+		carriers.addCarrier(thisCarrier);
+
+		if (newCarrier.getVehicleDepots() == null)
+			newCarrier.setVehicleDepots(new String[] {});
+		while (newCarrier.getVehicleDepots().length < newCarrier.getNumberOfDepotsPerType()) {
+
+			String selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
+			int a;
+			if (!regionLinksMap.containsKey(makeZonesLinksLanduseConnectionKey(startZone, selectedStartCategory)))
+				a = 0;
+			Link link = scenario.getNetwork().getLinks()
+					.get(regionLinksMap.get(makeZonesLinksLanduseConnectionKey(startZone, selectedStartCategory))
+							.toArray()[rnd.nextInt(regionLinksMap
+									.get(makeZonesLinksLanduseConnectionKey(startZone, selectedStartCategory))
+									.size())]);
+			newCarrier.addVehicleDepots(newCarrier.getVehicleDepots(), link.getId().toString());
+		}
+		for (String singleDepot : newCarrier.getVehicleDepots()) {
+			for (String thisVehicleType : newCarrier.getVehicleTypes()) {
+				int vehicleStartTime = rnd.nextInt(6 * 3600, 16 * 3600);
+				int vehicleEndTime = vehicleStartTime + 8 * 3600;
+				VehicleType thisType = carrierVehicleTypes.getVehicleTypes()
+						.get(Id.create(thisVehicleType, VehicleType.class));
+				usedCarrierVehicleTypes.getVehicleTypes().putIfAbsent(Id.create(thisVehicleType, VehicleType.class),
+						thisType);
+				if (newCarrier.getFixedNumberOfVehilcePerTypeAndLocation() == 0)
+					newCarrier.setFixedNumberOfVehilcePerTypeAndLocation(1);
+				for (int i = 0; i < newCarrier.getFixedNumberOfVehilcePerTypeAndLocation(); i++) {
+					CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder
+							.newInstance(
+									Id.create(
+											thisType.getId().toString() + "_" + thisCarrier.getId().toString() + "_"
+													+ (carrierCapabilities.getCarrierVehicles().size() + 1),
+											Vehicle.class),
+									Id.createLinkId(singleDepot))
+							.setEarliestStart(vehicleStartTime).setLatestEnd(vehicleEndTime).setTypeId(thisType.getId())
+							.build();
+					carrierCapabilities.getCarrierVehicles().put(newCarrierVehicle.getId(), newCarrierVehicle);
+					if (!carrierCapabilities.getVehicleTypes().contains(thisType))
+						carrierCapabilities.getVehicleTypes().add(thisType);
+				}
+			}
+
+			thisCarrier.setCarrierCapabilities(carrierCapabilities);
+		}
+		for (Carrier carrier : carriers.getCarriers().values()) {
+			if (CarrierUtils.getJspritIterations(carrier) == Integer.MIN_VALUE) {
+				CarrierUtils.setJspritIterations(carrier, defaultJspritIterations);
+				log.warn("The jspritIterations are now set to the default value of " + defaultJspritIterations
+						+ " in this simulation!");
+			}
+		}
+		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(carrierVehicleTypes);
 	}
 
 //	private void generateFreightPlan(Network network, Id<Link> fromLinkId, Id<Link> toLinkId, int numOfTrucks,
@@ -222,22 +360,29 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			freightConfigGroup.setCarriersVehicleTypesFile(vehicleTypesFileLocation);
 			log.info("Get vehicleTypes from: " + vehicleTypesFileLocation);
 		}
+		FreightUtils.addOrGetCarriers(ScenarioUtils.loadScenario(config));
+		CarrierVehicleTypes carrierVehicleTypes = new CarrierVehicleTypes();
+		new CarrierVehicleTypeReader(carrierVehicleTypes).readFile(freightConfigGroup.getCarriersVehicleTypesFile());
 	}
 
-
-	/** Creates a map for each zone/landuse combination containing all possible links.
+	/**
+	 * Creates a map for each zone/landuse combination containing all possible
+	 * links.
+	 * 
 	 * @param shapeFileZonePath
 	 * @param shapeFileLandusePath
+	 * @param shapeFileBuildingsPath
 	 * @param network
 	 * @return
 	 */
 	private Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> findLinksInLanduseCategoriesPerZone(
-			Path shapeFileZonePath, Path shapeFileLandusePath, Network network) {
+			Path shapeFileZonePath, Path shapeFileLandusePath, Path shapeFileBuildingsPath, Network network) {
+		ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
 		ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, "EPSG:4326", StandardCharsets.UTF_8);
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
 
 		// Extracting relevant zones and associate them with the all the links inside
-		log.info("Analyzing regions in the Shapefile (this may take some time)...");
+		log.info("Finding possible links for each buildings (this may take some time)...");
 		Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap = new HashMap<>();
 
 		ShpOptions.Index indexLanduse = shpLanduse.createIndex("EPSG:4326", "fclass");
@@ -245,16 +390,40 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		List<Link> links = network.getLinks().values().stream().filter(l -> l.getAllowedModes().contains("car"))
 				.collect(Collectors.toList());
+		links.forEach(l -> l.getAttributes().putAttribute("newCoord",
+				shpZones.createTransformation("EPSG:31468").transform(l.getCoord())));
+		links.stream().filter(a -> indexZones.query((Coord) a.getAttributes().getAttribute("newCoord")) != null);
 
-		for (Link link : links) {
-			String zoneId = indexZones
-					.query(shpZones.createTransformation("EPSG:31468").transform(link.getToNode().getCoord()));
+		List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
+
+		int countOSMObjects = 0;
+		for (SimpleFeature singleBuildingFeature : buildingsFeatures) {
+			countOSMObjects++;
+			if (countOSMObjects % 10000 == 0 || countOSMObjects == 1)
+				log.info("Investigate Building " + countOSMObjects + " of " + buildingsFeatures.size() + " buildings: "
+						+ Math.round((double) countOSMObjects / buildingsFeatures.size() * 100) + " %");
+			Coord centroidPointOfBuildingPolygon = MGC
+					.point2Coord(((Geometry) singleBuildingFeature.getDefaultGeometry()).getCentroid());
+			String zoneId = indexZones.query(centroidPointOfBuildingPolygon);
+			String buildingType = String.valueOf(singleBuildingFeature.getAttribute("type"));
 			if (zoneId != null) {
-				String landuseCategory = indexLanduse
-						.query(shpLanduse.createTransformation("EPSG:31468").transform(link.getToNode().getCoord()));
-				if (landuseCategory != null)
-					regionLinksMap.computeIfAbsent(makeZonesLinksLanduseConnectionKey(zoneId, landuseCategory),
-							(k) -> new ArrayList<>()).add(link.getId());
+				double minDistance = Double.MAX_VALUE;
+				Link nearestLink = null;
+				for (Link possibleLink : links) {
+					double distance = NetworkUtils.getEuclideanDistance(centroidPointOfBuildingPolygon,
+							(Coord) possibleLink.getAttributes().getAttribute("newCoord"));
+					if (distance < minDistance) {
+						nearestLink = possibleLink;
+						minDistance = distance;
+					}
+				}
+				if (buildingType.equals(""))
+					buildingType = indexLanduse.query(centroidPointOfBuildingPolygon);
+				for (String key : landuseCategoriesAndDataConnection.keySet())
+					if (landuseCategoriesAndDataConnection.get(key).contains(buildingType))
+						regionLinksMap.computeIfAbsent(makeZonesLinksLanduseConnectionKey(zoneId, key),
+								(k) -> new ArrayList<>()).add(nearestLink.getId());
+
 			}
 		}
 		return regionLinksMap;
@@ -430,6 +599,35 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = new HashMap<String, Object2DoubleMap<String>>();
 		Path outputFileInOutputFolder = output.resolve("caculatedData").resolve("dataDistributionPerZone.csv");
+
+		landuseCategoriesAndDataConnection.put("Inhabitants", new ArrayList<String>(Arrays.asList("residential",
+				"apartments", "dormitory", "dwelling_house", "house", "retirement_home", "semidetached_house")));
+		landuseCategoriesAndDataConnection.put("Employee Primary Sector",
+				new ArrayList<String>(Arrays.asList("farmyard", "farmland", "farm", "farm_auxiliary", "greenhouse")));
+		landuseCategoriesAndDataConnection.put("Employee Construction",
+				new ArrayList<String>(Arrays.asList("construction")));
+		landuseCategoriesAndDataConnection.put("Employee Secondary Sector Rest",
+				new ArrayList<String>(Arrays.asList("industrial", "factory", "manufacture")));
+		landuseCategoriesAndDataConnection.put("Employee Retail",
+				new ArrayList<String>(Arrays.asList("retail", "kiosk", "mall", "shop", "supermarket")));
+		landuseCategoriesAndDataConnection.put("Employee Traffic/Parcels", new ArrayList<String>(
+				Arrays.asList("commercial", "post_office", "storage", "storage_tank", "warehouse")));
+		landuseCategoriesAndDataConnection.put("Employee Tertiary Sector Rest", new ArrayList<String>(
+				Arrays.asList("commercial", "embassy", "foundation", "government", "office", "townhall")));
+		landuseCategoriesAndDataConnection.put("Employee", new ArrayList<String>());
+		landuseCategoriesAndDataConnection.get("Employee")
+				.addAll(landuseCategoriesAndDataConnection.get("Employee Primary Sector"));
+		landuseCategoriesAndDataConnection.get("Employee")
+				.addAll(landuseCategoriesAndDataConnection.get("Employee Construction"));
+		landuseCategoriesAndDataConnection.get("Employee")
+				.addAll(landuseCategoriesAndDataConnection.get("Employee Secondary Sector Rest"));
+		landuseCategoriesAndDataConnection.get("Employee")
+				.addAll(landuseCategoriesAndDataConnection.get("Employee Retail"));
+		landuseCategoriesAndDataConnection.get("Employee")
+				.addAll(landuseCategoriesAndDataConnection.get("Employee Traffic/Parcels"));
+		landuseCategoriesAndDataConnection.get("Employee")
+				.addAll(landuseCategoriesAndDataConnection.get("Employee Tertiary Sector Rest"));
+
 		switch (usedLanduseConfiguration) {
 		case useExistingDataDistribution:
 			Path existingDataDistribution = rawDataDirectory.resolve("dataDistributionPerZone.csv");
@@ -570,7 +768,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		switch (usedLanduseConfiguration) {
 		case useOSMBuildingsAndLanduse:
-
+//TODO perheps change to shp query
 			List<String> neededBuildingCategories = List.of("residential", "apartments", "dormitory", "dwelling_house",
 					"house", "retirement_home", "semidetached_house", "farm", "farm_auxiliary", "greenhouse",
 					"construction", "industrial", "factory", "manufacture", "retail", "kiosk", "mall", "shop",
@@ -701,35 +899,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone,
 			HashMap<String, HashMap<String, Integer>> investigationAreaData,
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) throws MalformedURLException, IOException {
-
-		HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
-		landuseCategoriesAndDataConnection.put("Inhabitants", new ArrayList<String>(Arrays.asList("residential",
-				"apartments", "dormitory", "dwelling_house", "house", "retirement_home", "semidetached_house")));
-		landuseCategoriesAndDataConnection.put("Employee Primary Sector",
-				new ArrayList<String>(Arrays.asList("farmyard", "farmland", "farm", "farm_auxiliary", "greenhouse")));
-		landuseCategoriesAndDataConnection.put("Employee Construction",
-				new ArrayList<String>(Arrays.asList("construction")));
-		landuseCategoriesAndDataConnection.put("Employee Secondary Sector Rest",
-				new ArrayList<String>(Arrays.asList("industrial", "factory", "manufacture")));
-		landuseCategoriesAndDataConnection.put("Employee Retail",
-				new ArrayList<String>(Arrays.asList("retail", "kiosk", "mall", "shop", "supermarket")));
-		landuseCategoriesAndDataConnection.put("Employee Traffic/Parcels", new ArrayList<String>(
-				Arrays.asList("commercial", "post_office", "storage", "storage_tank", "warehouse")));
-		landuseCategoriesAndDataConnection.put("Employee Tertiary Sector Rest", new ArrayList<String>(
-				Arrays.asList("commercial", "embassy", "foundation", "government", "office", "townhall")));
-		landuseCategoriesAndDataConnection.put("Employee", new ArrayList<String>());
-		landuseCategoriesAndDataConnection.get("Employee")
-				.addAll(landuseCategoriesAndDataConnection.get("Employee Primary Sector"));
-		landuseCategoriesAndDataConnection.get("Employee")
-				.addAll(landuseCategoriesAndDataConnection.get("Employee Construction"));
-		landuseCategoriesAndDataConnection.get("Employee")
-				.addAll(landuseCategoriesAndDataConnection.get("Employee Secondary Sector Rest"));
-		landuseCategoriesAndDataConnection.get("Employee")
-				.addAll(landuseCategoriesAndDataConnection.get("Employee Retail"));
-		landuseCategoriesAndDataConnection.get("Employee")
-				.addAll(landuseCategoriesAndDataConnection.get("Employee Traffic/Parcels"));
-		landuseCategoriesAndDataConnection.get("Employee")
-				.addAll(landuseCategoriesAndDataConnection.get("Employee Tertiary Sector Rest"));
 
 		Object2DoubleMap<String> totalSquareMetersPerCategory = new Object2DoubleOpenHashMap<>();
 		Object2DoubleMap<String> totalEmployeesInCategoriesPerZone = new Object2DoubleOpenHashMap<>();
@@ -1128,12 +1297,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 		return usedPurposes;
 	}
-	
+
 	private int getSumOfServices(HashMap<TripDistributionMatrixKey, Integer> odMatrix, String mode, int purpose) {
 		int numberOfTrips = 0;
 		ArrayList<String> zones = getListOfZones(odMatrix);
-		for (String startZone : zones) 
-			for (String stopZone : zones) 
+		for (String startZone : zones)
+			for (String stopZone : zones)
 				numberOfTrips = numberOfTrips + odMatrix.get(makeKey(startZone, stopZone, mode, purpose));
 		return numberOfTrips;
 	}
@@ -1262,7 +1431,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param purpose
 	 * @return
 	 */
-	private ZonesLinksLanduseConnectionKey makeZonesLinksLanduseConnectionKey(String fromZone, String toZone) {
+	private static ZonesLinksLanduseConnectionKey makeZonesLinksLanduseConnectionKey(String fromZone, String toZone) {
 		return new ZonesLinksLanduseConnectionKey(fromZone, toZone);
 	}
 }
