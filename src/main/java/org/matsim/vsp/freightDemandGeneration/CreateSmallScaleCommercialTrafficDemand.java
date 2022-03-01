@@ -107,16 +107,19 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Mixin
 	private CrsOptions crs = new CrsOptions("EPSG:4326");
 
-	private enum landuseConfiguration {
+	private enum LanduseConfiguration {
 		useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
 	}
-	
-	private enum modeDifferentiation {
-		createODMatrix, createSeperateODMatricesForModes
+
+	private enum ModeDifferentiation {
+		createOneODMatrix, createSeperateODMatricesForModes
 	}
 
+	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse")
+	private ModeDifferentiation usedModeDifferentiation;
+
 	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useExistingDataDistribution", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse")
-	private landuseConfiguration usedLanduseConfiguration;
+	private LanduseConfiguration usedLanduseConfiguration;
 
 	private final static SplittableRandom rnd = new SplittableRandom(4711);
 
@@ -197,9 +200,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		controler.run();
 		new CarrierPlanXmlWriterV2((Carriers) controler.getScenario().getScenarioElement("carriers"))
 				.write(config.controler().getOutputDirectory() + "/output_jspritCarriersWithPlans.xml");
-		
+
 		return 0;
 	}
+
 	/**
 	 * Prepares the controller.
 	 * 
@@ -218,6 +222,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		});
 		return controler;
 	}
+
 	/**
 	 * @param config
 	 * @param scenario
@@ -300,7 +305,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							.toArray()[rnd.nextInt(regionLinksMap
 									.get(makeZonesLinksLanduseConnectionKey(stopZone, selectedStopCategory)).size())]);
 
-			Id<CarrierService> idNewService = Id.create(newDemand.getCarrierID() +"_"+ link.getId() + "_" +rnd.nextInt(10000), CarrierService.class);
+			Id<CarrierService> idNewService = Id.create(
+					newDemand.getCarrierID() + "_" + link.getId() + "_" + rnd.nextInt(10000), CarrierService.class);
 
 			CarrierService thisService = CarrierService.Builder.newInstance(idNewService, link.getId())
 					.setServiceDuration(newDemand.getFirstJobElementTimePerUnit())
@@ -1212,7 +1218,17 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		HashMap<Integer, HashMap<String, Double>> generationRates = new HashMap<Integer, HashMap<String, Double>>();
 		HashMap<String, HashMap<String, Double>> commitmentRates = new HashMap<String, HashMap<String, Double>>();
 
-		ArrayList<String> modes = new ArrayList<String>(Arrays.asList("pt", "it", "op"));
+		ArrayList<String> modes;
+		switch (usedModeDifferentiation) {
+		case createOneODMatrix:
+			modes = new ArrayList<String>(Arrays.asList("total"));
+			break;
+		case createSeperateODMatricesForModes:
+			modes = new ArrayList<String>(Arrays.asList("pt", "it", "op"));
+			break;
+		default:
+			throw new RuntimeException("No mode differentiation selected.");
+		}
 
 		if (volumeType.equals("start")) {
 			generationRates = generationRatesStart;
@@ -1229,8 +1245,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				Object2DoubleMap<Integer> trafficValuesPerPurpose = new Object2DoubleOpenHashMap<>();
 				for (Integer purpose : generationRates.keySet()) {
 					for (String category : resultingDataPerZone.get(zoneId).keySet()) {
+						double commitmentFactor;
+						if (mode.equals("total"))
+							commitmentFactor = 1;
+						else
+							commitmentFactor = commitmentRates.get(purpose + "_" + mode).get(category);
 						double generationFactor = generationRates.get(purpose).get(category);
-						double commitmentFactor = commitmentRates.get(purpose + "_" + mode).get(category);
 						double newValue = resultingDataPerZone.get(zoneId).getDouble(category) * generationFactor
 								* commitmentFactor;
 						trafficValuesPerPurpose.merge(purpose, newValue, Double::sum);
