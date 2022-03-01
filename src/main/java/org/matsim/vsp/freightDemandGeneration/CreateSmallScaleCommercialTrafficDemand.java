@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,21 +34,27 @@ import org.matsim.api.core.v01.population.PopulationFactory;
 import org.matsim.application.options.CrsOptions;
 import org.matsim.application.options.LanduseOptions;
 import org.matsim.application.options.ShpOptions;
+import org.matsim.contrib.freight.Freight;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
+import org.matsim.contrib.freight.carrier.CarrierService;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
 import org.matsim.contrib.freight.carrier.CarrierVehicle;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypeLoader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.contrib.freight.carrier.Carriers;
+import org.matsim.contrib.freight.carrier.TimeWindow;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
+import org.matsim.contrib.freight.controler.CarrierModule;
 import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControlerConfigGroup;
+import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.network.NetworkUtils;
@@ -102,6 +109,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 	private enum landuseConfiguration {
 		useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
+	}
+	
+	private enum modeDifferentiation {
+		createODMatrix, createSeperateODMatricesForModes
 	}
 
 	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useExistingDataDistribution", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse")
@@ -181,9 +192,32 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				shapeFileZonePath, shapeFileLandusePath, shapeFileBuildingsPath, network);
 
 		createCarriers(config, scenario, odMatrix, regionLinksMap);
+		Controler controler = prepareControler(scenario);
+		FreightUtils.runJsprit(controler.getScenario());
+		controler.run();
+		new CarrierPlanXmlWriterV2((Carriers) controler.getScenario().getScenarioElement("carriers"))
+				.write(config.controler().getOutputDirectory() + "/output_jspritCarriersWithPlans.xml");
+		
 		return 0;
 	}
+	/**
+	 * Prepares the controller.
+	 * 
+	 * @param scenario
+	 * @return
+	 */
+	private static Controler prepareControler(Scenario scenario) {
+		Controler controler = new Controler(scenario);
 
+		Freight.configure(controler);
+		controler.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				install(new CarrierModule());
+			}
+		});
+		return controler;
+	}
 	/**
 	 * @param config
 	 * @param scenario
@@ -204,24 +238,77 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				if (isStartingLocation) {
 					String carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
 					String[] vehilceTypes = new String[] { "heavy26t" };
-					int numberOfDepots = 5;
+					int numberOfDepots = 5; // TODO hier kein fixen Wert sondern in Abhängidkeit der Nachfrage
 					String[] vehicleDepots = new String[] {};
 //				String[] areaOfAdditonalDepots;
 					FleetSize fleetSize = FleetSize.FINITE;
-					int vehicleStartTime = rnd.nextInt(6 * 3600, 16 * 3600);
-					int vehicleEndTime = vehicleStartTime + 8 * 3600;
 					int jspritIterations = 10;
 					int fixedNumberOfVehilcePerTypeAndLocation = 1;
+
 					NewCarrier newCarrier = new NewCarrier(carrierName, vehilceTypes, numberOfDepots, vehicleDepots,
-							null, fleetSize, vehicleStartTime, vehicleEndTime, jspritIterations,
-							fixedNumberOfVehilcePerTypeAndLocation);
+							null, fleetSize, 0, 0, jspritIterations, fixedNumberOfVehilcePerTypeAndLocation);
 					createNewCarrierAndAddVehilceTypes(scenario, newCarrier, purpose, startZone,
 							ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), regionLinksMap, 15);
+					for (String stopZone : getListOfZones(odMatrix)) {
+
+						int demand = 0;
+						int numberOfJobs = odMatrix.get(makeKey(startZone, stopZone, "it", purpose));
+						String[] areasFirstJobElement = new String[] { stopZone };
+						Integer firstJobElementTimePerUnit = 120; // TODO
+						TimeWindow firstJobElementTimeWindow = TimeWindow.newInstance(6 * 3600, 23 * 3600);
+						NewDemand newDemand = new NewDemand(carrierName, demand, numberOfJobs, null,
+								areasFirstJobElement, numberOfJobs, null, firstJobElementTimePerUnit,
+								firstJobElementTimeWindow);
+						createServices(scenario, newDemand, isStartingLocation, null, null, isStartingLocation, purpose,
+								regionLinksMap, startZone);
+					}
+
 				}
 			}
 		}
 		new CarrierPlanXmlWriterV2(FreightUtils.addOrGetCarriers(scenario))
 				.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierPlans.xml");
+	}
+
+	private static void createServices(Scenario scenario, NewDemand newDemand, boolean demandLocationsInShape,
+			Collection<SimpleFeature> polygonsInShape, Population population, boolean reduceNumberOfShipments,
+			Integer purpose, Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap, String startZone) {
+
+		Integer numberOfJobs = newDemand.getNumberOfJobs();
+		String stopZone = newDemand.getAreasFirstJobElement()[0];
+
+		ArrayList<String> stopCategory = new ArrayList<String>();
+		if (purpose == 1)
+			stopCategory.add("Employee Secondary Sector Rest");
+		else if (purpose == 2 || purpose == 3) {
+			stopCategory.add("Employee Retail");
+			stopCategory.add("Employee Traffic/Parcels");
+			stopCategory.add("Inhabitants");
+		} else if (purpose == 4) {
+			stopCategory.add("Employee Retail");
+			stopCategory.add("Inhabitants");
+		} else if (purpose == 5) {
+			stopCategory.add("Inhabitants");
+			stopCategory.add("Employee Construction");
+		} else
+			throw new RuntimeException("No possible purpose selected");
+
+		for (int i = 0; i < numberOfJobs; i++) {
+			String selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
+			Link link = scenario.getNetwork().getLinks()
+					.get(regionLinksMap.get(makeZonesLinksLanduseConnectionKey(stopZone, selectedStopCategory))
+							.toArray()[rnd.nextInt(regionLinksMap
+									.get(makeZonesLinksLanduseConnectionKey(stopZone, selectedStopCategory)).size())]);
+
+			Id<CarrierService> idNewService = Id.create(newDemand.getCarrierID() +"_"+ link.getId() + "_" +rnd.nextInt(10000), CarrierService.class);
+
+			CarrierService thisService = CarrierService.Builder.newInstance(idNewService, link.getId())
+					.setServiceDuration(newDemand.getFirstJobElementTimePerUnit())
+					.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
+			FreightUtils.getCarriers(scenario).getCarriers().get(Id.create(newDemand.getCarrierID(), Carrier.class))
+					.getServices().put(thisService.getId(), thisService);
+		}
+
 	}
 
 	private static void createNewCarrierAndAddVehilceTypes(Scenario scenario, NewCarrier newCarrier, Integer purpose,
@@ -257,11 +344,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		if (newCarrier.getVehicleDepots() == null)
 			newCarrier.setVehicleDepots(new String[] {});
 		while (newCarrier.getVehicleDepots().length < newCarrier.getNumberOfDepotsPerType()) {
-
 			String selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
-			int a;
-			if (!regionLinksMap.containsKey(makeZonesLinksLanduseConnectionKey(startZone, selectedStartCategory)))
-				a = 0;
 			Link link = scenario.getNetwork().getLinks()
 					.get(regionLinksMap.get(makeZonesLinksLanduseConnectionKey(startZone, selectedStartCategory))
 							.toArray()[rnd.nextInt(regionLinksMap
@@ -271,7 +354,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 		for (String singleDepot : newCarrier.getVehicleDepots()) {
 			for (String thisVehicleType : newCarrier.getVehicleTypes()) {
-				int vehicleStartTime = rnd.nextInt(6 * 3600, 16 * 3600);
+				int vehicleStartTime = rnd.nextInt(6 * 3600, 16 * 3600); // TODO Verteilung über den Tag prüfen
 				int vehicleEndTime = vehicleStartTime + 8 * 3600;
 				VehicleType thisType = carrierVehicleTypes.getVehicleTypes()
 						.get(Id.create(thisVehicleType, VehicleType.class));
