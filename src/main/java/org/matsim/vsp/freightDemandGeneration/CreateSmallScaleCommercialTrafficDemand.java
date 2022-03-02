@@ -30,7 +30,6 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Population;
-import org.matsim.api.core.v01.population.PopulationFactory;
 import org.matsim.application.options.CrsOptions;
 import org.matsim.application.options.LanduseOptions;
 import org.matsim.application.options.ShpOptions;
@@ -95,7 +94,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
 	private Path networkPath;
 
-	@CommandLine.Option(names = "--sample", defaultValue = "0.25", description = "Scaling factor of the freight traffic (0, 1)", required = true)
+	@CommandLine.Option(names = "--sample", defaultValue = "0.10", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
 	@CommandLine.Option(names = "--output", description = "Path to output population", required = true, defaultValue = "output/BusinessPassengerTraffic/")
@@ -124,6 +123,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private final static SplittableRandom rnd = new SplittableRandom(4711);
 
 	public static void main(String[] args) {
+		CreateSmallScaleCommercialTrafficDemand tesz = new CreateSmallScaleCommercialTrafficDemand();
 		System.exit(new CommandLine(new CreateSmallScaleCommercialTrafficDemand()).execute(args));
 	}
 
@@ -169,14 +169,15 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
 		new File(output.resolve("caculatedData").toString()).mkdir();
 
-		String vehicleTypesFileLocation = "scenarios/demandGeneration/testInput/vehicleTypes_default.xml";
+//		String vehicleTypesFileLocation = "scenarios/demandGeneration/testInput/vehicleTypes_default.xml";
+		String vehicleTypesFileLocation = rawDataDirectory.resolve("vehicleTypes_default.xml").toString();
 		prepareVehicles(config, vehicleTypesFileLocation);
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Network network = scenario.getNetwork();
 
-		Population population = scenario.getPopulation();
-		PopulationFactory populationFactory = population.getFactory();
+//		Population population = scenario.getPopulation();
+//		PopulationFactory populationFactory = population.getFactory();
 
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = createInputDataDistribution(shapeFileZonePath,
 				shapeFileLandusePath, shapeFileBuildingsPath);
@@ -200,6 +201,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		controler.run();
 		new CarrierPlanXmlWriterV2((Carriers) controler.getScenario().getScenarioElement("carriers"))
 				.write(config.controler().getOutputDirectory() + "/output_jspritCarriersWithPlans.xml");
+		
+		FreightAnalyse.main(new String[] {scenario.getConfig().controler().getOutputDirectory()});
 
 		return 0;
 	}
@@ -235,15 +238,44 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			for (String startZone : getListOfZones(odMatrix)) {
 				boolean isStartingLocation = false;
 				for (String possibleStopZone : getListOfZones(odMatrix)) {
-					if (odMatrix.get(makeKey(startZone, possibleStopZone, "it", purpose)) != 0) {
-						isStartingLocation = true;
-						break;
+					for (String possibleMode : getListOfModes(odMatrix)) {
+						if (possibleMode.equals("total") || possibleMode.equals("it"))
+							if (odMatrix.get(makeKey(startZone, possibleStopZone, possibleMode, purpose)) != 0) {
+								isStartingLocation = true;
+								break;
+							}
 					}
 				}
 				if (isStartingLocation) {
+					String[] vehilceTypes = null;
+					Integer serviceTimePerStop = null;
+					if (purpose == 1) {
+						vehilceTypes = new String[] { "heavy26t" };
+						serviceTimePerStop = (int)Math.round(71.7*60);
+					} else if (purpose == 2) {
+						vehilceTypes = new String[] { "heavy40t" };
+						serviceTimePerStop = (int)Math.round(70.4*60); //Durschnitt aus Handel,Transp.,Einw.
+					} else if (purpose == 3) {
+						vehilceTypes = new String[] { "light8t" };
+						serviceTimePerStop = (int)Math.round(70.4*60);
+					} else if (purpose == 4) {
+						vehilceTypes = new String[] { "medium18t" };
+						serviceTimePerStop = (int)Math.round(100.6*60);
+					} else if (purpose == 5) {
+						vehilceTypes = new String[] { "medium18t_electro" };
+						serviceTimePerStop = (int)Math.round(214.7*60);
+					}
+
+					String mode; // TODO Notwendigkeit überprüfen
+					if (getListOfModes(odMatrix).contains("total") && getListOfModes(odMatrix).size() == 1)
+						mode = "total";
+					else
+						mode = "it";
+
 					String carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
-					String[] vehilceTypes = new String[] { "heavy26t" };
-					int numberOfDepots = 5; // TODO hier kein fixen Wert sondern in Abhängidkeit der Nachfrage
+					int numberOfDepots = getSumOfServices(odMatrix, mode, purpose) / 2; // TODO hier kein fixen Wert
+																						// sondern in Abhängidkeit der
+																						// Nachfrage
 					String[] vehicleDepots = new String[] {};
 //				String[] areaOfAdditonalDepots;
 					FleetSize fleetSize = FleetSize.FINITE;
@@ -254,16 +286,15 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							null, fleetSize, 0, 0, jspritIterations, fixedNumberOfVehilcePerTypeAndLocation);
 					createNewCarrierAndAddVehilceTypes(scenario, newCarrier, purpose, startZone,
 							ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), regionLinksMap, 15);
+
 					for (String stopZone : getListOfZones(odMatrix)) {
 
 						int demand = 0;
-						int numberOfJobs = odMatrix.get(makeKey(startZone, stopZone, "it", purpose));
+						int numberOfJobs = odMatrix.get(makeKey(startZone, stopZone, mode, purpose));
 						String[] areasFirstJobElement = new String[] { stopZone };
-						Integer firstJobElementTimePerUnit = 120; // TODO
-						TimeWindow firstJobElementTimeWindow = TimeWindow.newInstance(6 * 3600, 23 * 3600);
+						TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 23 * 3600);
 						NewDemand newDemand = new NewDemand(carrierName, demand, numberOfJobs, null,
-								areasFirstJobElement, numberOfJobs, null, firstJobElementTimePerUnit,
-								firstJobElementTimeWindow);
+								areasFirstJobElement, numberOfJobs, null, serviceTimePerStop, serviceTimeWindow);
 						createServices(scenario, newDemand, isStartingLocation, null, null, isStartingLocation, purpose,
 								regionLinksMap, startZone);
 					}
@@ -395,44 +426,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(carrierVehicleTypes);
 	}
-
-//	private void generateFreightPlan(Network network, Id<Link> fromLinkId, Id<Link> toLinkId, int numOfTrucks,
-//			String goodType, Population population, PopulationFactory populationFactory,
-//			MutableInt totalGeneratedPersons) {
-//		for (Integer purpose : getListOfPurposes(odMatrix)) {
-//			
-//			int sumOfTripsToCreate = getSumOfServices(odMatrix, "it", purpose);
-//			int generated = 0;
-//			while (generated < sumOfTripsToCreate) {
-//				
-//				for (String startZone : getListOfZones(odMatrix)) {
-//					String stopZone = getListOfZones(odMatrix).get(rnd.nextInt(getListOfZones(odMatrix).size()));
-//				
-//				generated++;
-//				Person freightPerson = populationFactory
-//						.createPerson(Id.create("freight_" + generated, Person.class));
-//				freightPerson.getAttributes().putAttribute("subpopulation", "freight");
-//				freightPerson.getAttributes().putAttribute("purpose ", +purpose);
-//				TripDistributionMatrixKey odKey = (TripDistributionMatrixKey)odMatrix.keySet().toArray()[rnd.nextInt(odMatrix.size())];
-//				Plan plan = populationFactory.createPlan();
-//				Activity act0 = populationFactory.createActivityFromLinkId("freight_start", fromLinkId);
-//				act0.setCoord(network.getLinks().get(fromLinkId).getCoord());
-//				act0.setEndTime(rnd.nextInt(86400));
-//				act0.
-//				Leg leg = populationFactory.createLeg("freight");
-//				Activity act1 = populationFactory.createActivityFromLinkId("freight_end", toLinkId);
-//				act1.setCoord(network.getLinks().get(toLinkId).getCoord());
-//
-//				plan.addActivity(act0);
-//				plan.addLeg(leg);
-//				plan.addActivity(act1);
-//				freightPerson.addPlan(plan);
-//				population.addPerson(freightPerson);
-//				}
-//
-//			}
-//		}
-//	}
 
 	/**
 	 * Reads in the vehicle types.
