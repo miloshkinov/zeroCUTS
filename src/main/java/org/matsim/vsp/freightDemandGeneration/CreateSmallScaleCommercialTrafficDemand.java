@@ -85,6 +85,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private static HashMap<Integer, HashMap<String, Double>> generationRatesStop = new HashMap<Integer, HashMap<String, Double>>();
 	private static HashMap<String, HashMap<String, Double>> commitmentRatesStart = new HashMap<String, HashMap<String, Double>>();
 	private static HashMap<String, HashMap<String, Double>> commitmentRatesStop = new HashMap<String, HashMap<String, Double>>();
+	private static List<SimpleFeature> buildingsFeatures = null;
+	private static Path shapeFileLandusePath = null;
+	private static Path shapeFileZonePath = null;
+	private static Path shapeFileBuildingsPath = null;
+	private static List<Link> links = new ArrayList<Link>();
 
 	private static HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
 
@@ -92,9 +97,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private Path rawDataDirectory;
 
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
-	private Path networkPath;
+	private static Path networkPath;
 
-	@CommandLine.Option(names = "--sample", defaultValue = "0.10", description = "Scaling factor of the freight traffic (0, 1)", required = true)
+	@CommandLine.Option(names = "--sample", defaultValue = "0.001", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
 	@CommandLine.Option(names = "--output", description = "Path to output population", required = true, defaultValue = "output/BusinessPassengerTraffic/")
@@ -123,7 +128,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private final static SplittableRandom rnd = new SplittableRandom(4711);
 
 	public static void main(String[] args) {
-		CreateSmallScaleCommercialTrafficDemand tesz = new CreateSmallScaleCommercialTrafficDemand();
 		System.exit(new CommandLine(new CreateSmallScaleCommercialTrafficDemand()).execute(args));
 	}
 
@@ -135,16 +139,15 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		 * passiert mit construction?
 		 */
 
-		Path shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
-				.resolve("bezirksgrenzen_Berlin.shp");
+		shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts").resolve("bezirksgrenzen_Berlin.shp");
 //		Path shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
 //				.resolve("verkehrszellen_Berlin.shp");
-		Path shapeFileLandusePath = rawDataDirectory.resolve("shp").resolve("landuse")
+		shapeFileLandusePath = rawDataDirectory.resolve("shp").resolve("landuse")
 				.resolve("gis_osm_landuse_a_free_1.shp");
-		// Path shapeFileBuildingsPath =
+		// shapeFileBuildingsPath =
 		// rawDataDirectory.resolve("shp").resolve("landuse")
 		// .resolve("gis_osm_buildings_a_free_1.shp");
-		Path shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse")
+		shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse")
 				.resolve("allBuildingsWithLevels.shp");
 //		Path shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse").resolve("buildingSample.shp");
 
@@ -165,8 +168,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		config.network().setInputFile(networkPath.toString());
 		config.controler().setOutputDirectory(output.toString());
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
+		config.controler().setLastIteration(0);
+		config.global().setRandomSeed(4177);
 		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
 				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
+		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 		new File(output.resolve("caculatedData").toString()).mkdir();
 
 //		String vehicleTypesFileLocation = "scenarios/demandGeneration/testInput/vehicleTypes_default.xml";
@@ -174,7 +180,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		prepareVehicles(config, vehicleTypesFileLocation);
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
-		Network network = scenario.getNetwork();
 
 //		Population population = scenario.getPopulation();
 //		PopulationFactory populationFactory = population.getFactory();
@@ -191,18 +196,19 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		HashMap<TripDistributionMatrixKey, Integer> odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
 				trafficVolumePerTypeAndZone_stop, shapeFileZonePath);
-
-		Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap = findLinksInLanduseCategoriesPerZone(
-				shapeFileZonePath, shapeFileLandusePath, shapeFileBuildingsPath, network);
+		Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap = new HashMap<>();
+//		Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap = findLinksInLanduseCategoriesPerZone(
+//				shapeFileZonePath, shapeFileLandusePath, shapeFileBuildingsPath, network);
 
 		createCarriers(config, scenario, odMatrix, regionLinksMap);
 		Controler controler = prepareControler(scenario);
+
 		FreightUtils.runJsprit(controler.getScenario());
 		controler.run();
 		new CarrierPlanXmlWriterV2((Carriers) controler.getScenario().getScenarioElement("carriers"))
 				.write(config.controler().getOutputDirectory() + "/output_jspritCarriersWithPlans.xml");
-		
-		FreightAnalyse.main(new String[] {scenario.getConfig().controler().getOutputDirectory()});
+
+		FreightAnalyse.main(new String[] { scenario.getConfig().controler().getOutputDirectory() });
 
 		return 0;
 	}
@@ -234,6 +240,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 */
 	private void createCarriers(Config config, Scenario scenario, HashMap<TripDistributionMatrixKey, Integer> odMatrix,
 			Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap) {
+		int maxNumberOfCarrier = getListOfPurposes(odMatrix).size() * getListOfZones(odMatrix).size()
+				* getListOfModes(odMatrix).size();
+		int createdCarrier = 0;
 		for (Integer purpose : getListOfPurposes(odMatrix)) {
 			for (String startZone : getListOfZones(odMatrix)) {
 				boolean isStartingLocation = false;
@@ -247,23 +256,24 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					}
 				}
 				if (isStartingLocation) {
+
 					String[] vehilceTypes = null;
 					Integer serviceTimePerStop = null;
 					if (purpose == 1) {
 						vehilceTypes = new String[] { "heavy26t" };
-						serviceTimePerStop = (int)Math.round(71.7*60);
+						serviceTimePerStop = (int) Math.round(71.7 * 60);
 					} else if (purpose == 2) {
 						vehilceTypes = new String[] { "heavy40t" };
-						serviceTimePerStop = (int)Math.round(70.4*60); //Durschnitt aus Handel,Transp.,Einw.
+						serviceTimePerStop = (int) Math.round(70.4 * 60); // Durschnitt aus Handel,Transp.,Einw.
 					} else if (purpose == 3) {
 						vehilceTypes = new String[] { "light8t" };
-						serviceTimePerStop = (int)Math.round(70.4*60);
+						serviceTimePerStop = (int) Math.round(70.4 * 60);
 					} else if (purpose == 4) {
 						vehilceTypes = new String[] { "medium18t" };
-						serviceTimePerStop = (int)Math.round(100.6*60);
+						serviceTimePerStop = (int) Math.round(100.6 * 60);
 					} else if (purpose == 5) {
 						vehilceTypes = new String[] { "medium18t_electro" };
-						serviceTimePerStop = (int)Math.round(214.7*60);
+						serviceTimePerStop = (int) Math.round(214.7 * 60);
 					}
 
 					String mode; // TODO Notwendigkeit überprüfen
@@ -273,24 +283,31 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						mode = "it";
 
 					String carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
-					int numberOfDepots = getSumOfServices(odMatrix, mode, purpose) / 2; // TODO hier kein fixen Wert
-																						// sondern in Abhängidkeit der
-																						// Nachfrage
+					int numberOfDepots = getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose) / 2; // TODO
+																												// check
+					if (numberOfDepots == 0)
+						numberOfDepots = 1;
 					String[] vehicleDepots = new String[] {};
 //				String[] areaOfAdditonalDepots;
 					FleetSize fleetSize = FleetSize.FINITE;
 					int jspritIterations = 10;
 					int fixedNumberOfVehilcePerTypeAndLocation = 1;
-
+					createdCarrier++;
+					log.info("Create carrier number " + createdCarrier + " of a maximum Number of " + maxNumberOfCarrier
+							+ " carriers.");
+					log.info("Carrier: " + carrierName + "; depots: " + numberOfDepots + "; services: "
+							+ getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose));
 					NewCarrier newCarrier = new NewCarrier(carrierName, vehilceTypes, numberOfDepots, vehicleDepots,
 							null, fleetSize, 0, 0, jspritIterations, fixedNumberOfVehilcePerTypeAndLocation);
 					createNewCarrierAndAddVehilceTypes(scenario, newCarrier, purpose, startZone,
 							ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), regionLinksMap, 15);
-
+					log.info("Create services for carrier: " + carrierName);
 					for (String stopZone : getListOfZones(odMatrix)) {
 
 						int demand = 0;
 						int numberOfJobs = odMatrix.get(makeKey(startZone, stopZone, mode, purpose));
+						if (numberOfJobs == 0)
+							continue;
 						String[] areasFirstJobElement = new String[] { stopZone };
 						TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 23 * 3600);
 						NewDemand newDemand = new NewDemand(carrierName, demand, numberOfJobs, null,
@@ -298,10 +315,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						createServices(scenario, newDemand, isStartingLocation, null, null, isStartingLocation, purpose,
 								regionLinksMap, startZone);
 					}
-
 				}
 			}
 		}
+		log.info("Finished creating " + createdCarrier + " carriers including related services.");
+
 		new CarrierPlanXmlWriterV2(FreightUtils.addOrGetCarriers(scenario))
 				.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierPlans.xml");
 	}
@@ -331,10 +349,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		for (int i = 0; i < numberOfJobs; i++) {
 			String selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
-			Link link = scenario.getNetwork().getLinks()
-					.get(regionLinksMap.get(makeZonesLinksLanduseConnectionKey(stopZone, selectedStopCategory))
-							.toArray()[rnd.nextInt(regionLinksMap
-									.get(makeZonesLinksLanduseConnectionKey(stopZone, selectedStopCategory)).size())]);
+
+			Link link = findPossibleLink(regionLinksMap, stopZone, selectedStopCategory, null, scenario.getNetwork());
+//			Link link = scenario.getNetwork().getLinks()
+//					.get(regionLinksMap.get(makeZonesLinksLanduseConnectionKey(stopZone, selectedStopCategory))
+//							.toArray()[rnd.nextInt(regionLinksMap
+//									.get(makeZonesLinksLanduseConnectionKey(stopZone, selectedStopCategory)).size())]);
 
 			Id<CarrierService> idNewService = Id.create(
 					newDemand.getCarrierID() + "_" + link.getId() + "_" + rnd.nextInt(10000), CarrierService.class);
@@ -366,10 +386,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			throw new RuntimeException("No possible purpose selected");
 
 		Carriers carriers = FreightUtils.addOrGetCarriers(scenario);
-		CarrierVehicleTypes carrierVehicleTypes = new CarrierVehicleTypes();
-		CarrierVehicleTypes usedCarrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
-		new CarrierVehicleTypeReader(carrierVehicleTypes).readFile(freightConfigGroup.getCarriersVehicleTypesFile());
-
+		CarrierVehicleTypes carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
+		if (carrierVehicleTypes.getVehicleTypes().isEmpty()) {
+			new CarrierVehicleTypeReader(carrierVehicleTypes)
+					.readFile(freightConfigGroup.getCarriersVehicleTypesFile());
+		} else
+			carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
 		CarrierCapabilities carrierCapabilities = null;
 
 		Carrier thisCarrier = CarrierUtils.createCarrier(Id.create(newCarrier.getName(), Carrier.class));
@@ -382,11 +404,13 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			newCarrier.setVehicleDepots(new String[] {});
 		while (newCarrier.getVehicleDepots().length < newCarrier.getNumberOfDepotsPerType()) {
 			String selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
-			Link link = scenario.getNetwork().getLinks()
-					.get(regionLinksMap.get(makeZonesLinksLanduseConnectionKey(startZone, selectedStartCategory))
-							.toArray()[rnd.nextInt(regionLinksMap
-									.get(makeZonesLinksLanduseConnectionKey(startZone, selectedStartCategory))
-									.size())]);
+			Link link = findPossibleLink(regionLinksMap, startZone, selectedStartCategory,
+					newCarrier.getVehicleDepots(), scenario.getNetwork());
+//			Link link = scenario.getNetwork().getLinks()
+//					.get(regionLinksMap.get(makeZonesLinksLanduseConnectionKey(startZone, selectedStartCategory))
+//							.toArray()[rnd.nextInt(regionLinksMap
+//									.get(makeZonesLinksLanduseConnectionKey(startZone, selectedStartCategory))
+//									.size())]);
 			newCarrier.addVehicleDepots(newCarrier.getVehicleDepots(), link.getId().toString());
 		}
 		for (String singleDepot : newCarrier.getVehicleDepots()) {
@@ -395,8 +419,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				int vehicleEndTime = vehicleStartTime + 8 * 3600;
 				VehicleType thisType = carrierVehicleTypes.getVehicleTypes()
 						.get(Id.create(thisVehicleType, VehicleType.class));
-				usedCarrierVehicleTypes.getVehicleTypes().putIfAbsent(Id.create(thisVehicleType, VehicleType.class),
-						thisType);
 				if (newCarrier.getFixedNumberOfVehilcePerTypeAndLocation() == 0)
 					newCarrier.setFixedNumberOfVehilcePerTypeAndLocation(1);
 				for (int i = 0; i < newCarrier.getFixedNumberOfVehilcePerTypeAndLocation(); i++) {
@@ -425,6 +447,64 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			}
 		}
 		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(carrierVehicleTypes);
+	}
+
+	private static Link findPossibleLink(Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap,
+			String zone, String selectedStartCategory, String[] usedLinks, Network network) {
+
+		ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, "EPSG:4326", StandardCharsets.UTF_8);
+		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
+
+		ShpOptions.Index indexLanduse = shpLanduse.createIndex("EPSG:4326", "fclass");
+		ShpOptions.Index indexZones = shpZones.createIndex("EPSG:4326", "gml_id");
+
+		if (links.isEmpty()) {
+			Network networkToChange = NetworkUtils.readNetwork(networkPath.toString());
+			links = networkToChange.getLinks().values().stream().filter(l -> l.getAllowedModes().contains("car"))
+					.collect(Collectors.toList());
+			links.forEach(l -> l.getAttributes().putAttribute("newCoord",
+					shpZones.createTransformation("EPSG:31468").transform(l.getCoord())));
+			links.forEach(l -> l.getAttributes().putAttribute("zone",
+					indexZones.query((Coord) l.getAttributes().getAttribute("newCoord"))));
+			links = links.stream().filter(l -> l.getAttributes().getAttribute("zone") != null)
+					.collect(Collectors.toList());
+		}
+
+		if (buildingsFeatures == null) {
+			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
+			buildingsFeatures = shpBuildings.readFeatures();
+		}
+		Link newLink = null;
+		while (newLink == null) {
+			SimpleFeature possibleBuilding = buildingsFeatures.get(rnd.nextInt(buildingsFeatures.size()));
+			String buildingType = String.valueOf(possibleBuilding.getAttribute("type"));
+			Coord centroidPointOfBuildingPolygon = MGC
+					.point2Coord(((Geometry) possibleBuilding.getDefaultGeometry()).getCentroid());
+			if (buildingType.equals("")) {
+				buildingType = indexLanduse.query(centroidPointOfBuildingPolygon);
+				possibleBuilding.setAttribute("type", buildingType);
+			}
+			if (!landuseCategoriesAndDataConnection.get(selectedStartCategory).contains(buildingType))
+				continue;
+			String zoneOfBuilding = indexZones.query(centroidPointOfBuildingPolygon);
+			if (zoneOfBuilding == null || !zoneOfBuilding.equals(zone))
+				continue;
+			double minDistance = Double.MAX_VALUE;
+			for (Link possibleLink : links) {
+				if (!possibleLink.getAttributes().getAttribute("zone").equals(zone))
+					continue;
+				double distance = NetworkUtils.getEuclideanDistance(centroidPointOfBuildingPolygon,
+						(Coord) possibleLink.getAttributes().getAttribute("newCoord"));
+				if (distance < minDistance) {
+					newLink = possibleLink;
+					minDistance = distance;
+				}
+			}
+			regionLinksMap.computeIfAbsent(makeZonesLinksLanduseConnectionKey(zoneOfBuilding, selectedStartCategory),
+					(k) -> new ArrayList<>()).add(newLink.getId());
+		}
+
+		return newLink;
 	}
 
 	/**
@@ -457,8 +537,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param network
 	 * @return
 	 */
-	private Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> findLinksInLanduseCategoriesPerZone(
-			Path shapeFileZonePath, Path shapeFileLandusePath, Path shapeFileBuildingsPath, Network network) {
+	private Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> findLinksInLanduseCategoriesPerZone(Network network) {
 		ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
 		ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, "EPSG:4326", StandardCharsets.UTF_8);
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
@@ -476,7 +555,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				shpZones.createTransformation("EPSG:31468").transform(l.getCoord())));
 		links.stream().filter(a -> indexZones.query((Coord) a.getAttributes().getAttribute("newCoord")) != null);
 
-		List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
+		if (buildingsFeatures == null)
+			buildingsFeatures = shpBuildings.readFeatures();
 
 		int countOSMObjects = 0;
 		for (SimpleFeature singleBuildingFeature : buildingsFeatures) {
@@ -857,7 +937,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					"supermarket", "commercial", "post_office", "storage", "storage_tank", "warehouse", "embassy",
 					"foundation", "government", "office", "townhall");
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, null, StandardCharsets.UTF_8);
-			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
+			buildingsFeatures = shpBuildings.readFeatures();
 			for (SimpleFeature singleBuildingFeature : buildingsFeatures) {
 				countOSMObjects++;
 				if (countOSMObjects % 10000 == 0)
@@ -882,6 +962,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							neededType = true;
 						}
 					}
+					singleBuildingFeature.setAttribute("type", String.join(";", categoriesOfBuilding));
 				} else {
 					allBuildingType.replace(" ", "");
 					String[] buildingType = allBuildingType.split(";");
@@ -1400,6 +1481,15 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		for (String startZone : zones)
 			for (String stopZone : zones)
 				numberOfTrips = numberOfTrips + odMatrix.get(makeKey(startZone, stopZone, mode, purpose));
+		return numberOfTrips;
+	}
+
+	private int getSumOfServicesForStartZone(HashMap<TripDistributionMatrixKey, Integer> odMatrix, String startZone,
+			String mode, int purpose) {
+		int numberOfTrips = 0;
+		ArrayList<String> zones = getListOfZones(odMatrix);
+		for (String stopZone : zones)
+			numberOfTrips = numberOfTrips + odMatrix.get(makeKey(startZone, stopZone, mode, purpose));
 		return numberOfTrips;
 	}
 
