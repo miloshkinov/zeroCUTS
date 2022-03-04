@@ -93,7 +93,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private static HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
 
 	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/small-scale-commercial-traffic/input")
-	private Path rawDataDirectory;
+	private static Path rawDataDirectory;
 
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
 	private static Path networkPath;
@@ -159,7 +159,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			break;
 		default:
 			break;
-
 		}
 
 		shapeFileLandusePath = rawDataDirectory.resolve("shp").resolve("landuse")
@@ -179,30 +178,13 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 		output = output.resolve(java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay());
 
-		// Load config, scenario and network
-		Config config = ConfigUtils.createConfig();
-		config.global().setCoordinateSystem(crs.getInputCRS()); // "EPSG:4326"
-		config.network().setInputFile(networkPath.toString());
-		config.controler().setOutputDirectory(output.toString());
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
-		config.controler().setLastIteration(0);
-		config.global().setRandomSeed(4177);
-		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
-				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
-		new File(output.resolve("caculatedData").toString()).mkdir();
+		Config config = prepareConfig();
 
-//		String vehicleTypesFileLocation = "scenarios/demandGeneration/testInput/vehicleTypes_default.xml";
-		String vehicleTypesFileLocation = rawDataDirectory.resolve("vehicleTypes_default.xml").toString();
-		prepareVehicles(config, vehicleTypesFileLocation);
+		prepareVehicles(config);
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 
-//		Population population = scenario.getPopulation();
-//		PopulationFactory populationFactory = population.getFactory();
-
-		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = createInputDataDistribution(shapeFileZonePath,
-				shapeFileLandusePath, shapeFileBuildingsPath);
+		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = createInputDataDistribution();
 
 		readInputParamters();
 
@@ -212,7 +194,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				resultingDataPerZone);
 
 		HashMap<TripDistributionMatrixKey, Integer> odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
-				trafficVolumePerTypeAndZone_stop, shapeFileZonePath);
+				trafficVolumePerTypeAndZone_stop);
 
 		createCarriers(config, scenario, odMatrix);
 		Controler controler = prepareControler(scenario);
@@ -225,6 +207,24 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		FreightAnalyse.main(new String[] { scenario.getConfig().controler().getOutputDirectory() });
 
 		return 0;
+	}
+
+	/**
+	 * @return
+	 */
+	private Config prepareConfig() {
+		Config config = ConfigUtils.createConfig();
+		config.global().setCoordinateSystem(crs.getInputCRS()); // "EPSG:4326"
+		config.network().setInputFile(networkPath.toString());
+		config.controler().setOutputDirectory(output.toString());
+		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
+		config.controler().setLastIteration(0);
+		config.global().setRandomSeed(4177);
+		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
+				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
+		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
+		new File(output.resolve("caculatedData").toString()).mkdir();
+		return config;
 	}
 
 	/**
@@ -520,9 +520,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param config
 	 * @param vehicleTypesFileLocation
 	 */
-	private static void prepareVehicles(Config config, String vehicleTypesFileLocation) {
+	private static void prepareVehicles(Config config) {
 
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
+		String vehicleTypesFileLocation = rawDataDirectory.resolve("vehicleTypes_default.xml").toString();
 		if (vehicleTypesFileLocation == "")
 			throw new RuntimeException("No path to the vehicleTypes selected");
 		else {
@@ -546,12 +547,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 */
 	private HashMap<TripDistributionMatrixKey, Integer> createTripDistribution(
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop,
-			Path shapeFileZonesPath) throws UncheckedIOException, MalformedURLException {
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop) throws UncheckedIOException, MalformedURLException {
 
 		HashMap<TripDistributionMatrixKey, Integer> odMatrix = new HashMap<TripDistributionMatrixKey, Integer>();
 
-		ShpOptions shpZones = new ShpOptions(shapeFileZonesPath, null, StandardCharsets.UTF_8);
+		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
 		List<SimpleFeature> zonesFeatures = shpZones.readFeatures();
 		HashMap<ResistanceFunktionKey, Double> resistanceFunktionValues = createResistanceFunktionValues(zonesFeatures);
 
@@ -699,8 +699,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @throws IOException
 	 * @throws MalformedURLException
 	 */
-	private HashMap<String, Object2DoubleMap<String>> createInputDataDistribution(Path shapeFileZonePath,
-			Path shapeFileLandusePath, Path shapeFileBuildingsPath) throws IOException, MalformedURLException {
+	private HashMap<String, Object2DoubleMap<String>> createInputDataDistribution()
+			throws IOException, MalformedURLException {
 
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = new HashMap<String, Object2DoubleMap<String>>();
 		Path outputFileInOutputFolder = output.resolve("caculatedData").resolve("dataDistributionPerZone.csv");
@@ -762,8 +762,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 			log.info("New analyze for data distribution is started. The used method is: " + usedLanduseConfiguration);
 			HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone = new HashMap<String, Object2DoubleMap<String>>();
-			createLanduseDistribution(shapeFileZonePath, landuseCategoriesPerZone, shapeFileLandusePath,
-					shapeFileBuildingsPath);
+			createLanduseDistribution(landuseCategoriesPerZone);
 
 			HashMap<String, HashMap<String, Integer>> investigationAreaData = new HashMap<String, HashMap<String, Integer>>();
 			readAreaData(investigationAreaData);
@@ -851,15 +850,13 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param shapeFileBuildingsPath
 	 * 
 	 */
-	private void createLanduseDistribution(Path shapeFileZonesPath,
-			HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone, Path shapeFileLandusePath,
-			Path shapeFileBuildingsPath) {
+	private void createLanduseDistribution(HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone) {
 
 		List<String> neededLanduseCategories = List.of("residential", "industrial", "commercial", "retail", "farmyard",
 				"farmland", "construction");
 
 		ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, null, StandardCharsets.UTF_8);
-		ShpOptions shpZones = new ShpOptions(shapeFileZonesPath, null, StandardCharsets.UTF_8);
+		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
 
 		List<SimpleFeature> landuseFeatures = shpLanduse.readFeatures();
 		List<SimpleFeature> zonesFeatures = shpZones.readFeatures();
