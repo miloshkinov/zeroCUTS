@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.SplittableRandom;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -105,6 +104,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--output", description = "Path to output population", required = true, defaultValue = "output/BusinessPassengerTraffic/")
 	private Path output;
 
+	@CommandLine.Option(names = "--jspritIterations", description = "Set number of jsprit iterations", required = true, defaultValue = "15")
+	private static int jspritIterations;
+
 	@CommandLine.Mixin
 	private LanduseOptions landuse = new LanduseOptions();
 
@@ -115,14 +117,21 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
 	}
 
+	private enum ZoneChoice {
+		useDistricts, useTrafficCells
+	}
+
 	private enum ModeDifferentiation {
 		createOneODMatrix, createSeperateODMatricesForModes
 	}
 
-	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse")
+	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of mode differentiation:  createOneODMatrix, createSeperateODMatricesForModes")
 	private ModeDifferentiation usedModeDifferentiation;
 
-	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useExistingDataDistribution", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse")
+	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useDistricts", description = "Set option input zones. Options: useDistricts, useTrafficCells")
+	private ZoneChoice usedZoneChoice;
+
+	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useExistingDataDistribution", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
 	private LanduseConfiguration usedLanduseConfiguration;
 
 	private final static SplittableRandom rnd = new SplittableRandom(4711);
@@ -139,17 +148,25 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		 * passiert mit construction?
 		 */
 
-		shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts").resolve("bezirksgrenzen_Berlin.shp");
-//		Path shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
-//				.resolve("verkehrszellen_Berlin.shp");
+		switch (usedZoneChoice) {
+		case useDistricts:
+			shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
+					.resolve("bezirksgrenzen_Berlin.shp");
+			break;
+		case useTrafficCells:
+			shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
+					.resolve("verkehrszellen_Berlin.shp");
+			break;
+		default:
+			break;
+
+		}
+
 		shapeFileLandusePath = rawDataDirectory.resolve("shp").resolve("landuse")
 				.resolve("gis_osm_landuse_a_free_1.shp");
-		// shapeFileBuildingsPath =
-		// rawDataDirectory.resolve("shp").resolve("landuse")
-		// .resolve("gis_osm_buildings_a_free_1.shp");
+
 		shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse")
 				.resolve("allBuildingsWithLevels.shp");
-//		Path shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse").resolve("buildingSample.shp");
 
 		if (!Files.exists(shapeFileLandusePath)) {
 			log.error("Required landuse shape file {} not found", shapeFileLandusePath);
@@ -196,11 +213,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		HashMap<TripDistributionMatrixKey, Integer> odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
 				trafficVolumePerTypeAndZone_stop, shapeFileZonePath);
-		Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap = new HashMap<>();
-//		Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap = findLinksInLanduseCategoriesPerZone(
-//				shapeFileZonePath, shapeFileLandusePath, shapeFileBuildingsPath, network);
 
-		createCarriers(config, scenario, odMatrix, regionLinksMap);
+		createCarriers(config, scenario, odMatrix);
 		Controler controler = prepareControler(scenario);
 
 		FreightUtils.runJsprit(controler.getScenario());
@@ -236,10 +250,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param config
 	 * @param scenario
 	 * @param odMatrix
-	 * @param regionLinksMap
 	 */
-	private void createCarriers(Config config, Scenario scenario, HashMap<TripDistributionMatrixKey, Integer> odMatrix,
-			Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap) {
+	private void createCarriers(Config config, Scenario scenario,
+			HashMap<TripDistributionMatrixKey, Integer> odMatrix) {
 		int maxNumberOfCarrier = getListOfPurposes(odMatrix).size() * getListOfZones(odMatrix).size()
 				* getListOfModes(odMatrix).size();
 		int createdCarrier = 0;
@@ -300,7 +313,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					NewCarrier newCarrier = new NewCarrier(carrierName, vehilceTypes, numberOfDepots, vehicleDepots,
 							null, fleetSize, 0, 0, jspritIterations, fixedNumberOfVehilcePerTypeAndLocation);
 					createNewCarrierAndAddVehilceTypes(scenario, newCarrier, purpose, startZone,
-							ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), regionLinksMap, 15);
+							ConfigUtils.addOrGetModule(config, FreightConfigGroup.class));
 					log.info("Create services for carrier: " + carrierName);
 					for (String stopZone : getListOfZones(odMatrix)) {
 
@@ -313,10 +326,14 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						NewDemand newDemand = new NewDemand(carrierName, demand, numberOfJobs, null,
 								areasFirstJobElement, numberOfJobs, null, serviceTimePerStop, serviceTimeWindow);
 						createServices(scenario, newDemand, isStartingLocation, null, null, isStartingLocation, purpose,
-								regionLinksMap, startZone);
+								startZone);
 					}
 				}
 			}
+		}
+		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
+			CarrierUtils.setJspritIterations(carrier, jspritIterations);
+			log.warn("The jspritIterations are now set to " + jspritIterations + " in this simulation!");
 		}
 		log.info("Finished creating " + createdCarrier + " carriers including related services.");
 
@@ -326,7 +343,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 	private static void createServices(Scenario scenario, NewDemand newDemand, boolean demandLocationsInShape,
 			Collection<SimpleFeature> polygonsInShape, Population population, boolean reduceNumberOfShipments,
-			Integer purpose, Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap, String startZone) {
+			Integer purpose, String startZone) {
 
 		Integer numberOfJobs = newDemand.getNumberOfJobs();
 		String stopZone = newDemand.getAreasFirstJobElement()[0];
@@ -350,7 +367,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		for (int i = 0; i < numberOfJobs; i++) {
 			String selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
 
-			Link link = findPossibleLink(regionLinksMap, stopZone, selectedStopCategory, null, scenario.getNetwork());
+			Link link = findPossibleLink(stopZone, selectedStopCategory, null, scenario.getNetwork());
 //			Link link = scenario.getNetwork().getLinks()
 //					.get(regionLinksMap.get(makeZonesLinksLanduseConnectionKey(stopZone, selectedStopCategory))
 //							.toArray()[rnd.nextInt(regionLinksMap
@@ -369,8 +386,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	}
 
 	private static void createNewCarrierAndAddVehilceTypes(Scenario scenario, NewCarrier newCarrier, Integer purpose,
-			String startZone, FreightConfigGroup freightConfigGroup,
-			Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap, int defaultJspritIterations) {
+			String startZone, FreightConfigGroup freightConfigGroup) {
 
 		ArrayList<String> startCategory = new ArrayList<String>();
 		if (purpose == 1 || purpose == 2)
@@ -404,8 +420,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			newCarrier.setVehicleDepots(new String[] {});
 		while (newCarrier.getVehicleDepots().length < newCarrier.getNumberOfDepotsPerType()) {
 			String selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
-			Link link = findPossibleLink(regionLinksMap, startZone, selectedStartCategory,
-					newCarrier.getVehicleDepots(), scenario.getNetwork());
+			Link link = findPossibleLink(startZone, selectedStartCategory, newCarrier.getVehicleDepots(),
+					scenario.getNetwork());
 //			Link link = scenario.getNetwork().getLinks()
 //					.get(regionLinksMap.get(makeZonesLinksLanduseConnectionKey(startZone, selectedStartCategory))
 //							.toArray()[rnd.nextInt(regionLinksMap
@@ -439,18 +455,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 			thisCarrier.setCarrierCapabilities(carrierCapabilities);
 		}
-		for (Carrier carrier : carriers.getCarriers().values()) {
-			if (CarrierUtils.getJspritIterations(carrier) == Integer.MIN_VALUE) {
-				CarrierUtils.setJspritIterations(carrier, defaultJspritIterations);
-				log.warn("The jspritIterations are now set to the default value of " + defaultJspritIterations
-						+ " in this simulation!");
-			}
-		}
 		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(carrierVehicleTypes);
 	}
 
-	private static Link findPossibleLink(Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap,
-			String zone, String selectedStartCategory, String[] usedLinks, Network network) {
+	private static Link findPossibleLink(String zone, String selectedStartCategory, String[] usedLinks,
+			Network network) {
 
 		ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, "EPSG:4326", StandardCharsets.UTF_8);
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
@@ -500,8 +509,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					minDistance = distance;
 				}
 			}
-			regionLinksMap.computeIfAbsent(makeZonesLinksLanduseConnectionKey(zoneOfBuilding, selectedStartCategory),
-					(k) -> new ArrayList<>()).add(newLink.getId());
 		}
 
 		return newLink;
@@ -525,70 +532,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		FreightUtils.addOrGetCarriers(ScenarioUtils.loadScenario(config));
 		CarrierVehicleTypes carrierVehicleTypes = new CarrierVehicleTypes();
 		new CarrierVehicleTypeReader(carrierVehicleTypes).readFile(freightConfigGroup.getCarriersVehicleTypesFile());
-	}
-
-	/**
-	 * Creates a map for each zone/landuse combination containing all possible
-	 * links.
-	 * 
-	 * @param shapeFileZonePath
-	 * @param shapeFileLandusePath
-	 * @param shapeFileBuildingsPath
-	 * @param network
-	 * @return
-	 */
-	private Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> findLinksInLanduseCategoriesPerZone(Network network) {
-		ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
-		ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, "EPSG:4326", StandardCharsets.UTF_8);
-		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
-
-		// Extracting relevant zones and associate them with the all the links inside
-		log.info("Finding possible links for each buildings (this may take some time)...");
-		Map<ZonesLinksLanduseConnectionKey, List<Id<Link>>> regionLinksMap = new HashMap<>();
-
-		ShpOptions.Index indexLanduse = shpLanduse.createIndex("EPSG:4326", "fclass");
-		ShpOptions.Index indexZones = shpZones.createIndex("EPSG:4326", "gml_id");
-
-		List<Link> links = network.getLinks().values().stream().filter(l -> l.getAllowedModes().contains("car"))
-				.collect(Collectors.toList());
-		links.forEach(l -> l.getAttributes().putAttribute("newCoord",
-				shpZones.createTransformation("EPSG:31468").transform(l.getCoord())));
-		links.stream().filter(a -> indexZones.query((Coord) a.getAttributes().getAttribute("newCoord")) != null);
-
-		if (buildingsFeatures == null)
-			buildingsFeatures = shpBuildings.readFeatures();
-
-		int countOSMObjects = 0;
-		for (SimpleFeature singleBuildingFeature : buildingsFeatures) {
-			countOSMObjects++;
-			if (countOSMObjects % 10000 == 0 || countOSMObjects == 1)
-				log.info("Investigate Building " + countOSMObjects + " of " + buildingsFeatures.size() + " buildings: "
-						+ Math.round((double) countOSMObjects / buildingsFeatures.size() * 100) + " %");
-			Coord centroidPointOfBuildingPolygon = MGC
-					.point2Coord(((Geometry) singleBuildingFeature.getDefaultGeometry()).getCentroid());
-			String zoneId = indexZones.query(centroidPointOfBuildingPolygon);
-			String buildingType = String.valueOf(singleBuildingFeature.getAttribute("type"));
-			if (zoneId != null) {
-				double minDistance = Double.MAX_VALUE;
-				Link nearestLink = null;
-				for (Link possibleLink : links) {
-					double distance = NetworkUtils.getEuclideanDistance(centroidPointOfBuildingPolygon,
-							(Coord) possibleLink.getAttributes().getAttribute("newCoord"));
-					if (distance < minDistance) {
-						nearestLink = possibleLink;
-						minDistance = distance;
-					}
-				}
-				if (buildingType.equals(""))
-					buildingType = indexLanduse.query(centroidPointOfBuildingPolygon);
-				for (String key : landuseCategoriesAndDataConnection.keySet())
-					if (landuseCategoriesAndDataConnection.get(key).contains(buildingType))
-						regionLinksMap.computeIfAbsent(makeZonesLinksLanduseConnectionKey(zoneId, key),
-								(k) -> new ArrayList<>()).add(nearestLink.getId());
-
-			}
-		}
-		return regionLinksMap;
 	}
 
 	/**
@@ -1338,10 +1281,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		return trafficVolumePerZone;
 	}
 
-	/**
-	 * @author Ricardo
-	 *
-	 */
 	static class TripDistributionMatrixKey {
 		private final String fromZone;
 		private final String toZone;
@@ -1475,15 +1414,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		return usedPurposes;
 	}
 
-	private int getSumOfServices(HashMap<TripDistributionMatrixKey, Integer> odMatrix, String mode, int purpose) {
-		int numberOfTrips = 0;
-		ArrayList<String> zones = getListOfZones(odMatrix);
-		for (String startZone : zones)
-			for (String stopZone : zones)
-				numberOfTrips = numberOfTrips + odMatrix.get(makeKey(startZone, stopZone, mode, purpose));
-		return numberOfTrips;
-	}
-
 	private int getSumOfServicesForStartZone(HashMap<TripDistributionMatrixKey, Integer> odMatrix, String startZone,
 			String mode, int purpose) {
 		int numberOfTrips = 0;
@@ -1555,69 +1485,5 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 */
 	private ResistanceFunktionKey makeResistanceFunktionKey(String fromZone, String toZone) {
 		return new ResistanceFunktionKey(fromZone, toZone);
-	}
-
-	static class ZonesLinksLanduseConnectionKey {
-		private final String zoneId;
-		private final String landuseCategory;
-
-		public ZonesLinksLanduseConnectionKey(String zoneId, String landuseCategory) {
-			super();
-			this.zoneId = zoneId;
-			this.landuseCategory = landuseCategory;
-
-		}
-
-		public String getZoneId() {
-			return zoneId;
-		}
-
-		public String getLanduseCategory() {
-			return landuseCategory;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((zoneId == null) ? 0 : zoneId.hashCode());
-			result = prime * result + ((landuseCategory == null) ? 0 : landuseCategory.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			ZonesLinksLanduseConnectionKey other = (ZonesLinksLanduseConnectionKey) obj;
-			if (zoneId == null) {
-				if (other.zoneId != null)
-					return false;
-			} else if (!zoneId.equals(other.zoneId))
-				return false;
-			if (landuseCategory == null) {
-				if (other.landuseCategory != null)
-					return false;
-			} else if (!landuseCategory.equals(other.landuseCategory))
-				return false;
-			return true;
-		}
-	}
-
-	/**
-	 * Creates a key for the tripDistributionMatrix.
-	 * 
-	 * @param fromZone
-	 * @param toZone
-	 * @param mode
-	 * @param purpose
-	 * @return
-	 */
-	private static ZonesLinksLanduseConnectionKey makeZonesLinksLanduseConnectionKey(String fromZone, String toZone) {
-		return new ZonesLinksLanduseConnectionKey(fromZone, toZone);
 	}
 }
