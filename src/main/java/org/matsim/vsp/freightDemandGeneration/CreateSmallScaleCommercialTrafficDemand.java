@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.SplittableRandom;
@@ -28,7 +27,6 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.population.Population;
 import org.matsim.application.options.CrsOptions;
 import org.matsim.application.options.LanduseOptions;
 import org.matsim.application.options.ShpOptions;
@@ -89,8 +87,17 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private static Path shapeFileZonePath = null;
 	private static Path shapeFileBuildingsPath = null;
 	private static List<Link> links = new ArrayList<Link>();
-
 	private static HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
+
+	private enum LanduseConfiguration {
+		useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
+	}
+	private enum ZoneChoice {
+		useDistricts, useTrafficCells
+	}
+	private enum ModeDifferentiation {
+		createOneODMatrix, createSeperateODMatricesForModes
+	}
 
 	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/small-scale-commercial-traffic/input")
 	private static Path rawDataDirectory;
@@ -112,18 +119,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 	@CommandLine.Mixin
 	private CrsOptions crs = new CrsOptions("EPSG:4326");
-
-	private enum LanduseConfiguration {
-		useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
-	}
-
-	private enum ZoneChoice {
-		useDistricts, useTrafficCells
-	}
-
-	private enum ModeDifferentiation {
-		createOneODMatrix, createSeperateODMatricesForModes
-	}
 
 	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of mode differentiation:  createOneODMatrix, createSeperateODMatricesForModes")
 	private ModeDifferentiation usedModeDifferentiation;
@@ -325,8 +320,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 23 * 3600);
 						NewDemand newDemand = new NewDemand(carrierName, demand, numberOfJobs, null,
 								areasFirstJobElement, numberOfJobs, null, serviceTimePerStop, serviceTimeWindow);
-						createServices(scenario, newDemand, isStartingLocation, null, null, isStartingLocation, purpose,
-								startZone);
+						createServices(scenario, newDemand, purpose, newCarrier.getVehicleDepots());
 					}
 				}
 			}
@@ -341,9 +335,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierPlans.xml");
 	}
 
-	private static void createServices(Scenario scenario, NewDemand newDemand, boolean demandLocationsInShape,
-			Collection<SimpleFeature> polygonsInShape, Population population, boolean reduceNumberOfShipments,
-			Integer purpose, String startZone) {
+	private static void createServices(Scenario scenario, NewDemand newDemand, Integer purpose,
+			String[] noPossibleLinks) {
 
 		Integer numberOfJobs = newDemand.getNumberOfJobs();
 		String stopZone = newDemand.getAreasFirstJobElement()[0];
@@ -367,12 +360,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		for (int i = 0; i < numberOfJobs; i++) {
 			String selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
 
-			Link link = findPossibleLink(stopZone, selectedStopCategory, null, scenario.getNetwork());
-//			Link link = scenario.getNetwork().getLinks()
-//					.get(regionLinksMap.get(makeZonesLinksLanduseConnectionKey(stopZone, selectedStopCategory))
-//							.toArray()[rnd.nextInt(regionLinksMap
-//									.get(makeZonesLinksLanduseConnectionKey(stopZone, selectedStopCategory)).size())]);
-
+			Link link = findPossibleLink(stopZone, selectedStopCategory, noPossibleLinks, scenario.getNetwork());
 			Id<CarrierService> idNewService = Id.create(
 					newDemand.getCarrierID() + "_" + link.getId() + "_" + rnd.nextInt(10000), CarrierService.class);
 
@@ -422,11 +410,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			String selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
 			Link link = findPossibleLink(startZone, selectedStartCategory, newCarrier.getVehicleDepots(),
 					scenario.getNetwork());
-//			Link link = scenario.getNetwork().getLinks()
-//					.get(regionLinksMap.get(makeZonesLinksLanduseConnectionKey(startZone, selectedStartCategory))
-//							.toArray()[rnd.nextInt(regionLinksMap
-//									.get(makeZonesLinksLanduseConnectionKey(startZone, selectedStartCategory))
-//									.size())]);
 			newCarrier.addVehicleDepots(newCarrier.getVehicleDepots(), link.getId().toString());
 		}
 		for (String singleDepot : newCarrier.getVehicleDepots()) {
@@ -458,7 +441,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(carrierVehicleTypes);
 	}
 
-	private static Link findPossibleLink(String zone, String selectedStartCategory, String[] usedLinks,
+	private static Link findPossibleLink(String zone, String selectedStartCategory, String[] noPossibleLinks,
 			Network network) {
 
 		ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, "EPSG:4326", StandardCharsets.UTF_8);
@@ -500,6 +483,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				continue;
 			double minDistance = Double.MAX_VALUE;
 			for (Link possibleLink : links) {
+				for (int i = 0; i < noPossibleLinks.length; i++) {
+					if (noPossibleLinks[i].equals(possibleLink.getId().toString()))
+						continue;
+				}
 				if (!possibleLink.getAttributes().getAttribute("zone").equals(zone))
 					continue;
 				double distance = NetworkUtils.getEuclideanDistance(centroidPointOfBuildingPolygon,
@@ -510,7 +497,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				}
 			}
 		}
-
 		return newLink;
 	}
 
@@ -547,17 +533,30 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 */
 	private HashMap<TripDistributionMatrixKey, Integer> createTripDistribution(
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop) throws UncheckedIOException, MalformedURLException {
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop)
+			throws UncheckedIOException, MalformedURLException {
 
 		HashMap<TripDistributionMatrixKey, Integer> odMatrix = new HashMap<TripDistributionMatrixKey, Integer>();
 
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
 		List<SimpleFeature> zonesFeatures = shpZones.readFeatures();
 		HashMap<ResistanceFunktionKey, Double> resistanceFunktionValues = createResistanceFunktionValues(zonesFeatures);
-
+		
 		for (String startZone : trafficVolumePerTypeAndZone_start.keySet()) {
 			for (String mode : trafficVolumePerTypeAndZone_start.get(startZone).keySet()) {
 				for (Integer purpose : trafficVolumePerTypeAndZone_start.get(startZone).get(mode).keySet()) {
+					
+					double occupancyRate = 0;
+					if (purpose == 1)
+						occupancyRate = 1.5;
+					else if (purpose == 2)
+						occupancyRate = 1.6;
+					else if (purpose == 3)
+						occupancyRate = 1.2;
+					else if (purpose == 4)
+						occupancyRate = 1.2;
+					else if (purpose == 5)
+						occupancyRate = 1.7;
 					for (String stopZone : trafficVolumePerTypeAndZone_stop.keySet()) {
 
 						double volumeStart = trafficVolumePerTypeAndZone_start.get(startZone).get(mode)
@@ -573,7 +572,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						 * gravity model Anpassungen: Faktor anpassen, z.B. reale Reisezeiten im Netz,
 						 * auch besonders für ÖV Bisher: Gravity model mit fixem Quellverkehr
 						 */
-						double volume = gravityConstantA * volumeStart * volumeStop * resitanceValue;
+						double volume = (gravityConstantA * volumeStart * volumeStop * resitanceValue) / occupancyRate;
 						int sampledVolume = (int) Math.round(sample * volume);
 						odMatrix.put(makeKey(startZone, stopZone, mode, purpose), sampledVolume);
 					}
