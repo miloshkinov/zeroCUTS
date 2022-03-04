@@ -268,19 +268,19 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					String[] vehilceTypes = null;
 					Integer serviceTimePerStop = null;
 					if (purpose == 1) {
-						vehilceTypes = new String[] { "heavy26t" };
+						vehilceTypes = new String[] { "mercedes313" };
 						serviceTimePerStop = (int) Math.round(71.7 * 60);
 					} else if (purpose == 2) {
-						vehilceTypes = new String[] { "heavy40t" };
+						vehilceTypes = new String[] { "mercedes313" };
 						serviceTimePerStop = (int) Math.round(70.4 * 60); // Durschnitt aus Handel,Transp.,Einw.
 					} else if (purpose == 3) {
-						vehilceTypes = new String[] { "light8t" };
+						vehilceTypes = new String[] { "golf1.4" };
 						serviceTimePerStop = (int) Math.round(70.4 * 60);
 					} else if (purpose == 4) {
-						vehilceTypes = new String[] { "medium18t" };
+						vehilceTypes = new String[] { "golf1.4" };
 						serviceTimePerStop = (int) Math.round(100.6 * 60);
 					} else if (purpose == 5) {
-						vehilceTypes = new String[] { "medium18t_electro" };
+						vehilceTypes = new String[] { "mercedes313" };
 						serviceTimePerStop = (int) Math.round(214.7 * 60);
 					}
 
@@ -291,7 +291,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						mode = "it";
 
 					String carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
-					int numberOfDepots = getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose) / 2; // TODO
+					int numberOfDepots = getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose) / 4; // TODO
 																												// check
 					if (numberOfDepots == 0)
 						numberOfDepots = 1;
@@ -509,7 +509,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private static void prepareVehicles(Config config) {
 
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
-		String vehicleTypesFileLocation = rawDataDirectory.resolve("vehicleTypes_default.xml").toString();
+		String vehicleTypesFileLocation = rawDataDirectory.resolve("vehicleTypes.xml").toString();
 		if (vehicleTypesFileLocation == "")
 			throw new RuntimeException("No path to the vehicleTypes selected");
 		else {
