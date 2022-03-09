@@ -125,7 +125,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of mode differentiation:  createOneODMatrix, createSeperateODMatricesForModes")
 	private ModeDifferentiation usedModeDifferentiation;
 
-	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useDistricts", description = "Set option input zones. Options: useDistricts, useTrafficCells")
+	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useTrafficCells", description = "Set option input zones. Options: useDistricts, useTrafficCells")
 	private ZoneChoice usedZoneChoice;
 // useDistricts, useTrafficCells
 	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useOSMBuildingsAndLanduse", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
@@ -162,9 +162,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		shapeFileLandusePath = rawDataDirectory.resolve("shp").resolve("landuse")
 				.resolve("gis_osm_landuse_a_free_1.shp");
 
-//		shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse")
-//				.resolve("allBuildingsWithLevels.shp");
-		shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse").resolve("buildingSample.shp");
+		shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse")
+				.resolve("allBuildingsWithLevels.shp");
+// 		shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse").resolve("buildingSample.shp");
 
 		if (!Files.exists(shapeFileLandusePath)) {
 			log.error("Required landuse shape file {} not found", shapeFileLandusePath);
@@ -268,24 +268,29 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					}
 				}
 				if (isStartingLocation) {
-
+					double occupancyRate = 0;
 					String[] vehilceTypes = null;
 					Integer serviceTimePerStop = null;
 					if (purpose == 1) {
 						vehilceTypes = new String[] { "mercedes313" };
 						serviceTimePerStop = (int) Math.round(71.7 * 60);
+						occupancyRate = 1.5;
 					} else if (purpose == 2) {
 						vehilceTypes = new String[] { "mercedes313" };
 						serviceTimePerStop = (int) Math.round(70.4 * 60); // Durschnitt aus Handel,Transp.,Einw.
+						occupancyRate = 1.6;
 					} else if (purpose == 3) {
 						vehilceTypes = new String[] { "golf1.4" };
 						serviceTimePerStop = (int) Math.round(70.4 * 60);
+						occupancyRate = 1.2;
 					} else if (purpose == 4) {
 						vehilceTypes = new String[] { "golf1.4" };
 						serviceTimePerStop = (int) Math.round(100.6 * 60);
+						occupancyRate = 1.2;
 					} else if (purpose == 5) {
 						vehilceTypes = new String[] { "mercedes313" };
 						serviceTimePerStop = (int) Math.round(214.7 * 60);
+						occupancyRate = 1.7;
 					}
 
 					String mode; // TODO Notwendigkeit überprüfen
@@ -302,7 +307,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					String[] vehicleDepots = new String[] {};
 //				String[] areaOfAdditonalDepots;
 					FleetSize fleetSize = FleetSize.FINITE;
-					int jspritIterations = 10;
 					int fixedNumberOfVehilcePerTypeAndLocation = 1;
 					createdCarrier++;
 					log.info("Create carrier number " + createdCarrier + " of a maximum Number of " + maxNumberOfCarrier
@@ -317,13 +321,17 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					for (String stopZone : getListOfZones(odMatrix)) {
 
 						int demand = 0;
-						int numberOfJobs = odMatrix.get(makeKey(startZone, stopZone, mode, purpose));
+						double numberOfJobs = odMatrix.get(makeKey(startZone, stopZone, mode, purpose)) / occupancyRate;
 						if (numberOfJobs == 0)
 							continue;
+						if (numberOfJobs < 1)
+							numberOfJobs = 1;
+						else
+							numberOfJobs = Math.round(numberOfDepots);
 						String[] areasFirstJobElement = new String[] { stopZone };
 						TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 23 * 3600);
-						NewDemand newDemand = new NewDemand(carrierName, demand, numberOfJobs, null,
-								areasFirstJobElement, numberOfJobs, null, serviceTimePerStop, serviceTimeWindow);
+						NewDemand newDemand = new NewDemand(carrierName, demand, (int) numberOfJobs, null,
+								areasFirstJobElement, (int) numberOfJobs, null, serviceTimePerStop, serviceTimeWindow);
 						createServices(scenario, newDemand, purpose, newCarrier.getVehicleDepots());
 					}
 				}
@@ -545,43 +553,47 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
 		List<SimpleFeature> zonesFeatures = shpZones.readFeatures();
 		HashMap<ResistanceFunktionKey, Double> resistanceFunktionValues = createResistanceFunktionValues(zonesFeatures);
-
+		int count = 0;
 		for (String startZone : trafficVolumePerTypeAndZone_start.keySet()) {
+			count++;
+			if (count % 50 == 0 || count == 1)
+				log.info("Create OD pairs for start zone :" + startZone + ". Zone " + count + " of "
+						+ trafficVolumePerTypeAndZone_start.size());
+			Object2DoubleMap<String> roundingError = new Object2DoubleOpenHashMap<>();
 			for (String mode : trafficVolumePerTypeAndZone_start.get(startZone).keySet()) {
 				for (Integer purpose : trafficVolumePerTypeAndZone_start.get(startZone).get(mode).keySet()) {
+					double volumeStart = trafficVolumePerTypeAndZone_start.get(startZone).get(mode).getDouble(purpose);
+					double gravityConstantA = getGravityConstant(startZone, trafficVolumePerTypeAndZone_stop,
+							resistanceFunktionValues, mode, purpose);
+					int countingStopZones = 0;
+					int createdVolume = 0;
 
-					double occupancyRate = 0;
-					if (purpose == 1)
-						occupancyRate = 1.5;
-					else if (purpose == 2)
-						occupancyRate = 1.6;
-					else if (purpose == 3)
-						occupancyRate = 1.2;
-					else if (purpose == 4)
-						occupancyRate = 1.2;
-					else if (purpose == 5)
-						occupancyRate = 1.7;
-					for (String stopZone : trafficVolumePerTypeAndZone_stop.keySet()) {
-						double volumeStart = trafficVolumePerTypeAndZone_start.get(startZone).get(mode)
-								.getDouble(purpose);
+					for (String stopZone : trafficVolumePerTypeAndZone_start.keySet()) {
+						countingStopZones++;
 						double volumeStop = trafficVolumePerTypeAndZone_stop.get(stopZone).get(mode).getDouble(purpose);
-						if (volumeStart == 0 || volumeStop == 0) {
-							odMatrix.put(makeKey(startZone, stopZone, mode, purpose), 0);
-							continue;
-						}
 						double resitanceValue = resistanceFunktionValues
 								.get(makeResistanceFunktionKey(startZone, stopZone));
-						double gravityConstantA = getGravityConstant(startZone, trafficVolumePerTypeAndZone_stop,
-								resistanceFunktionValues, mode, purpose);
 //						double gravityConstantB= getGravityConstant(stopZone, trafficVolumePerTypeAndZone_start,
-//								resistanceFunktionValues, mode, purpose);;
+//								resistanceFunktionValues, mode, purpose);
 						/*
 						 * gravity model Anpassungen: Faktor anpassen, z.B. reale Reisezeiten im Netz,
 						 * auch besonders für ÖV Bisher: Gravity model mit fixem Quellverkehr
 						 */
-						double volume = (gravityConstantA * volumeStart * volumeStop * resitanceValue) / occupancyRate;
-						int sampledVolume = (int) Math.round(sample * volume);
-						odMatrix.put(makeKey(startZone, stopZone, mode, purpose), sampledVolume);
+						double volume = gravityConstantA * volumeStart * volumeStop * resitanceValue;
+						double sampledVolume = sample * volume;
+						int roundedSampledVolume = (int) Math.floor(sampledVolume);
+
+						double certainRoundingError = sampledVolume - roundedSampledVolume;
+						roundingError.merge((mode + "_" + purpose), certainRoundingError, Double::sum);
+						if (roundingError.getDouble((mode + "_" + purpose)) >= 1) {
+							roundedSampledVolume++;
+							roundingError.merge((mode + "_" + purpose), -1, Double::sum);
+						}
+						if (countingStopZones == trafficVolumePerTypeAndZone_stop.size()
+								&& roundingError.getDouble((mode + "_" + purpose)) > 0)
+							roundedSampledVolume = (int) Math.round(volumeStart * sample - createdVolume);
+						createdVolume = createdVolume + roundedSampledVolume;
+						odMatrix.put(makeKey(startZone, stopZone, mode, purpose), roundedSampledVolume);
 					}
 				}
 			}
@@ -684,6 +696,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						List<String> row = new ArrayList<>();
 						row.add(startZone);
 						for (String stopZone : usedZones) {
+							if (odMatrix.get(makeKey(startZone, stopZone, mode, purpose)) == null)
+								throw new RuntimeException("OD pair is missing; start: " + startZone + "; stop: "
+										+ stopZone + "; mode: " + mode + "; purpuse: " + purpose);
 							row.add(String.valueOf(odMatrix.get(makeKey(startZone, stopZone, mode, purpose))));
 						}
 						JOIN.appendTo(writer, row);
@@ -1062,7 +1077,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			}
 		}
 		// corrects the number of employees in the categories so that the sum is correct
-		for (int i = 0; i < 30; i++) { //TODO perhaps find number of iterations
+		for (int i = 0; i < 30; i++) { // TODO perhaps find number of iterations
 			for (String zoneId : resultingDataPerZone.keySet()) {
 				for (String categoryData : resultingDataPerZone.get(zoneId).keySet()) {
 					if (!categoryData.equals("Employee") && !categoryData.equals("Inhabitants")) {
@@ -1088,18 +1103,19 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					}
 				}
 			}
-			//update totals per sum becaus eof the changes before
+			// update totals per sum becaus eof the changes before
 			totalEmployeesInCategoriesPerZone.clear();
 			totalEmployeesPerCategories.clear();
 			for (String zoneId : resultingDataPerZone.keySet()) {
 				for (String categoryData : resultingDataPerZone.get(zoneId).keySet()) {
-					totalEmployeesPerCategories.mergeDouble(categoryData, resultingDataPerZone.get(zoneId).getDouble(categoryData), Double::sum);
+					totalEmployeesPerCategories.mergeDouble(categoryData,
+							resultingDataPerZone.get(zoneId).getDouble(categoryData), Double::sum);
 					if (!categoryData.equals("Employee") && !categoryData.equals("Inhabitants"))
-						totalEmployeesInCategoriesPerZone.mergeDouble(zoneId, resultingDataPerZone.get(zoneId).getDouble(categoryData), Double::sum);
+						totalEmployeesInCategoriesPerZone.mergeDouble(zoneId,
+								resultingDataPerZone.get(zoneId).getDouble(categoryData), Double::sum);
 				}
 			}
-			
-			
+
 		}
 	}
 
@@ -1295,17 +1311,21 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			for (String mode : modes) {
 				Object2DoubleMap<Integer> trafficValuesPerPurpose = new Object2DoubleOpenHashMap<>();
 				for (Integer purpose : generationRates.keySet()) {
-					for (String category : resultingDataPerZone.get(zoneId).keySet()) {
-						double commitmentFactor;
-						if (mode.equals("total"))
-							commitmentFactor = 1;
-						else
-							commitmentFactor = commitmentRates.get(purpose + "_" + mode).get(category);
-						double generationFactor = generationRates.get(purpose).get(category);
-						double newValue = resultingDataPerZone.get(zoneId).getDouble(category) * generationFactor
-								* commitmentFactor;
-						trafficValuesPerPurpose.merge(purpose, newValue, Double::sum);
-					}
+
+					if (resultingDataPerZone.get(zoneId).isEmpty())
+						trafficValuesPerPurpose.merge(purpose, 0., Double::sum);
+					else
+						for (String category : resultingDataPerZone.get(zoneId).keySet()) {
+							double commitmentFactor;
+							if (mode.equals("total"))
+								commitmentFactor = 1;
+							else
+								commitmentFactor = commitmentRates.get(purpose + "_" + mode).get(category);
+							double generationFactor = generationRates.get(purpose).get(category);
+							double newValue = resultingDataPerZone.get(zoneId).getDouble(category) * generationFactor
+									* commitmentFactor;
+							trafficValuesPerPurpose.merge(purpose, newValue, Double::sum);
+						}
 					trafficValuesPerPurpose.replace(purpose, trafficValuesPerPurpose.getDouble(purpose));
 				}
 				valuesForZone.put(mode, trafficValuesPerPurpose);
