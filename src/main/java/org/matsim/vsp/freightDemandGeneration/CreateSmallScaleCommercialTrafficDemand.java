@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SplittableRandom;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -82,12 +83,18 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private static HashMap<Integer, HashMap<String, Double>> generationRatesStop = new HashMap<Integer, HashMap<String, Double>>();
 	private static HashMap<String, HashMap<String, Double>> commitmentRatesStart = new HashMap<String, HashMap<String, Double>>();
 	private static HashMap<String, HashMap<String, Double>> commitmentRatesStop = new HashMap<String, HashMap<String, Double>>();
-	private static List<SimpleFeature> buildingsFeatures = null;
+	private static HashMap<String, ArrayList<SimpleFeature>> buildingsPerZone = new HashMap<>();
 	private static Path shapeFileLandusePath = null;
 	private static Path shapeFileZonePath = null;
 	private static Path shapeFileBuildingsPath = null;
 	private static List<Link> links = new ArrayList<Link>();
+	private static Map<String, List<Link>> regionLinksMap = new HashMap<>();
 	private static HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
+	private static ArrayList<String> listOfZones = new ArrayList<String>();
+	private static ArrayList<String> listOfModes = new ArrayList<String>();
+	private static ArrayList<Integer> listOfPurposes = new ArrayList<Integer>();
+	private static ShpOptions.Index indexLanduse = null;
+	private static ShpOptions.Index indexZones = null;
 
 	private enum LanduseConfiguration {
 		useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
@@ -128,7 +135,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useTrafficCells", description = "Set option input zones. Options: useDistricts, useTrafficCells")
 	private ZoneChoice usedZoneChoice;
 // useDistricts, useTrafficCells
-	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useOSMBuildingsAndLanduse", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
+	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useExistingDataDistribution", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
 	private LanduseConfiguration usedLanduseConfiguration;
 // useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
 
@@ -195,7 +202,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		HashMap<TripDistributionMatrixKey, Integer> odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
 				trafficVolumePerTypeAndZone_stop);
 
-		createCarriers(config, scenario, odMatrix);
+		createCarriers(config, scenario, odMatrix, resultingDataPerZone);
 		Controler controler = prepareControler(scenario);
 
 		FreightUtils.runJsprit(controler.getScenario());
@@ -249,9 +256,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param config
 	 * @param scenario
 	 * @param odMatrix
+	 * @param resultingDataPerZone
 	 */
-	private void createCarriers(Config config, Scenario scenario,
-			HashMap<TripDistributionMatrixKey, Integer> odMatrix) {
+	private void createCarriers(Config config, Scenario scenario, HashMap<TripDistributionMatrixKey, Integer> odMatrix,
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) {
 		int maxNumberOfCarrier = getListOfPurposes(odMatrix).size() * getListOfZones(odMatrix).size()
 				* getListOfModes(odMatrix).size();
 		int createdCarrier = 0;
@@ -271,27 +279,72 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					double occupancyRate = 0;
 					String[] vehilceTypes = null;
 					Integer serviceTimePerStop = null;
+					ArrayList<String> startCategory = new ArrayList<String>();
+					ArrayList<String> stopCategory = new ArrayList<String>();
+
 					if (purpose == 1) {
 						vehilceTypes = new String[] { "mercedes313" };
 						serviceTimePerStop = (int) Math.round(71.7 * 60);
 						occupancyRate = 1.5;
+						startCategory.add("Employee Secondary Sector Rest");
+						stopCategory.add("Employee Secondary Sector Rest");
 					} else if (purpose == 2) {
 						vehilceTypes = new String[] { "mercedes313" };
 						serviceTimePerStop = (int) Math.round(70.4 * 60); // Durschnitt aus Handel,Transp.,Einw.
 						occupancyRate = 1.6;
+						startCategory.add("Employee Secondary Sector Rest");
+						stopCategory.add("Employee Primary Sector");
+						stopCategory.add("Employee Construction");
+						stopCategory.add("Employee Secondary Sector Rest");
+						stopCategory.add("Employee Retail");
+						stopCategory.add("Employee Traffic/Parcels");
+						stopCategory.add("Employee Tertiary Sector Rest");
+						stopCategory.add("Inhabitants");
 					} else if (purpose == 3) {
 						vehilceTypes = new String[] { "golf1.4" };
 						serviceTimePerStop = (int) Math.round(70.4 * 60);
 						occupancyRate = 1.2;
+						startCategory.add("Employee Retail");
+						startCategory.add("Employee Tertiary Sector Rest");
+						stopCategory.add("Employee Primary Sector");
+						stopCategory.add("Employee Construction");
+						stopCategory.add("Employee Secondary Sector Rest");
+						stopCategory.add("Employee Retail");
+						stopCategory.add("Employee Traffic/Parcels");
+						stopCategory.add("Employee Tertiary Sector Rest");
+						stopCategory.add("Inhabitants");
 					} else if (purpose == 4) {
 						vehilceTypes = new String[] { "golf1.4" };
 						serviceTimePerStop = (int) Math.round(100.6 * 60);
 						occupancyRate = 1.2;
+						startCategory.add("Employee Traffic/Parcels");
+						stopCategory.add("Employee Primary Sector");
+						stopCategory.add("Employee Construction");
+						stopCategory.add("Employee Secondary Sector Rest");
+						stopCategory.add("Employee Retail");
+						stopCategory.add("Employee Traffic/Parcels");
+						stopCategory.add("Employee Tertiary Sector Rest");
+						stopCategory.add("Inhabitants");
 					} else if (purpose == 5) {
 						vehilceTypes = new String[] { "mercedes313" };
 						serviceTimePerStop = (int) Math.round(214.7 * 60);
 						occupancyRate = 1.7;
+						startCategory.add("Employee Construction");
+						stopCategory.add("Employee Primary Sector");
+						stopCategory.add("Employee Construction");
+						stopCategory.add("Employee Secondary Sector Rest");
+						stopCategory.add("Employee Retail");
+						stopCategory.add("Employee Traffic/Parcels");
+						stopCategory.add("Employee Tertiary Sector Rest");
+						stopCategory.add("Inhabitants");
 					}
+					String selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
+					for (int i = 0; resultingDataPerZone.get(startZone).getDouble(selectedStartCategory) == 0
+							&& i < startCategory.size()*30; i++) {
+						selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
+						if (i > startCategory.size()*20)
+							selectedStartCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
+					} //TODO vielleicht besser lösen
 
 					String mode; // TODO Notwendigkeit überprüfen
 					if (getListOfModes(odMatrix).contains("total") && getListOfModes(odMatrix).size() == 1)
@@ -301,11 +354,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 					String carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
 					int numberOfDepots = getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose) / 4; // TODO
-																												// check
 					if (numberOfDepots == 0)
 						numberOfDepots = 1;
 					String[] vehicleDepots = new String[] {};
-//				String[] areaOfAdditonalDepots;
 					FleetSize fleetSize = FleetSize.FINITE;
 					int fixedNumberOfVehilcePerTypeAndLocation = 1;
 					createdCarrier++;
@@ -316,10 +367,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					NewCarrier newCarrier = new NewCarrier(carrierName, vehilceTypes, numberOfDepots, vehicleDepots,
 							null, fleetSize, 0, 0, jspritIterations, fixedNumberOfVehilcePerTypeAndLocation);
 					createNewCarrierAndAddVehilceTypes(scenario, newCarrier, purpose, startZone,
-							ConfigUtils.addOrGetModule(config, FreightConfigGroup.class));
+							ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), selectedStartCategory);
 					log.info("Create services for carrier: " + carrierName);
 					for (String stopZone : getListOfZones(odMatrix)) {
-
 						int demand = 0;
 						double numberOfJobs = odMatrix.get(makeKey(startZone, stopZone, mode, purpose)) / occupancyRate;
 						if (numberOfJobs == 0)
@@ -328,11 +378,15 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							numberOfJobs = 1;
 						else
 							numberOfJobs = Math.round(numberOfDepots);
+						String selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
+						while (resultingDataPerZone.get(stopZone).getDouble(selectedStopCategory) == 0)
+							selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
 						String[] areasFirstJobElement = new String[] { stopZone };
 						TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 23 * 3600);
 						NewDemand newDemand = new NewDemand(carrierName, demand, (int) numberOfJobs, null,
 								areasFirstJobElement, (int) numberOfJobs, null, serviceTimePerStop, serviceTimeWindow);
-						createServices(scenario, newDemand, purpose, newCarrier.getVehicleDepots());
+						createServices(scenario, newDemand, purpose, newCarrier.getVehicleDepots(),
+								selectedStopCategory);
 					}
 				}
 			}
@@ -348,35 +402,18 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	}
 
 	private static void createServices(Scenario scenario, NewDemand newDemand, Integer purpose,
-			String[] noPossibleLinks) {
+			String[] noPossibleLinks, String selectedStopCategory) {
 
 		Integer numberOfJobs = newDemand.getNumberOfJobs();
 		String stopZone = newDemand.getAreasFirstJobElement()[0];
 
-		ArrayList<String> stopCategory = new ArrayList<String>();
-		if (purpose == 1)
-			stopCategory.add("Employee Secondary Sector Rest");
-		else if (purpose == 2 || purpose == 3) {
-			stopCategory.add("Employee Retail");
-			stopCategory.add("Employee Traffic/Parcels");
-			stopCategory.add("Inhabitants");
-		} else if (purpose == 4) {
-			stopCategory.add("Employee Retail");
-			stopCategory.add("Inhabitants");
-		} else if (purpose == 5) {
-			stopCategory.add("Inhabitants");
-			stopCategory.add("Employee Construction");
-		} else
-			throw new RuntimeException("No possible purpose selected");
-
 		for (int i = 0; i < numberOfJobs; i++) {
-			String selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
 
-			Link link = findPossibleLink(stopZone, selectedStopCategory, noPossibleLinks, scenario.getNetwork());
-			Id<CarrierService> idNewService = Id.create(
-					newDemand.getCarrierID() + "_" + link.getId() + "_" + rnd.nextInt(10000), CarrierService.class);
+			Id<Link> linkId = findPossibleLink(stopZone, selectedStopCategory, noPossibleLinks, scenario.getNetwork());
+			Id<CarrierService> idNewService = Id
+					.create(newDemand.getCarrierID() + "_" + linkId + "_" + rnd.nextInt(10000), CarrierService.class);
 
-			CarrierService thisService = CarrierService.Builder.newInstance(idNewService, link.getId())
+			CarrierService thisService = CarrierService.Builder.newInstance(idNewService, linkId)
 					.setServiceDuration(newDemand.getFirstJobElementTimePerUnit())
 					.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
 			FreightUtils.getCarriers(scenario).getCarriers().get(Id.create(newDemand.getCarrierID(), Carrier.class))
@@ -386,20 +423,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	}
 
 	private static void createNewCarrierAndAddVehilceTypes(Scenario scenario, NewCarrier newCarrier, Integer purpose,
-			String startZone, FreightConfigGroup freightConfigGroup) {
-
-		ArrayList<String> startCategory = new ArrayList<String>();
-		if (purpose == 1 || purpose == 2)
-			startCategory.add("Employee Secondary Sector Rest");
-		else if (purpose == 3) {
-			startCategory.add("Employee Retail");
-			startCategory.add("Employee Tertiary Sector Rest");
-		} else if (purpose == 4)
-			startCategory.add("Employee Traffic/Parcels");
-		else if (purpose == 5)
-			startCategory.add("Employee Construction");
-		else
-			throw new RuntimeException("No possible purpose selected");
+			String startZone, FreightConfigGroup freightConfigGroup, String selectedStartCategory) {
 
 		Carriers carriers = FreightUtils.addOrGetCarriers(scenario);
 		CarrierVehicleTypes carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
@@ -419,10 +443,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		if (newCarrier.getVehicleDepots() == null)
 			newCarrier.setVehicleDepots(new String[] {});
 		while (newCarrier.getVehicleDepots().length < newCarrier.getNumberOfDepotsPerType()) {
-			String selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
-			Link link = findPossibleLink(startZone, selectedStartCategory, newCarrier.getVehicleDepots(),
+
+			Id<Link> link = findPossibleLink(startZone, selectedStartCategory, newCarrier.getVehicleDepots(),
 					scenario.getNetwork());
-			newCarrier.addVehicleDepots(newCarrier.getVehicleDepots(), link.getId().toString());
+			newCarrier.addVehicleDepots(newCarrier.getVehicleDepots(), link.toString());
 		}
 		for (String singleDepot : newCarrier.getVehicleDepots()) {
 			for (String thisVehicleType : newCarrier.getVehicleTypes()) {
@@ -453,14 +477,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(carrierVehicleTypes);
 	}
 
-	private static Link findPossibleLink(String zone, String selectedStartCategory, String[] noPossibleLinks,
+	private static Id<Link> findPossibleLink(String zone, String selectedStartCategory, String[] noPossibleLinks,
 			Network network) {
-
-		ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, "EPSG:4326", StandardCharsets.UTF_8);
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
 
-		ShpOptions.Index indexLanduse = shpLanduse.createIndex("EPSG:4326", "fclass");
-		ShpOptions.Index indexZones = shpZones.createIndex("EPSG:4326", "gml_id");
+		getIndexLanduse();
+		getIndexZones();
 
 		if (links.isEmpty()) {
 			Network networkToChange = NetworkUtils.readNetwork(networkPath.toString());
@@ -472,44 +494,70 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					indexZones.query((Coord) l.getAttributes().getAttribute("newCoord"))));
 			links = links.stream().filter(l -> l.getAttributes().getAttribute("zone") != null)
 					.collect(Collectors.toList());
+			links.forEach(l -> regionLinksMap
+					.computeIfAbsent((String) l.getAttributes().getAttribute("zone"), (k) -> new ArrayList<>()).add(l));
 		}
-
-		if (buildingsFeatures == null) {
+		if (buildingsPerZone.isEmpty()) {
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
-			buildingsFeatures = shpBuildings.readFeatures();
+			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
+			for (SimpleFeature singleBuildingFeature : buildingsFeatures) {
+				Coord centroidPointOfBuildingPolygon = MGC
+						.point2Coord(((Geometry) singleBuildingFeature.getDefaultGeometry()).getCentroid());
+				String singleZone = indexZones.query(centroidPointOfBuildingPolygon);
+				if (singleZone != null)
+					buildingsPerZone.computeIfAbsent(singleZone, k -> new ArrayList<SimpleFeature>())
+							.add(singleBuildingFeature);
+			}
 		}
-		Link newLink = null;
-		while (newLink == null) {
-			SimpleFeature possibleBuilding = buildingsFeatures.get(rnd.nextInt(buildingsFeatures.size()));
+		Id<Link> newLink = null;
+		int count = 0;
+		while (newLink == null && count < links.size()) {
+			SimpleFeature possibleBuilding = buildingsPerZone.get(zone)
+					.get(rnd.nextInt(buildingsPerZone.get(zone).size()));
 			String buildingType = String.valueOf(possibleBuilding.getAttribute("type"));
 			Coord centroidPointOfBuildingPolygon = MGC
 					.point2Coord(((Geometry) possibleBuilding.getDefaultGeometry()).getCentroid());
-			if (buildingType.equals("")) {
+			if (buildingType.equals("") || buildingType.equals("null")) {
 				buildingType = indexLanduse.query(centroidPointOfBuildingPolygon);
 				possibleBuilding.setAttribute("type", buildingType);
 			}
 			if (!landuseCategoriesAndDataConnection.get(selectedStartCategory).contains(buildingType))
 				continue;
-			String zoneOfBuilding = indexZones.query(centroidPointOfBuildingPolygon);
-			if (zoneOfBuilding == null || !zoneOfBuilding.equals(zone))
-				continue;
 			double minDistance = Double.MAX_VALUE;
-			for (Link possibleLink : links) {
-				for (int i = 0; i < noPossibleLinks.length; i++) {
-					if (noPossibleLinks[i].equals(possibleLink.getId().toString()))
-						continue;
-				}
-				if (!possibleLink.getAttributes().getAttribute("zone").equals(zone))
-					continue;
+			int numberOfPossibleLinks = regionLinksMap.get(zone).size();
+			if (numberOfPossibleLinks < 1)
+				throw new RuntimeException("No possible links in zone found");
+			for (Link possibleLink : regionLinksMap.get(zone)) {
+				if (numberOfPossibleLinks > noPossibleLinks.length)
+					for (int i = 0; i < noPossibleLinks.length; i++) {
+						if (noPossibleLinks[i].equals(possibleLink.getId().toString()))
+							continue;
+					}
 				double distance = NetworkUtils.getEuclideanDistance(centroidPointOfBuildingPolygon,
 						(Coord) possibleLink.getAttributes().getAttribute("newCoord"));
 				if (distance < minDistance) {
-					newLink = possibleLink;
+					newLink = possibleLink.getId();
 					minDistance = distance;
 				}
 			}
 		}
+		if (newLink == null)
+			throw new RuntimeException("No possible link found");
 		return newLink;
+	}
+
+	private static void getIndexZones() {
+		if (indexZones == null) {
+			ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
+			indexZones = shpZones.createIndex("EPSG:4326", "gml_id");
+		}
+	}
+
+	private static void getIndexLanduse() {
+		if (indexLanduse == null) {
+			ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, "EPSG:4326", StandardCharsets.UTF_8);
+			indexLanduse = shpLanduse.createIndex("EPSG:4326", "fclass");
+		}
 	}
 
 	/**
@@ -565,11 +613,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					double volumeStart = trafficVolumePerTypeAndZone_start.get(startZone).get(mode).getDouble(purpose);
 					double gravityConstantA = getGravityConstant(startZone, trafficVolumePerTypeAndZone_stop,
 							resistanceFunktionValues, mode, purpose);
-					int countingStopZones = 0;
 					int createdVolume = 0;
 
 					for (String stopZone : trafficVolumePerTypeAndZone_start.keySet()) {
-						countingStopZones++;
 						double volumeStop = trafficVolumePerTypeAndZone_stop.get(stopZone).get(mode).getDouble(purpose);
 						double resitanceValue = resistanceFunktionValues
 								.get(makeResistanceFunktionKey(startZone, stopZone));
@@ -588,10 +634,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						if (roundingError.getDouble((mode + "_" + purpose)) >= 1) {
 							roundedSampledVolume++;
 							roundingError.merge((mode + "_" + purpose), -1, Double::sum);
-						}
-						if (countingStopZones == trafficVolumePerTypeAndZone_stop.size()
-								&& roundingError.getDouble((mode + "_" + purpose)) > 0)
-							roundedSampledVolume = (int) Math.round(volumeStart * sample - createdVolume);
+						} //TODO eventuell methodik für den letzten error rest am Ende
 						createdVolume = createdVolume + roundedSampledVolume;
 						odMatrix.put(makeKey(startZone, stopZone, mode, purpose), roundedSampledVolume);
 					}
@@ -709,6 +752,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+				log.info("Write OD matrix for mode " + mode + " and for purpose " + purpose + " to "
+						+ outputFolder.toString());
 			}
 		}
 	}
@@ -898,14 +943,14 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		switch (usedLanduseConfiguration) {
 		case useOSMBuildingsAndLanduse:
-//TODO perheps change to shp query
+
 			List<String> neededBuildingCategories = List.of("residential", "apartments", "dormitory", "dwelling_house",
 					"house", "retirement_home", "semidetached_house", "farm", "farm_auxiliary", "greenhouse",
 					"construction", "industrial", "factory", "manufacture", "retail", "kiosk", "mall", "shop",
 					"supermarket", "commercial", "post_office", "storage", "storage_tank", "warehouse", "embassy",
 					"foundation", "government", "office", "townhall");
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, null, StandardCharsets.UTF_8);
-			buildingsFeatures = shpBuildings.readFeatures();
+			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
 			for (SimpleFeature singleBuildingFeature : buildingsFeatures) {
 				countOSMObjects++;
 				if (countOSMObjects % 10000 == 0)
@@ -943,6 +988,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 				String singleZone = indexZones.query(centroidPointOfBuildingPolygon);
 				if (singleZone != null) {
+					buildingsPerZone.computeIfAbsent(singleZone, k -> new ArrayList<SimpleFeature>())
+							.add(singleBuildingFeature);
 					for (String singleCategoryOfBuilding : categoriesOfBuilding) {
 						double buildingLevels;
 						if (singleBuildingFeature.getAttribute("levels") == null)
@@ -1326,7 +1373,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 									* commitmentFactor;
 							trafficValuesPerPurpose.merge(purpose, newValue, Double::sum);
 						}
-					trafficValuesPerPurpose.replace(purpose, trafficValuesPerPurpose.getDouble(purpose));
+					trafficValuesPerPurpose.replace(purpose, trafficValuesPerPurpose.getDouble(purpose)); // notwendig?
 				}
 				valuesForZone.put(mode, trafficValuesPerPurpose);
 			}
@@ -1428,14 +1475,14 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @return
 	 */
 	private ArrayList<String> getListOfZones(HashMap<TripDistributionMatrixKey, Integer> odMatrix) {
-		ArrayList<String> usedZones = new ArrayList<String>();
-		for (TripDistributionMatrixKey key : odMatrix.keySet()) {
-			if (!usedZones.contains(key.getFromZone()))
-				usedZones.add(key.getFromZone());
-			if (!usedZones.contains(key.getToZone()))
-				usedZones.add(key.getToZone());
-		}
-		return usedZones;
+		if (listOfZones.isEmpty())
+			for (TripDistributionMatrixKey key : odMatrix.keySet()) {
+				if (!listOfZones.contains(key.getFromZone()))
+					listOfZones.add(key.getFromZone());
+				if (!listOfZones.contains(key.getToZone()))
+					listOfZones.add(key.getToZone());
+			}
+		return listOfZones;
 	}
 
 	/**
@@ -1445,12 +1492,13 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @return
 	 */
 	private ArrayList<String> getListOfModes(HashMap<TripDistributionMatrixKey, Integer> odMatrix) {
-		ArrayList<String> usedModes = new ArrayList<String>();
-		for (TripDistributionMatrixKey key : odMatrix.keySet()) {
-			if (!usedModes.contains(key.getMode()))
-				usedModes.add(key.getMode());
+		if (listOfModes.isEmpty()) {
+			for (TripDistributionMatrixKey key : odMatrix.keySet()) {
+				if (!listOfModes.contains(key.getMode()))
+					listOfModes.add(key.getMode());
+			}
 		}
-		return usedModes;
+		return listOfModes;
 	}
 
 	/**
@@ -1460,12 +1508,13 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @return
 	 */
 	private ArrayList<Integer> getListOfPurposes(HashMap<TripDistributionMatrixKey, Integer> odMatrix) {
-		ArrayList<Integer> usedPurposes = new ArrayList<Integer>();
-		for (TripDistributionMatrixKey key : odMatrix.keySet()) {
-			if (!usedPurposes.contains(key.getPurpose()))
-				usedPurposes.add(key.getPurpose());
+		if (listOfPurposes.isEmpty()) {
+			for (TripDistributionMatrixKey key : odMatrix.keySet()) {
+				if (!listOfPurposes.contains(key.getPurpose()))
+					listOfPurposes.add(key.getPurpose());
+			}
 		}
-		return usedPurposes;
+		return listOfPurposes;
 	}
 
 	private int getSumOfServicesForStartZone(HashMap<TripDistributionMatrixKey, Integer> odMatrix, String startZone,
