@@ -114,7 +114,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
 	private static Path networkPath;
 
-	@CommandLine.Option(names = "--sample", defaultValue = "0.01", description = "Scaling factor of the freight traffic (0, 1)", required = true)
+	@CommandLine.Option(names = "--sample", defaultValue = "0.05", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
 	@CommandLine.Option(names = "--output", description = "Path to output population", required = true, defaultValue = "output/BusinessPassengerTraffic/")
@@ -132,10 +132,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of mode differentiation:  createOneODMatrix, createSeperateODMatricesForModes")
 	private ModeDifferentiation usedModeDifferentiation;
 
-	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useTrafficCells", description = "Set option input zones. Options: useDistricts, useTrafficCells")
+	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useDistricts", description = "Set option input zones. Options: useDistricts, useTrafficCells")
 	private ZoneChoice usedZoneChoice;
 // useDistricts, useTrafficCells
-	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useOSMBuildingsAndLanduse", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
+	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useExistingDataDistribution", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
 	private LanduseConfiguration usedLanduseConfiguration;
 // useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
 
@@ -351,11 +351,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						mode = "total";
 					else
 						mode = "it";
-
 					String carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
-					int numberOfDepots = getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose) / 4; // TODO
-					if (numberOfDepots == 0)
-						numberOfDepots = 1;
+					int numberOfDepots = (int) Math
+							.ceil((double)getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose) / 4); // TODO
+
 					String[] vehicleDepots = new String[] {};
 					FleetSize fleetSize = FleetSize.FINITE;
 					int fixedNumberOfVehilcePerTypeAndLocation = 1;
@@ -371,19 +370,15 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					log.info("Create services for carrier: " + carrierName);
 					for (String stopZone : getListOfZones(odMatrix)) {
 						int demand = 0;
-						double numberOfJobs = odMatrix.get(makeKey(startZone, stopZone, mode, purpose)) / occupancyRate;
+						int numberOfJobs = (int) Math.ceil(odMatrix.get(makeKey(startZone, stopZone, mode, purpose)) / occupancyRate);
 						if (numberOfJobs == 0)
 							continue;
-						if (numberOfJobs < 1)
-							numberOfJobs = 1;
-						else
-							numberOfJobs = Math.round(numberOfDepots);
 						String selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
 						while (resultingDataPerZone.get(stopZone).getDouble(selectedStopCategory) == 0)
 							selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
 						String[] areasFirstJobElement = new String[] { stopZone };
 						TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 23 * 3600);
-						NewDemand newDemand = new NewDemand(carrierName, demand, (int) numberOfJobs, null,
+						NewDemand newDemand = new NewDemand(carrierName, demand, numberOfJobs, null,
 								areasFirstJobElement, (int) numberOfJobs, null, serviceTimePerStop, serviceTimeWindow);
 						createServices(scenario, newDemand, purpose, newCarrier.getVehicleDepots(),
 								selectedStopCategory);
@@ -393,8 +388,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
 			CarrierUtils.setJspritIterations(carrier, jspritIterations);
-			log.warn("The jspritIterations are now set to " + jspritIterations + " in this simulation!");
 		}
+		log.warn("The jspritIterations are now set to " + jspritIterations + " in this simulation!");
 		log.info("Finished creating " + createdCarrier + " carriers including related services.");
 
 		new CarrierPlanXmlWriterV2(FreightUtils.addOrGetCarriers(scenario))
@@ -444,8 +439,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			newCarrier.setVehicleDepots(new String[] {});
 		while (newCarrier.getVehicleDepots().length < newCarrier.getNumberOfDepotsPerType()) {
 
-			Id<Link> link = findPossibleLink(startZone, selectedStartCategory, newCarrier.getVehicleDepots(),
-					scenario.getNetwork());
+			Id<Link> link = findPossibleLink(startZone, selectedStartCategory, null, scenario.getNetwork());
 			newCarrier.addVehicleDepots(newCarrier.getVehicleDepots(), link.toString());
 		}
 		for (String singleDepot : newCarrier.getVehicleDepots()) {
@@ -506,7 +500,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 		Id<Link> newLink = null;
 		for (int a = 0; newLink == null && a < buildingsPerZone.get(zone).get(selectedCategory).size() * 2; a++) {
-			
+
 			SimpleFeature possibleBuilding = buildingsPerZone.get(zone).get(selectedCategory)
 					.get(rnd.nextInt(buildingsPerZone.get(zone).get(selectedCategory).size()));
 			Coord centroidPointOfBuildingPolygon = MGC
@@ -514,7 +508,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			double minDistance = Double.MAX_VALUE;
 			int numberOfPossibleLinks = regionLinksMap.get(zone).size();
 			for (Link possibleLink : regionLinksMap.get(zone)) {
-				if (numberOfPossibleLinks > noPossibleLinks.length)
+				if (noPossibleLinks != null && numberOfPossibleLinks > noPossibleLinks.length)
 					for (int i = 0; i < noPossibleLinks.length; i++) {
 						if (noPossibleLinks[i].equals(possibleLink.getId().toString()))
 							continue;
