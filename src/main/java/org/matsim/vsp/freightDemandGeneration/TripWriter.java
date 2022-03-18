@@ -399,12 +399,15 @@ import java.util.TreeMap;
 
 				bw.write("Carrier ID;" +
 						"#ofVehicles;" +
-						"distance [km];" +
+						"Distance [km];" +
 						"TravelTime [h]; " +
 						"ActivityDuration [h];" +
 						"# of Services;" +
 						"# of Shipments;" +
-						"Handled Demand"
+						"Handled Demand; " +
+						"Missed # of Services ;" +
+						"Missed # of Shipments ;" +
+						"Costs"
 				);
 				bw.newLine();
 				
@@ -414,54 +417,100 @@ import java.util.TreeMap;
 				Map<Id<Person>, Integer> personId2tourAmountServices = null;
 				Map<Id<Person>, Integer> personId2tourAmountShipments = null;
 //				Map<Id<Person>, Integer> personId2tourHandeledDemand = null;
-				
-				for (Carrier carrier : carriers.getCarriers().values()) {
-				personId2tourDistance = this.handler.getPersonId2TourDistances(carrier.getId().toString());
-				personId2tourTravelTimes = this.handler.getPersonId2TravelTimes(carrier.getId().toString());
-				personId2tourActivityDurations = this.handler.getPersonId2SumOfActivityDurations(carrier.getId().toString());
-				personId2tourAmountServices = this.handler.getPersonId2TourServices(carrier.getId().toString());
-				personId2tourAmountShipments = this.handler.getPersonId2TourShipments(carrier.getId().toString());
-//				personId2tourHandeledDemand = this.handler.getPersonId2TourHandledDemand(carrier.getId().toString());
-				
+				int sumMissedServices = 0;
+				int sumMissedShipments = 0;
+				int sumOfVehicles = 0;
 				double totalTourDistanceInMeters = 0.0;
 				double totalTourTravelTimeInSeconds =0.0;
 				double totalTourActivityDurationInSeconds =0.0;
 				int totalNumberOfServices =0;
 				int totalNumberOfShipments =0;
 				int totalAmountOfHandeledDemand =0;
-
-				for (Id<Person> id :personId2tourDistance.keySet()) {
-					totalTourDistanceInMeters = totalTourDistanceInMeters + personId2tourDistance.get(id);
-					totalTourTravelTimeInSeconds = totalTourTravelTimeInSeconds + personId2tourTravelTimes.get(id);
-					totalTourActivityDurationInSeconds = totalTourActivityDurationInSeconds + personId2tourActivityDurations.get(id);
-					if (!personId2tourAmountServices.isEmpty())
-						totalNumberOfServices = totalNumberOfServices + personId2tourAmountServices.get(id);
-					if (!personId2tourAmountShipments.isEmpty())
-						totalNumberOfShipments = totalNumberOfShipments + personId2tourAmountShipments.get(id);
-//					totalAmountOfHandeledDemand = totalAmountOfHandeledDemand + personId2tourHandeledDemand.get(id);
-				}
-
-				bw.write(carrier.getId().toString() + ";"
-						+ personId2tourDistance.size() + ";"
-						+ totalTourDistanceInMeters/1000 + ";"
-						+ totalTourTravelTimeInSeconds/3600 + ";"
-						+ totalTourActivityDurationInSeconds/3600 +";"
-						+ totalNumberOfServices +";"
-						+ totalNumberOfShipments +";"
-						+ "TODO"//totalAmountOfHandeledDemand
-				);
-				bw.newLine();
+				int score = 0;
+				for (int i = 0; i < 2; i++) {
+					if (i==1) {
+						sumMissedServices = 0;
+						sumMissedShipments = 0;
+					}
+					for (Carrier carrier : carriers.getCarriers().values()) {
+					personId2tourDistance = this.handler.getPersonId2TourDistances(carrier.getId().toString());
+					personId2tourTravelTimes = this.handler.getPersonId2TravelTimes(carrier.getId().toString());
+					personId2tourActivityDurations = this.handler.getPersonId2SumOfActivityDurations(carrier.getId().toString());
+					personId2tourAmountServices = this.handler.getPersonId2TourServices(carrier.getId().toString());
+					personId2tourAmountShipments = this.handler.getPersonId2TourShipments(carrier.getId().toString());
+//					personId2tourHandeledDemand = this.handler.getPersonId2TourHandledDemand(carrier.getId().toString());
+					
+					if (i==1) {
+						totalTourDistanceInMeters = 0.0;
+						totalTourTravelTimeInSeconds =0.0;
+						totalTourActivityDurationInSeconds =0.0;
+						totalNumberOfServices =0;
+						totalNumberOfShipments =0;
+						totalAmountOfHandeledDemand =0;
+						score = (int) Math.round(carrier.getSelectedPlan().getScore()*-1);
+					}
+					else
+						score += (int) Math.round(carrier.getSelectedPlan().getScore()*-1);
+					int oldTotalNumberOfServices = totalNumberOfServices;
+					int oldTotalNumberOfShipments = totalNumberOfShipments;
+					for (Id<Person> id :personId2tourDistance.keySet()) {
+						totalTourDistanceInMeters = totalTourDistanceInMeters + personId2tourDistance.get(id);
+						totalTourTravelTimeInSeconds = totalTourTravelTimeInSeconds + personId2tourTravelTimes.get(id);
+						totalTourActivityDurationInSeconds = totalTourActivityDurationInSeconds + personId2tourActivityDurations.get(id);
+						if (!personId2tourAmountServices.isEmpty())
+							totalNumberOfServices = totalNumberOfServices + personId2tourAmountServices.get(id);
+						if (!personId2tourAmountShipments.isEmpty())
+							totalNumberOfShipments = totalNumberOfShipments + personId2tourAmountShipments.get(id);
+//						totalAmountOfHandeledDemand = totalAmountOfHandeledDemand + personId2tourHandeledDemand.get(id);
+					}
+					int missedServices = carrier.getServices().size() - (totalNumberOfServices - oldTotalNumberOfServices);
+					int missedShipments = carrier.getShipments().size() - (totalNumberOfShipments - oldTotalNumberOfShipments);
+					sumMissedServices += missedServices;
+					sumMissedShipments += missedShipments;
+					sumOfVehicles += personId2tourDistance.size();
+					if (i==1) {
+					
+						bw.write(carrier.getId().toString() + ";"
+								+ personId2tourDistance.size() + ";"
+								+ totalTourDistanceInMeters/1000 + ";"
+								+ totalTourTravelTimeInSeconds/3600 + ";"
+								+ totalTourActivityDurationInSeconds/3600 +";"
+								+ totalNumberOfServices +";"
+								+ totalNumberOfShipments +";"
+								+ "TODO" +";"//totalAmountOfHandeledDemand
+								+ missedServices + ";"
+								+ missedShipments + ";"
+								+ score
+						);
+						bw.newLine();
+					}
+					
+					}
+					if (i==0) {
+						bw.write("Sum Carrier" + ";"
+								+ sumOfVehicles + ";"
+								+ totalTourDistanceInMeters/1000 + ";"
+								+ totalTourTravelTimeInSeconds/3600 + ";"
+								+ totalTourActivityDurationInSeconds/3600 +";"
+								+ totalNumberOfServices +";"
+								+ totalNumberOfShipments +";"
+								+ "TODO" +";"//totalAmountOfHandeledDemand
+								+ sumMissedServices + ";"
+								+ sumMissedShipments + ";"
+								+ score
+						);
+						bw.newLine();
+					}
 				}
 				log.info("Output written to " + fileName);
+				if (sumMissedServices>0)
+					log.warn("Number of not handled services: "+sumMissedServices);
+				if (sumMissedShipments>0)
+					log.warn("Number of not handled services: "+sumMissedShipments);
 				bw.close();
 				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-
-
-
-
-
 }
