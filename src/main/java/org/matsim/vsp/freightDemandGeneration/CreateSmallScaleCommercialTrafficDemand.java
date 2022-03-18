@@ -21,8 +21,10 @@ import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -114,10 +116,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
 	private static Path networkPath;
 
-	@CommandLine.Option(names = "--sample", defaultValue = "0.05", description = "Scaling factor of the freight traffic (0, 1)", required = true)
+	@CommandLine.Option(names = "--sample", defaultValue = "0.001", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
-	@CommandLine.Option(names = "--output", description = "Path to output population", required = true, defaultValue = "output/BusinessPassengerTraffic/")
+	@CommandLine.Option(names = "--output", description = "Path to output folder", required = true, defaultValue = "output/BusinessPassengerTraffic/")
 	private Path output;
 
 	@CommandLine.Option(names = "--jspritIterations", description = "Set number of jsprit iterations", required = true, defaultValue = "15")
@@ -147,7 +149,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 	@Override
 	public Integer call() throws Exception {
-
+		Configurator.setLevel("org.matsim.core.utils.geometry.geotools.MGC", Level.ERROR);
 		/*
 		 * Fragen: wann den sample hinzufügen (output oder table) bei only landuse; was
 		 * passiert mit construction?
@@ -352,17 +354,17 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					else
 						mode = "it";
 					String carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
-					int numberOfDepots = (int) Math
-							.ceil((double)getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose) / 4); // TODO
-
+//					int numberOfDepots = (int) Math
+//							.ceil((double)getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose) / 4); // TODO
+					int numberOfDepots = 1;
 					String[] vehicleDepots = new String[] {};
 					FleetSize fleetSize = FleetSize.FINITE;
 					int fixedNumberOfVehilcePerTypeAndLocation = 1;
 					createdCarrier++;
 					log.info("Create carrier number " + createdCarrier + " of a maximum Number of " + maxNumberOfCarrier
 							+ " carriers.");
-					log.info("Carrier: " + carrierName + "; depots: " + numberOfDepots + "; services: "
-							+ getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose));
+					log.info("Carrier: " + carrierName + "; depots: " + numberOfDepots + "; services: " + (int) Math
+							.ceil(getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose) / occupancyRate));
 					NewCarrier newCarrier = new NewCarrier(carrierName, vehilceTypes, numberOfDepots, vehicleDepots,
 							null, fleetSize, 0, 0, jspritIterations, fixedNumberOfVehilcePerTypeAndLocation);
 					createNewCarrierAndAddVehilceTypes(scenario, newCarrier, purpose, startZone,
@@ -370,7 +372,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					log.info("Create services for carrier: " + carrierName);
 					for (String stopZone : getListOfZones(odMatrix)) {
 						int demand = 0;
-						int numberOfJobs = (int) Math.ceil(odMatrix.get(makeKey(startZone, stopZone, mode, purpose)) / occupancyRate);
+						int numberOfJobs = (int) Math
+								.ceil(odMatrix.get(makeKey(startZone, stopZone, mode, purpose)) / occupancyRate);
 						if (numberOfJobs == 0)
 							continue;
 						String selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
@@ -494,9 +497,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		if (buildingsPerZone.isEmpty()) {
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
 			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
+			log.info("Analyzing buildings types. This may take some time...");
 			for (SimpleFeature singleBuildingFeature : buildingsFeatures) {
 				analyzeBuildingType(singleBuildingFeature);
 			}
+			log.info("Finished nalyzing buildings types.");
 		}
 		Id<Link> newLink = null;
 		for (int a = 0; newLink == null && a < buildingsPerZone.get(zone).get(selectedCategory).size() * 2; a++) {
@@ -507,11 +512,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					.point2Coord(((Geometry) possibleBuilding.getDefaultGeometry()).getCentroid());
 			double minDistance = Double.MAX_VALUE;
 			int numberOfPossibleLinks = regionLinksMap.get(zone).size();
-			for (Link possibleLink : regionLinksMap.get(zone)) {
+//TODO eventuell auch opposite Links als noPossible deklarieren
+			searchLink: for (Link possibleLink : regionLinksMap.get(zone)) {
 				if (noPossibleLinks != null && numberOfPossibleLinks > noPossibleLinks.length)
 					for (int i = 0; i < noPossibleLinks.length; i++) {
 						if (noPossibleLinks[i].equals(possibleLink.getId().toString()))
-							continue;
+							continue searchLink;
 					}
 				double distance = NetworkUtils.getEuclideanDistance(centroidPointOfBuildingPolygon,
 						(Coord) possibleLink.getAttributes().getAttribute("newCoord"));
@@ -532,6 +538,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param singleBuildingFeature
 	 */
 	private static void analyzeBuildingType(SimpleFeature singleBuildingFeature) {
+
 		List<String> categoriesOfBuilding = new ArrayList<String>();
 		String[] buildingTypes;
 		Coord centroidPointOfBuildingPolygon = MGC
