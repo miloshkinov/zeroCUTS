@@ -116,7 +116,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
 	private static Path networkPath;
 
-	@CommandLine.Option(names = "--sample", defaultValue = "0.001", description = "Scaling factor of the freight traffic (0, 1)", required = true)
+	@CommandLine.Option(names = "--sample", defaultValue = "0.01", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
 	@CommandLine.Option(names = "--output", description = "Path to output folder", required = true, defaultValue = "output/BusinessPassengerTraffic/")
@@ -134,10 +134,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of mode differentiation:  createOneODMatrix, createSeperateODMatricesForModes")
 	private ModeDifferentiation usedModeDifferentiation;
 
-	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useDistricts", description = "Set option input zones. Options: useDistricts, useTrafficCells")
+	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useTrafficCells", description = "Set option input zones. Options: useDistricts, useTrafficCells")
 	private ZoneChoice usedZoneChoice;
 // useDistricts, useTrafficCells
-	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useExistingDataDistribution", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
+	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useOSMBuildingsAndLanduse", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
 	private LanduseConfiguration usedLanduseConfiguration;
 // useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
 
@@ -268,13 +268,15 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		for (Integer purpose : getListOfPurposes(odMatrix)) {
 			for (String startZone : getListOfZones(odMatrix)) {
 				boolean isStartingLocation = false;
-				for (String possibleStopZone : getListOfZones(odMatrix)) {
-					for (String possibleMode : getListOfModes(odMatrix)) {
-						if (possibleMode.equals("total") || possibleMode.equals("it"))
-							if (odMatrix.get(makeKey(startZone, possibleStopZone, possibleMode, purpose)) != 0) {
-								isStartingLocation = true;
-								break;
-							}
+				checkIfIsStartingPosition: {
+					for (String possibleStopZone : getListOfZones(odMatrix)) {
+						for (String possibleMode : getListOfModes(odMatrix)) {
+							if (possibleMode.equals("total") || possibleMode.equals("it"))
+								if (odMatrix.get(makeKey(startZone, possibleStopZone, possibleMode, purpose)) != 0) {
+									isStartingLocation = true;
+									break checkIfIsStartingPosition;
+								}
+						}
 					}
 				}
 				if (isStartingLocation) {
@@ -354,9 +356,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					else
 						mode = "it";
 					String carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
-//					int numberOfDepots = (int) Math
-//							.ceil((double)getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose) / 4); // TODO
-					int numberOfDepots = 1;
+					int numberOfDepots = (int) Math
+							.ceil((double)getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose)*serviceTimePerStop / (8*3600) *2); // TODO
 					String[] vehicleDepots = new String[] {};
 					FleetSize fleetSize = FleetSize.FINITE;
 					int fixedNumberOfVehilcePerTypeAndLocation = 1;
@@ -380,7 +381,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						while (resultingDataPerZone.get(stopZone).getDouble(selectedStopCategory) == 0)
 							selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
 						String[] areasFirstJobElement = new String[] { stopZone };
-						TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 23 * 3600);
+						TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 20 * 3600);
 						NewDemand newDemand = new NewDemand(carrierName, demand, numberOfJobs, null,
 								areasFirstJobElement, (int) numberOfJobs, null, serviceTimePerStop, serviceTimeWindow);
 						createServices(scenario, newDemand, purpose, newCarrier.getVehicleDepots(),
@@ -447,7 +448,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 		for (String singleDepot : newCarrier.getVehicleDepots()) {
 			for (String thisVehicleType : newCarrier.getVehicleTypes()) {
-				int vehicleStartTime = rnd.nextInt(6 * 3600, 16 * 3600); // TODO Verteilung über den Tag prüfen
+				int vehicleStartTime = rnd.nextInt(6 * 3600, 14 * 3600); // TODO Verteilung über den Tag prüfen
 				int vehicleEndTime = vehicleStartTime + 8 * 3600;
 				VehicleType thisType = carrierVehicleTypes.getVehicleTypes()
 						.get(Id.create(thisVehicleType, VehicleType.class));
@@ -501,7 +502,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			for (SimpleFeature singleBuildingFeature : buildingsFeatures) {
 				analyzeBuildingType(singleBuildingFeature);
 			}
-			log.info("Finished nalyzing buildings types.");
+			log.info("Finished anlyzing buildings types.");
 		}
 		Id<Link> newLink = null;
 		for (int a = 0; newLink == null && a < buildingsPerZone.get(zone).get(selectedCategory).size() * 2; a++) {
