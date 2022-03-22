@@ -77,6 +77,14 @@
 			<version>${matsim.version}</version>
 			<!--<scope>compile</scope> -->
 		</dependency>
+		
+		<!-- This is the matsim vsp contrib: -->
+		<dependency>
+			<groupId>org.matsim.contrib</groupId>
+			<artifactId>vsp</artifactId>
+			<version>${matsim.version}</version>
+			<!--<scope>compile</scope> -->
+		</dependency>
 
 		<!-- This is the matsim application contrib: -->
 		<dependency>
