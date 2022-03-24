@@ -30,8 +30,6 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.application.options.CrsOptions;
-import org.matsim.application.options.LanduseOptions;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.contrib.freight.Freight;
 import org.matsim.contrib.freight.FreightConfigGroup;
@@ -111,7 +109,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	}
 
 	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/small-scale-commercial-traffic/input")
-	private static Path rawDataDirectory;
+	private static Path inputDataDirectory;
 
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
 	private static Path networkPath;
@@ -124,12 +122,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 	@CommandLine.Option(names = "--jspritIterations", description = "Set number of jsprit iterations", required = true, defaultValue = "15")
 	private static int jspritIterations;
-
-	@CommandLine.Mixin
-	private LanduseOptions landuse = new LanduseOptions();
-
-	@CommandLine.Mixin
-	private CrsOptions crs = new CrsOptions("EPSG:4326");
 
 	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of mode differentiation:  createOneODMatrix, createSeperateODMatricesForModes")
 	private ModeDifferentiation usedModeDifferentiation;
@@ -157,21 +149,21 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		switch (usedZoneChoice) {
 		case useDistricts:
-			shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
+			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("districts")
 					.resolve("bezirksgrenzen_Berlin.shp");
 			break;
 		case useTrafficCells:
-			shapeFileZonePath = rawDataDirectory.resolve("shp").resolve("districts")
+			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("districts")
 					.resolve("verkehrszellen_Berlin.shp");
 			break;
 		default:
 			break;
 		}
 
-		shapeFileLandusePath = rawDataDirectory.resolve("shp").resolve("landuse")
+		shapeFileLandusePath = inputDataDirectory.resolve("shp").resolve("landuse")
 				.resolve("gis_osm_landuse_a_free_1.shp");
 
-		shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse")
+		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("landuse")
 				.resolve("allBuildingsWithLevels.shp");
 // 		shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse").resolve("buildingSample.shp");
 
@@ -222,7 +214,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 */
 	private Config prepareConfig() {
 		Config config = ConfigUtils.createConfig();
-		config.global().setCoordinateSystem(crs.getInputCRS()); // "EPSG:4326"
+		config.global().setCoordinateSystem("EPSG:4326");
 		config.network().setInputFile(networkPath.toString());
 		config.controler().setOutputDirectory(output.toString());
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
@@ -592,7 +584,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private static void prepareVehicles(Config config) {
 
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
-		String vehicleTypesFileLocation = rawDataDirectory.resolve("vehicleTypes.xml").toString();
+		String vehicleTypesFileLocation = inputDataDirectory.resolve("vehicleTypes.xml").toString();
 		if (vehicleTypesFileLocation == "")
 			throw new RuntimeException("No path to the vehicleTypes selected");
 		else {
@@ -828,7 +820,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		switch (usedLanduseConfiguration) {
 		case useExistingDataDistribution:
-			Path existingDataDistribution = rawDataDirectory.resolve("dataDistributionPerZone.csv");
+			Path existingDataDistribution = inputDataDirectory.resolve("dataDistributionPerZone.csv");
 
 			if (!Files.exists(existingDataDistribution)) {
 				log.error("Required data per zone file {} not found", existingDataDistribution);
@@ -871,22 +863,22 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private void readInputParamters() throws IOException {
 
 		// Read generation rates for start potentials
-		Path generationRatesStartPath = rawDataDirectory.resolve("parameters").resolve("generationRates_start.csv");
+		Path generationRatesStartPath = inputDataDirectory.resolve("parameters").resolve("generationRates_start.csv");
 		generationRatesStart = readGenerationRates(generationRatesStartPath);
 		log.info("Read generations rates (start)");
 
 		// Read generation rates for stop potentials
-		Path generationRatesStopPath = rawDataDirectory.resolve("parameters").resolve("generationRates_stop.csv");
+		Path generationRatesStopPath = inputDataDirectory.resolve("parameters").resolve("generationRates_stop.csv");
 		generationRatesStop = readGenerationRates(generationRatesStopPath);
 		log.info("Read generations rates (stop)");
 
 		// read commitment rates for start potentials
-		Path commitmentRatesStartPath = rawDataDirectory.resolve("parameters").resolve("commitmentRates_start.csv");
+		Path commitmentRatesStartPath = inputDataDirectory.resolve("parameters").resolve("commitmentRates_start.csv");
 		commitmentRatesStart = readCommitmentRates(commitmentRatesStartPath);
 		log.info("Read commitment rates (start)");
 
 		// read commitment rates for stop potentials
-		Path commitmentRatesStopPath = rawDataDirectory.resolve("parameters").resolve("commitmentRates_stop.csv");
+		Path commitmentRatesStopPath = inputDataDirectory.resolve("parameters").resolve("commitmentRates_stop.csv");
 		commitmentRatesStop = readCommitmentRates(commitmentRatesStopPath);
 		log.info("Read commitment rates (stop)");
 	}
@@ -1029,7 +1021,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 */
 	private void readAreaData(HashMap<String, HashMap<String, Integer>> areaData) throws IOException {
 
-		Path areaDataPath = rawDataDirectory.resolve("investigationAreaData.csv");
+		Path areaDataPath = inputDataDirectory.resolve("investigationAreaData.csv");
 		if (!Files.exists(areaDataPath)) {
 			log.error("Required input data file {} not found", areaDataPath);
 		}
@@ -1168,7 +1160,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private void writeResultOfDataDistribution(HashMap<String, Object2DoubleMap<String>> resultingDataPerZone,
 			Path outputFileInOutputFolder) throws IOException, MalformedURLException {
 
-		Path outputFileInInputFolder = rawDataDirectory.resolve("dataDistributionPerZone.csv");
+		Path outputFileInInputFolder = inputDataDirectory.resolve("dataDistributionPerZone.csv");
 
 		if (Files.exists(outputFileInInputFolder)) {
 			Path oldFile = Path.of(outputFileInInputFolder.toString().replace(".csv", "_old.csv"));
