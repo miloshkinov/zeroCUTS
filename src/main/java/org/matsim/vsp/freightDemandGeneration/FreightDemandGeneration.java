@@ -279,7 +279,6 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	private static void createDemandLocationsFile(Controler controler) {
 
 		Network network = controler.getScenario().getNetwork();
-
 		FileWriter writer;
 		File file;
 		file = new File(controler.getConfig().controler().getOutputDirectory() + "/outputFacilitiesFile.tsv");
@@ -386,16 +385,14 @@ public class FreightDemandGeneration implements Callable<Integer> {
 		}
 	}
 
-	/**
-	 * Differs between the different options of creating the carrier.
-	 * 
+	/** Differs between the different options of creating the carrier.
 	 * @param scenario
 	 * @param selectedCarrierInputOption
-	 * @param carriersFileLocation.toString()
-	 * @param allNewCarrier
-	 * @param csvLocation
+	 * @param carriersFileLocation
+	 * @param csvLocationCarrier
 	 * @param polygonsInShape
 	 * @param defaultJspritIterations
+	 * @param crsTransformationNetworkAndShape
 	 * @throws IOException
 	 */
 	private static void createCarrier(Scenario scenario, CarrierInputOptions selectedCarrierInputOption,
@@ -435,17 +432,16 @@ public class FreightDemandGeneration implements Callable<Integer> {
 		}
 	}
 
-	/**
-	 * Differs between the different options of creating the demand.
-	 * 
+	/** Differs between the different options of creating the demand..
 	 * @param selectedDemandGenerationOption
 	 * @param scenario
-	 * @param allNewCarrier
+	 * @param csvLocationDemand
 	 * @param polygonsInShape
 	 * @param populationFile
-	 * @param selectedSamplingOption2
-	 * @param selectedUpSamplingOption
-	 * @param defaultJspritIterations
+	 * @param selectedSamplingOption
+	 * @param selectedPopulationOption
+	 * @param combineSimilarJobs
+	 * @param crsTransformationNetworkAndShape
 	 * @throws IOException
 	 */
 	private static void createDemand(DemandGenerationOptions selectedDemandGenerationOption, Scenario scenario,
@@ -497,14 +493,13 @@ public class FreightDemandGeneration implements Callable<Integer> {
 			break;
 		case useDemandFromCarrierFile:
 			boolean oneCarrierHasJobs = false;
-			for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
-				if (carrier.getServices().isEmpty() && carrier.getShipments().isEmpty()) {
+			for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values())
+				if (carrier.getServices().isEmpty() && carrier.getShipments().isEmpty())
 					log.warn(carrier.getId().toString() + " has no jobs which can be used");
-				} else {
+				else {
 					oneCarrierHasJobs = true;
 					log.info("Used the demand of the carrier " + carrier.getId().toString() + " from the carrierFile!");
 				}
-			}
 			if (!oneCarrierHasJobs)
 				throw new RuntimeException("Minimum one carrier has no jobs");
 			break;
@@ -520,6 +515,8 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	 * @param polygonsInShape
 	 * @param demandInformation
 	 * @param population
+	 * @param combineSimilarJobs
+	 * @param crsTransformationNetworkAndShape
 	 */
 	private static void createDemandForCarriers(Scenario scenario, Collection<SimpleFeature> polygonsInShape,
 			Set<NewDemand> demandInformation, Population population, boolean combineSimilarJobs,
@@ -536,13 +533,21 @@ public class FreightDemandGeneration implements Callable<Integer> {
 
 	}
 
+	/**
+	 * Creates the shipments of a carrier.
+	 * 
+	 * @param scenario
+	 * @param newDemand
+	 * @param polygonsInShape
+	 * @param population
+	 * @param combineSimilarJobs
+	 * @param crsTransformationNetworkAndShape
+	 */
 	private static void createShipments(Scenario scenario, NewDemand newDemand,
 			Collection<SimpleFeature> polygonsInShape, Population population, boolean combineSimilarJobs,
 			CoordinateTransformation crsTransformationNetworkAndShape) {
 
 		int countOfLinks = 1;
-		HashMap<Id<Link>, Link> possibleLinksPickup = new HashMap<Id<Link>, Link>();
-		HashMap<Id<Link>, Link> possibleLinksDelivery = new HashMap<Id<Link>, Link>();
 		int distributedDemand = 0;
 		double roundingError = 0;
 		Double shareOfPopulationWithThisPickup = newDemand.getShareOfPopulationWithFirstJobElement();
@@ -641,14 +646,12 @@ public class FreightDemandGeneration implements Callable<Integer> {
 				numberOfDeliveryLocations = numberPossibleJobsDelivery;
 		}
 		// find possible Links for delivery and pickup
-		for (Link link : scenario.getNetwork().getLinks().values()) {
-			findAllPossibleLinks(scenario, polygonsInShape, crsTransformationNetworkAndShape, possibleLinksPickup,
-					numberOfPickupLocations, areasForPickupLocations, setLocationsOfPickup, possiblePersonsPickup,
-					middlePointsLinksPickup, link);
-			findAllPossibleLinks(scenario, polygonsInShape, crsTransformationNetworkAndShape, possibleLinksDelivery,
-					numberOfDeliveryLocations, areasForDeliveryLocations, setLocationsOfDelivery,
-					possiblePersonsDelivery, middlePointsLinksDelivery, link);
-		}
+		HashMap<Id<Link>, Link> possibleLinksPickup = findAllPossibleLinks(scenario, polygonsInShape,
+				crsTransformationNetworkAndShape, numberOfPickupLocations, areasForPickupLocations,
+				setLocationsOfPickup, possiblePersonsPickup, middlePointsLinksPickup);
+		HashMap<Id<Link>, Link> possibleLinksDelivery = findAllPossibleLinks(scenario, polygonsInShape,
+				crsTransformationNetworkAndShape, numberOfDeliveryLocations, areasForDeliveryLocations,
+				setLocationsOfDelivery, possiblePersonsDelivery, middlePointsLinksDelivery);
 
 		if (shareOfPopulationWithThisPickup != null)
 			possibleLinksPickup.values().forEach(l -> middlePointsLinksPickup.put(l.getId(), middlePointOfLink(l)));
@@ -757,36 +760,36 @@ public class FreightDemandGeneration implements Callable<Integer> {
 					}
 					if (pickupIsDemandBase) {
 						linkPickup = demandBasedLink;
+						linkDelivery = findNextUsedLink(scenario, polygonsInShape, possibleLinksDelivery,
+								numberOfDeliveryLocations, areasForDeliveryLocations, setLocationsOfDelivery,
+								usedDeliveryLocations, possiblePersonsDelivery, middlePointsLinksDelivery,
+								crsTransformationNetworkAndShape, countOfLinks - 1);
+						while (usedDeliveryLocations.contains(linkDelivery.getId().toString())) {
 							linkDelivery = findNextUsedLink(scenario, polygonsInShape, possibleLinksDelivery,
 									numberOfDeliveryLocations, areasForDeliveryLocations, setLocationsOfDelivery,
 									usedDeliveryLocations, possiblePersonsDelivery, middlePointsLinksDelivery,
 									crsTransformationNetworkAndShape, countOfLinks - 1);
-							while (usedDeliveryLocations.contains(linkDelivery.getId().toString())) {
-								linkDelivery = findNextUsedLink(scenario, polygonsInShape, possibleLinksDelivery,
-										numberOfDeliveryLocations, areasForDeliveryLocations, setLocationsOfDelivery,
-										usedDeliveryLocations, possiblePersonsDelivery, middlePointsLinksDelivery,
-										crsTransformationNetworkAndShape, countOfLinks - 1);
-								if (usedDeliveryLocations.size() == possibleLinksDelivery.size()
-										|| (numberOfDeliveryLocations != null
-												&& usedDeliveryLocations.size() == numberOfDeliveryLocations))
-									break;
+							if (usedDeliveryLocations.size() == possibleLinksDelivery.size()
+									|| (numberOfDeliveryLocations != null
+											&& usedDeliveryLocations.size() == numberOfDeliveryLocations))
+								break;
 						}
 					} else {
 						linkDelivery = demandBasedLink;
+						linkPickup = findNextUsedLink(scenario, polygonsInShape, possibleLinksPickup,
+								numberOfPickupLocations, areasForPickupLocations, setLocationsOfPickup,
+								usedPickupLocations, possiblePersonsPickup, middlePointsLinksPickup,
+								crsTransformationNetworkAndShape, countOfLinks - 1);
+						while (usedPickupLocations.contains(linkPickup.getId().toString())) {
 							linkPickup = findNextUsedLink(scenario, polygonsInShape, possibleLinksPickup,
 									numberOfPickupLocations, areasForPickupLocations, setLocationsOfPickup,
 									usedPickupLocations, possiblePersonsPickup, middlePointsLinksPickup,
 									crsTransformationNetworkAndShape, countOfLinks - 1);
-							while (usedPickupLocations.contains(linkPickup.getId().toString())) {
-								linkPickup = findNextUsedLink(scenario, polygonsInShape, possibleLinksPickup,
-										numberOfPickupLocations, areasForPickupLocations, setLocationsOfPickup,
-										usedPickupLocations, possiblePersonsPickup, middlePointsLinksPickup,
-										crsTransformationNetworkAndShape, countOfLinks - 1);
-								if (usedPickupLocations.size() == possibleLinksPickup.size()
-										|| (numberOfPickupLocations != null
-												&& usedPickupLocations.size() == numberOfPickupLocations))
-									break;
-							}
+							if (usedPickupLocations.size() == possibleLinksPickup.size()
+									|| (numberOfPickupLocations != null
+											&& usedPickupLocations.size() == numberOfPickupLocations))
+								break;
+						}
 					}
 					countOfLinks++;
 					if (!usedPickupLocations.contains(linkPickup.getId().toString()))
@@ -830,9 +833,9 @@ public class FreightDemandGeneration implements Callable<Integer> {
 						usedDeliveryLocations, possiblePersonsDelivery, middlePointsLinksDelivery,
 						crsTransformationNetworkAndShape, i);
 				int demandForThisLink = (int) Math.ceil((double) demandToDistribute / (double) numberOfJobs);
-				if (numberOfJobs == (i + 1)) {
+				if (numberOfJobs == (i + 1))
 					demandForThisLink = demandToDistribute - distributedDemand;
-				} else {
+				else {
 					roundingError = roundingError
 							+ ((double) demandForThisLink - ((double) demandToDistribute / (double) numberOfJobs));
 					if (roundingError > 1) {
@@ -872,37 +875,45 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	}
 
 	/**
+	 * Finds and returns all possible links for this job.
+	 * 
 	 * @param scenario
 	 * @param polygonsInShape
 	 * @param crsTransformationNetworkAndShape
-	 * @param possibleLinks
 	 * @param numberOfLocations
 	 * @param areasForLocations
 	 * @param setLocations
 	 * @param possiblePersons
 	 * @param middlePointsLinks
-	 * @param link
 	 * @return
 	 */
-	private static void findAllPossibleLinks(Scenario scenario, Collection<SimpleFeature> polygonsInShape,
-			CoordinateTransformation crsTransformationNetworkAndShape, HashMap<Id<Link>, Link> possibleLinks,
+	private static HashMap<Id<Link>, Link> findAllPossibleLinks(Scenario scenario,
+			Collection<SimpleFeature> polygonsInShape, CoordinateTransformation crsTransformationNetworkAndShape,
 			Integer numberOfLocations, String[] areasForLocations, String[] setLocations,
-			HashMap<Id<Person>, Person> possiblePersons, HashMap<Id<Link>, Coord> middlePointsLinks, Link link) {
-		if (numberOfLocations == null && !link.getId().toString().contains("pt") && checkPositionInShape(link, null,
-				polygonsInShape, areasForLocations, crsTransformationNetworkAndShape)) {
-			possibleLinks.put(link.getId(), link);
-		} else if (numberOfLocations != null) {
-			Link newPossibleLink = null;
-			while (possibleLinks.size() < numberOfLocations) {
-				newPossibleLink = findPossibleLinkForDemand(null, possiblePersons, middlePointsLinks, polygonsInShape,
-						areasForLocations, numberOfLocations, scenario, setLocations, crsTransformationNetworkAndShape);
-				if (!possibleLinks.containsKey(newPossibleLink.getId()))
-					possibleLinks.put(newPossibleLink.getId(), newPossibleLink);
+			HashMap<Id<Person>, Person> possiblePersons, HashMap<Id<Link>, Coord> middlePointsLinks) {
+		HashMap<Id<Link>, Link> possibleLinks = new HashMap<Id<Link>, Link>();
+		for (Link link : scenario.getNetwork().getLinks().values()) {
+			if (numberOfLocations == null && !link.getId().toString().contains("pt") && checkPositionInShape(link, null,
+					polygonsInShape, areasForLocations, crsTransformationNetworkAndShape)) {
+				possibleLinks.put(link.getId(), link);
+			} else if (numberOfLocations != null) {
+				Link newPossibleLink = null;
+				while (possibleLinks.size() < numberOfLocations) {
+					newPossibleLink = findPossibleLinkForDemand(null, possiblePersons, middlePointsLinks,
+							polygonsInShape, areasForLocations, numberOfLocations, scenario, setLocations,
+							crsTransformationNetworkAndShape);
+					if (!possibleLinks.containsKey(newPossibleLink.getId()))
+						possibleLinks.put(newPossibleLink.getId(), newPossibleLink);
+				}
 			}
 		}
+		return possibleLinks;
 	}
 
 	/**
+	 * If jobs of a carrier have the same characteristics (timewindow, location)
+	 * they will be combined to one job,
+	 * 
 	 * @param scenario
 	 * @param newDemand
 	 */
@@ -1012,19 +1023,17 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	 * Creates the services.
 	 * 
 	 * @param scenario
-	 * @param demandInformation
-	 * @param singlePolygons
+	 * @param newDemand
 	 * @param polygonsInShape
-	 * @param defaultJspritIterations
-	 * @throws MalformedURLException
+	 * @param population
+	 * @param combineSimilarJobs
+	 * @param crsTransformationNetworkAndShape
 	 */
-
 	private static void createServices(Scenario scenario, NewDemand newDemand,
 			Collection<SimpleFeature> polygonsInShape, Population population, boolean combineSimilarJobs,
 			CoordinateTransformation crsTransformationNetworkAndShape) {
 
 		int countOfLinks = 1;
-		HashMap<Id<Link>, Link> possibleLinksForService = new HashMap<Id<Link>, Link>();
 		int distributedDemand = 0;
 		double roundingError = 0;
 		Double shareOfPopulationWithThisService = newDemand.getShareOfPopulationWithFirstJobElement();
@@ -1072,12 +1081,10 @@ public class FreightDemandGeneration implements Callable<Integer> {
 			if (numberPossibleServices != 0)
 				numberOfServiceLocations = numberPossibleServices;
 		}
-
-		for (Link link : scenario.getNetwork().getLinks().values()) {
-			findAllPossibleLinks(scenario, polygonsInShape, crsTransformationNetworkAndShape, possibleLinksForService,
-					numberOfServiceLocations, areasForServiceLocations, locationsOfServices, possiblePersonsForService,
-					middlePointsLinksForService, link);
-		}
+		// find possible links for the services
+		HashMap<Id<Link>, Link> possibleLinksForService = findAllPossibleLinks(scenario, polygonsInShape,
+				crsTransformationNetworkAndShape, numberOfServiceLocations, areasForServiceLocations,
+				locationsOfServices, possiblePersonsForService, middlePointsLinksForService);
 
 		if (shareOfPopulationWithThisService != null)
 			possibleLinksForService.values()
