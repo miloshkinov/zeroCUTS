@@ -55,6 +55,7 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Population;
+import org.matsim.application.options.CrsOptions;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.contrib.freight.Freight;
 import org.matsim.contrib.freight.FreightConfigGroup;
@@ -85,7 +86,6 @@ import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.geotools.MGC;
-import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.io.UncheckedIOException;
 import org.matsim.vehicles.Vehicle;
@@ -181,6 +181,15 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	@CommandLine.Option(names = "--populationSamplingOption", defaultValue = "createMoreLocations", description = "Select the option of sampling if using the population.")
 	private static PopulationSamplingOption selectedPopulationSamplingOption;
 
+	@CommandLine.Option(names = "--populationSample", defaultValue = "0.01", description = "Sample of the selected population.")
+	private static double sampleSizeInputPopulation;
+
+	@CommandLine.Option(names = "--populationSamplingTo", defaultValue = "0.1", description = "Sample the population to this value.")
+	private static double upSamplePopulationTo;
+
+	@CommandLine.Option(names = "--populationCRS", defaultValue = "DHDN_GK4", description = "CRS of the population.")
+	private static String populationCRS;
+
 	@CommandLine.Option(names = "--combineSimilarJobs", defaultValue = "false", description = "Select the option if created jobs of the same carrier with same location and time will be combined.")
 	private static boolean combineSimilarJobs;
 
@@ -252,7 +261,7 @@ public class FreightDemandGeneration implements Callable<Integer> {
 
 		// prepare the VRP and get a solution
 		Controler controler = prepareControler(scenario);
-		createFaciltyFile(controler);
+		createDemandLocationsFile(controler);
 		solveSelectedSolution(selectedSolution, config, controler);
 
 		// analyze results
@@ -263,38 +272,38 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	}
 
 	/**
-	 * Creates a csv file with the locations of all created demand elements.
+	 * Creates a tsv file with the locations of all created demand elements.
 	 * 
 	 * @param controler
 	 */
-	private static void createFaciltyFile(Controler controler) {
+	private static void createDemandLocationsFile(Controler controler) {
 
 		Network network = controler.getScenario().getNetwork();
 
 		FileWriter writer;
 		File file;
-		file = new File(controler.getConfig().controler().getOutputDirectory() + "/outputFacilitiesFile.csv");
+		file = new File(controler.getConfig().controler().getOutputDirectory() + "/outputFacilitiesFile.tsv");
 		try {
 			writer = new FileWriter(file, true);
-			writer.write("id;x;y;type;ServiceLocation;pickupLocation;deliveryLocation\n");
+			writer.write("id	x	y	type	ServiceLocation	pickupLocation	deliveryLocation\n");
 
 			for (Carrier thisCarrier : FreightUtils.getCarriers(controler.getScenario()).getCarriers().values()) {
 				for (CarrierService thisService : thisCarrier.getServices().values()) {
 					Coord coord = middlePointOfLink(network.getLinks().get(thisService.getLocationLinkId()));
-					writer.write(thisCarrier.getId().toString() + thisService.getId().toString() + ";" + coord.getX()
-							+ ";" + coord.getY() + ";" + "Service" + ";" + thisService.getLocationLinkId().toString()
-							+ ";;" + "\n");
+					writer.write(thisCarrier.getId().toString() + thisService.getId().toString() + "	" + coord.getX()
+							+ "	" + coord.getY() + "	" + "Service" + "	"
+							+ thisService.getLocationLinkId().toString() + "		" + "\n");
 				}
 				for (CarrierShipment thisShipment : thisCarrier.getShipments().values()) {
 					Coord coordFrom = middlePointOfLink(network.getLinks().get(thisShipment.getFrom()));
 					Coord coordTo = middlePointOfLink(network.getLinks().get(thisShipment.getTo()));
 
-					writer.write(thisCarrier.getId().toString() + thisShipment.getId().toString() + ";"
-							+ coordFrom.getX() + ";" + coordFrom.getY() + ";" + "Pickup" + ";;"
-							+ thisShipment.getFrom().toString() + ";" + thisShipment.getTo().toString() + "\n");
-					writer.write(thisCarrier.getId().toString() + thisShipment.getId().toString() + ";" + coordTo.getX()
-							+ ";" + coordTo.getY() + ";" + "Delivery" + ";;" + thisShipment.getFrom().toString() + ";"
-							+ thisShipment.getTo().toString() + "\n");
+					writer.write(thisCarrier.getId().toString() + thisShipment.getId().toString() + "	"
+							+ coordFrom.getX() + "	" + coordFrom.getY() + "	" + "Pickup" + "		"
+							+ thisShipment.getFrom().toString() + "	" + thisShipment.getTo().toString() + "\n");
+					writer.write(thisCarrier.getId().toString() + thisShipment.getId().toString() + "	"
+							+ coordTo.getX() + "	" + coordTo.getY() + "	" + "Delivery" + "		"
+							+ thisShipment.getFrom().toString() + "	" + thisShipment.getTo().toString() + "\n");
 				}
 			}
 			writer.flush();
@@ -453,17 +462,16 @@ public class FreightDemandGeneration implements Callable<Integer> {
 			break;
 		case createFromCSVAndUsePopulation:
 			Population population = PopulationUtils.readPopulation(populationFile);
-			double sampleSizeInputPopulation = 0.01;
-			double upSampleTo = 0.1;
 
 			demandInformation = readDemandInformation(csvLocationDemand, demandInformation, scenario, polygonsInShape);
 			switch (selectedSamplingOption) {
 			case createMoreLocations:
-				preparePopulation(population, sampleSizeInputPopulation, upSampleTo,
+				preparePopulation(population, sampleSizeInputPopulation, upSamplePopulationTo,
 						"changeNumberOfLocationsWithDemand");
 				break;
 			case increaseDemandOnLocation:
-				preparePopulation(population, sampleSizeInputPopulation, upSampleTo, "changeDemandOnLocation");
+				preparePopulation(population, sampleSizeInputPopulation, upSamplePopulationTo,
+						"changeDemandOnLocation");
 				break;
 			default:
 				break;
@@ -478,11 +486,8 @@ public class FreightDemandGeneration implements Callable<Integer> {
 				// TODO
 				break;
 			case usePopulationInShape:
-				String populationCRS = TransformationFactory.DHDN_GK4;
-				String shapeCRS = "EPSG:3857";
-				CoordinateTransformation crsTransformationPopulationAndShape = TransformationFactory
-						.getCoordinateTransformation(populationCRS, shapeCRS);
-				reducePopulationToShapeArea(population, crsTransformationPopulationAndShape, polygonsInShape);
+				CrsOptions populationCRSOptions = new CrsOptions(populationCRS, shapeCRS);
+				reducePopulationToShapeArea(population, populationCRSOptions.getTransformation(), polygonsInShape);
 				createDemandForCarriers(scenario, polygonsInShape, demandInformation, population, combineSimilarJobs,
 						crsTransformationNetworkAndShape);
 				break;
@@ -752,9 +757,6 @@ public class FreightDemandGeneration implements Callable<Integer> {
 					}
 					if (pickupIsDemandBase) {
 						linkPickup = demandBasedLink;
-						if (numberOfDeliveryLocations != null)
-							linkDelivery = findNearestJobElement(linkPickup, possibleLinksDelivery);
-						else {
 							linkDelivery = findNextUsedLink(scenario, polygonsInShape, possibleLinksDelivery,
 									numberOfDeliveryLocations, areasForDeliveryLocations, setLocationsOfDelivery,
 									usedDeliveryLocations, possiblePersonsDelivery, middlePointsLinksDelivery,
@@ -768,13 +770,9 @@ public class FreightDemandGeneration implements Callable<Integer> {
 										|| (numberOfDeliveryLocations != null
 												&& usedDeliveryLocations.size() == numberOfDeliveryLocations))
 									break;
-							}
 						}
 					} else {
 						linkDelivery = demandBasedLink;
-						if (numberOfPickupLocations != null)
-							linkPickup = findNearestJobElement(linkDelivery, possibleLinksPickup);
-						else {
 							linkPickup = findNextUsedLink(scenario, polygonsInShape, possibleLinksPickup,
 									numberOfPickupLocations, areasForPickupLocations, setLocationsOfPickup,
 									usedPickupLocations, possiblePersonsPickup, middlePointsLinksPickup,
@@ -789,7 +787,6 @@ public class FreightDemandGeneration implements Callable<Integer> {
 												&& usedPickupLocations.size() == numberOfPickupLocations))
 									break;
 							}
-						}
 					}
 					countOfLinks++;
 					if (!usedPickupLocations.contains(linkPickup.getId().toString()))
@@ -825,45 +822,13 @@ public class FreightDemandGeneration implements Callable<Integer> {
 				if (demandToDistribute != 0 && demandToDistribute < numberOfJobs)
 					throw new RuntimeException(
 							"The resulting number of jobs is not feasible, because the demand is smaller then the number of jobs. Please check!");
-				Link linkDelivery = null;
-				Link linkPickup = null;
-				if (numberOfPickupLocations != null && numberOfDeliveryLocations == null) {
-					linkDelivery = findNextUsedLink(scenario, polygonsInShape, possibleLinksDelivery,
-							numberOfDeliveryLocations, areasForDeliveryLocations, setLocationsOfDelivery,
-							usedDeliveryLocations, possiblePersonsDelivery, middlePointsLinksDelivery,
-							crsTransformationNetworkAndShape, i);
-					linkPickup = findNearestJobElement(linkDelivery, possibleLinksPickup);
-				}
-				if (numberOfPickupLocations != null && numberOfDeliveryLocations != null) {
-					if (numberOfPickupLocations > numberOfDeliveryLocations) {
-						linkPickup = findNextUsedLink(scenario, polygonsInShape, possibleLinksPickup,
-								numberOfPickupLocations, areasForPickupLocations, setLocationsOfPickup,
-								usedPickupLocations, possiblePersonsPickup, middlePointsLinksPickup,
-								crsTransformationNetworkAndShape, i);
-						linkDelivery = findNearestJobElement(linkPickup, possibleLinksDelivery);
-					} else {
-						linkDelivery = findNextUsedLink(scenario, polygonsInShape, possibleLinksDelivery,
-								numberOfDeliveryLocations, areasForDeliveryLocations, setLocationsOfDelivery,
-								usedDeliveryLocations, possiblePersonsDelivery, middlePointsLinksDelivery,
-								crsTransformationNetworkAndShape, i);
-						linkPickup = findNearestJobElement(linkDelivery, possibleLinksPickup);
-					}
-				}
-				if (numberOfDeliveryLocations != null && numberOfPickupLocations == null) {
-					linkPickup = findNextUsedLink(scenario, polygonsInShape, possibleLinksPickup,
-							numberOfPickupLocations, areasForPickupLocations, setLocationsOfPickup, usedPickupLocations,
-							possiblePersonsPickup, middlePointsLinksPickup, crsTransformationNetworkAndShape, i);
-					linkDelivery = findNearestJobElement(linkPickup, possibleLinksDelivery);
-				}
-				if (numberOfPickupLocations == null && numberOfDeliveryLocations == null) {
-					linkPickup = findNextUsedLink(scenario, polygonsInShape, possibleLinksPickup,
-							numberOfPickupLocations, areasForPickupLocations, setLocationsOfPickup, usedPickupLocations,
-							possiblePersonsPickup, middlePointsLinksPickup, crsTransformationNetworkAndShape, i);
-					linkDelivery = findNextUsedLink(scenario, polygonsInShape, possibleLinksDelivery,
-							numberOfDeliveryLocations, areasForDeliveryLocations, setLocationsOfDelivery,
-							usedDeliveryLocations, possiblePersonsDelivery, middlePointsLinksDelivery,
-							crsTransformationNetworkAndShape, i);
-				}
+				Link linkPickup = findNextUsedLink(scenario, polygonsInShape, possibleLinksPickup,
+						numberOfPickupLocations, areasForPickupLocations, setLocationsOfPickup, usedPickupLocations,
+						possiblePersonsPickup, middlePointsLinksPickup, crsTransformationNetworkAndShape, i);
+				Link linkDelivery = findNextUsedLink(scenario, polygonsInShape, possibleLinksDelivery,
+						numberOfDeliveryLocations, areasForDeliveryLocations, setLocationsOfDelivery,
+						usedDeliveryLocations, possiblePersonsDelivery, middlePointsLinksDelivery,
+						crsTransformationNetworkAndShape, i);
 				int demandForThisLink = (int) Math.ceil((double) demandToDistribute / (double) numberOfJobs);
 				if (numberOfJobs == (i + 1)) {
 					demandForThisLink = demandToDistribute - distributedDemand;
@@ -978,7 +943,6 @@ public class FreightDemandGeneration implements Callable<Integer> {
 						shipmentsToRemove.put(carrierShipment.getId(), carrierShipment);
 						connectedJobs++;
 					}
-
 					CarrierShipment newShipment = CarrierShipment.Builder
 							.newInstance(idNewShipment, baseShipment.getFrom(), baseShipment.getTo(), demandForThisLink)
 							.setPickupServiceTime(serviceTimePickup)
@@ -989,9 +953,7 @@ public class FreightDemandGeneration implements Callable<Integer> {
 					shipmentsToAdd.add(newShipment);
 					connectedJobs++;
 				}
-
 			}
-
 			for (CarrierShipment id : shipmentsToRemove.values())
 				thisCarrier.getShipments().remove(id.getId(), id);
 
@@ -1028,22 +990,17 @@ public class FreightDemandGeneration implements Callable<Integer> {
 						servicesToRemove.put(carrierService.getId(), carrierService);
 						connectedJobs++;
 					}
-
 					CarrierService newService = CarrierService.Builder
 							.newInstance(idNewService, baseService.getLocationLinkId())
 							.setServiceDuration(serviceTimeService)
 							.setServiceStartTimeWindow(baseService.getServiceStartTimeWindow())
 							.setCapacityDemand(demandForThisLink).build();
-
 					servicesToAdd.add(newService);
 					connectedJobs++;
 				}
-
 			}
-
 			for (CarrierService id : servicesToRemove.values())
 				thisCarrier.getServices().remove(id.getId(), id);
-
 			for (CarrierService carrierService : servicesToAdd) {
 				thisCarrier.getServices().put(carrierService.getId(), carrierService);
 			}
@@ -1249,27 +1206,6 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	}
 
 	/**
-	 * @param link
-	 * @param possibleLinks
-	 * @return
-	 */
-	private static Link findNearestJobElement(Link link, HashMap<Id<Link>, Link> possibleLinks) {
-		Link nearestLink = null;
-		double distance;
-		double minDistance = -1;
-
-		for (Link possibleLink : possibleLinks.values()) {
-			distance = NetworkUtils.getEuclideanDistance(link.getCoord(), possibleLink.getCoord());
-			if (minDistance == -1 || distance < minDistance) {
-				minDistance = distance;
-				nearestLink = possibleLink;
-			}
-		}
-		return nearestLink;
-
-	}
-
-	/**
 	 * Creates a job Id for a new job. If a certain Id is already used a number will
 	 * be added at the end until no existing job was the same Id.
 	 * 
@@ -1306,6 +1242,22 @@ public class FreightDemandGeneration implements Callable<Integer> {
 		return newJobId.toString();
 	}
 
+	/**
+	 * Finds the next link which can be used as a location.
+	 * 
+	 * @param scenario
+	 * @param polygonsInShape
+	 * @param possibleLinks
+	 * @param selectedNumberOfLocations
+	 * @param areasForLocations
+	 * @param selectedLocations
+	 * @param usedLocations
+	 * @param possiblePersons
+	 * @param middlePointsLinks
+	 * @param crsTransformationNetworkAndShape
+	 * @param i
+	 * @return
+	 */
 	private static Link findNextUsedLink(Scenario scenario, Collection<SimpleFeature> polygonsInShape,
 			HashMap<Id<Link>, Link> possibleLinks, Integer selectedNumberOfLocations, String[] areasForLocations,
 			String[] selectedLocations, ArrayList<String> usedLocations, HashMap<Id<Person>, Person> possiblePersons,
@@ -1433,7 +1385,6 @@ public class FreightDemandGeneration implements Callable<Integer> {
 			Collection<SimpleFeature> polygonsInShape) {
 
 		for (NewDemand newDemand : demandInformation) {
-
 			if (newDemand.getCarrierID() == null || newDemand.getCarrierID().isBlank())
 				throw new RuntimeException(
 						"Minimum one demand is not related to a carrier. Every demand information has to be related to one carrier. Please check the input csv file!");
@@ -1497,7 +1448,7 @@ public class FreightDemandGeneration implements Callable<Integer> {
 				throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
 						+ ": No timeWindow for one job element was selected");
 
-			// for service
+			// for services
 			if (newDemand.getTypeOfDemand().equals("service")) {
 				if (newDemand.getNumberOfJobs() != null && newDemand.getShareOfPopulationWithFirstJobElement() != null)
 					throw new RuntimeException("For the carrier " + newDemand.getCarrierID()
@@ -1573,26 +1524,23 @@ public class FreightDemandGeneration implements Callable<Integer> {
 			CoordinateTransformation crsTransformationPopulationAndShape, Collection<SimpleFeature> polygonsInShape) {
 
 		List<Id<Person>> personsToRemove = new ArrayList<>();
-
 		double x, y;
 		for (Person person : population.getPersons().values()) {
 			boolean isInShape = false;
 			x = (double) person.getAttributes().getAttribute("homeX");
 			y = (double) person.getAttributes().getAttribute("homeY");
-			Point test = MGC
+			Point point = MGC
 					.coord2Point(crsTransformationPopulationAndShape.transform(MGC.point2Coord(MGC.xy2Point(x, y))));
-			for (SimpleFeature singlePolygon : polygonsInShape) {
-				if (((Geometry) singlePolygon.getDefaultGeometry()).contains(test)) {
+			for (SimpleFeature singlePolygon : polygonsInShape)
+				if (((Geometry) singlePolygon.getDefaultGeometry()).contains(point)) {
 					isInShape = true;
 					break;
 				}
-			}
 			if (!isInShape)
 				personsToRemove.add(person.getId());
 		}
-		for (Id<Person> id : personsToRemove) {
+		for (Id<Person> id : personsToRemove)
 			population.removePerson(id);
-		}
 	}
 
 	/**
@@ -1602,8 +1550,8 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	 * @param config
 	 * @param controler
 	 * @throws InvalidAttributeValueException
-	 * @throws InterruptedException
 	 * @throws ExecutionException
+	 * @throws InterruptedException
 	 */
 	private static void solveSelectedSolution(OptionsOfVRPSolutions selectedSolution, Config config,
 			Controler controler) throws InvalidAttributeValueException, ExecutionException, InterruptedException {
@@ -1671,6 +1619,8 @@ public class FreightDemandGeneration implements Callable<Integer> {
 		case withAnalyseOutput:
 			String[] argsAnalysis = { outputDirectory };
 			FreightAnalyse.main(argsAnalysis);
+//			RunFreightAnalysis freightAnalysis = new RunFreightAnalysis(outputDirectory, outputDirectory);
+//			freightAnalysis.runAnalysis();
 			break;
 		case withoutAnalyseOutput:
 			break;
@@ -1685,10 +1635,10 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	 * @param scenario
 	 * @param allNewCarrier
 	 * @param freightConfigGroup
-	 * @param csvLocation
+	 * @param csvLocationCarrier
 	 * @param polygonsInShape
 	 * @param defaultJspritIterations
-	 * @param useShapeFileforLocationsChoice
+	 * @param crsTransformationNetworkAndShape
 	 * @throws IOException
 	 */
 	private static void readAndCreateCarrierFromCSV(Scenario scenario, Set<NewCarrier> allNewCarrier,
@@ -1744,7 +1694,6 @@ public class FreightDemandGeneration implements Callable<Integer> {
 		log.info("The read carrier information from the csv are checked without errors.");
 		createNewCarrierAndAddVehilceTypes(scenario, allNewCarrier, freightConfigGroup, polygonsInShape,
 				defaultJspritIterations, crsTransformationNetworkAndShape);
-
 	}
 
 	/**
@@ -1855,17 +1804,12 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	/**
 	 * Read and creates the carrier and the vehicle types.
 	 * 
-	 * @param freightConfigGroup
+	 * @param scenario
 	 * @param allNewCarrier
-	 * @param scenario
-	 * @param scenario
-	 * @param fleetSize
-	 * @param carrierWithDepots
-	 * @param vehicleTypesOfThisCarrier
 	 * @param freightConfigGroup
 	 * @param polygonsInShape
-	 * @param polygonsInShape
-	 * @param CarrierVehicleTypes
+	 * @param defaultJspritIterations
+	 * @param crsTransformationNetworkAndShape
 	 */
 	private static void createNewCarrierAndAddVehilceTypes(Scenario scenario, Set<NewCarrier> allNewCarrier,
 			FreightConfigGroup freightConfigGroup, Collection<SimpleFeature> polygonsInShape,
@@ -1947,7 +1891,7 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	 * @param population
 	 * @param areasForServiceLocations
 	 * @param polygonsInShape
-	 * @param demandLocationsInShape
+	 * @param crsTransformationNetworkAndShape
 	 * @return
 	 */
 	private static HashMap<Id<Person>, Person> findPossiblePersons(Population population,
@@ -1971,11 +1915,15 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	/**
 	 * Searches a possible link for the demand.
 	 * 
-	 * @param scenario
-	 * @param population
+	 * @param possibleLinks
+	 * @param possiblePersons
 	 * @param middlePointsLinks
-	 * @param strings
 	 * @param polygonsInShape
+	 * @param areasForTheDemand
+	 * @param selectedNumberOfLocations
+	 * @param scenario
+	 * @param selectedLocations
+	 * @param crsTransformationNetworkAndShape
 	 * @return
 	 */
 	private static Link findPossibleLinkForDemand(HashMap<Id<Link>, Link> possibleLinks,
@@ -2042,10 +1990,9 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	}
 
 	/**
-	 * Finds the nearest link of one certain location.
+	 * Finds the nearest possible link of one certain location.
 	 * 
 	 * @param pointActivity
-	 * @param allLinks
 	 * @param middlePointsLinks
 	 * @return
 	 */
@@ -2071,36 +2018,21 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	 * Checks if a link is one of the possible areas.
 	 * 
 	 * @param link
-	 * @param strings
-	 * @param polygonsInShape2
+	 * @param point
+	 * @param polygonsInShape
+	 * @param possibleAreas
+	 * @param crsTransformationNetworkAndShape
 	 * @return
-	 * @throws MalformedURLException
 	 */
 	private static boolean checkPositionInShape(Link link, Point point, Collection<SimpleFeature> polygonsInShape,
 			String[] possibleAreas, CoordinateTransformation crsTransformationNetworkAndShape) {
 
-		if (polygonsInShape == null) {
+		if (polygonsInShape == null)
 			return true;
-		}
 		boolean isInShape = false;
 		Point p = null;
 		if (link != null && point == null) {
-			double x, y, xCoordFrom, xCoordTo, yCoordFrom, yCoordTo;
-
-			xCoordFrom = crsTransformationNetworkAndShape.transform(link.getFromNode().getCoord()).getX();
-			xCoordTo = crsTransformationNetworkAndShape.transform(link.getFromNode().getCoord()).getX();
-			yCoordFrom = crsTransformationNetworkAndShape.transform(link.getFromNode().getCoord()).getY();
-			yCoordTo = crsTransformationNetworkAndShape.transform(link.getFromNode().getCoord()).getY();
-
-			if (xCoordFrom > xCoordTo)
-				x = xCoordFrom - ((xCoordFrom - xCoordTo) / 2);
-			else
-				x = xCoordTo - ((xCoordTo - xCoordFrom) / 2);
-			if (yCoordFrom > yCoordTo)
-				y = yCoordFrom - ((yCoordFrom - yCoordTo) / 2);
-			else
-				y = yCoordTo - ((yCoordTo - yCoordFrom) / 2);
-			p = MGC.xy2Point(x, y);
+			p = MGC.coord2Point(crsTransformationNetworkAndShape.transform(middlePointOfLink(link)));
 		} else if (link == null && point != null)
 			p = point;
 		for (SimpleFeature singlePolygon : polygonsInShape) {
@@ -2146,7 +2078,6 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	 * Deletes the existing output file and sets the number of the last iteration
 	 * 
 	 * @param lastMATSimIteration
-	 * @param outputLocation
 	 * @param coordinateSystem
 	 * @return
 	 */
@@ -2160,7 +2091,6 @@ public class FreightDemandGeneration implements Callable<Integer> {
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 		config.controler().setLastIteration(lastMATSimIteration);
 		config.global().setRandomSeed(4177);
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 		config.global().setCoordinateSystem(coordinateSystem);
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 		freightConfigGroup.setTravelTimeSliceWidth(1800);
@@ -2170,12 +2100,12 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	}
 
 	/**
-	 * add the home coordinates to attributes and remove plans
+	 * Adds the home coordinates to attributes and removes plans
 	 * 
 	 * @param population
-	 * @param sampleTo
 	 * @param sampleSizeInputPopulation
-	 * @param string
+	 * @param sampleTo
+	 * @param samlingOption
 	 */
 	private static void preparePopulation(Population population, double sampleSizeInputPopulation, double sampleTo,
 			String samlingOption) {
@@ -2213,11 +2143,10 @@ public class FreightDemandGeneration implements Callable<Integer> {
 	 * Runs jsprit
 	 * 
 	 * @param controler
-	 * @param nuOfJspritIteration
 	 * @param usingRangeRestriction
 	 * @throws InvalidAttributeValueException
-	 * @throws InterruptedException
 	 * @throws ExecutionException
+	 * @throws InterruptedException
 	 */
 	private static void runJsprit(Controler controler, boolean usingRangeRestriction)
 			throws InvalidAttributeValueException, ExecutionException, InterruptedException {
