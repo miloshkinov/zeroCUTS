@@ -63,7 +63,7 @@ public class FreightAnalyse {
 		log.warn("VehicleTypes: "+ vehicleTypes.getVehicleTypes().keySet().toString());
 
 		Carriers carriers = new Carriers() ;
-		new CarrierPlanXmlReader(carriers).readFile(carrierFile.getAbsolutePath() ) ;
+		new CarrierPlanXmlReader(carriers, vehicleTypes).readFile(carrierFile.getAbsolutePath() ) ;
 
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 		TripEventHandler tripHandler = new TripEventHandler(network, vehicleTypes);
