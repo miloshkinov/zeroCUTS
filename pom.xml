@@ -11,7 +11,7 @@
 	<description>zeroCUTS project</description>
 
 	<properties>
-		<matsim.version>14.0-2022w02</matsim.version>
+		<matsim.version>15.0-PR1952</matsim.version>
 
 	</properties>
 
