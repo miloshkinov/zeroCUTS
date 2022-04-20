@@ -24,7 +24,6 @@ import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
 import org.matsim.contrib.freight.carrier.CarrierService;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
 import org.matsim.contrib.freight.carrier.CarrierVehicle;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypeLoader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.contrib.freight.carrier.Carriers;
 import org.matsim.contrib.freight.carrier.ScheduledTour;
@@ -284,9 +283,8 @@ public class RunDistanceConstraint {
 	static CarrierVehicle createGarbageTruck(String vehicleName, double earliestStartingTime,
 			double latestFinishingTime, VehicleType singleVehicleType) {
 
-		return CarrierVehicle.Builder.newInstance(Id.create(vehicleName, Vehicle.class), Id.createLinkId("i(1,8)"))
-				.setEarliestStart(earliestStartingTime).setLatestEnd(latestFinishingTime)
-				.setTypeId(singleVehicleType.getId()).setType(singleVehicleType).build();
+		return CarrierVehicle.Builder.newInstance(Id.create(vehicleName, Vehicle.class), Id.createLinkId("i(1,8)"), singleVehicleType)
+				.setEarliestStart(earliestStartingTime).setLatestEnd(latestFinishingTime).build();
 	}
 
 	/**
@@ -304,8 +302,6 @@ public class RunDistanceConstraint {
 			CarrierUtils.addCarrierVehicle(singleCarrier, carrierVehicle);
 		}
 		singleCarrier.getCarrierCapabilities().getVehicleTypes().addAll(vehicleTypes.getVehicleTypes().values());
-
-		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(vehicleTypes);
 	}
 
 	private static void solveJspritAndMATSim(Scenario scenario, CarrierVehicleTypes vehicleTypes, Carriers carriers,
@@ -463,7 +459,7 @@ public class RunDistanceConstraint {
 			for (ScheduledTour scheduledTour : singleCarrier.getSelectedPlan().getScheduledTours()) {
 				distanceTour = 0.0;
 				for (VehicleType vt2 : singleCarrier.getCarrierCapabilities().getVehicleTypes()) {
-					if (vt2.getId().toString().contains(scheduledTour.getVehicle().getVehicleId().toString())) {
+					if (vt2.getId().toString().contains(scheduledTour.getVehicle().getId().toString())) {
 
 						vt = vt2;
 						break;
@@ -471,8 +467,8 @@ public class RunDistanceConstraint {
 				}
 
 				int vehicleTypeCount = usedNumberPerVehicleType
-						.get(scheduledTour.getVehicle().getVehicleId().toString());
-				usedNumberPerVehicleType.replace(scheduledTour.getVehicle().getVehicleId().toString(),
+						.get(scheduledTour.getVehicle().getId().toString());
+				usedNumberPerVehicleType.replace(scheduledTour.getVehicle().getId().toString(),
 						vehicleTypeCount + 1);
 
 				List<Tour.TourElement> elements = scheduledTour.getTour().getTourElements();
@@ -489,7 +485,7 @@ public class RunDistanceConstraint {
 					}
 				}
 				Id<Person> personId = Id.create(
-						scheduledTour.getVehicle().getVehicleId().toString() + "-Tour " + tourNumberCarrier,
+						scheduledTour.getVehicle().getId().toString() + "-Tour " + tourNumberCarrier,
 						Person.class);
 				personId2tourDistance.put(personId, distanceTour);
 				if (vt.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electricity")) {

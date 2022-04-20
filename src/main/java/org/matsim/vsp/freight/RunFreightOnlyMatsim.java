@@ -216,10 +216,7 @@ public class RunFreightOnlyMatsim {
 
 	private static Carriers createCarriers(CarrierVehicleTypes vehicleTypes) {
 		Carriers carriers = new Carriers() ;
-		new CarrierPlanXmlReader(carriers).readFile(CARRIERFILE) ;
-
-		// assign vehicle types to the carriers
-		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(vehicleTypes) ;
+		new CarrierPlanXmlReader(carriers, vehicleTypes).readFile(CARRIERFILE) ;
 		return carriers;
 	}
 

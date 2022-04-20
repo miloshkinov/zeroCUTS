@@ -39,7 +39,6 @@ import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
 import org.matsim.contrib.freight.carrier.CarrierService;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
 import org.matsim.contrib.freight.carrier.CarrierVehicle;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypeLoader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.contrib.freight.carrier.Carriers;
@@ -143,8 +142,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	public Integer call() throws Exception {
 		Configurator.setLevel("org.matsim.core.utils.geometry.geotools.MGC", Level.ERROR);
 		/*
-		 * Fragen: wann den sample hinzufügen (output oder table) bei only landuse; was
-		 * passiert mit construction?
+		 * Fragen: bei only landuse; was passiert mit construction?
 		 */
 
 		switch (usedZoneChoice) {
@@ -453,9 +451,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 											thisType.getId().toString() + "_" + thisCarrier.getId().toString() + "_"
 													+ (carrierCapabilities.getCarrierVehicles().size() + 1),
 											Vehicle.class),
-									Id.createLinkId(singleDepot))
-							.setEarliestStart(vehicleStartTime).setLatestEnd(vehicleEndTime).setTypeId(thisType.getId())
-							.build();
+									Id.createLinkId(singleDepot), thisType)
+							.setEarliestStart(vehicleStartTime).setLatestEnd(vehicleEndTime).build();
 					carrierCapabilities.getCarrierVehicles().put(newCarrierVehicle.getId(), newCarrierVehicle);
 					if (!carrierCapabilities.getVehicleTypes().contains(thisType))
 						carrierCapabilities.getVehicleTypes().add(thisType);
@@ -464,7 +461,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 			thisCarrier.setCarrierCapabilities(carrierCapabilities);
 		}
-		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(carrierVehicleTypes);
 	}
 
 	private static Id<Link> findPossibleLink(String zone, String selectedCategory, String[] noPossibleLinks,

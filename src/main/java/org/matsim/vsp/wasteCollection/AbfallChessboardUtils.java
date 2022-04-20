@@ -13,6 +13,7 @@ import org.matsim.contrib.freight.carrier.CarrierVehicleTypeLoader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.contrib.freight.carrier.Carriers;
 import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.VehicleType;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
 import org.matsim.contrib.freight.carrier.CarrierImpl;
 
@@ -88,10 +89,10 @@ public class AbfallChessboardUtils {
 		double earliestStartingTime = 6 * 3600;
 		double latestFinishingTime = 14 * 3600;
 
+		VehicleType vehicleType = carrierVehicleTypes.getVehicleTypes().values().iterator().next();
 		CarrierVehicle newCarrierVehicle =  CarrierVehicle.Builder
-			.newInstance(Id.create(vehicleName, Vehicle.class), Id.createLinkId(linkChessboardDepot))
-			.setEarliestStart(earliestStartingTime).setLatestEnd(latestFinishingTime)
-			.setTypeId(carrierVehicleTypes.getVehicleTypes().values().iterator().next().getId()).build();
+			.newInstance(Id.create(vehicleName, Vehicle.class), Id.createLinkId(linkChessboardDepot), vehicleType)
+			.setEarliestStart(earliestStartingTime).setLatestEnd(latestFinishingTime).build();
 
 //		AbfallUtils.createGarbageTruck(vehicleName, linkChessboardDepot, earliestStartingTime, latestFinishingTime);
 

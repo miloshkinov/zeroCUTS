@@ -36,7 +36,7 @@ class ConvertCarriersToOpenBerlin {
 		Network oldNetwork = NetworkUtils.readNetwork(inputOldNetwork); 		//should be referenced in GK 4 after having a look at the net in via
 
 		Carriers oldCarriers = new Carriers();
-		CarrierPlanXmlReader carrierReader = new CarrierPlanXmlReader(oldCarriers);
+		CarrierPlanXmlReader carrierReader = new CarrierPlanXmlReader(oldCarriers, null);
 		carrierReader.readFile(inputOldCarriers);
 
 		Network newNetworkFiltered = filterNetwork(openBerlinNet);
@@ -84,8 +84,7 @@ class ConvertCarriersToOpenBerlin {
 			//Adapt VehicleId to new Location
 			String oldVehicleString = carrierVehicle.getId().toString();
 			Id<Vehicle> newVehicleId = Id.createVehicleId(oldVehicleString.substring(0,oldVehicleString.lastIndexOf("_")+1)+newLinkId.toString());
-			CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder.newInstance(newVehicleId, newLinkId)
-					.setTypeId(carrierVehicle.getVehicleTypeId())
+			CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder.newInstance(newVehicleId, newLinkId, carrierVehicle.getType())
 					.setEarliestStart(carrierVehicle.getEarliestStartTime())
 					.setLatestEnd(carrierVehicle.getLatestEndTime())
 					.build();
