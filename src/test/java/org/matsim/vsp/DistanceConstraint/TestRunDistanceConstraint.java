@@ -16,7 +16,6 @@ import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
 import org.matsim.contrib.freight.carrier.CarrierService;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
 import org.matsim.contrib.freight.carrier.CarrierVehicle;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypeLoader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.contrib.freight.carrier.Carriers;
 import org.matsim.contrib.freight.carrier.ScheduledTour;
@@ -122,7 +121,7 @@ public class TestRunDistanceConstraint {
 				carrierV1.getSelectedPlan().getScheduledTours().size());
 
 		Assert.assertEquals(newVT2.getId(), carrierV1.getSelectedPlan().getScheduledTours().iterator().next()
-				.getVehicle().getVehicleType().getId());
+				.getVehicle().getType().getId());
 		double maxDistanceVehicle1 = (double) newVT1.getEngineInformation().getAttributes()
 				.getAttribute("engeryCapacity")
 				/ (double) newVT1.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
@@ -201,7 +200,7 @@ public class TestRunDistanceConstraint {
 				carrierV2.getSelectedPlan().getScheduledTours().size());
 
 		Assert.assertEquals(newVT3.getId(), carrierV2.getSelectedPlan().getScheduledTours().iterator().next()
-				.getVehicle().getVehicleType().getId());
+				.getVehicle().getType().getId());
 		double maxDistanceVehicle3 = (double) newVT3.getEngineInformation().getAttributes()
 				.getAttribute("engeryCapacity")
 				/ (double) newVT3.getEngineInformation().getAttributes().getAttribute("engeryConsumptionPerKm");
@@ -305,7 +304,7 @@ public class TestRunDistanceConstraint {
 								0, scenario.getNetwork());
 				}
 			}
-			Assert.assertEquals(newVT6.getId(), scheduledTour.getVehicle().getVehicleType().getId());
+			Assert.assertEquals(newVT6.getId(), scheduledTour.getVehicle().getType().getId());
 			if (distanceTour == 12000)
 				Assert.assertEquals("The schedulded tour has a non expected distance", 12000, distanceTour,
 						MatsimTestUtils.EPSILON);
@@ -387,7 +386,7 @@ public class TestRunDistanceConstraint {
 
 		for (ScheduledTour scheduledTour : carrierV4.getSelectedPlan().getScheduledTours()) {
 
-			String thisTypeId = scheduledTour.getVehicle().getVehicleType().getId().toString();
+			String thisTypeId = scheduledTour.getVehicle().getType().getId().toString();
 			double distanceTour = 0.0;
 			List<Tour.TourElement> elements = scheduledTour.getTour().getTourElements();
 			for (Tour.TourElement element : elements) {
@@ -486,9 +485,8 @@ public class TestRunDistanceConstraint {
 	static CarrierVehicle createGarbageTruck(String vehicleName, double earliestStartingTime,
 			double latestFinishingTime, VehicleType singleVehicleType) {
 
-		return CarrierVehicle.Builder.newInstance(Id.create(vehicleName, Vehicle.class), Id.createLinkId("i(1,8)"))
-				.setEarliestStart(earliestStartingTime).setLatestEnd(latestFinishingTime)
-				.setTypeId(singleVehicleType.getId()).setType(singleVehicleType).build();
+		return CarrierVehicle.Builder.newInstance(Id.create(vehicleName, Vehicle.class), Id.createLinkId("i(1,8)"), singleVehicleType)
+				.setEarliestStart(earliestStartingTime).setLatestEnd(latestFinishingTime).build();
 	}
 
 	/**
@@ -507,7 +505,6 @@ public class TestRunDistanceConstraint {
 		}
 		singleCarrier.getCarrierCapabilities().getVehicleTypes().addAll(vehicleTypes.getVehicleTypes().values());
 
-		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(vehicleTypes);
 	}
 
 	private static void solveJspritAndMATSim(Scenario scenario, CarrierVehicleTypes vehicleTypes, Carriers carriers,
