@@ -126,7 +126,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of mode differentiation:  createOneODMatrix, createSeperateODMatricesForModes")
 	private ModeDifferentiation usedModeDifferentiation;
 
-	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useTrafficCells", description = "Set option input zones. Options: useDistricts, useTrafficCells")
+	@CommandLine.Option(names = "--useDistricts", defaultValue = "useDistricts", description = "Set option input zones. Options: useDistricts, useTrafficCells")
 	private ZoneChoice usedZoneChoice;
 // useDistricts, useTrafficCells
 	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useOSMBuildingsAndLanduse", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
@@ -1156,18 +1156,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private void writeResultOfDataDistribution(HashMap<String, Object2DoubleMap<String>> resultingDataPerZone,
 			Path outputFileInOutputFolder) throws IOException, MalformedURLException {
 
-		Path outputFileInInputFolder = inputDataDirectory.resolve("dataDistributionPerZone.csv");
-
-		if (Files.exists(outputFileInInputFolder)) {
-			Path oldFile = Path.of(outputFileInInputFolder.toString().replace(".csv", "_old.csv"));
-			log.warn("The result of data distribution already exists. The existing data will be moved to: " + oldFile);
-			Files.deleteIfExists(oldFile);
-			Files.move(outputFileInInputFolder, oldFile, StandardCopyOption.REPLACE_EXISTING);
-		}
-
-		writeCSVWithCategoryHeader(resultingDataPerZone, outputFileInInputFolder);
-		log.info("The data distribution is finished and written to: " + outputFileInInputFolder);
-		Files.copy(outputFileInInputFolder, outputFileInOutputFolder, StandardCopyOption.COPY_ATTRIBUTES);
+		writeCSVWithCategoryHeader(resultingDataPerZone, outputFileInOutputFolder);
+		log.info("The data distribution is finished and written to: " + outputFileInOutputFolder);
 	}
 
 	/**
@@ -1189,10 +1179,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				List<String> row = new ArrayList<>();
 				row.add(zone);
 				for (String category : header) {
-					if (!category.equals("areaID")) {
+					if (!category.equals("areaID")) 
 						row.add(String.valueOf((int) Math.round(resultingDataPerZone.get(zone).getDouble(category))));
-//						row.add(String.valueOf(resultingDataPerZone.get(zone).getDouble(category)));
-					}
 				}
 				JOIN.appendTo(writer, row);
 				writer.write("\n");
