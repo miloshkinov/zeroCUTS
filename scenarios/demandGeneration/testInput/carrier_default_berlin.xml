@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<carriers>
+		<carrier id="testCarrier1">
+			<capabilities fleetSize="INFINITE">
+				<vehicles>
+					<vehicle id="heavy26t_19384" depotLinkId="19384" typeId="heavy26t" earliestStart="09:00:00" latestEnd="19:00:00"/>
+					<vehicle id="medium18t_19384" depotLinkId="19384" typeId="medium18t" earliestStart="09:00:00" latestEnd="19:00:00"/>
+					<vehicle id="heavy26t_electro_19384" depotLinkId="19384" typeId="heavy26t_electro" earliestStart="09:00:00" latestEnd="19:00:00"/>
+					<vehicle id="medium18t_electro_19384" depotLinkId="19384" typeId="medium18t_electro" earliestStart="09:00:00" latestEnd="19:00:00"/>
+				</vehicles>
+
+			</capabilities>
+
+			<shipments>
+			</shipments>
+
+			<services>						
+				<service id="127_kaiser" to="5263" capacityDemand="4" earliestStart="04:00:00" latestEnd="09:00:00" serviceDuration="00:12:00"/>
+				<service id="128_kaiser" to="5455" capacityDemand="2" earliestStart="04:00:00" latestEnd="09:00:00" serviceDuration="00:06:00"/>
+				<service id="129_kaiser" to="6255" capacityDemand="3" earliestStart="04:00:00" latestEnd="09:00:00" serviceDuration="00:09:00"/>
+				<service id="130_kaiser" to="5257" capacityDemand="3" earliestStart="04:00:00" latestEnd="09:00:00" serviceDuration="00:09:00"/>
+				<service id="131_kaiser" to="5524" capacityDemand="4" earliestStart="04:00:00" latestEnd="09:00:00" serviceDuration="00:12:00"/>
+				<service id="132_kaiser" to="5946" capacityDemand="6" earliestStart="04:00:00" latestEnd="09:00:00" serviceDuration="00:18:00"/>
+				<service id="133_kaiser" to="3961" capacityDemand="2" earliestStart="04:00:00" latestEnd="09:00:00" serviceDuration="00:06:00"/>
+				<service id="134_kaiser" to="5983" capacityDemand="6" earliestStart="04:00:00" latestEnd="09:00:00" serviceDuration="00:18:00"/>
+			</services>
+
+		</carrier>
+
+	</carriers>

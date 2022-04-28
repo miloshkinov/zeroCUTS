@@ -1,18 +1,13 @@
 package org.matsim.vsp.freight.food.analyse;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.freight.carrier.*;
 import org.matsim.core.api.experimental.events.EventsManager;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.scenario.MutableScenario;
-import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.UncheckedIOException;
 
 import java.io.File;
@@ -126,7 +121,7 @@ public class FreightAnalyseKT {
 		log.warn("VehicleTypes: "+ vehicleTypes.getVehicleTypes().keySet().toString());
 
 		Carriers carriers = new Carriers() ;
-		new CarrierPlanXmlReader(carriers).readFile(carrierFile.getAbsolutePath() ) ;
+		new CarrierPlanXmlReader(carriers, vehicleTypes).readFile(carrierFile.getAbsolutePath() ) ;
 
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 		TripEventHandler tripHandler = new TripEventHandler(network, vehicleTypes);

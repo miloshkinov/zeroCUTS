@@ -27,6 +27,7 @@ import org.matsim.contrib.freight.carrier.*;
 import org.matsim.core.gbl.Gbl;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.VehicleUtils;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -39,7 +40,7 @@ public class AddAdditionalBEVTrucksToCarriers {
 
 	public static void main(String[] args) {
 		Carriers carriers = new Carriers();
-		new CarrierPlanXmlReader(carriers).readFile(INPUT_Carrier_File);
+		new CarrierPlanXmlReader(carriers, null).readFile(INPUT_Carrier_File); //re: perhaps add vehicleTypes here
 
 		for (Carrier carrier : carriers.getCarriers().values()){
 			Map<Id<Vehicle>, CarrierVehicle> carrierVehicles = carrier.getCarrierCapabilities().getCarrierVehicles();
@@ -63,12 +64,15 @@ public class AddAdditionalBEVTrucksToCarriers {
 				Id<Vehicle> vehicleId2 = Id.createVehicleId(vehicleId2String);
 
 				Id<VehicleType> vehicleTypeId2 = Id.create(carrierVehicle.getVehicleTypeId() + "_electro", VehicleType.class);
+				
+				VehicleType vehicleType = carrierVehicle.getType();
+				VehicleType vehicleType_new = VehicleUtils.createVehicleType(vehicleTypeId2);
+				VehicleUtils.copyFromTo(vehicleType_new, vehicleType);
 
 				CarrierVehicle additionalCarrierVehicle =
-						CarrierVehicle.Builder.newInstance(vehicleId2, carrierVehicle.getLocation())
+						CarrierVehicle.Builder.newInstance(vehicleId2, carrierVehicle.getLocation(), vehicleType_new)
 								.setEarliestStart(carrierVehicle.getEarliestStartTime())
 								.setLatestEnd(carrierVehicle.getLatestEndTime())
-								.setTypeId(vehicleTypeId2)
 								.build();
 
 				vehiclesToAdd.add(additionalCarrierVehicle);

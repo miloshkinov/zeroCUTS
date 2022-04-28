@@ -20,7 +20,6 @@ import org.matsim.contrib.freight.jsprit.NetworkRouter;
 import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts.Builder;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
-import org.matsim.vehicles.EngineInformation.FuelType;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 
@@ -98,9 +97,8 @@ class DistanceConstraintUtils {
 					for (VehicleType vehicleType : singleCarrier.getCarrierCapabilities().getVehicleTypes()) {
 
 						CarrierVehicle testVehicle = CarrierVehicle.Builder
-								.newInstance(Id.create("testVehicle", Vehicle.class), Id.createLinkId(from))
-								.setEarliestStart(0).setLatestEnd(72 * 3600).setType(vehicleType)
-								.setTypeId(vehicleType.getId()).build();
+								.newInstance(Id.create("testVehicle", Vehicle.class), Id.createLinkId(from), vehicleType)
+								.setEarliestStart(0).setLatestEnd(72 * 3600).build();
 						oneShipmentCarrier.getCarrierCapabilities().getVehicleTypes().add(vehicleType);
 						CarrierUtils.addCarrierVehicle(oneShipmentCarrier, testVehicle);
 						oneShipmentCarrier.getCarrierCapabilities().setFleetSize(FleetSize.FINITE);

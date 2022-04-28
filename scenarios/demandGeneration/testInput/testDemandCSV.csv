@@ -1,0 +1,4 @@
+carrierName;demandToDistribute;numberOfJobs;shareOfPopulationWithFirstJobElement;areasFirstJobElement;numberOfFirstJobElementLocations;locationsOfFirstJobElement;firstJobElementTimePerUnit;firstJobElementStartTime;firstJobElementEndTime;shareOfPopulationWithSecondJobElement;areasSecondJobElement;numberOfSecondJobElementLocations;locationsOfSecondJobElement;secondJobElementTimePerUnit;secondJobElementStartTime;secondJobElementEndTime
+csvCarrier1;400;5;;;;;180;3000;13000;;;;;;;
+csvCarrier1;12;10;;;4;;100;5000;20000;;;;;;;
+csvCarrier2;4;;;Heinersdorf;;;300;10000;45000;;Hellersdorf;;;300;10000;45000
