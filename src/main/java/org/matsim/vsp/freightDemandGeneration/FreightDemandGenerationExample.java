@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import org.matsim.core.utils.io.UncheckedIOException;
 import org.matsim.freightDemandGeneration.FreightDemandGeneration;
+import org.matsim.vsp.freightAnalysis.FreightAnalyse;
 
 public class FreightDemandGenerationExample {
 

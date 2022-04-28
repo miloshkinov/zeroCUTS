@@ -1,4 +1,4 @@
-package org.matsim.vsp.freightDemandGeneration;
+package org.matsim.vsp.freightAnalysis;
 
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;

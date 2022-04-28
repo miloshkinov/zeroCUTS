@@ -1,4 +1,4 @@
-package org.matsim.vsp.freightDemandGeneration;
+package org.matsim.vsp.SmallScaleFreightTraffic;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -60,6 +60,7 @@ import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.io.UncheckedIOException;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
+import org.matsim.vsp.freightAnalysis.FreightAnalyse;
 import org.opengis.feature.simple.SimpleFeature;
 import com.google.common.base.Joiner;
 import org.locationtech.jts.geom.Geometry;
