@@ -231,7 +231,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param scenario
 	 * @return
 	 */
-	private static Controler prepareControler(Scenario scenario) {
+	private Controler prepareControler(Scenario scenario) {
 		Controler controler = new Controler(scenario);
 
 		Freight.configure(controler);
@@ -347,19 +347,20 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						mode = "it";
 					String carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
 					int numberOfDepots = (int) Math
-							.ceil((double)getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose)*serviceTimePerStop / (8*3600) *2); // TODO
-					String[] vehicleDepots = new String[] {};
+							.ceil((double) getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose)
+									* serviceTimePerStop / (8 * 3600) * 2); // TODO
 					FleetSize fleetSize = FleetSize.FINITE;
 					int fixedNumberOfVehilcePerTypeAndLocation = 1;
+					ArrayList<String> vehicleDepots = new ArrayList<String>();
 					createdCarrier++;
 					log.info("Create carrier number " + createdCarrier + " of a maximum Number of " + maxNumberOfCarrier
 							+ " carriers.");
 					log.info("Carrier: " + carrierName + "; depots: " + numberOfDepots + "; services: " + (int) Math
 							.ceil(getSumOfServicesForStartZone(odMatrix, startZone, mode, purpose) / occupancyRate));
-					NewCarrier newCarrier = new NewCarrier(carrierName, vehilceTypes, numberOfDepots, vehicleDepots,
-							null, fleetSize, 0, 0, jspritIterations, fixedNumberOfVehilcePerTypeAndLocation);
-					createNewCarrierAndAddVehilceTypes(scenario, newCarrier, purpose, startZone,
-							ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), selectedStartCategory);
+					createNewCarrierAndAddVehilceTypes(scenario, purpose, startZone,
+							ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), selectedStartCategory,
+							carrierName, vehilceTypes, numberOfDepots, fleetSize,
+							fixedNumberOfVehilcePerTypeAndLocation, vehicleDepots);
 					log.info("Create services for carrier: " + carrierName);
 					for (String stopZone : getListOfZones(odMatrix)) {
 						int demand = 0;
@@ -370,12 +371,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						String selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
 						while (resultingDataPerZone.get(stopZone).getDouble(selectedStopCategory) == 0)
 							selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
-						String[] areasFirstJobElement = new String[] { stopZone };
+						String[] serviceArea = new String[] { stopZone };
 						TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 20 * 3600);
-						NewDemand newDemand = new NewDemand(carrierName, demand, numberOfJobs, null,
-								areasFirstJobElement, (int) numberOfJobs, null, serviceTimePerStop, serviceTimeWindow);
-						createServices(scenario, newDemand, purpose, newCarrier.getVehicleDepots(),
-								selectedStopCategory);
+//						NewDemand newDemand = new NewDemand(carrierName, demand, numberOfJobs, null,
+//								areasFirstJobElement, (int) numberOfJobs, null, serviceTimePerStop, serviceTimeWindow);
+						createServices(scenario, purpose, vehicleDepots, selectedStopCategory, carrierName, demand,
+								numberOfJobs, serviceArea, serviceTimePerStop, serviceTimeWindow);
 					}
 				}
 			}
@@ -390,29 +391,30 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierPlans.xml");
 	}
 
-	private static void createServices(Scenario scenario, NewDemand newDemand, Integer purpose,
-			String[] noPossibleLinks, String selectedStopCategory) {
+	private void createServices(Scenario scenario, Integer purpose, ArrayList<String> noPossibleLinks,
+			String selectedStopCategory, String carrierName, int demand, int numberOfJobs, String[] serviceArea,
+			Integer serviceTimePerStop, TimeWindow serviceTimeWindow) {
 
-		Integer numberOfJobs = newDemand.getNumberOfJobs();
-		String stopZone = newDemand.getAreasFirstJobElement()[0];
+		String stopZone = serviceArea[0];
 
 		for (int i = 0; i < numberOfJobs; i++) {
 
 			Id<Link> linkId = findPossibleLink(stopZone, selectedStopCategory, noPossibleLinks, scenario.getNetwork());
-			Id<CarrierService> idNewService = Id
-					.create(newDemand.getCarrierID() + "_" + linkId + "_" + rnd.nextInt(10000), CarrierService.class);
+			Id<CarrierService> idNewService = Id.create(carrierName + "_" + linkId + "_" + rnd.nextInt(10000),
+					CarrierService.class);
 
 			CarrierService thisService = CarrierService.Builder.newInstance(idNewService, linkId)
-					.setServiceDuration(newDemand.getFirstJobElementTimePerUnit())
-					.setServiceStartTimeWindow(newDemand.getFirstJobElementTimeWindow()).build();
-			FreightUtils.getCarriers(scenario).getCarriers().get(Id.create(newDemand.getCarrierID(), Carrier.class))
-					.getServices().put(thisService.getId(), thisService);
+					.setServiceDuration(serviceTimePerStop).setServiceStartTimeWindow(serviceTimeWindow).build();
+			FreightUtils.getCarriers(scenario).getCarriers().get(Id.create(carrierName, Carrier.class)).getServices()
+					.put(thisService.getId(), thisService);
 		}
 
 	}
 
-	private static void createNewCarrierAndAddVehilceTypes(Scenario scenario, NewCarrier newCarrier, Integer purpose,
-			String startZone, FreightConfigGroup freightConfigGroup, String selectedStartCategory) {
+	private void createNewCarrierAndAddVehilceTypes(Scenario scenario, Integer purpose, String startZone,
+			FreightConfigGroup freightConfigGroup, String selectedStartCategory, String carrierName,
+			String[] vehilceTypes, int numberOfDepots, FleetSize fleetSize, int fixedNumberOfVehilcePerTypeAndLocation,
+			ArrayList<String> vehicleDepots) {
 
 		Carriers carriers = FreightUtils.addOrGetCarriers(scenario);
 		CarrierVehicleTypes carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
@@ -423,28 +425,25 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
 		CarrierCapabilities carrierCapabilities = null;
 
-		Carrier thisCarrier = CarrierUtils.createCarrier(Id.create(newCarrier.getName(), Carrier.class));
-		if (newCarrier.getJspritIterations() > 0)
-			CarrierUtils.setJspritIterations(thisCarrier, newCarrier.getJspritIterations());
-		carrierCapabilities = CarrierCapabilities.Builder.newInstance().setFleetSize(newCarrier.getFleetSize()).build();
+		Carrier thisCarrier = CarrierUtils.createCarrier(Id.create(carrierName, Carrier.class));
+		if (jspritIterations > 0)
+			CarrierUtils.setJspritIterations(thisCarrier, jspritIterations);
+		carrierCapabilities = CarrierCapabilities.Builder.newInstance().setFleetSize(fleetSize).build();
 		carriers.addCarrier(thisCarrier);
 
-		if (newCarrier.getVehicleDepots() == null)
-			newCarrier.setVehicleDepots(new String[] {});
-		while (newCarrier.getVehicleDepots().length < newCarrier.getNumberOfDepotsPerType()) {
-
+		while (vehicleDepots.size() < numberOfDepots) {
 			Id<Link> link = findPossibleLink(startZone, selectedStartCategory, null, scenario.getNetwork());
-			newCarrier.addVehicleDepots(newCarrier.getVehicleDepots(), link.toString());
+			vehicleDepots.add(link.toString());
 		}
-		for (String singleDepot : newCarrier.getVehicleDepots()) {
-			for (String thisVehicleType : newCarrier.getVehicleTypes()) {
+		for (String singleDepot : vehicleDepots) {
+			for (String thisVehicleType : vehilceTypes) {
 				int vehicleStartTime = rnd.nextInt(6 * 3600, 14 * 3600); // TODO Verteilung über den Tag prüfen
 				int vehicleEndTime = vehicleStartTime + 8 * 3600;
 				VehicleType thisType = carrierVehicleTypes.getVehicleTypes()
 						.get(Id.create(thisVehicleType, VehicleType.class));
-				if (newCarrier.getFixedNumberOfVehilcePerTypeAndLocation() == 0)
-					newCarrier.setFixedNumberOfVehilcePerTypeAndLocation(1);
-				for (int i = 0; i < newCarrier.getFixedNumberOfVehilcePerTypeAndLocation(); i++) {
+				if (fixedNumberOfVehilcePerTypeAndLocation == 0)
+					fixedNumberOfVehilcePerTypeAndLocation = 1;
+				for (int i = 0; i < fixedNumberOfVehilcePerTypeAndLocation; i++) {
 					CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder
 							.newInstance(
 									Id.create(
@@ -463,7 +462,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 	}
 
-	private static Id<Link> findPossibleLink(String zone, String selectedCategory, String[] noPossibleLinks,
+	private Id<Link> findPossibleLink(String zone, String selectedCategory, ArrayList<String> noPossibleLinks,
 			Network network) {
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
 
@@ -503,9 +502,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			int numberOfPossibleLinks = regionLinksMap.get(zone).size();
 //TODO eventuell auch opposite Links als noPossible deklarieren
 			searchLink: for (Link possibleLink : regionLinksMap.get(zone)) {
-				if (noPossibleLinks != null && numberOfPossibleLinks > noPossibleLinks.length)
-					for (int i = 0; i < noPossibleLinks.length; i++) {
-						if (noPossibleLinks[i].equals(possibleLink.getId().toString()))
+				if (noPossibleLinks != null && numberOfPossibleLinks > noPossibleLinks.size())
+					for (String depotLink : noPossibleLinks) {
+						if (depotLink.equals(possibleLink.getId().toString()))
 							continue searchLink;
 					}
 				double distance = NetworkUtils.getEuclideanDistance(centroidPointOfBuildingPolygon,
@@ -526,7 +525,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param categoriesOfBuilding
 	 * @param singleBuildingFeature
 	 */
-	private static void analyzeBuildingType(SimpleFeature singleBuildingFeature) {
+	private void analyzeBuildingType(SimpleFeature singleBuildingFeature) {
 
 		List<String> categoriesOfBuilding = new ArrayList<String>();
 		String[] buildingTypes;
@@ -557,14 +556,14 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 	}
 
-	private static void getIndexZones() {
+	private void getIndexZones() {
 		if (indexZones == null) {
 			ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
 			indexZones = shpZones.createIndex("EPSG:4326", "gml_id");
 		}
 	}
 
-	private static void getIndexLanduse() {
+	private void getIndexLanduse() {
 		if (indexLanduse == null) {
 			ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, "EPSG:4326", StandardCharsets.UTF_8);
 			indexLanduse = shpLanduse.createIndex("EPSG:4326", "fclass");
@@ -577,7 +576,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param config
 	 * @param vehicleTypesFileLocation
 	 */
-	private static void prepareVehicles(Config config) {
+	private void prepareVehicles(Config config) {
 
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 		String vehicleTypesFileLocation = inputDataDirectory.resolve("vehicleTypes.xml").toString();
@@ -1506,7 +1505,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		return numberOfTrips;
 	}
 
-	static class ResistanceFunktionKey {
+	class ResistanceFunktionKey {
 		private final String fromZone;
 		private final String toZone;
 
