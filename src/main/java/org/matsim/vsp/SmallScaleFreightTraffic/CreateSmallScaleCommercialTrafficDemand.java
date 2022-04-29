@@ -634,65 +634,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				}
 			}
 		}
-		writeODMatrices(odMatrix);
-	}
-
-	/**
-	 * Writes every matrix for each mode and purpose.
-	 * 
-	 * @param odMatrix
-	 * @param usedModes
-	 * @param usedPurposes
-	 * @param usedZones
-	 * @throws UncheckedIOException
-	 * @throws MalformedURLException
-	 */
-	private void writeODMatrices(TripDistributionMatrix odMatrix) throws UncheckedIOException, MalformedURLException {
-
-		ArrayList<String> usedModes = odMatrix.getListOfModes();
-		ArrayList<String> usedZones = odMatrix.getListOfZones();
-		ArrayList<Integer> usedPurposes = odMatrix.getListOfPurposes();
-
-		for (String mode : usedModes) {
-			for (int purpose : usedPurposes) {
-
-				Path outputFolder = output.resolve("caculatedData")
-						.resolve("odMatrix_" + mode + "_" + purpose + ".csv");
-
-				BufferedWriter writer = IOUtils.getBufferedWriter(outputFolder.toUri().toURL(), StandardCharsets.UTF_8,
-						true);
-				try {
-
-					List<String> headerRow = new ArrayList<>();
-					headerRow.add("");
-					for (int i = 0; i < usedZones.size(); i++) {
-						headerRow.add(usedZones.get(i));
-					}
-					JOIN.appendTo(writer, headerRow);
-					writer.write("\n");
-
-					for (String startZone : usedZones) {
-						List<String> row = new ArrayList<>();
-						row.add(startZone);
-						for (String stopZone : usedZones) {
-							if (odMatrix.getTripDistributionValue(startZone, stopZone, mode, purpose) == null)
-								throw new RuntimeException("OD pair is missing; start: " + startZone + "; stop: "
-										+ stopZone + "; mode: " + mode + "; purpuse: " + purpose);
-							row.add(String
-									.valueOf(odMatrix.getTripDistributionValue(startZone, stopZone, mode, purpose)));
-						}
-						JOIN.appendTo(writer, row);
-						writer.write("\n");
-					}
-					writer.close();
-
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				log.info("Write OD matrix for mode " + mode + " and for purpose " + purpose + " to "
-						+ outputFolder.toString());
-			}
-		}
+		odMatrix.writeODMatrices(output);	
 	}
 
 	/**

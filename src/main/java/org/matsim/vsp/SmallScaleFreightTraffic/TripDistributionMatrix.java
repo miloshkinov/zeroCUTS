@@ -1,14 +1,25 @@
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.matsim.application.options.ShpOptions;
+import org.matsim.core.utils.io.IOUtils;
+import org.matsim.core.utils.io.UncheckedIOException;
 import org.opengis.feature.simple.SimpleFeature;
+
+import com.google.common.base.Joiner;
 
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
@@ -19,6 +30,9 @@ import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
  */
 public class TripDistributionMatrix {
 
+	private static final Logger log = LogManager.getLogger(TripDistributionMatrix.class);
+	private static final Joiner JOIN = Joiner.on("\t");
+	
 	private ArrayList<String> listOfZones = new ArrayList<String>();
 	private ArrayList<String> listOfModes = new ArrayList<String>();
 	private ArrayList<Integer> listOfPurposes = new ArrayList<Integer>();
@@ -444,5 +458,64 @@ public class TripDistributionMatrix {
 		for (String stopZone : zones)
 			numberOfTrips = numberOfTrips + matrixCache.get(makeKey(startZone, stopZone, mode, purpose));
 		return numberOfTrips;
+	}
+	
+	/**
+	 * Writes every matrix for each mode and purpose.
+	 * @param output 
+	 * 
+	 * @param odMatrix
+	 * @param usedModes
+	 * @param usedPurposes
+	 * @param usedZones
+	 * @throws UncheckedIOException
+	 * @throws MalformedURLException
+	 */
+	void writeODMatrices(Path output) throws UncheckedIOException, MalformedURLException {
+
+		ArrayList<String> usedModes = getListOfModes();
+		ArrayList<String> usedZones = getListOfZones();
+		ArrayList<Integer> usedPurposes = getListOfPurposes();
+
+		for (String mode : usedModes) {
+			for (int purpose : usedPurposes) {
+
+				Path outputFolder = output.resolve("caculatedData")
+						.resolve("odMatrix_" + mode + "_" + purpose + ".csv");
+
+				BufferedWriter writer = IOUtils.getBufferedWriter(outputFolder.toUri().toURL(), StandardCharsets.UTF_8,
+						true);
+				try {
+
+					List<String> headerRow = new ArrayList<>();
+					headerRow.add("");
+					for (int i = 0; i < usedZones.size(); i++) {
+						headerRow.add(usedZones.get(i));
+					}
+					JOIN.appendTo(writer, headerRow);
+					writer.write("\n");
+
+					for (String startZone : usedZones) {
+						List<String> row = new ArrayList<>();
+						row.add(startZone);
+						for (String stopZone : usedZones) {
+							if (getTripDistributionValue(startZone, stopZone, mode, purpose) == null)
+								throw new RuntimeException("OD pair is missing; start: " + startZone + "; stop: "
+										+ stopZone + "; mode: " + mode + "; purpuse: " + purpose);
+							row.add(String
+									.valueOf(getTripDistributionValue(startZone, stopZone, mode, purpose)));
+						}
+						JOIN.appendTo(writer, row);
+						writer.write("\n");
+					}
+					writer.close();
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				log.info("Write OD matrix for mode " + mode + " and for purpose " + purpose + " to "
+						+ outputFolder.toString());
+			}
+		}
 	}
 }
