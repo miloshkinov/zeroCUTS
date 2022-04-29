@@ -190,7 +190,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				resultingDataPerZone);
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
 		final TripDistributionMatrix odMatrix = TripDistributionMatrix.Builder
-				.newInstance(shpZones, trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop, sample).build();
+				.newInstance(shpZones, trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop, sample)
+				.build();
 		createTripDistribution(odMatrix, trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop);
 
 		createCarriers(config, scenario, odMatrix, resultingDataPerZone);
@@ -261,7 +262,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					for (String possibleStopZone : odMatrix.getListOfZones()) {
 						for (String possibleMode : odMatrix.getListOfModes()) {
 							if (possibleMode.equals("total") || possibleMode.equals("it"))
-								if (odMatrix.getTripDistributionValue(startZone, possibleStopZone, possibleMode, purpose) != 0) {
+								if (odMatrix.getTripDistributionValue(startZone, possibleStopZone, possibleMode,
+										purpose) != 0) {
 									isStartingLocation = true;
 									break checkIfIsStartingPosition;
 								}
@@ -363,8 +365,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					log.info("Create services for carrier: " + carrierName);
 					for (String stopZone : odMatrix.getListOfZones()) {
 						int demand = 0;
-						int numberOfJobs = (int) Math
-								.ceil(odMatrix.getTripDistributionValue(startZone, stopZone, mode, purpose) / occupancyRate);
+						int numberOfJobs = (int) Math.ceil(
+								odMatrix.getTripDistributionValue(startZone, stopZone, mode, purpose) / occupancyRate);
 						if (numberOfJobs == 0)
 							continue;
 						String selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
@@ -372,8 +374,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
 						String[] serviceArea = new String[] { stopZone };
 						TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 20 * 3600);
-//						NewDemand newDemand = new NewDemand(carrierName, demand, numberOfJobs, null,
-//								areasFirstJobElement, (int) numberOfJobs, null, serviceTimePerStop, serviceTimeWindow);
 						createServices(scenario, purpose, vehicleDepots, selectedStopCategory, carrierName, demand,
 								numberOfJobs, serviceArea, serviceTimePerStop, serviceTimeWindow);
 					}
@@ -469,8 +469,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		getIndexZones();
 
 		if (links.isEmpty()) {
-			Network networkToChange = NetworkUtils.readNetwork(networkPath.toString());
-			links = networkToChange.getLinks().values().stream().filter(l -> l.getAllowedModes().contains("car"))
+			log.info("Filtering and assign links to zones. This take some time...");
+			links = network.getLinks().values().stream().filter(l -> l.getAllowedModes().contains("car"))
 					.collect(Collectors.toList());
 			links.forEach(l -> l.getAttributes().putAttribute("newCoord",
 					shpZones.createTransformation("EPSG:31468").transform(l.getCoord())));
@@ -484,11 +484,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		if (buildingsPerZone.isEmpty()) {
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
 			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
-			log.info("Analyzing buildings types. This may take some time...");
-			for (SimpleFeature singleBuildingFeature : buildingsFeatures) {
-				analyzeBuildingType(singleBuildingFeature);
-			}
-			log.info("Finished anlyzing buildings types.");
+			analyzeBuildingType(buildingsFeatures);
 		}
 		Id<Link> newLink = null;
 		for (int a = 0; newLink == null && a < buildingsPerZone.get(zone).get(selectedCategory).size() * 2; a++) {
@@ -522,37 +518,46 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 	/**
 	 * @param categoriesOfBuilding
-	 * @param singleBuildingFeature
+	 * @param buildingsFeatures
 	 */
-	private void analyzeBuildingType(SimpleFeature singleBuildingFeature) {
+	private void analyzeBuildingType(List<SimpleFeature> buildingsFeatures) {
+		int countOSMObjects = 0;
+		log.info("Analyzing buildings types. This may take some time...");
+		for (SimpleFeature singleBuildingFeature : buildingsFeatures) {
+			countOSMObjects++;
+			if (countOSMObjects % 10000 == 0)
+				log.info("Investigate Building " + countOSMObjects + " of " + buildingsFeatures.size() + " buildings: "
+						+ Math.round((double) countOSMObjects / buildingsFeatures.size() * 100) + " %");
 
-		List<String> categoriesOfBuilding = new ArrayList<String>();
-		String[] buildingTypes;
-		Coord centroidPointOfBuildingPolygon = MGC
-				.point2Coord(((Geometry) singleBuildingFeature.getDefaultGeometry()).getCentroid());
-		String singleZone = indexZones.query(centroidPointOfBuildingPolygon);
-		String buildingType = String.valueOf(singleBuildingFeature.getAttribute("type"));
-		if (buildingType.equals("") || buildingType.equals("null")) {
-			buildingType = indexLanduse.query(centroidPointOfBuildingPolygon);
-			buildingTypes = new String[] { buildingType };
-		} else {
-			buildingType.replace(" ", "");
-			buildingTypes = buildingType.split(";");
-		}
-		singleBuildingFeature.setAttribute("type", String.join(";", buildingTypes));
-		for (String singleBuildingType : buildingTypes) {
-			for (String category : landuseCategoriesAndDataConnection.keySet()) {
-				if (landuseCategoriesAndDataConnection.get(category).contains(singleBuildingType)
-						&& !categoriesOfBuilding.contains(category)) {
-					categoriesOfBuilding.add(category);
+			List<String> categoriesOfBuilding = new ArrayList<String>();
+			String[] buildingTypes;
+			Coord centroidPointOfBuildingPolygon = MGC
+					.point2Coord(((Geometry) singleBuildingFeature.getDefaultGeometry()).getCentroid());
+			String singleZone = indexZones.query(centroidPointOfBuildingPolygon);
+			String buildingType = String.valueOf(singleBuildingFeature.getAttribute("type"));
+			if (buildingType.equals("") || buildingType.equals("null")) {
+				buildingType = indexLanduse.query(centroidPointOfBuildingPolygon);
+				buildingTypes = new String[] { buildingType };
+			} else {
+				buildingType.replace(" ", "");
+				buildingTypes = buildingType.split(";");
+			}
+			singleBuildingFeature.setAttribute("type", String.join(";", buildingTypes));
+			for (String singleBuildingType : buildingTypes) {
+				for (String category : landuseCategoriesAndDataConnection.keySet()) {
+					if (landuseCategoriesAndDataConnection.get(category).contains(singleBuildingType)
+							&& !categoriesOfBuilding.contains(category)) {
+						categoriesOfBuilding.add(category);
+					}
 				}
 			}
+			if (singleZone != null) {
+				categoriesOfBuilding.forEach(c -> buildingsPerZone
+						.computeIfAbsent(singleZone, k -> new HashMap<String, ArrayList<SimpleFeature>>())
+						.computeIfAbsent(c, k -> new ArrayList<SimpleFeature>()).add(singleBuildingFeature));
+			}
 		}
-		if (singleZone != null) {
-			categoriesOfBuilding.forEach(c -> buildingsPerZone
-					.computeIfAbsent(singleZone, k -> new HashMap<String, ArrayList<SimpleFeature>>())
-					.computeIfAbsent(c, k -> new ArrayList<SimpleFeature>()).add(singleBuildingFeature));
-		}
+		log.info("Finished anlyzing buildings types.");
 	}
 
 	private void getIndexZones() {
@@ -602,7 +607,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 */
 	private void createTripDistribution(TripDistributionMatrix odMatrix,
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop) throws UncheckedIOException, MalformedURLException {	
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop)
+			throws UncheckedIOException, MalformedURLException {
 
 		int count = 0;
 
@@ -633,8 +639,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @throws UncheckedIOException
 	 * @throws MalformedURLException
 	 */
-	private void writeODMatrices(TripDistributionMatrix odMatrix)
-			throws UncheckedIOException, MalformedURLException {
+	private void writeODMatrices(TripDistributionMatrix odMatrix) throws UncheckedIOException, MalformedURLException {
 
 		ArrayList<String> usedModes = odMatrix.getListOfModes();
 		ArrayList<String> usedZones = odMatrix.getListOfZones();
@@ -665,7 +670,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							if (odMatrix.getTripDistributionValue(startZone, stopZone, mode, purpose) == null)
 								throw new RuntimeException("OD pair is missing; start: " + startZone + "; stop: "
 										+ stopZone + "; mode: " + mode + "; purpuse: " + purpose);
-							row.add(String.valueOf(odMatrix.getTripDistributionValue(startZone, stopZone, mode, purpose)));
+							row.add(String
+									.valueOf(odMatrix.getTripDistributionValue(startZone, stopZone, mode, purpose)));
 						}
 						JOIN.appendTo(writer, row);
 						writer.write("\n");
@@ -863,21 +869,21 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			landuseCategoriesPerZone.put((String) districId.getAttribute("gml_id"), landusePerCategory);
 		}
 
-		int countOSMObjects = 0;
+//		int countOSMObjects = 0;
 
 		switch (usedLanduseConfiguration) {
 		case useOSMBuildingsAndLanduse:
 
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, null, StandardCharsets.UTF_8);
 			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
-			for (SimpleFeature singleBuildingFeature : buildingsFeatures) {
-				countOSMObjects++;
-				if (countOSMObjects % 10000 == 0)
-					log.info("Investigate Building " + countOSMObjects + " of " + buildingsFeatures.size()
-							+ " buildings: " + Math.round((double) countOSMObjects / buildingsFeatures.size() * 100)
-							+ " %");
-				analyzeBuildingType(singleBuildingFeature);
-			}
+//			for (SimpleFeature singleBuildingFeature : buildingsFeatures) {
+//				countOSMObjects++;
+//				if (countOSMObjects % 10000 == 0)
+//					log.info("Investigate Building " + countOSMObjects + " of " + buildingsFeatures.size()
+//							+ " buildings: " + Math.round((double) countOSMObjects / buildingsFeatures.size() * 100)
+//							+ " %");
+			analyzeBuildingType(buildingsFeatures);
+//			}
 			for (String zone : buildingsPerZone.keySet()) {
 				for (String category : buildingsPerZone.get(zone).keySet()) {
 					for (SimpleFeature building : buildingsPerZone.get(zone).get(category)) {
