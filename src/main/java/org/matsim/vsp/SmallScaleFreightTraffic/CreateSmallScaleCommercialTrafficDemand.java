@@ -191,16 +191,14 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 
 		TrafficVolumeGeneration.loadInputParamters(inputDataDirectory);
-		
-		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration.createTrafficVolume_start(
-				resultingDataPerZone, output, inputDataDirectory, sample, modes);
-		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration.createTrafficVolume_stop(
-				resultingDataPerZone, output, inputDataDirectory, sample, modes);
+
+		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
+				.createTrafficVolume_start(resultingDataPerZone, output, inputDataDirectory, sample, modes);
+		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
+				.createTrafficVolume_stop(resultingDataPerZone, output, inputDataDirectory, sample, modes);
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
-		final TripDistributionMatrix odMatrix = TripDistributionMatrix.Builder
-				.newInstance(shpZones, trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop, sample)
-				.build();
-		createTripDistribution(odMatrix, trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop);
+		final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
+				trafficVolumePerTypeAndZone_stop, shpZones);
 
 		createCarriers(config, scenario, odMatrix, resultingDataPerZone);
 		Controler controler = prepareControler(scenario);
@@ -608,15 +606,20 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * 
 	 * @param trafficVolumePerTypeAndZone_start
 	 * @param trafficVolumePerTypeAndZone_stop
+	 * @param shpZones
 	 * @param shapeFileZonesPath
 	 * @return
 	 * @throws MalformedURLException
 	 * @throws UncheckedIOException
 	 */
-	private void createTripDistribution(TripDistributionMatrix odMatrix,
+	private TripDistributionMatrix createTripDistribution(
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop)
-			throws UncheckedIOException, MalformedURLException {
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop,
+			ShpOptions shpZones) throws UncheckedIOException, MalformedURLException {
+
+		final TripDistributionMatrix odMatrix = TripDistributionMatrix.Builder
+				.newInstance(shpZones, trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop, sample)
+				.build();
 
 		int count = 0;
 
@@ -634,7 +637,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				}
 			}
 		}
-		odMatrix.writeODMatrices(output);	
+		odMatrix.writeODMatrices(output);
+		return odMatrix;
 	}
 
 	/**
@@ -755,8 +759,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			Object2DoubleMap<String> landusePerCategory = new Object2DoubleOpenHashMap<>();
 			landuseCategoriesPerZone.put((String) districId.getAttribute("gml_id"), landusePerCategory);
 		}
-
-
 
 		switch (usedLanduseConfiguration) {
 		case useOSMBuildingsAndLanduse:
