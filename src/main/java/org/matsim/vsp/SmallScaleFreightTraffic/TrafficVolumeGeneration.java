@@ -27,7 +27,7 @@ import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
  *
  */
 public class TrafficVolumeGeneration {
-	
+
 	private static final Logger log = LogManager.getLogger(TrafficVolumeGeneration.class);
 	private static final Joiner JOIN = Joiner.on("\t");
 
@@ -35,29 +35,31 @@ public class TrafficVolumeGeneration {
 	private static HashMap<Integer, HashMap<String, Double>> generationRatesStop = new HashMap<Integer, HashMap<String, Double>>();
 	private static HashMap<String, HashMap<String, Double>> commitmentRatesStart = new HashMap<String, HashMap<String, Double>>();
 	private static HashMap<String, HashMap<String, Double>> commitmentRatesStop = new HashMap<String, HashMap<String, Double>>();
-	
+
 	/**
 	 * Creates the traffic volume (start) for each zone separated in the 3 modes and
 	 * the 5 purposes.
 	 * 
 	 * @param resultingDataPerZone
-	 * @param sample 
-	 * @param inputDataDirectory 
-	 * @param output 
-	 * @param usedModeDifferentiation 
+	 * @param sample
+	 * @param inputDataDirectory
+	 * @param output
+	 * @param usedModeDifferentiation
 	 * @return
 	 * @throws MalformedURLException
 	 */
 	static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_start(
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output, Path inputDataDirectory, double sample, ArrayList<String> modes) throws MalformedURLException {
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output, Path inputDataDirectory,
+			double sample, ArrayList<String> modesORvehTypes) throws MalformedURLException {
 
-		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
-		calculateTrafficVolumePerZone(trafficVolumePerTypeAndZone_start, resultingDataPerZone, "start", modes);
+		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
+		calculateTrafficVolumePerZone(trafficVolume_start, resultingDataPerZone, "start",
+				modesORvehTypes);
 		Path outputFileStart = output.resolve("caculatedData")
 				.resolve("TrafficVolume_startPerZone_" + (int) (sample * 100) + "pt.csv");
-		writeCSVWithTrafficVolumeperZoneAndModes(trafficVolumePerTypeAndZone_start, outputFileStart, sample);
+		writeCSVTrafficVolume(trafficVolume_start, outputFileStart, sample);
 		log.info("Write traffic volume for start trips per zone in CSV: " + outputFileStart);
-		return trafficVolumePerTypeAndZone_start;
+		return trafficVolume_start;
 	}
 
 	/**
@@ -65,36 +67,40 @@ public class TrafficVolumeGeneration {
 	 * the 5 purposes.
 	 * 
 	 * @param resultingDataPerZone
-	 * @param sample 
-	 * @param inputDataDirectory 
-	 * @param output 
-	 * @param usedModeDifferentiation 
+	 * @param sample
+	 * @param inputDataDirectory
+	 * @param output
+	 * @param usedModeDifferentiation
 	 * @return
 	 * @throws MalformedURLException
 	 */
 	static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_stop(
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output, Path inputDataDirectory, double sample, ArrayList<String> modes) throws MalformedURLException {
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output, Path inputDataDirectory,
+			double sample, ArrayList<String> modesORvehTypes) throws MalformedURLException {
 
-		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
-		calculateTrafficVolumePerZone(trafficVolumePerTypeAndZone_stop, resultingDataPerZone, "stop", modes);
+		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
+		calculateTrafficVolumePerZone(trafficVolume_stop, resultingDataPerZone, "stop",
+				modesORvehTypes);
 		Path outputFileStop = output.resolve("caculatedData")
 				.resolve("TrafficVolume_stopPerZone_" + (int) (sample * 100) + "pt.csv");
-		writeCSVWithTrafficVolumeperZoneAndModes(trafficVolumePerTypeAndZone_stop, outputFileStop, sample);
+		writeCSVTrafficVolume(trafficVolume_stop, outputFileStop, sample);
 		log.info("Write traffic volume for stop trips per zone in CSV: " + outputFileStop);
-		return trafficVolumePerTypeAndZone_stop;
+		return trafficVolume_stop;
 	}
+
 	/**
 	 * Calculates the traffic volume for each zone and purpose.
 	 * 
-	 * @param trafficVolumePerZone
+	 * @param trafficVolume
 	 * @param resultingDataPerZone
 	 * @param volumeType
-	 * @param modes 
+	 * @param modesORvehTypes
 	 * @return
 	 */
 	private static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> calculateTrafficVolumePerZone(
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerZone,
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String volumeType, ArrayList<String> modes) {
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume,
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String volumeType,
+			ArrayList<String> modesORvehTypes) {
 
 		HashMap<Integer, HashMap<String, Double>> generationRates = new HashMap<Integer, HashMap<String, Double>>();
 		HashMap<String, HashMap<String, Double>> commitmentRates = new HashMap<String, HashMap<String, Double>>();
@@ -110,7 +116,7 @@ public class TrafficVolumeGeneration {
 
 		for (String zoneId : resultingDataPerZone.keySet()) {
 			HashMap<String, Object2DoubleMap<Integer>> valuesForZone = new HashMap<String, Object2DoubleMap<Integer>>();
-			for (String mode : modes) {
+			for (String modeORvehType : modesORvehTypes) {
 				Object2DoubleMap<Integer> trafficValuesPerPurpose = new Object2DoubleOpenHashMap<>();
 				for (Integer purpose : generationRates.keySet()) {
 
@@ -119,10 +125,13 @@ public class TrafficVolumeGeneration {
 					else
 						for (String category : resultingDataPerZone.get(zoneId).keySet()) {
 							double commitmentFactor;
-							if (mode.equals("total"))
+							if (modeORvehType.equals("total"))
 								commitmentFactor = 1;
 							else
-								commitmentFactor = commitmentRates.get(purpose + "_" + mode).get(category);
+								commitmentFactor = commitmentRates
+										.get(purpose + "_"
+												+ modeORvehType.substring(modeORvehType.length() - 1))
+										.get(category);
 							double generationFactor = generationRates.get(purpose).get(category);
 							double newValue = resultingDataPerZone.get(zoneId).getDouble(category) * generationFactor
 									* commitmentFactor;
@@ -130,21 +139,21 @@ public class TrafficVolumeGeneration {
 						}
 					trafficValuesPerPurpose.replace(purpose, trafficValuesPerPurpose.getDouble(purpose)); // notwendig?
 				}
-				valuesForZone.put(mode, trafficValuesPerPurpose);
+				valuesForZone.put(modeORvehType, trafficValuesPerPurpose);
 			}
-			trafficVolumePerZone.put(zoneId, valuesForZone);
+			trafficVolume.put(zoneId, valuesForZone);
 		}
-		return trafficVolumePerZone;
+		return trafficVolume;
 	}
-	
+
 	/**
-	 * @param trafficVolumePerTypeAndZone
+	 * @param trafficVolume
 	 * @param outputFileInInputFolder
-	 * @param sample 
+	 * @param sample
 	 * @throws MalformedURLException
 	 */
-	private static void writeCSVWithTrafficVolumeperZoneAndModes(
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone,
+	private static void writeCSVTrafficVolume(
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume,
 			Path outputFileInInputFolder, double sample) throws MalformedURLException {
 		BufferedWriter writer = IOUtils.getBufferedWriter(outputFileInInputFolder.toUri().toURL(),
 				StandardCharsets.UTF_8, true);
@@ -152,15 +161,15 @@ public class TrafficVolumeGeneration {
 			String[] header = new String[] { "areaID", "mode", "1", "2", "3", "4", "5" };
 			JOIN.appendTo(writer, header);
 			writer.write("\n");
-			for (String zoneID : trafficVolumePerTypeAndZone.keySet()) {
-				for (String mode : trafficVolumePerTypeAndZone.get(zoneID).keySet()) {
+			for (String zoneID : trafficVolume.keySet()) {
+				for (String modeORvehType : trafficVolume.get(zoneID).keySet()) {
 					List<String> row = new ArrayList<>();
 					row.add(zoneID);
-					row.add(mode);
+					row.add(modeORvehType);
 					Integer count = 1;
 					while (count < 6) {
 						row.add(String.valueOf(Math
-								.round(trafficVolumePerTypeAndZone.get(zoneID).get(mode).getDouble(count) * sample)));
+								.round(trafficVolume.get(zoneID).get(modeORvehType).getDouble(count) * sample)));
 						count++;
 					}
 					JOIN.appendTo(writer, row);
@@ -173,29 +182,34 @@ public class TrafficVolumeGeneration {
 			e.printStackTrace();
 		}
 	}
-	static void loadInputParamters(Path inputDataDirectory) throws IOException {
+
+	static void loadInputParamters(Path inputDataDirectory, String trafficType) throws IOException {
 
 		// Read generation rates for start potentials
-		Path generationRatesStartPath = inputDataDirectory.resolve("parameters").resolve("generationRates_start.csv");
+		Path generationRatesStartPath = inputDataDirectory.resolve("parameters")
+				.resolve("generationRates_start_" + trafficType + ".csv");
 		generationRatesStart = readGenerationRates(generationRatesStartPath);
 		log.info("Read generations rates (start)");
 
 		// Read generation rates for stop potentials
-		Path generationRatesStopPath = inputDataDirectory.resolve("parameters").resolve("generationRates_stop.csv");
+		Path generationRatesStopPath = inputDataDirectory.resolve("parameters")
+				.resolve("generationRates_stop_" + trafficType + ".csv");
 		generationRatesStop = readGenerationRates(generationRatesStopPath);
 		log.info("Read generations rates (stop)");
 
 		// read commitment rates for start potentials
-		Path commitmentRatesStartPath = inputDataDirectory.resolve("parameters").resolve("commitmentRates_start.csv");
+		Path commitmentRatesStartPath = inputDataDirectory.resolve("parameters")
+				.resolve("commitmentRates_start_" + trafficType + ".csv");
 		commitmentRatesStart = readCommitmentRates(commitmentRatesStartPath);
 		log.info("Read commitment rates (start)");
 
 		// read commitment rates for stop potentials
-		Path commitmentRatesStopPath = inputDataDirectory.resolve("parameters").resolve("commitmentRates_stop.csv");
+		Path commitmentRatesStopPath = inputDataDirectory.resolve("parameters")
+				.resolve("commitmentRates_stop_" + trafficType + ".csv");
 		commitmentRatesStop = readCommitmentRates(commitmentRatesStopPath);
 		log.info("Read commitment rates (stop)");
 	}
-	
+
 	/**
 	 * Reads the data for the generation rates.
 	 * 
@@ -203,7 +217,8 @@ public class TrafficVolumeGeneration {
 	 * @return
 	 * @throws IOException
 	 */
-	private static HashMap<Integer, HashMap<String, Double>> readGenerationRates(Path generationRatesPath) throws IOException {
+	private static HashMap<Integer, HashMap<String, Double>> readGenerationRates(Path generationRatesPath)
+			throws IOException {
 		HashMap<Integer, HashMap<String, Double>> generationRates = new HashMap<Integer, HashMap<String, Double>>();
 		if (!Files.exists(generationRatesPath)) {
 			log.error("Required input data file {} not found", generationRatesPath);
@@ -231,7 +246,8 @@ public class TrafficVolumeGeneration {
 	 * @return
 	 * @throws IOException
 	 */
-	private static HashMap<String, HashMap<String, Double>> readCommitmentRates(Path commitmentRatesPath) throws IOException {
+	private static HashMap<String, HashMap<String, Double>> readCommitmentRates(Path commitmentRatesPath)
+			throws IOException {
 		HashMap<String, HashMap<String, Double>> commitmentRates = new HashMap<String, HashMap<String, Double>>();
 		if (!Files.exists(commitmentRatesPath)) {
 			log.error("Required input data file {} not found", commitmentRatesPath);

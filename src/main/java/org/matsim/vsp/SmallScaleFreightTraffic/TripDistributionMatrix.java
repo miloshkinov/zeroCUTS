@@ -34,24 +34,25 @@ public class TripDistributionMatrix {
 	private static final Joiner JOIN = Joiner.on("\t");
 	
 	private ArrayList<String> listOfZones = new ArrayList<String>();
-	private ArrayList<String> listOfModes = new ArrayList<String>();
+	private ArrayList<String> listOfModesORvehTypes = new ArrayList<String>();
 	private ArrayList<Integer> listOfPurposes = new ArrayList<Integer>();
 	private final List<SimpleFeature> zonesFeatures;
-	private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start;
-	private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop;
+	private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start;
+	private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop;
 	private final double sample;
+	private final String trafficType;
 
 	static class TripDistributionMatrixKey {
 		private final String fromZone;
 		private final String toZone;
-		private final String mode;
+		private final String modeORvehType;
 		private final int purpose;
 
-		public TripDistributionMatrixKey(String fromZone, String toZone, String mode, int purpose) {
+		public TripDistributionMatrixKey(String fromZone, String toZone, String modeORvehType, int purpose) {
 			super();
 			this.fromZone = fromZone;
 			this.toZone = toZone;
-			this.mode = mode;
+			this.modeORvehType = modeORvehType;
 			this.purpose = purpose;
 		}
 
@@ -63,8 +64,8 @@ public class TripDistributionMatrix {
 			return toZone;
 		}
 
-		public String getMode() {
-			return mode;
+		public String getModesORvehType() {
+			return modeORvehType;
 		}
 
 		public int getPurpose() {
@@ -80,7 +81,7 @@ public class TripDistributionMatrix {
 			temp = Double.doubleToLongBits(purpose);
 			result = prime * result + (int) (temp ^ (temp >>> 32));
 			result = prime * result + ((toZone == null) ? 0 : toZone.hashCode());
-			result = prime * result + ((mode == null) ? 0 : mode.hashCode());
+			result = prime * result + ((modeORvehType == null) ? 0 : modeORvehType.hashCode());
 			return result;
 		}
 
@@ -105,10 +106,10 @@ public class TripDistributionMatrix {
 					return false;
 			} else if (!toZone.equals(other.toZone))
 				return false;
-			if (mode == null) {
-				if (other.mode != null)
+			if (modeORvehType == null) {
+				if (other.modeORvehType != null)
 					return false;
-			} else if (!mode.equals(other.mode))
+			} else if (!modeORvehType.equals(other.modeORvehType))
 				return false;
 			return true;
 		}
@@ -167,13 +168,13 @@ public class TripDistributionMatrix {
 
 	static class GravityConstantKey {
 		private final String fromZone;
-		private final String mode;
+		private final String modeORvehType;
 		private final int purpose;
 
 		public GravityConstantKey(String fromZone, String mode, int purpose) {
 			super();
 			this.fromZone = fromZone;
-			this.mode = mode;
+			this.modeORvehType = mode;
 			this.purpose = purpose;
 		}
 
@@ -181,8 +182,8 @@ public class TripDistributionMatrix {
 			return fromZone;
 		}
 
-		public String getMode() {
-			return mode;
+		public String getModeORvehType() {
+			return modeORvehType;
 		}
 
 		public int getPurpose() {
@@ -197,7 +198,7 @@ public class TripDistributionMatrix {
 			long temp;
 			temp = Double.doubleToLongBits(purpose);
 			result = prime * result + (int) (temp ^ (temp >>> 32));
-			result = prime * result + ((mode == null) ? 0 : mode.hashCode());
+			result = prime * result + ((modeORvehType == null) ? 0 : modeORvehType.hashCode());
 			return result;
 		}
 
@@ -217,10 +218,10 @@ public class TripDistributionMatrix {
 				return false;
 			if (Double.doubleToLongBits(purpose) != Double.doubleToLongBits(other.purpose))
 				return false;
-			if (mode == null) {
-				if (other.mode != null)
+			if (modeORvehType == null) {
+				if (other.modeORvehType != null)
 					return false;
-			} else if (!mode.equals(other.mode))
+			} else if (!modeORvehType.equals(other.modeORvehType))
 				return false;
 			return true;
 		}
@@ -229,26 +230,28 @@ public class TripDistributionMatrix {
 	public static class Builder {
 
 		private final List<SimpleFeature> zonesFeatures;
-		private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start;
-		private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop;
+		private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start;
+		private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop;
 		private final double sample;
+		private final String trafficType;
 
 		public static Builder newInstance(ShpOptions shpZones,
-				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start,
-				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop,
-				double sample) {
-			return new Builder(shpZones, trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop, sample);
+				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
+				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop,
+				double sample, String trafficType) {
+			return new Builder(shpZones, trafficVolume_start, trafficVolume_stop, sample, trafficType);
 		}
 
 		private Builder(ShpOptions shpZones,
-				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start,
-				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop,
-				double sample) {
+				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
+				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop,
+				double sample, String trafficType) {
 			super();
 			this.zonesFeatures = shpZones.readFeatures();
-			this.trafficVolumePerTypeAndZone_start = trafficVolumePerTypeAndZone_start;
-			this.trafficVolumePerTypeAndZone_stop = trafficVolumePerTypeAndZone_stop;
+			this.trafficVolume_start = trafficVolume_start;
+			this.trafficVolume_stop = trafficVolume_stop;
 			this.sample = sample;
+			this.trafficType = trafficType;
 		}
 
 		public TripDistributionMatrix build() {
@@ -258,9 +261,10 @@ public class TripDistributionMatrix {
 
 	private TripDistributionMatrix(Builder builder) {
 		zonesFeatures = builder.zonesFeatures;
-		trafficVolumePerTypeAndZone_start = builder.trafficVolumePerTypeAndZone_start;
-		trafficVolumePerTypeAndZone_stop = builder.trafficVolumePerTypeAndZone_stop;
+		trafficVolume_start = builder.trafficVolume_start;
+		trafficVolume_stop = builder.trafficVolume_stop;
 		sample = builder.sample;
+		trafficType = builder.trafficType;
 	}
 
 	private final ConcurrentHashMap<TripDistributionMatrixKey, Integer> matrixCache = new ConcurrentHashMap<TripDistributionMatrixKey, Integer>();
@@ -270,11 +274,11 @@ public class TripDistributionMatrix {
 	private final ConcurrentHashMap<String, Object2DoubleMap<String>> roundingError = new ConcurrentHashMap<>();
 	private int createdVolume = 0;
 
-	void setTripDistributionValue(String startZone, String stopZone, String mode, Integer purpose) {
-		double volumeStart = trafficVolumePerTypeAndZone_start.get(startZone).get(mode).getDouble(purpose);
-		double volumeStop = trafficVolumePerTypeAndZone_stop.get(stopZone).get(mode).getDouble(purpose);
+	void setTripDistributionValue(String startZone, String stopZone, String modeORvehType, Integer purpose) {
+		double volumeStart = trafficVolume_start.get(startZone).get(modeORvehType).getDouble(purpose);
+		double volumeStop = trafficVolume_stop.get(stopZone).get(modeORvehType).getDouble(purpose);
 		double resistanceValue = getResistanceFunktionValue(startZone, stopZone);
-		double gravityConstantA = getGravityConstant(startZone, trafficVolumePerTypeAndZone_stop, mode, purpose);
+		double gravityConstantA = getGravityConstant(startZone, trafficVolume_stop, modeORvehType, purpose);
 		roundingError.computeIfAbsent(startZone, (k) -> new Object2DoubleOpenHashMap<>());
 		/*
 		 * gravity model Anpassungen: Faktor anpassen, z.B. reale Reisezeiten im Netz,
@@ -284,18 +288,18 @@ public class TripDistributionMatrix {
 		double sampledVolume = sample * volume;
 		int roundedSampledVolume = (int) Math.floor(sampledVolume);
 		double certainRoundingError = sampledVolume - roundedSampledVolume;
-		roundingError.get(startZone).merge((mode + "_" + purpose), certainRoundingError, Double::sum);
-		if (roundingError.get(startZone).getDouble((mode + "_" + purpose)) >= 1) {
+		roundingError.get(startZone).merge((modeORvehType + "_" + purpose), certainRoundingError, Double::sum);
+		if (roundingError.get(startZone).getDouble((modeORvehType + "_" + purpose)) >= 1) {
 			roundedSampledVolume++;
-			roundingError.get(startZone).merge((mode + "_" + purpose), -1, Double::sum);
+			roundingError.get(startZone).merge((modeORvehType + "_" + purpose), -1, Double::sum);
 		} // TODO eventuell methodik für den letzten error rest am Ende
-		TripDistributionMatrixKey matrixKey = makeKey(startZone, stopZone, mode, purpose);
+		TripDistributionMatrixKey matrixKey = makeKey(startZone, stopZone, modeORvehType, purpose);
 		createdVolume = createdVolume + roundedSampledVolume;
 		matrixCache.put(matrixKey, roundedSampledVolume);
 	}
 
-	Integer getTripDistributionValue(String startZone, String stopZone, String mode, Integer purpose) {
-		TripDistributionMatrixKey matrixKey = makeKey(startZone, stopZone, mode, purpose);
+	Integer getTripDistributionValue(String startZone, String stopZone, String modeORvehType, Integer purpose) {
+		TripDistributionMatrixKey matrixKey = makeKey(startZone, stopZone, modeORvehType, purpose);
 		return matrixCache.get(matrixKey);
 	}
 
@@ -339,21 +343,21 @@ public class TripDistributionMatrix {
 	 * Calculates the gravity constant.
 	 * 
 	 * @param baseZone
-	 * @param trafficVolumePerTypeAndZone
+	 * @param trafficVolume
 	 * @param resistanceValue
-	 * @param mode
+	 * @param modeORvehType
 	 * @param purpose
 	 * @return
 	 */
 	private double getGravityConstant(String baseZone,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone, String mode,
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume, String modeORvehType,
 			Integer purpose) {
 
-		GravityConstantKey gravityKey = makeGravityKey(baseZone, mode, purpose);
+		GravityConstantKey gravityKey = makeGravityKey(baseZone, modeORvehType, purpose);
 		if (!gravityConstantACache.containsKey(gravityKey)) {
 			double sum = 0;
-			for (String zone : trafficVolumePerTypeAndZone.keySet()) {
-				double volume = trafficVolumePerTypeAndZone.get(zone).get(mode).getDouble(purpose);
+			for (String zone : trafficVolume.keySet()) {
+				double volume = trafficVolume.get(zone).get(modeORvehType).getDouble(purpose);
 				double resistanceValue = getResistanceFunktionValue(baseZone, zone);
 				sum = sum + (volume * resistanceValue);
 			}
@@ -369,12 +373,12 @@ public class TripDistributionMatrix {
 	 * 
 	 * @param fromZone
 	 * @param toZone
-	 * @param mode
+	 * @param modeORvehType
 	 * @param purpose
 	 * @return
 	 */
-	private TripDistributionMatrixKey makeKey(String fromZone, String toZone, String mode, int purpose) {
-		return new TripDistributionMatrixKey(fromZone, toZone, mode, purpose);
+	private TripDistributionMatrixKey makeKey(String fromZone, String toZone, String modeORvehType, int purpose) {
+		return new TripDistributionMatrixKey(fromZone, toZone, modeORvehType, purpose);
 	}
 
 	/**
@@ -382,7 +386,7 @@ public class TripDistributionMatrix {
 	 * 
 	 * @param fromZone
 	 * @param toZone
-	 * @param mode
+	 * @param modeORvehType
 	 * @param purpose
 	 * @return
 	 */
@@ -395,12 +399,12 @@ public class TripDistributionMatrix {
 	 * 
 	 * @param fromZone
 	 * @param toZone
-	 * @param mode
+	 * @param modeOrVehType
 	 * @param purpose
 	 * @return
 	 */
-	private GravityConstantKey makeGravityKey(String fromZone, String mode, int purpose) {
-		return new GravityConstantKey(fromZone, mode, purpose);
+	private GravityConstantKey makeGravityKey(String fromZone, String modeOrVehType, int purpose) {
+		return new GravityConstantKey(fromZone, modeOrVehType, purpose);
 	}
 
 	/**
@@ -426,14 +430,14 @@ public class TripDistributionMatrix {
 	 * @param odMatrix
 	 * @return
 	 */
-	ArrayList<String> getListOfModes() {
-		if (listOfModes.isEmpty()) {
+	ArrayList<String> getListOfModesOrVehTypes() {
+		if (listOfModesORvehTypes.isEmpty()) {
 			for (TripDistributionMatrixKey key : matrixCache.keySet()) {
-				if (!listOfModes.contains(key.getMode()))
-					listOfModes.add(key.getMode());
+				if (!listOfModesORvehTypes.contains(key.getModesORvehType()))
+					listOfModesORvehTypes.add(key.getModesORvehType());
 			}
 		}
-		return listOfModes;
+		return listOfModesORvehTypes;
 	}
 
 	/**
@@ -452,11 +456,11 @@ public class TripDistributionMatrix {
 		return listOfPurposes;
 	}
 
-	int getSumOfServicesForStartZone(String startZone, String mode, int purpose) {
+	int getSumOfServicesForStartZone(String startZone, String modeORvehType, int purpose) {
 		int numberOfTrips = 0;
 		ArrayList<String> zones = getListOfZones();
 		for (String stopZone : zones)
-			numberOfTrips = numberOfTrips + matrixCache.get(makeKey(startZone, stopZone, mode, purpose));
+			numberOfTrips = numberOfTrips + matrixCache.get(makeKey(startZone, stopZone, modeORvehType, purpose));
 		return numberOfTrips;
 	}
 	
@@ -473,15 +477,15 @@ public class TripDistributionMatrix {
 	 */
 	void writeODMatrices(Path output) throws UncheckedIOException, MalformedURLException {
 
-		ArrayList<String> usedModes = getListOfModes();
+		ArrayList<String> usedModesORvehTypes = getListOfModesOrVehTypes();
 		ArrayList<String> usedZones = getListOfZones();
 		ArrayList<Integer> usedPurposes = getListOfPurposes();
 
-		for (String mode : usedModes) {
+		for (String modeORvehType : usedModesORvehTypes) {
 			for (int purpose : usedPurposes) {
 
 				Path outputFolder = output.resolve("caculatedData")
-						.resolve("odMatrix_" + mode + "_" + purpose + ".csv");
+						.resolve("odMatrix_" + modeORvehType + "_" + purpose + ".csv");
 
 				BufferedWriter writer = IOUtils.getBufferedWriter(outputFolder.toUri().toURL(), StandardCharsets.UTF_8,
 						true);
@@ -499,11 +503,11 @@ public class TripDistributionMatrix {
 						List<String> row = new ArrayList<>();
 						row.add(startZone);
 						for (String stopZone : usedZones) {
-							if (getTripDistributionValue(startZone, stopZone, mode, purpose) == null)
+							if (getTripDistributionValue(startZone, stopZone, modeORvehType, purpose) == null)
 								throw new RuntimeException("OD pair is missing; start: " + startZone + "; stop: "
-										+ stopZone + "; mode: " + mode + "; purpuse: " + purpose);
+										+ stopZone + "; modeORvehType: " + modeORvehType + "; purpuse: " + purpose);
 							row.add(String
-									.valueOf(getTripDistributionValue(startZone, stopZone, mode, purpose)));
+									.valueOf(getTripDistributionValue(startZone, stopZone, modeORvehType, purpose)));
 						}
 						JOIN.appendTo(writer, row);
 						writer.write("\n");
@@ -513,7 +517,7 @@ public class TripDistributionMatrix {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-				log.info("Write OD matrix for mode " + mode + " and for purpose " + purpose + " to "
+				log.info("Write OD matrix for mode " + modeORvehType + " and for purpose " + purpose + " to "
 						+ outputFolder.toString());
 			}
 		}

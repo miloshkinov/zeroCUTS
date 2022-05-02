@@ -101,6 +101,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		createOneODMatrix, createSeperateODMatricesForModes
 	}
 
+	private enum TrafficType {
+		businessTraffic, freightTraffic
+	}
+
 	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input")
 	private static Path inputDataDirectory;
 
@@ -117,7 +121,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private static int jspritIterations;
 
 	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of mode differentiation:  createOneODMatrix, createSeperateODMatricesForModes")
-	private ModeDifferentiation usedModeDifferentiation;
+	private ModeDifferentiation usedModeDifferentiationForPassangerTraffic;
 
 	@CommandLine.Option(names = "--useDistricts", defaultValue = "useDistricts", description = "Set option input zones. Options: useDistricts, useTrafficCells")
 	private ZoneChoice usedZoneChoice;
@@ -126,6 +130,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private LanduseConfiguration usedLanduseConfiguration;
 // useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
 
+	@CommandLine.Option(names = "--trafficType", defaultValue = "freightTraffic", description = "Select traffic type. Options: commercialPassengerTraffic, freightTraffic")
+	private TrafficType usedTrafficType;
+// businessTraffic, freightTraffic
 	private final static SplittableRandom rnd = new SplittableRandom(4711);
 
 	public static void main(String[] args) {
@@ -178,29 +185,39 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = createInputDataDistribution();
 
-		ArrayList<String> modes;
-		switch (usedModeDifferentiation) {
-		case createOneODMatrix:
-			modes = new ArrayList<String>(Arrays.asList("total"));
+		ArrayList<String> modesORvehTypes;
+		switch (usedTrafficType) {
+		case businessTraffic:
+			switch (usedModeDifferentiationForPassangerTraffic) {
+			case createOneODMatrix:
+				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
+				break;
+			case createSeperateODMatricesForModes:
+				modesORvehTypes = new ArrayList<String>(Arrays.asList("pt", "it", "op"));
+				break;
+			default:
+				throw new RuntimeException("No mode differentiation selected.");
+			}
 			break;
-		case createSeperateODMatricesForModes:
-			modes = new ArrayList<String>(Arrays.asList("pt", "it", "op"));
+		case freightTraffic:
+			modesORvehTypes = new ArrayList<String>(
+					Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
 			break;
 		default:
-			throw new RuntimeException("No mode differentiation selected.");
+			throw new RuntimeException("No traffic type selected.");
 		}
 
-		TrafficVolumeGeneration.loadInputParamters(inputDataDirectory);
+		TrafficVolumeGeneration.loadInputParamters(inputDataDirectory, usedTrafficType.toString());
 
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
-				.createTrafficVolume_start(resultingDataPerZone, output, inputDataDirectory, sample, modes);
+				.createTrafficVolume_start(resultingDataPerZone, output, inputDataDirectory, sample, modesORvehTypes);
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
-				.createTrafficVolume_stop(resultingDataPerZone, output, inputDataDirectory, sample, modes);
+				.createTrafficVolume_stop(resultingDataPerZone, output, inputDataDirectory, sample, modesORvehTypes);
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
 		final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
 				trafficVolumePerTypeAndZone_stop, shpZones);
 
-		createCarriers(config, scenario, odMatrix, resultingDataPerZone);
+		createCarriers(config, scenario, odMatrix, resultingDataPerZone, usedTrafficType.toString());
 		Controler controler = prepareControler(scenario);
 
 		FreightUtils.runJsprit(controler.getScenario());
@@ -255,133 +272,183 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param scenario
 	 * @param odMatrix
 	 * @param resultingDataPerZone
+	 * @param trafficType
 	 */
 	private void createCarriers(Config config, Scenario scenario, TripDistributionMatrix odMatrix,
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone) {
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String trafficType) {
 		int maxNumberOfCarrier = odMatrix.getListOfPurposes().size() * odMatrix.getListOfZones().size()
-				* odMatrix.getListOfModes().size();
+				* odMatrix.getListOfModesOrVehTypes().size();
 		int createdCarrier = 0;
 		for (Integer purpose : odMatrix.getListOfPurposes()) {
 			for (String startZone : odMatrix.getListOfZones()) {
-				boolean isStartingLocation = false;
-				checkIfIsStartingPosition: {
-					for (String possibleStopZone : odMatrix.getListOfZones()) {
-						for (String possibleMode : odMatrix.getListOfModes()) {
-							if (possibleMode.equals("total") || possibleMode.equals("it"))
-								if (odMatrix.getTripDistributionValue(startZone, possibleStopZone, possibleMode,
+				for (String modeORvehType : odMatrix.getListOfModesOrVehTypes()) {
+					boolean isStartingLocation = false;
+					checkIfIsStartingPosition: {
+						for (String possibleStopZone : odMatrix.getListOfZones()) {
+							if (!modeORvehType.equals("pt") && !modeORvehType.equals("op"))
+								if (odMatrix.getTripDistributionValue(startZone, possibleStopZone, modeORvehType,
 										purpose) != 0) {
 									isStartingLocation = true;
 									break checkIfIsStartingPosition;
 								}
 						}
 					}
-				}
-				if (isStartingLocation) {
-					double occupancyRate = 0;
-					String[] vehilceTypes = null;
-					Integer serviceTimePerStop = null;
-					ArrayList<String> startCategory = new ArrayList<String>();
-					ArrayList<String> stopCategory = new ArrayList<String>();
+					if (isStartingLocation) {
+						double occupancyRate = 0;
+						String[] vehilceTypes = null;
+						Integer serviceTimePerStop = null;
+						ArrayList<String> startCategory = new ArrayList<String>();
+						ArrayList<String> stopCategory = new ArrayList<String>();
+						if (purpose == 1) {
+							if (trafficType.equals("freightTraffic")) {
+								occupancyRate = 1.;
+							} else if (trafficType.equals("businessTraffic")) {
+								vehilceTypes = new String[] { "vwCaddy" };
+								serviceTimePerStop = (int) Math.round(71.7 * 60);
+								occupancyRate = 1.5;
+							}
+							startCategory.add("Employee Secondary Sector Rest");
+							stopCategory.add("Employee Secondary Sector Rest");
+						} else if (purpose == 2) {
+							if (trafficType.equals("freightTraffic")) {
+								occupancyRate = 1.;
+							} else if (trafficType.equals("businessTraffic")) {
+								vehilceTypes = new String[] { "vwCaddy" };
+								serviceTimePerStop = (int) Math.round(70.4 * 60); // Durschnitt aus Handel,Transp.,Einw.
+								occupancyRate = 1.6;
+							}
+							startCategory.add("Employee Secondary Sector Rest");
+							stopCategory.add("Employee Primary Sector");
+							stopCategory.add("Employee Construction");
+							stopCategory.add("Employee Secondary Sector Rest");
+							stopCategory.add("Employee Retail");
+							stopCategory.add("Employee Traffic/Parcels");
+							stopCategory.add("Employee Tertiary Sector Rest");
+							stopCategory.add("Inhabitants");
+						} else if (purpose == 3) {
+							if (trafficType.equals("freightTraffic")) {
+								occupancyRate = 1.;
+							} else if (trafficType.equals("businessTraffic")) {
+								vehilceTypes = new String[] { "golf1.4" };
+								serviceTimePerStop = (int) Math.round(70.4 * 60);
+								occupancyRate = 1.2;
+							}
+							startCategory.add("Employee Retail");
+							startCategory.add("Employee Tertiary Sector Rest");
+							stopCategory.add("Employee Primary Sector");
+							stopCategory.add("Employee Construction");
+							stopCategory.add("Employee Secondary Sector Rest");
+							stopCategory.add("Employee Retail");
+							stopCategory.add("Employee Traffic/Parcels");
+							stopCategory.add("Employee Tertiary Sector Rest");
+							stopCategory.add("Inhabitants");
+						} else if (purpose == 4) {
+							if (trafficType.equals("freightTraffic")) {
+								occupancyRate = 1.;
+							} else if (trafficType.equals("businessTraffic")) {
+								vehilceTypes = new String[] { "golf1.4" };
+								serviceTimePerStop = (int) Math.round(100.6 * 60);
+								occupancyRate = 1.2;
+							}
+							startCategory.add("Employee Traffic/Parcels");
+							stopCategory.add("Employee Primary Sector");
+							stopCategory.add("Employee Construction");
+							stopCategory.add("Employee Secondary Sector Rest");
+							stopCategory.add("Employee Retail");
+							stopCategory.add("Employee Traffic/Parcels");
+							stopCategory.add("Employee Tertiary Sector Rest");
+							stopCategory.add("Inhabitants");
+						} else if (purpose == 5) {
+							if (trafficType.equals("freightTraffic")) {
+								occupancyRate = 1.;
+							} else if (trafficType.equals("businessTraffic")) {
+								vehilceTypes = new String[] { "mercedes313" };
+								serviceTimePerStop = (int) Math.round(214.7 * 60);
+								occupancyRate = 1.7;
+							}
+							startCategory.add("Employee Construction");
+							stopCategory.add("Employee Primary Sector");
+							stopCategory.add("Employee Construction");
+							stopCategory.add("Employee Secondary Sector Rest");
+							stopCategory.add("Employee Retail");
+							stopCategory.add("Employee Traffic/Parcels");
+							stopCategory.add("Employee Tertiary Sector Rest");
+							stopCategory.add("Inhabitants");
+						} else if (purpose == 6) {
+							occupancyRate = 1.;
+							startCategory.add("Inhabitants");
+							stopCategory.add("Employee Primary Sector");
+							stopCategory.add("Employee Construction");
+							stopCategory.add("Employee Secondary Sector Rest");
+							stopCategory.add("Employee Retail");
+							stopCategory.add("Employee Traffic/Parcels");
+							stopCategory.add("Employee Tertiary Sector Rest");
+							stopCategory.add("Inhabitants");
+						}
+						if (trafficType.equals("freightTraffic")) {
+							if (modeORvehType.equals("vehTyp1")) {
+								vehilceTypes = new String[] { "vwCaddy" }; // possible to add more types, see source
+								serviceTimePerStop = (int) Math.round(120 * 60);
+							} else if (modeORvehType.equals("vehTyp2")) {
+								vehilceTypes = new String[] { "mercedes313" };
+								serviceTimePerStop = (int) Math.round(150 * 60);
+							} else if (modeORvehType.equals("vehTyp3")) {
+								vehilceTypes = new String[] { "light8t" };
+								serviceTimePerStop = (int) Math.round(120 * 60);
+							} else if (modeORvehType.equals("vehTyp4")) {
+								vehilceTypes = new String[] { "light8t" };
+								serviceTimePerStop = (int) Math.round(75 * 60);
+							} else if (modeORvehType.equals("vehTyp5")) {
+								vehilceTypes = new String[] { "medium18t" };
+								serviceTimePerStop = (int) Math.round(65 * 60);
+							}
+						}
+						String selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
+						for (int i = 0; resultingDataPerZone.get(startZone).getDouble(selectedStartCategory) == 0
+								&& i < startCategory.size() * 30; i++) {
+							selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
+							if (i > startCategory.size() * 20)
+								selectedStartCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
+						} // TODO vielleicht besser lösen
 
-					if (purpose == 1) {
-						vehilceTypes = new String[] { "mercedes313" };
-						serviceTimePerStop = (int) Math.round(71.7 * 60);
-						occupancyRate = 1.5;
-						startCategory.add("Employee Secondary Sector Rest");
-						stopCategory.add("Employee Secondary Sector Rest");
-					} else if (purpose == 2) {
-						vehilceTypes = new String[] { "mercedes313" };
-						serviceTimePerStop = (int) Math.round(70.4 * 60); // Durschnitt aus Handel,Transp.,Einw.
-						occupancyRate = 1.6;
-						startCategory.add("Employee Secondary Sector Rest");
-						stopCategory.add("Employee Primary Sector");
-						stopCategory.add("Employee Construction");
-						stopCategory.add("Employee Secondary Sector Rest");
-						stopCategory.add("Employee Retail");
-						stopCategory.add("Employee Traffic/Parcels");
-						stopCategory.add("Employee Tertiary Sector Rest");
-						stopCategory.add("Inhabitants");
-					} else if (purpose == 3) {
-						vehilceTypes = new String[] { "golf1.4" };
-						serviceTimePerStop = (int) Math.round(70.4 * 60);
-						occupancyRate = 1.2;
-						startCategory.add("Employee Retail");
-						startCategory.add("Employee Tertiary Sector Rest");
-						stopCategory.add("Employee Primary Sector");
-						stopCategory.add("Employee Construction");
-						stopCategory.add("Employee Secondary Sector Rest");
-						stopCategory.add("Employee Retail");
-						stopCategory.add("Employee Traffic/Parcels");
-						stopCategory.add("Employee Tertiary Sector Rest");
-						stopCategory.add("Inhabitants");
-					} else if (purpose == 4) {
-						vehilceTypes = new String[] { "golf1.4" };
-						serviceTimePerStop = (int) Math.round(100.6 * 60);
-						occupancyRate = 1.2;
-						startCategory.add("Employee Traffic/Parcels");
-						stopCategory.add("Employee Primary Sector");
-						stopCategory.add("Employee Construction");
-						stopCategory.add("Employee Secondary Sector Rest");
-						stopCategory.add("Employee Retail");
-						stopCategory.add("Employee Traffic/Parcels");
-						stopCategory.add("Employee Tertiary Sector Rest");
-						stopCategory.add("Inhabitants");
-					} else if (purpose == 5) {
-						vehilceTypes = new String[] { "mercedes313" };
-						serviceTimePerStop = (int) Math.round(214.7 * 60);
-						occupancyRate = 1.7;
-						startCategory.add("Employee Construction");
-						stopCategory.add("Employee Primary Sector");
-						stopCategory.add("Employee Construction");
-						stopCategory.add("Employee Secondary Sector Rest");
-						stopCategory.add("Employee Retail");
-						stopCategory.add("Employee Traffic/Parcels");
-						stopCategory.add("Employee Tertiary Sector Rest");
-						stopCategory.add("Inhabitants");
-					}
-					String selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
-					for (int i = 0; resultingDataPerZone.get(startZone).getDouble(selectedStartCategory) == 0
-							&& i < startCategory.size() * 30; i++) {
-						selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
-						if (i > startCategory.size() * 20)
-							selectedStartCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
-					} // TODO vielleicht besser lösen
-
-					String mode; // TODO Notwendigkeit überprüfen
-					if (odMatrix.getListOfModes().contains("total") && odMatrix.getListOfModes().size() == 1)
-						mode = "total";
-					else
-						mode = "it";
-					String carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
-					int numberOfDepots = (int) Math
-							.ceil((double) odMatrix.getSumOfServicesForStartZone(startZone, mode, purpose)
-									* serviceTimePerStop / (8 * 3600) * 2); // TODO
-					FleetSize fleetSize = FleetSize.FINITE;
-					int fixedNumberOfVehilcePerTypeAndLocation = 1;
-					ArrayList<String> vehicleDepots = new ArrayList<String>();
-					createdCarrier++;
-					log.info("Create carrier number " + createdCarrier + " of a maximum Number of " + maxNumberOfCarrier
-							+ " carriers.");
-					log.info("Carrier: " + carrierName + "; depots: " + numberOfDepots + "; services: " + (int) Math
-							.ceil(odMatrix.getSumOfServicesForStartZone(startZone, mode, purpose) / occupancyRate));
-					createNewCarrierAndAddVehilceTypes(scenario, purpose, startZone,
-							ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), selectedStartCategory,
-							carrierName, vehilceTypes, numberOfDepots, fleetSize,
-							fixedNumberOfVehilcePerTypeAndLocation, vehicleDepots);
-					log.info("Create services for carrier: " + carrierName);
-					for (String stopZone : odMatrix.getListOfZones()) {
-						int demand = 0;
-						int numberOfJobs = (int) Math.ceil(
-								odMatrix.getTripDistributionValue(startZone, stopZone, mode, purpose) / occupancyRate);
-						if (numberOfJobs == 0)
-							continue;
-						String selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
-						while (resultingDataPerZone.get(stopZone).getDouble(selectedStopCategory) == 0)
-							selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
-						String[] serviceArea = new String[] { stopZone };
-						TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 20 * 3600);
-						createServices(scenario, purpose, vehicleDepots, selectedStopCategory, carrierName, demand,
-								numberOfJobs, serviceArea, serviceTimePerStop, serviceTimeWindow);
+						String carrierName;
+						if (trafficType.equals("freightTraffic")) {
+							carrierName = "Carrier_" + startZone + "_purpose_" + purpose + "_" + modeORvehType;
+						} else
+							carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
+						int numberOfDepots = (int) Math
+								.ceil((double) odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType, purpose)
+										* serviceTimePerStop / (8 * 3600) * 2); // TODO
+						FleetSize fleetSize = FleetSize.FINITE;
+						int fixedNumberOfVehilcePerTypeAndLocation = 1;
+						ArrayList<String> vehicleDepots = new ArrayList<String>();
+						createdCarrier++;
+						log.info("Create carrier number " + createdCarrier + " of a maximum Number of "
+								+ maxNumberOfCarrier + " carriers.");
+						log.info("Carrier: " + carrierName + "; depots: " + numberOfDepots + "; services: "
+								+ (int) Math
+										.ceil(odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType, purpose)
+												/ occupancyRate));
+						createNewCarrierAndAddVehilceTypes(scenario, purpose, startZone,
+								ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), selectedStartCategory,
+								carrierName, vehilceTypes, numberOfDepots, fleetSize,
+								fixedNumberOfVehilcePerTypeAndLocation, vehicleDepots);
+						log.info("Create services for carrier: " + carrierName);
+						for (String stopZone : odMatrix.getListOfZones()) {
+							int demand = 0;
+							int numberOfJobs = (int) Math
+									.ceil(odMatrix.getTripDistributionValue(startZone, stopZone, modeORvehType, purpose)
+											/ occupancyRate);
+							if (numberOfJobs == 0)
+								continue;
+							String selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
+							while (resultingDataPerZone.get(stopZone).getDouble(selectedStopCategory) == 0)
+								selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
+							String[] serviceArea = new String[] { stopZone };
+							TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 20 * 3600);
+							createServices(scenario, purpose, vehicleDepots, selectedStopCategory, carrierName, demand,
+									numberOfJobs, serviceArea, serviceTimePerStop, serviceTimeWindow);
+						}
 					}
 				}
 			}
@@ -584,12 +651,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * Reads in the vehicle types.
 	 * 
 	 * @param config
-	 * @param vehicleTypesFileLocation
 	 */
 	private void prepareVehicles(Config config) {
 
-		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 		String vehicleTypesFileLocation = inputDataDirectory.resolve("vehicleTypes.xml").toString();
+		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 		if (vehicleTypesFileLocation == "")
 			throw new RuntimeException("No path to the vehicleTypes selected");
 		else {
@@ -604,8 +670,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	/**
 	 * Creates the number of trips between the zones for each mode and purpose.
 	 * 
-	 * @param trafficVolumePerTypeAndZone_start
-	 * @param trafficVolumePerTypeAndZone_stop
+	 * @param trafficVolume_start
+	 * @param trafficVolume_stop
 	 * @param shpZones
 	 * @param shapeFileZonesPath
 	 * @return
@@ -613,26 +679,26 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @throws UncheckedIOException
 	 */
 	private TripDistributionMatrix createTripDistribution(
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop,
-			ShpOptions shpZones) throws UncheckedIOException, MalformedURLException {
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, ShpOptions shpZones)
+			throws UncheckedIOException, MalformedURLException {
 
 		final TripDistributionMatrix odMatrix = TripDistributionMatrix.Builder
-				.newInstance(shpZones, trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop, sample)
+				.newInstance(shpZones, trafficVolume_start, trafficVolume_stop, sample, usedTrafficType.toString())
 				.build();
 
 		int count = 0;
 
-		for (String startZone : trafficVolumePerTypeAndZone_start.keySet()) {
+		for (String startZone : trafficVolume_start.keySet()) {
 			count++;
 			if (count % 50 == 0 || count == 1)
 				log.info("Create OD pairs for start zone :" + startZone + ". Zone " + count + " of "
-						+ trafficVolumePerTypeAndZone_start.size());
+						+ trafficVolume_start.size());
 
-			for (String mode : trafficVolumePerTypeAndZone_start.get(startZone).keySet()) {
-				for (Integer purpose : trafficVolumePerTypeAndZone_start.get(startZone).get(mode).keySet()) {
-					for (String stopZone : trafficVolumePerTypeAndZone_stop.keySet()) {
-						odMatrix.setTripDistributionValue(startZone, stopZone, mode, purpose);
+			for (String modeORvehType : trafficVolume_start.get(startZone).keySet()) {
+				for (Integer purpose : trafficVolume_start.get(startZone).get(modeORvehType).keySet()) {
+					for (String stopZone : trafficVolume_stop.keySet()) {
+						odMatrix.setTripDistributionValue(startZone, stopZone, modeORvehType, purpose);
 					}
 				}
 			}
