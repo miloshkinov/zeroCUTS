@@ -1,3 +1,22 @@
+/* *********************************************************************** *
+ * project: org.matsim.*
+ * Controler.java
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ * copyright       : (C) 2007 by the members listed in the COPYING,        *
+ *                   LICENSE and WARRANTY file.                            *
+ * email           : info at matsim dot org                                *
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *   See also COPYING, LICENSE and WARRANTY file                           *
+ *                                                                         *
+ * *********************************************************************** */
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
 import java.io.BufferedReader;
@@ -29,8 +48,8 @@ import org.opengis.feature.simple.SimpleFeature;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 
-/**
- * @author Ricardo
+/** 
+ * @author Ricardo Ewert
  *
  */
 public class LanduseBuildingAnalysis {
@@ -41,20 +60,14 @@ public class LanduseBuildingAnalysis {
 	 * Creates a distribution of the given input data for each zone based on the
 	 * used OSM data.
 	 * 
+	 * @param output
 	 * @param landuseCategoriesAndDataConnection
 	 * @param inputDataDirectory
-	 * @param shapeFileZonePath
+	 * @param usedLanduseConfiguration
 	 * @param shapeFileLandusePath
-	 * @param i
-	 * @param string
-	 * 
 	 * @param shapeFileZonePath
-	 * @param shapeFileLandusePath
-	 * @param shapeFileBuildingsPath
 	 * @param shapeFileBuildingsPath
 	 * @param buildingsPerZone
-	 * @param indexZones
-	 * @param indexLanduse
 	 * @return
 	 * @throws IOException
 	 * @throws MalformedURLException
@@ -62,7 +75,8 @@ public class LanduseBuildingAnalysis {
 	static HashMap<String, Object2DoubleMap<String>> createInputDataDistribution(Path output,
 			HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection, Path inputDataDirectory,
 			String usedLanduseConfiguration, Path shapeFileLandusePath, Path shapeFileZonePath,
-			Path shapeFileBuildingsPath, HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone) throws IOException, MalformedURLException {
+			Path shapeFileBuildingsPath, HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone)
+			throws IOException, MalformedURLException {
 
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = new HashMap<String, Object2DoubleMap<String>>();
 		Path outputFileInOutputFolder = output.resolve("caculatedData").resolve("dataDistributionPerZone.csv");
@@ -140,12 +154,15 @@ public class LanduseBuildingAnalysis {
 	}
 
 	/**
+	 * Creates the resulting data for each zone based on the landuse distribution
+	 * and the original data.
+	 * 
 	 * @param landuseCategoriesPerZone
 	 * @param investigationAreaData
 	 * @param resultingDataPerZone
 	 * @param landuseCategoriesAndDataConnection
-	 * @throws IOException
 	 * @throws MalformedURLException
+	 * @throws IOException
 	 */
 	private static void createResultingDataForLanduseInZones(
 			HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone,
@@ -161,44 +178,39 @@ public class LanduseBuildingAnalysis {
 		// connects the collected landuse data with the needed categories
 		for (String zoneID : landuseCategoriesPerZone.keySet()) {
 			resultingDataPerZone.put(zoneID, new Object2DoubleOpenHashMap<>());
-			for (String categoryLanduse : landuseCategoriesPerZone.get(zoneID).keySet()) {
-				for (String categoryData : landuseCategoriesAndDataConnection.keySet()) {
+			for (String categoryLanduse : landuseCategoriesPerZone.get(zoneID).keySet())
+				for (String categoryData : landuseCategoriesAndDataConnection.keySet())
 					if (landuseCategoriesAndDataConnection.get(categoryData).contains(categoryLanduse)) {
 						double additionalArea = landuseCategoriesPerZone.get(zoneID).getDouble(categoryLanduse);
 						resultingDataPerZone.get(zoneID).mergeDouble(categoryData, additionalArea, Double::sum);
 						totalSquareMetersPerCategory.mergeDouble(categoryData, additionalArea, Double::sum);
 					}
-				}
-			}
 		}
 
 		/*
 		 * creates the percentages of each category and zones based on the sum in this
 		 * category
 		 */
-		for (String zoneId : resultingDataPerZone.keySet()) {
+		for (String zoneId : resultingDataPerZone.keySet())
 			for (String categoryData : resultingDataPerZone.get(zoneId).keySet()) {
 				double newValue = resultingDataPerZone.get(zoneId).getDouble(categoryData)
 						/ totalSquareMetersPerCategory.getDouble(categoryData);
 				resultingDataPerZone.get(zoneId).replace(categoryData,
 						resultingDataPerZone.get(zoneId).getDouble(categoryData), newValue);
 			}
-		}
-		// can be deleted or used as test
+		// tests the result
 		Object2DoubleMap<String> checkPercentages = new Object2DoubleOpenHashMap<>();
-		for (String landuseCategoriesForSingleZone : resultingDataPerZone.keySet()) {
+		for (String landuseCategoriesForSingleZone : resultingDataPerZone.keySet())
 			for (String category : resultingDataPerZone.get(landuseCategoriesForSingleZone).keySet()) {
 				checkPercentages.mergeDouble(category,
 						resultingDataPerZone.get(landuseCategoriesForSingleZone).getDouble(category), Double::sum);
 			}
-		}
-		for (String category : checkPercentages.keySet()) {
+		for (String category : checkPercentages.keySet())
 			if (Math.abs(1 - checkPercentages.getDouble(category)) > 0.01)
 				throw new RuntimeException("Sum of percenatges is not 1. For " + category + " the sum is "
 						+ checkPercentages.getDouble(category) + "%");
-		}
 		// calculates the data per zone and category data
-		for (String zoneId : resultingDataPerZone.keySet()) {
+		for (String zoneId : resultingDataPerZone.keySet())
 			for (String categoryData : resultingDataPerZone.get(zoneId).keySet()) {
 				double percentageValue = resultingDataPerZone.get(zoneId).getDouble(categoryData);
 				int inputDataForCategory = investigationAreaData.get("Berlin").get(categoryData);
@@ -209,11 +221,10 @@ public class LanduseBuildingAnalysis {
 					totalEmployeesInCategoriesPerZone.mergeDouble(zoneId, resultingNumberPerCategory, Double::sum);
 
 			}
-		}
 		// corrects the number of employees in the categories so that the sum is correct
 		for (int i = 0; i < 30; i++) { // TODO perhaps find number of iterations
-			for (String zoneId : resultingDataPerZone.keySet()) {
-				for (String categoryData : resultingDataPerZone.get(zoneId).keySet()) {
+			for (String zoneId : resultingDataPerZone.keySet())
+				for (String categoryData : resultingDataPerZone.get(zoneId).keySet())
 					if (!categoryData.equals("Employee") && !categoryData.equals("Inhabitants")) {
 						double correctionFactor = resultingDataPerZone.get(zoneId).getDouble("Employee")
 								/ totalEmployeesInCategoriesPerZone.getDouble(zoneId);
@@ -222,11 +233,8 @@ public class LanduseBuildingAnalysis {
 						resultingDataPerZone.get(zoneId).replace(categoryData,
 								resultingDataPerZone.get(zoneId).getDouble(categoryData), resultingNumberPerCategory);
 					}
-				}
-			}
-
-			for (String categoryData : investigationAreaData.get("Berlin").keySet()) {
-				for (String zoneId : resultingDataPerZone.keySet()) {
+			for (String categoryData : investigationAreaData.get("Berlin").keySet())
+				for (String zoneId : resultingDataPerZone.keySet())
 					if (!categoryData.equals("Employee") && !categoryData.equals("Inhabitants")) {
 						double correctionFactor = investigationAreaData.get("Berlin").get(categoryData)
 								/ totalEmployeesPerCategories.getDouble(categoryData);
@@ -235,12 +243,10 @@ public class LanduseBuildingAnalysis {
 						resultingDataPerZone.get(zoneId).replace(categoryData,
 								resultingDataPerZone.get(zoneId).getDouble(categoryData), resultingNumberPerCategory);
 					}
-				}
-			}
-			// update totals per sum becaus eof the changes before
+			// update totals per sum because of the changes before
 			totalEmployeesInCategoriesPerZone.clear();
 			totalEmployeesPerCategories.clear();
-			for (String zoneId : resultingDataPerZone.keySet()) {
+			for (String zoneId : resultingDataPerZone.keySet())
 				for (String categoryData : resultingDataPerZone.get(zoneId).keySet()) {
 					totalEmployeesPerCategories.mergeDouble(categoryData,
 							resultingDataPerZone.get(zoneId).getDouble(categoryData), Double::sum);
@@ -248,8 +254,6 @@ public class LanduseBuildingAnalysis {
 						totalEmployeesInCategoriesPerZone.mergeDouble(zoneId,
 								resultingDataPerZone.get(zoneId).getDouble(categoryData), Double::sum);
 				}
-			}
-
 		}
 	}
 
@@ -257,22 +261,13 @@ public class LanduseBuildingAnalysis {
 	 * Method create the percentage for each land use category in each zone based on
 	 * the sum of this category in all zones of the zone shape file
 	 * 
-	 * @param shapeFileLandusePath               Path to shape file with the land
-	 *                                           use information
-	 * @param shapeFileZonesPath                 Path to shape file with the zone
-	 *                                           information
 	 * @param landuseCategoriesPerZone
+	 * @param shapeFileLandusePath
 	 * @param shapeFileZonePath
-	 * @param shapeFileLandusePath
-	 * @param shapeFileLandusePath
 	 * @param usedLanduseConfiguration
-	 * @param shapeFileBuildingsPath
 	 * @param shapeFileBuildingsPath
 	 * @param landuseCategoriesAndDataConnection
 	 * @param buildingsPerZone
-	 * @param indexZones
-	 * @param indexLanduse
-	 * 
 	 */
 	static void createLanduseDistribution(HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone,
 			Path shapeFileLandusePath, Path shapeFileZonePath, String usedLanduseConfiguration,
@@ -288,8 +283,7 @@ public class LanduseBuildingAnalysis {
 		List<SimpleFeature> landuseFeatures = shpLanduse.readFeatures();
 		List<SimpleFeature> zonesFeatures = shpZones.readFeatures();
 
-//		 Index indexLanduse = SmallScaleFreightTrafficUtils.getIndexLanduse(shapeFileLandusePath);
-		 Index indexZones = SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath);
+		Index indexZones = SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath);
 
 		for (SimpleFeature districId : zonesFeatures) {
 			Object2DoubleMap<String> landusePerCategory = new Object2DoubleOpenHashMap<>();
@@ -303,8 +297,8 @@ public class LanduseBuildingAnalysis {
 			analyzeBuildingType(buildingsFeatures, buildingsPerZone, landuseCategoriesAndDataConnection, indexZones,
 					indexZones);
 
-			for (String zone : buildingsPerZone.keySet()) {
-				for (String category : buildingsPerZone.get(zone).keySet()) {
+			for (String zone : buildingsPerZone.keySet())
+				for (String category : buildingsPerZone.get(zone).keySet())
 					for (SimpleFeature building : buildingsPerZone.get(zone).get(category)) {
 						String[] buildingTypes = ((String) building.getAttribute("type")).split(";");
 						for (String singleCategoryOfBuilding : buildingTypes) {
@@ -314,36 +308,29 @@ public class LanduseBuildingAnalysis {
 							else
 								buildingLevels = (long) building.getAttribute("levels") / buildingTypes.length;
 							double area = (double) ((long) building.getAttribute("area")) * buildingLevels;
-
 							landuseCategoriesPerZone.get(zone).mergeDouble(singleCategoryOfBuilding, area, Double::sum);
 						}
-
 					}
-				}
-			}
-		} else if (usedLanduseConfiguration.equals("useOnlyOSMLanduse")) {
+		} else if (usedLanduseConfiguration.equals("useOnlyOSMLanduse"))
 			for (SimpleFeature singleLanduseFeature : landuseFeatures) {
 				if (!neededLanduseCategories.contains((String) singleLanduseFeature.getAttribute("fclass")))
 					continue;
 				Point centroidPointOfLandusePolygon = ((Geometry) singleLanduseFeature.getDefaultGeometry())
 						.getCentroid();
 
-				for (SimpleFeature singleZone : zonesFeatures) {
+				for (SimpleFeature singleZone : zonesFeatures)
 					if (((Geometry) singleZone.getDefaultGeometry()).contains(centroidPointOfLandusePolygon)) {
 						landuseCategoriesPerZone.get(singleZone.getAttribute("gml_id")).mergeDouble(
 								(String) singleLanduseFeature.getAttribute("fclass"),
 								(double) singleLanduseFeature.getAttribute("area"), Double::sum);
 						continue;
 					}
-				}
 			}
-		}
 	}
 
 	/**
 	 * Reads the input data for certain areas from the csv file.
 	 * 
-	 * @param areaDataPath
 	 * @param areaData
 	 * @param inputDataDirectory
 	 * @throws IOException
@@ -370,12 +357,13 @@ public class LanduseBuildingAnalysis {
 	}
 
 	/**
-	 * @param categoriesOfBuilding
+	 * Analysis the building types so that you have the buildings per zone and type.
+	 * 
 	 * @param buildingsFeatures
 	 * @param buildingsPerZone
 	 * @param landuseCategoriesAndDataConnection
-	 * @param indexZones
 	 * @param indexLanduse
+	 * @param indexZones
 	 */
 	static void analyzeBuildingType(List<SimpleFeature> buildingsFeatures,
 			HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone,
@@ -419,5 +407,4 @@ public class LanduseBuildingAnalysis {
 		}
 		log.info("Finished anlyzing buildings types.");
 	}
-
 }

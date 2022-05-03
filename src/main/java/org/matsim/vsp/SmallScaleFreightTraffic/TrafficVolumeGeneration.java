@@ -1,3 +1,22 @@
+/* *********************************************************************** *
+ * project: org.matsim.*
+ * Controler.java
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ * copyright       : (C) 2007 by the members listed in the COPYING,        *
+ *                   LICENSE and WARRANTY file.                            *
+ * email           : info at matsim dot org                                *
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *   See also COPYING, LICENSE and WARRANTY file                           *
+ *                                                                         *
+ * *********************************************************************** */
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
 import java.io.BufferedWriter;
@@ -23,7 +42,7 @@ import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 
 /**
- * @author Ricardo
+ * @author Ricardo Ewert
  *
  */
 public class TrafficVolumeGeneration {
@@ -37,15 +56,15 @@ public class TrafficVolumeGeneration {
 	private static HashMap<String, HashMap<String, Double>> commitmentRatesStop = new HashMap<String, HashMap<String, Double>>();
 
 	/**
-	 * Creates the traffic volume (start) for each zone separated in the 3 modes and
-	 * the 5 purposes.
+	 * Creates the traffic volume (start) for each zone separated in the
+	 * modesORvehTypes and the purposes.
 	 * 
 	 * @param resultingDataPerZone
-	 * @param sample
-	 * @param inputDataDirectory
 	 * @param output
-	 * @param usedModeDifferentiation
-	 * @return
+	 * @param inputDataDirectory
+	 * @param sample
+	 * @param modesORvehTypes
+	 * @return trafficVolume_start
 	 * @throws MalformedURLException
 	 */
 	static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_start(
@@ -53,8 +72,7 @@ public class TrafficVolumeGeneration {
 			double sample, ArrayList<String> modesORvehTypes) throws MalformedURLException {
 
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
-		calculateTrafficVolumePerZone(trafficVolume_start, resultingDataPerZone, "start",
-				modesORvehTypes);
+		calculateTrafficVolumePerZone(trafficVolume_start, resultingDataPerZone, "start", modesORvehTypes);
 		Path outputFileStart = output.resolve("caculatedData")
 				.resolve("TrafficVolume_startPerZone_" + (int) (sample * 100) + "pt.csv");
 		writeCSVTrafficVolume(trafficVolume_start, outputFileStart, sample);
@@ -63,15 +81,15 @@ public class TrafficVolumeGeneration {
 	}
 
 	/**
-	 * Creates the traffic volume (stop) for each zone separated in the 3 modes and
-	 * the 5 purposes.
+	 * Creates the traffic volume (stop) for each zone separated in the
+	 * modesORvehTypes and the purposes.
 	 * 
 	 * @param resultingDataPerZone
-	 * @param sample
-	 * @param inputDataDirectory
 	 * @param output
-	 * @param usedModeDifferentiation
-	 * @return
+	 * @param inputDataDirectory
+	 * @param sample
+	 * @param modesORvehTypes
+	 * @return trafficVolume_stop
 	 * @throws MalformedURLException
 	 */
 	static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_stop(
@@ -79,8 +97,7 @@ public class TrafficVolumeGeneration {
 			double sample, ArrayList<String> modesORvehTypes) throws MalformedURLException {
 
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
-		calculateTrafficVolumePerZone(trafficVolume_stop, resultingDataPerZone, "stop",
-				modesORvehTypes);
+		calculateTrafficVolumePerZone(trafficVolume_stop, resultingDataPerZone, "stop", modesORvehTypes);
 		Path outputFileStop = output.resolve("caculatedData")
 				.resolve("TrafficVolume_stopPerZone_" + (int) (sample * 100) + "pt.csv");
 		writeCSVTrafficVolume(trafficVolume_stop, outputFileStop, sample);
@@ -95,7 +112,7 @@ public class TrafficVolumeGeneration {
 	 * @param resultingDataPerZone
 	 * @param volumeType
 	 * @param modesORvehTypes
-	 * @return
+	 * @return trafficVolume
 	 */
 	private static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> calculateTrafficVolumePerZone(
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume,
@@ -129,8 +146,7 @@ public class TrafficVolumeGeneration {
 								commitmentFactor = 1;
 							else
 								commitmentFactor = commitmentRates
-										.get(purpose + "_"
-												+ modeORvehType.substring(modeORvehType.length() - 1))
+										.get(purpose + "_" + modeORvehType.substring(modeORvehType.length() - 1))
 										.get(category);
 							double generationFactor = generationRates.get(purpose).get(category);
 							double newValue = resultingDataPerZone.get(zoneId).getDouble(category) * generationFactor
@@ -147,13 +163,14 @@ public class TrafficVolumeGeneration {
 	}
 
 	/**
+	 * Writes the traffic volume.
+	 * 
 	 * @param trafficVolume
 	 * @param outputFileInInputFolder
 	 * @param sample
 	 * @throws MalformedURLException
 	 */
-	private static void writeCSVTrafficVolume(
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume,
+	private static void writeCSVTrafficVolume(HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume,
 			Path outputFileInInputFolder, double sample) throws MalformedURLException {
 		BufferedWriter writer = IOUtils.getBufferedWriter(outputFileInInputFolder.toUri().toURL(),
 				StandardCharsets.UTF_8, true);
@@ -168,8 +185,8 @@ public class TrafficVolumeGeneration {
 					row.add(modeORvehType);
 					Integer count = 1;
 					while (count < 6) {
-						row.add(String.valueOf(Math
-								.round(trafficVolume.get(zoneID).get(modeORvehType).getDouble(count) * sample)));
+						row.add(String.valueOf(
+								Math.round(trafficVolume.get(zoneID).get(modeORvehType).getDouble(count) * sample)));
 						count++;
 					}
 					JOIN.appendTo(writer, row);
@@ -183,6 +200,13 @@ public class TrafficVolumeGeneration {
 		}
 	}
 
+	/**
+	 * Loads the input data based on the selected trafficType.
+	 * 
+	 * @param inputDataDirectory
+	 * @param trafficType
+	 * @throws IOException
+	 */
 	static void loadInputParamters(Path inputDataDirectory, String trafficType) throws IOException {
 
 		// Read generation rates for start potentials
@@ -239,8 +263,8 @@ public class TrafficVolumeGeneration {
 	}
 
 	/**
-	 * Reads the data for the commitment rates. For modes: pt = public transport; it
-	 * = individual traffic; op = elective (wahlfrei)
+	 * Reads the data for the commitment rates. The modes for the businessTraffic:
+	 * pt = public transport; it = individual traffic; op = elective (wahlfrei)
 	 * 
 	 * @param generationRatesPath
 	 * @return
@@ -263,7 +287,6 @@ public class TrafficVolumeGeneration {
 				}
 				commitmentRates.put((record.get(0) + "_" + record.get(1)), lookUpTable);
 			}
-
 		}
 		return commitmentRates;
 	}

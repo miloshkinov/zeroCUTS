@@ -1,3 +1,22 @@
+/* *********************************************************************** *
+ * project: org.matsim.*
+ * Controler.java
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ * copyright       : (C) 2007 by the members listed in the COPYING,        *
+ *                   LICENSE and WARRANTY file.                            *
+ * email           : info at matsim dot org                                *
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *   See also COPYING, LICENSE and WARRANTY file                           *
+ *                                                                         *
+ * *********************************************************************** */
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
 import java.io.BufferedWriter;
@@ -32,7 +51,7 @@ public class TripDistributionMatrix {
 
 	private static final Logger log = LogManager.getLogger(TripDistributionMatrix.class);
 	private static final Joiner JOIN = Joiner.on("\t");
-	
+
 	private ArrayList<String> listOfZones = new ArrayList<String>();
 	private ArrayList<String> listOfModesORvehTypes = new ArrayList<String>();
 	private ArrayList<Integer> listOfPurposes = new ArrayList<Integer>();
@@ -40,7 +59,7 @@ public class TripDistributionMatrix {
 	private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start;
 	private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop;
 	private final double sample;
-	private final String trafficType;
+//	private final String trafficType;
 
 	static class TripDistributionMatrixKey {
 		private final String fromZone;
@@ -233,25 +252,25 @@ public class TripDistributionMatrix {
 		private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start;
 		private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop;
 		private final double sample;
-		private final String trafficType;
+//		private final String trafficType;
 
 		public static Builder newInstance(ShpOptions shpZones,
 				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
-				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop,
-				double sample, String trafficType) {
-			return new Builder(shpZones, trafficVolume_start, trafficVolume_stop, sample, trafficType);
+				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, double sample/*,
+				String trafficType*/) {
+			return new Builder(shpZones, trafficVolume_start, trafficVolume_stop, sample/*, trafficType*/);
 		}
 
 		private Builder(ShpOptions shpZones,
 				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
-				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop,
-				double sample, String trafficType) {
+				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, double sample /*,
+				String trafficType*/) {
 			super();
 			this.zonesFeatures = shpZones.readFeatures();
 			this.trafficVolume_start = trafficVolume_start;
 			this.trafficVolume_stop = trafficVolume_stop;
 			this.sample = sample;
-			this.trafficType = trafficType;
+//			this.trafficType = trafficType;
 		}
 
 		public TripDistributionMatrix build() {
@@ -264,7 +283,7 @@ public class TripDistributionMatrix {
 		trafficVolume_start = builder.trafficVolume_start;
 		trafficVolume_stop = builder.trafficVolume_stop;
 		sample = builder.sample;
-		trafficType = builder.trafficType;
+//		trafficType = builder.trafficType;
 	}
 
 	private final ConcurrentHashMap<TripDistributionMatrixKey, Integer> matrixCache = new ConcurrentHashMap<TripDistributionMatrixKey, Integer>();
@@ -274,6 +293,15 @@ public class TripDistributionMatrix {
 	private final ConcurrentHashMap<String, Object2DoubleMap<String>> roundingError = new ConcurrentHashMap<>();
 	private int createdVolume = 0;
 
+	/**
+	 * Calculates the traffic volume between two zones for a specific modeORvehType
+	 * and purpuse.
+	 * 
+	 * @param startZone
+	 * @param stopZone
+	 * @param modeORvehType
+	 * @param purpose
+	 */
 	void setTripDistributionValue(String startZone, String stopZone, String modeORvehType, Integer purpose) {
 		double volumeStart = trafficVolume_start.get(startZone).get(modeORvehType).getDouble(purpose);
 		double volumeStop = trafficVolume_stop.get(stopZone).get(modeORvehType).getDouble(purpose);
@@ -298,18 +326,25 @@ public class TripDistributionMatrix {
 		matrixCache.put(matrixKey, roundedSampledVolume);
 	}
 
+	/**
+	 * Gets value of the need traffic volume.
+	 * 
+	 * @param startZone
+	 * @param stopZone
+	 * @param modeORvehType
+	 * @param purpose
+	 * @return
+	 */
 	Integer getTripDistributionValue(String startZone, String stopZone, String modeORvehType, Integer purpose) {
 		TripDistributionMatrixKey matrixKey = makeKey(startZone, stopZone, modeORvehType, purpose);
 		return matrixCache.get(matrixKey);
 	}
 
 	/**
-	 * Creates a map of the values of the resistance function between two zones.
+	 * Calculates the values of the resistance function between two zones.
 	 * 
-	 * @param stopZone2
-	 * @param startZone2
-	 * 
-	 * @param zonesFeatures
+	 * @param startZone
+	 * @param stopZone
 	 * @return
 	 */
 	private Double getResistanceFunktionValue(String startZone, String stopZone) {
@@ -344,10 +379,9 @@ public class TripDistributionMatrix {
 	 * 
 	 * @param baseZone
 	 * @param trafficVolume
-	 * @param resistanceValue
 	 * @param modeORvehType
 	 * @param purpose
-	 * @return
+	 * @return gravity constant
 	 */
 	private double getGravityConstant(String baseZone,
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume, String modeORvehType,
@@ -375,33 +409,31 @@ public class TripDistributionMatrix {
 	 * @param toZone
 	 * @param modeORvehType
 	 * @param purpose
-	 * @return
+	 * @return TripDistributionMatrixKey
 	 */
 	private TripDistributionMatrixKey makeKey(String fromZone, String toZone, String modeORvehType, int purpose) {
 		return new TripDistributionMatrixKey(fromZone, toZone, modeORvehType, purpose);
 	}
 
 	/**
-	 * Creates a key for the tripDistributionMatrix.
+	 * Creates a key for the resistance function.
 	 * 
 	 * @param fromZone
 	 * @param toZone
-	 * @param modeORvehType
-	 * @param purpose
-	 * @return
+	 * @return ResistanceFunktionKey
 	 */
 	private ResistanceFunktionKey makeResistanceFunktionKey(String fromZone, String toZone) {
 		return new ResistanceFunktionKey(fromZone, toZone);
 	}
 
 	/**
-	 * Creates a key for the tripDistributionMatrix.
+	 * Creates a key for a gravity constant.
 	 * 
 	 * @param fromZone
 	 * @param toZone
 	 * @param modeOrVehType
 	 * @param purpose
-	 * @return
+	 * @return GravityConstantKey
 	 */
 	private GravityConstantKey makeGravityKey(String fromZone, String modeOrVehType, int purpose) {
 		return new GravityConstantKey(fromZone, modeOrVehType, purpose);
@@ -410,8 +442,7 @@ public class TripDistributionMatrix {
 	/**
 	 * Returns all zones being used as a start and/or stop location
 	 * 
-	 * @param odMatrix
-	 * @return
+	 * @return listOfZones
 	 */
 	ArrayList<String> getListOfZones() {
 		if (listOfZones.isEmpty())
@@ -427,8 +458,7 @@ public class TripDistributionMatrix {
 	/**
 	 * Returns all modes being used.
 	 * 
-	 * @param odMatrix
-	 * @return
+	 * @return listOfModesORvehTypes
 	 */
 	ArrayList<String> getListOfModesOrVehTypes() {
 		if (listOfModesORvehTypes.isEmpty()) {
@@ -443,8 +473,7 @@ public class TripDistributionMatrix {
 	/**
 	 * Returns all purposes being used.
 	 * 
-	 * @param odMatrix
-	 * @return
+	 * @return listOfPurposes
 	 */
 	ArrayList<Integer> getListOfPurposes() {
 		if (listOfPurposes.isEmpty()) {
@@ -456,6 +485,12 @@ public class TripDistributionMatrix {
 		return listOfPurposes;
 	}
 
+	/**
+	 * @param startZone
+	 * @param modeORvehType
+	 * @param purpose
+	 * @return numberOfTrips
+	 */
 	int getSumOfServicesForStartZone(String startZone, String modeORvehType, int purpose) {
 		int numberOfTrips = 0;
 		ArrayList<String> zones = getListOfZones();
@@ -463,15 +498,11 @@ public class TripDistributionMatrix {
 			numberOfTrips = numberOfTrips + matrixCache.get(makeKey(startZone, stopZone, modeORvehType, purpose));
 		return numberOfTrips;
 	}
-	
+
 	/**
 	 * Writes every matrix for each mode and purpose.
-	 * @param output 
 	 * 
-	 * @param odMatrix
-	 * @param usedModes
-	 * @param usedPurposes
-	 * @param usedZones
+	 * @param output
 	 * @throws UncheckedIOException
 	 * @throws MalformedURLException
 	 */

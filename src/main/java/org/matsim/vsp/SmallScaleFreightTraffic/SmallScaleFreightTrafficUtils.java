@@ -1,3 +1,22 @@
+/* *********************************************************************** *
+ * project: org.matsim.*
+ * Controler.java
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ * copyright       : (C) 2007 by the members listed in the COPYING,        *
+ *                   LICENSE and WARRANTY file.                            *
+ * email           : info at matsim dot org                                *
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *   See also COPYING, LICENSE and WARRANTY file                           *
+ *                                                                         *
+ * *********************************************************************** */
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
 import java.io.BufferedWriter;
@@ -20,33 +39,47 @@ import com.google.common.base.Joiner;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 
 /**
- * @author Ricardo
+ * Utils for the SmallScaleFreightTraffic
+ * 
+ * @author Ricardo Ewert
  *
  */
 public class SmallScaleFreightTrafficUtils {
-	
+
 	private static final Logger log = LogManager.getLogger(LanduseBuildingAnalysis.class);
 	private static final Joiner JOIN = Joiner.on("\t");
 
-	
+	/**
+	 * Creates and return the Index of the zones shape.
+	 * 
+	 * @param shapeFileZonePath
+	 * @return indexZones
+	 */
 	static Index getIndexZones(Path shapeFileZonePath) {
 
-			ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
-			 Index indexZones = shpZones.createIndex("EPSG:4326", "gml_id");
+		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
+		Index indexZones = shpZones.createIndex("EPSG:4326", "gml_id");
 		return indexZones;
 	}
 
+	/**
+	 * Creates and return the Index of the landuse shape.
+	 * 
+	 * @param shapeFileLandusePath
+	 * @return indexLanduse
+	 */
 	static Index getIndexLanduse(Path shapeFileLandusePath) {
 
-			ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, "EPSG:4326", StandardCharsets.UTF_8);
-			Index indexLanduse = shpLanduse.createIndex("EPSG:4326", "fclass");
+		ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, "EPSG:4326", StandardCharsets.UTF_8);
+		Index indexLanduse = shpLanduse.createIndex("EPSG:4326", "fclass");
 		return indexLanduse;
 	}
-	
+
 	/**
 	 * Writes a csv file with result of the distribution per zone of the input data.
 	 * 
 	 * @param resultingDataPerZone
+	 * @param outputFileInOutputFolder
 	 * @throws IOException
 	 * @throws MalformedURLException
 	 */
@@ -56,8 +89,10 @@ public class SmallScaleFreightTrafficUtils {
 		writeCSVWithCategoryHeader(resultingDataPerZone, outputFileInOutputFolder);
 		log.info("The data distribution is finished and written to: " + outputFileInOutputFolder);
 	}
-	
+
 	/**
+	 * Writer of data distribution data.
+	 * 
 	 * @param resultingDataPerZone
 	 * @param outputFileInInputFolder
 	 * @throws MalformedURLException
