@@ -153,11 +153,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		switch (usedZoneChoice) {
 		case useDistricts:
-			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("districts")
+			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("zones")
 					.resolve("bezirksgrenzen_Berlin.shp");
 			break;
 		case useTrafficCells:
-			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("districts")
+			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("zones")
 					.resolve("verkehrszellen_Berlin.shp");
 			break;
 		default:
