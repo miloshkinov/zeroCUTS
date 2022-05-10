@@ -58,7 +58,7 @@ public class SmallScaleFreightTrafficUtils {
 	static Index getIndexZones(Path shapeFileZonePath) {
 
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
-		Index indexZones = shpZones.createIndex("EPSG:4326", "gml_id");
+		Index indexZones = shpZones.createIndex("EPSG:4326", "id");
 		return indexZones;
 	}
 

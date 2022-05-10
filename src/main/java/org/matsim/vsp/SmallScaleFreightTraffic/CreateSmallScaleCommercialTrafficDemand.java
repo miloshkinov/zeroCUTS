@@ -116,7 +116,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
 	private static Path networkPath;
 
-	@CommandLine.Option(names = "--sample", defaultValue = "0.001", description = "Scaling factor of the freight traffic (0, 1)", required = true)
+	@CommandLine.Option(names = "--sample", defaultValue = "0.01", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
 	@CommandLine.Option(names = "--output", description = "Path to output folder", required = true, defaultValue = "output/BusinessPassengerTraffic/")
@@ -128,10 +128,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of mode differentiation:  createOneODMatrix, createSeperateODMatricesForModes")
 	private ModeDifferentiation usedModeDifferentiationForPassangerTraffic;
 
-	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useDistricts", description = "Set option input zones. Options: useDistricts, useTrafficCells")
+	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useTrafficCells", description = "Set option input zones. Options: useDistricts, useTrafficCells")
 	private ZoneChoice usedZoneChoice;
 // useDistricts, useTrafficCells
-	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useExistingDataDistribution", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
+	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useOSMBuildingsAndLanduse", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
 	private LanduseConfiguration usedLanduseConfiguration;
 // useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
 
@@ -153,22 +153,27 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		switch (usedZoneChoice) {
 		case useDistricts:
-			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("zones")
-					.resolve("bezirksgrenzen_Berlin.shp");
+			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("zones").resolve("bezirksgrenzen_Berlin.shp");
 			break;
 		case useTrafficCells:
-			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("zones")
-					.resolve("verkehrszellen_Berlin.shp");
+			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+					.resolve("berlinBrandenburg_Zones_4326.shp");
 			break;
 		default:
 			break;
 		}
 
-		shapeFileLandusePath = inputDataDirectory.resolve("shp").resolve("landuse")
-				.resolve("gis_osm_landuse_a_free_1.shp");
+//		shapeFileLandusePath = inputDataDirectory.resolve("shp").resolve("landuse")
+//				.resolve("gis_osm_landuse_a_free_1.shp");
+		shapeFileLandusePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+				.resolve("berlinBranburg_landuse_4326.shp");
 
-		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("landuse")
-				.resolve("allBuildingsWithLevels.shp");
+//		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("landuse")
+//				.resolve("allBuildingsWithLevels.shp");
+		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+				.resolve("buildingSample_BB.shp");
+//		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+//				.resolve("gis_osm_buildings_a_free_1.shp");
 // 		shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse").resolve("buildingSample.shp");
 
 		if (!Files.exists(shapeFileLandusePath)) {
@@ -585,7 +590,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private Id<Link> findPossibleLink(String zone, String selectedCategory, ArrayList<String> noPossibleLinks) {
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
 
-		Index indexLanduse = SmallScaleFreightTrafficUtils.getIndexLanduse(shapeFileLandusePath);
+//		Index indexLanduse = SmallScaleFreightTrafficUtils.getIndexLanduse(shapeFileLandusePath);
 		Index indexZones = SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath);
 
 		if (links.isEmpty()) {
@@ -606,7 +611,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
 			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
 			LanduseBuildingAnalysis.analyzeBuildingType(buildingsFeatures, buildingsPerZone,
-					landuseCategoriesAndDataConnection, indexLanduse, indexZones);
+					landuseCategoriesAndDataConnection, shapeFileLandusePath, indexZones);
 		}
 		Id<Link> newLink = null;
 		for (int a = 0; newLink == null && a < buildingsPerZone.get(zone).get(selectedCategory).size() * 2; a++) {
@@ -616,9 +621,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			Coord centroidPointOfBuildingPolygon = MGC
 					.point2Coord(((Geometry) possibleBuilding.getDefaultGeometry()).getCentroid());
 			double minDistance = Double.MAX_VALUE;
-			int numberOfPossibleLinks = regionLinksMap.get(zone).size();
+			int numberOfPossibleLinks = regionLinksMap.get(zone.replaceFirst(zone.split("_")[0] + "_", "")).size();
 //TODO eventuell auch opposite Links als noPossible deklarieren
-			searchLink: for (Link possibleLink : regionLinksMap.get(zone)) {
+			searchLink: for (Link possibleLink : regionLinksMap.get(zone.replaceFirst(zone.split("_")[0] + "_", ""))) {
 				if (noPossibleLinks != null && numberOfPossibleLinks > noPossibleLinks.size())
 					for (String depotLink : noPossibleLinks) {
 						if (depotLink.equals(possibleLink.getId().toString()))
@@ -674,16 +679,14 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			throws UncheckedIOException, MalformedURLException {
 
 		final TripDistributionMatrix odMatrix = TripDistributionMatrix.Builder
-				.newInstance(shpZones, trafficVolume_start, trafficVolume_stop, sample)
-				.build();
+				.newInstance(shpZones, trafficVolume_start, trafficVolume_stop, sample).build();
 
 		int count = 0;
 
 		for (String startZone : trafficVolume_start.keySet()) {
 			count++;
 			if (count % 50 == 0 || count == 1)
-				log.info("Create OD pairs for start zone :" + startZone + ". Zone " + count + " of "
-						+ trafficVolume_start.size());
+				log.info("Create OD pair " + count + " of " + trafficVolume_start.size());
 
 			for (String modeORvehType : trafficVolume_start.get(startZone).keySet())
 				for (Integer purpose : trafficVolume_start.get(startZone).get(modeORvehType).keySet())

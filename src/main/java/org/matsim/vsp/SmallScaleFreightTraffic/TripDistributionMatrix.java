@@ -348,13 +348,15 @@ public class TripDistributionMatrix {
 	 * @return
 	 */
 	private Double getResistanceFunktionValue(String startZone, String stopZone) {
+		startZone = startZone.replaceFirst(startZone.split("_")[0]+"_", "");
+		stopZone = stopZone.replaceFirst(stopZone.split("_")[0]+"_", "");
 		if (!resistanceFunktionCache.containsKey(makeResistanceFunktionKey(startZone, stopZone)))
 			for (SimpleFeature startZoneFeature : zonesFeatures) {
-				String zone1 = String.valueOf(startZoneFeature.getAttribute("gml_id"));
+				String zone1 = String.valueOf(startZoneFeature.getAttribute("id"));
 				if (!startZone.equals(zone1))
 					continue;
 				for (SimpleFeature stopZoneFeature : zonesFeatures) {
-					String zone2 = String.valueOf(stopZoneFeature.getAttribute("gml_id"));
+					String zone2 = String.valueOf(stopZoneFeature.getAttribute("id"));
 					if (!stopZone.equals(zone2))
 						continue;
 					double distance = Double.MAX_VALUE;
