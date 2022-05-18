@@ -128,7 +128,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of mode differentiation:  createOneODMatrix, createSeperateODMatricesForModes")
 	private ModeDifferentiation usedModeDifferentiationForPassangerTraffic;
 
-	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useTrafficCells", description = "Set option input zones. Options: useDistricts, useTrafficCells")
+	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useDistricts", description = "Set option input zones. Options: useDistricts, useTrafficCells")
 	private ZoneChoice usedZoneChoice;
 // useDistricts, useTrafficCells
 	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useOSMBuildingsAndLanduse", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
@@ -153,28 +153,24 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		switch (usedZoneChoice) {
 		case useDistricts:
-			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("zones").resolve("bezirksgrenzen_Berlin.shp");
+			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+					.resolve("berlinBrandenburg_Zones_districts_4326.shp");
 			break;
 		case useTrafficCells:
 			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-					.resolve("berlinBrandenburg_Zones_4326.shp");
+					.resolve("berlinBrandenburg_Zones_VKZ_4326.shp");
 			break;
 		default:
 			break;
 		}
 
-//		shapeFileLandusePath = inputDataDirectory.resolve("shp").resolve("landuse")
-//				.resolve("gis_osm_landuse_a_free_1.shp");
 		shapeFileLandusePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-				.resolve("berlinBranburg_landuse_4326.shp");
+				.resolve("berlinBrandenburg_landuse_4326.shp");
 
-//		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("landuse")
-//				.resolve("allBuildingsWithLevels.shp");
-		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-				.resolve("buildingSample_BB.shp");
 //		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-//				.resolve("gis_osm_buildings_a_free_1.shp");
-// 		shapeFileBuildingsPath = rawDataDirectory.resolve("shp").resolve("landuse").resolve("buildingSample.shp");
+//				.resolve("buildings_sample_BerlinBrandenburg_4326.shp");
+		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+				.resolve("buildings_BerlinBrandenburg_4326.shp");
 
 		if (!Files.exists(shapeFileLandusePath)) {
 			log.error("Required landuse shape file {} not found", shapeFileLandusePath);
@@ -185,7 +181,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		if (!Files.exists(shapeFileZonePath)) {
 			log.error("Required distrcits shape file {} not found", shapeFileZonePath);
 		}
-		output = output.resolve(java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay());
+		output = output.resolve(java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay()
+				+ "_" + usedTrafficType.toString());
 
 		Config config = prepareConfig();
 
@@ -432,9 +429,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							carrierName = "Carrier_" + startZone + "_purpose_" + purpose + "_" + modeORvehType;
 						} else
 							carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
-						int numberOfDepots = (int) Math
-								.ceil((double) odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType, purpose)
-										* serviceTimePerStop / (8 * 3600) * 2); // TODO
+						int numberOfDepots = odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType, purpose);
 						FleetSize fleetSize = FleetSize.FINITE;
 						int fixedNumberOfVehilcePerTypeAndLocation = 1;
 						ArrayList<String> vehicleDepots = new ArrayList<String>();
