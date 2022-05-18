@@ -80,13 +80,14 @@ public class SmallScaleFreightTrafficUtils {
 	 * 
 	 * @param resultingDataPerZone
 	 * @param outputFileInOutputFolder
+	 * @param zoneIdNameConnection 
 	 * @throws IOException
 	 * @throws MalformedURLException
 	 */
 	static void writeResultOfDataDistribution(HashMap<String, Object2DoubleMap<String>> resultingDataPerZone,
-			Path outputFileInOutputFolder) throws IOException, MalformedURLException {
+			Path outputFileInOutputFolder, HashMap<String, String> zoneIdNameConnection) throws IOException, MalformedURLException {
 
-		writeCSVWithCategoryHeader(resultingDataPerZone, outputFileInOutputFolder);
+		writeCSVWithCategoryHeader(resultingDataPerZone, outputFileInOutputFolder, zoneIdNameConnection);
 		log.info("The data distribution is finished and written to: " + outputFileInOutputFolder);
 	}
 
@@ -95,14 +96,15 @@ public class SmallScaleFreightTrafficUtils {
 	 * 
 	 * @param resultingDataPerZone
 	 * @param outputFileInInputFolder
+	 * @param zoneIdNameConnection 
 	 * @throws MalformedURLException
 	 */
 	private static void writeCSVWithCategoryHeader(HashMap<String, Object2DoubleMap<String>> resultingDataPerZone,
-			Path outputFileInInputFolder) throws MalformedURLException {
+			Path outputFileInInputFolder, HashMap<String, String> zoneIdNameConnection) throws MalformedURLException {
 		BufferedWriter writer = IOUtils.getBufferedWriter(outputFileInInputFolder.toUri().toURL(),
 				StandardCharsets.UTF_8, true);
 		try {
-			String[] header = new String[] { "areaID", "Inhabitants", "Employee", "Employee Primary Sector",
+			String[] header = new String[] { "areaID", "areaName", "Inhabitants", "Employee", "Employee Primary Sector",
 					"Employee Construction", "Employee Secondary Sector Rest", "Employee Retail",
 					"Employee Traffic/Parcels", "Employee Tertiary Sector Rest" };
 			JOIN.appendTo(writer, header);
@@ -110,8 +112,9 @@ public class SmallScaleFreightTrafficUtils {
 			for (String zone : resultingDataPerZone.keySet()) {
 				List<String> row = new ArrayList<>();
 				row.add(zone);
+				row.add(zoneIdNameConnection.get(zone));
 				for (String category : header) {
-					if (!category.equals("areaID"))
+					if (!category.equals("areaID") && !category.equals("areaName"))
 						row.add(String.valueOf((int) Math.round(resultingDataPerZone.get(zone).getDouble(category))));
 				}
 				JOIN.appendTo(writer, row);
