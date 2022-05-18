@@ -78,10 +78,12 @@ public class LanduseBuildingAnalysis {
 			throws IOException, MalformedURLException {
 
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = new HashMap<String, Object2DoubleMap<String>>();
+		HashMap<String, String> zoneIdNameConnection = new HashMap<String, String>();
 		Path outputFileInOutputFolder = output.resolve("caculatedData").resolve("dataDistributionPerZone.csv");
 
-		landuseCategoriesAndDataConnection.put("Inhabitants", new ArrayList<String>(Arrays.asList("residential",
-				"apartments", "dormitory", "dwelling_house", "house", "retirement_home", "semidetached_house")));
+		landuseCategoriesAndDataConnection.put("Inhabitants",
+				new ArrayList<String>(Arrays.asList("residential", "apartments", "dormitory", "dwelling_house", "house",
+						"retirement_home", "semidetached_house", "detached")));
 		landuseCategoriesAndDataConnection.put("Employee Primary Sector", new ArrayList<String>(
 				Arrays.asList("farmyard", "farmland", "farm", "farm_auxiliary", "greenhouse", "agricultural")));
 		landuseCategoriesAndDataConnection.put("Employee Construction",
@@ -135,18 +137,19 @@ public class LanduseBuildingAnalysis {
 		else {
 
 			log.info("New analyze for data distribution is started. The used method is: " + usedLanduseConfiguration);
+
 			HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone = new HashMap<String, Object2DoubleMap<String>>();
 			createLanduseDistribution(landuseCategoriesPerZone, shapeFileLandusePath, shapeFileZonePath,
 					usedLanduseConfiguration, shapeFileBuildingsPath, landuseCategoriesAndDataConnection,
-					buildingsPerZone);
-
+					buildingsPerZone, zoneIdNameConnection);
+			
 			HashMap<String, HashMap<String, Integer>> investigationAreaData = new HashMap<String, HashMap<String, Integer>>();
 			readAreaData(investigationAreaData, inputDataDirectory);
-
+			
 			createResultingDataForLanduseInZones(landuseCategoriesPerZone, investigationAreaData, resultingDataPerZone,
 					landuseCategoriesAndDataConnection);
 
-			SmallScaleFreightTrafficUtils.writeResultOfDataDistribution(resultingDataPerZone, outputFileInOutputFolder);
+			SmallScaleFreightTrafficUtils.writeResultOfDataDistribution(resultingDataPerZone, outputFileInOutputFolder, zoneIdNameConnection);
 		}
 
 		return resultingDataPerZone;
@@ -289,11 +292,13 @@ public class LanduseBuildingAnalysis {
 	 * @param shapeFileBuildingsPath
 	 * @param landuseCategoriesAndDataConnection
 	 * @param buildingsPerZone
+	 * @param zoneIdNameConnection
 	 */
 	static void createLanduseDistribution(HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone,
 			Path shapeFileLandusePath, Path shapeFileZonePath, String usedLanduseConfiguration,
 			Path shapeFileBuildingsPath, HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection,
-			HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone) {
+			HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone,
+			HashMap<String, String> zoneIdNameConnection) {
 
 		List<String> neededLanduseCategories = List.of("residential", "industrial", "commercial", "retail", "farmyard",
 				"farmland", "construction");
@@ -311,6 +316,9 @@ public class LanduseBuildingAnalysis {
 			landuseCategoriesPerZone.put(
 					(String) singleZone.getAttribute("region") + "_" + (String) singleZone.getAttribute("id"),
 					landusePerCategory);
+			zoneIdNameConnection.put(
+					(String) singleZone.getAttribute("region") + "_" + (String) singleZone.getAttribute("id"),
+					(String) singleZone.getAttribute("name"));
 		}
 
 		if (usedLanduseConfiguration.equals("useOSMBuildingsAndLanduse")) {
@@ -335,8 +343,8 @@ public class LanduseBuildingAnalysis {
 							if (building.getAttribute("levels") == null)
 								buildingLevels = 1;
 							else
-								buildingLevels = (int) building.getAttribute("levels") / buildingTypes.length;
-							double area = (double) building.getAttribute("area") * buildingLevels;
+								buildingLevels = (int) (long) building.getAttribute("levels") / buildingTypes.length;
+							double area = (int) (long) building.getAttribute("area") * buildingLevels;
 							landuseCategoriesPerZone.get(zone).mergeDouble(singleCategoryOfBuilding, area, Double::sum);
 						}
 					}
