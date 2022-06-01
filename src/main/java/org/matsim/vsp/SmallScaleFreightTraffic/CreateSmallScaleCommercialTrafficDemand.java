@@ -606,7 +606,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
 			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
 			LanduseBuildingAnalysis.analyzeBuildingType(buildingsFeatures, buildingsPerZone,
-					landuseCategoriesAndDataConnection, shapeFileLandusePath, indexZones);
+					landuseCategoriesAndDataConnection, shapeFileLandusePath, indexZones, shpZones.readFeatures());
 		}
 		Id<Link> newLink = null;
 		for (int a = 0; newLink == null && a < buildingsPerZone.get(zone).get(selectedCategory).size() * 2; a++) {

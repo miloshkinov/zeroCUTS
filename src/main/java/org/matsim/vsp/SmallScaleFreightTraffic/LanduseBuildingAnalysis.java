@@ -123,7 +123,7 @@ public class LanduseBuildingAnalysis {
 				for (CSVRecord record : parse) {
 					String zoneID = record.get("areaID");
 					resultingDataPerZone.put(zoneID, new Object2DoubleOpenHashMap<>());
-					for (int n = 1; n < parse.getHeaderMap().size(); n++) {
+					for (int n = 2; n < parse.getHeaderMap().size(); n++) {
 						resultingDataPerZone.get(zoneID).mergeDouble(parse.getHeaderNames().get(n),
 								Double.valueOf(record.get(n)), Double::sum);
 					}
@@ -326,13 +326,7 @@ public class LanduseBuildingAnalysis {
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, null, StandardCharsets.UTF_8);
 			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
 			analyzeBuildingType(buildingsFeatures, buildingsPerZone, landuseCategoriesAndDataConnection,
-					shapeFileLandusePath, indexZones);
-			for (SimpleFeature singleZone : zonesFeatures) {
-				if (buildingsPerZone.containsKey(((String) singleZone.getAttribute("id"))))
-					buildingsPerZone.put(
-							(String) singleZone.getAttribute("region") + "_" + (String) singleZone.getAttribute("id"),
-							buildingsPerZone.remove((String) singleZone.getAttribute("id")));
-			}
+					shapeFileLandusePath, indexZones, zonesFeatures);
 
 			for (String zone : buildingsPerZone.keySet())
 				for (String category : buildingsPerZone.get(zone).keySet())
@@ -365,6 +359,20 @@ public class LanduseBuildingAnalysis {
 						continue;
 					}
 			}
+	}
+
+	/**Changes the key of the buildingsPerZone map to include the region into the name.
+	 * @param buildingsPerZone
+	 * @param zonesFeatures
+	 */
+	private static void changeNameOfKey(HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone,
+			List<SimpleFeature> zonesFeatures) {
+		for (SimpleFeature singleZone : zonesFeatures) {
+			if (buildingsPerZone.containsKey(((String) singleZone.getAttribute("id"))))
+				buildingsPerZone.put(
+						(String) singleZone.getAttribute("region") + "_" + (String) singleZone.getAttribute("id"),
+						buildingsPerZone.remove((String) singleZone.getAttribute("id")));
+		}
 	}
 
 	/**
@@ -402,12 +410,13 @@ public class LanduseBuildingAnalysis {
 	 * @param buildingsPerZone
 	 * @param landuseCategoriesAndDataConnection
 	 * @param shapeFileLandusePath
+	 * @param zonesFeatures 
 	 * @param shapeFileZonePath
 	 */
 	static void analyzeBuildingType(List<SimpleFeature> buildingsFeatures,
 			HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone,
 			HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection, Path shapeFileLandusePath,
-			Index indexZones) {
+			Index indexZones, List<SimpleFeature> zonesFeatures) {
 
 		Index indexLanduse = SmallScaleFreightTrafficUtils.getIndexLanduse(shapeFileLandusePath);
 
@@ -447,6 +456,7 @@ public class LanduseBuildingAnalysis {
 						.computeIfAbsent(c, k -> new ArrayList<SimpleFeature>()).add(singleBuildingFeature));
 			}
 		}
+		changeNameOfKey(buildingsPerZone, zonesFeatures);
 		log.info("Finished anlyzing buildings types.");
 	}
 }
