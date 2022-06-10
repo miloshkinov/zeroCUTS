@@ -27,8 +27,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SplittableRandom;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -40,8 +42,11 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Leg;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.application.options.ShpOptions.Index;
 import org.matsim.contrib.freight.Freight;
@@ -55,9 +60,17 @@ import org.matsim.contrib.freight.carrier.CarrierVehicle;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.contrib.freight.carrier.Carriers;
+import org.matsim.contrib.freight.carrier.ScheduledTour;
 import org.matsim.contrib.freight.carrier.TimeWindow;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
+import org.matsim.contrib.freight.carrier.CarrierPlan;
 import org.matsim.contrib.freight.controler.CarrierModule;
+import org.matsim.contrib.freight.controler.CarrierPlanStrategyManagerFactory;
+import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
+import org.matsim.contrib.freight.controler.FreightActivity;
+import org.matsim.contrib.freight.controler.ReRouteVehicles;
+import org.matsim.contrib.freight.controler.TimeAllocationMutator;
+import org.matsim.contrib.freight.usecases.chessboard.TravelDisutilities;
 import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -66,14 +79,29 @@ import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
+import org.matsim.core.gbl.Gbl;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.population.routes.NetworkRoute;
+import org.matsim.core.replanning.GenericPlanStrategyImpl;
+import org.matsim.core.replanning.GenericStrategyManager;
+import org.matsim.core.replanning.selectors.ExpBetaPlanChanger;
+import org.matsim.core.replanning.selectors.KeepSelected;
+import org.matsim.core.router.util.LeastCostPathCalculator;
+import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
+import org.matsim.core.router.util.TravelDisutility;
+import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.scoring.ScoringFunction;
+import org.matsim.core.scoring.SumScoringFunction;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.io.UncheckedIOException;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vsp.freightAnalysis.FreightAnalyse;
 import org.opengis.feature.simple.SimpleFeature;
+
+import com.google.inject.Inject;
+
 import org.locationtech.jts.geom.Geometry;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import picocli.CommandLine;
@@ -93,6 +121,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private static List<Link> links = new ArrayList<Link>();
 	private static Map<String, List<Link>> regionLinksMap = new HashMap<>();
 	private static HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
+
+	private enum CreationOption {
+		useExistingCarrierFile, createNewCarrierFile
+	}
 
 	private enum LanduseConfiguration {
 		useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
@@ -125,6 +157,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--jspritIterations", description = "Set number of jsprit iterations", required = true, defaultValue = "15")
 	private static int jspritIterations;
 
+	@CommandLine.Option(names = "--CreationOption", defaultValue = "useExistingCarrierFile", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
+	private CreationOption usedCreationOption;
+// useExistingCarrierFile, createNewCarrierFile	
+
 	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of mode differentiation:  createOneODMatrix, createSeperateODMatricesForModes")
 	private ModeDifferentiation usedModeDifferentiationForPassangerTraffic;
 
@@ -151,36 +187,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		 * Fragen: bei only landuse; was passiert mit construction?
 		 */
 
-		switch (usedZoneChoice) {
-		case useDistricts:
-			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-					.resolve("berlinBrandenburg_Zones_districts_4326.shp");
-			break;
-		case useTrafficCells:
-			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-					.resolve("berlinBrandenburg_Zones_VKZ_4326.shp");
-			break;
-		default:
-			break;
-		}
-
-		shapeFileLandusePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-				.resolve("berlinBrandenburg_landuse_4326.shp");
-
-//		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-//				.resolve("buildings_sample_BerlinBrandenburg_4326.shp");
-		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-				.resolve("buildings_BerlinBrandenburg_4326.shp");
-
-		if (!Files.exists(shapeFileLandusePath)) {
-			log.error("Required landuse shape file {} not found", shapeFileLandusePath);
-		}
-		if (!Files.exists(shapeFileBuildingsPath)) {
-			log.error("Required OSM buildings shape file {} not found", shapeFileBuildingsPath);
-		}
-		if (!Files.exists(shapeFileZonePath)) {
-			log.error("Required distrcits shape file {} not found", shapeFileZonePath);
-		}
 		output = output.resolve(java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay()
 				+ "_" + usedTrafficType.toString());
 
@@ -189,52 +195,103 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		prepareVehicles(config);
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
+		Controler controler;
+		switch (usedCreationOption) {
+		case useExistingCarrierFile:
+			String carriersFileLocation = inputDataDirectory.resolve("output_jspritCarriersWithPlans.xml").toString();
+			FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
+			freightConfigGroup.setCarriersFile(carriersFileLocation);
+			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
+			log.info("Load carriers from: " + carriersFileLocation);
+			controler = prepareControler(scenario);
+			break;
 
-		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
-				.createInputDataDistribution(output, landuseCategoriesAndDataConnection, inputDataDirectory,
-						usedLanduseConfiguration.toString(), shapeFileLandusePath, shapeFileZonePath,
-						shapeFileBuildingsPath, buildingsPerZone);
+		default:
 
-		ArrayList<String> modesORvehTypes;
-		switch (usedTrafficType) {
-		case businessTraffic:
-			switch (usedModeDifferentiationForPassangerTraffic) {
-			case createOneODMatrix:
-				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
+			switch (usedZoneChoice) {
+			case useDistricts:
+				shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+						.resolve("berlinBrandenburg_Zones_districts_4326.shp");
 				break;
-			case createSeperateODMatricesForModes:
-				modesORvehTypes = new ArrayList<String>(Arrays.asList("pt", "it", "op"));
+			case useTrafficCells:
+				shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+						.resolve("berlinBrandenburg_Zones_VKZ_4326.shp");
 				break;
 			default:
-				throw new RuntimeException("No mode differentiation selected.");
+				break;
 			}
+
+			shapeFileLandusePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+					.resolve("berlinBrandenburg_landuse_4326.shp");
+
+			shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+					.resolve("buildings_sample_BerlinBrandenburg_4326.shp");
+//		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+//				.resolve("buildings_BerlinBrandenburg_4326.shp");
+
+			if (!Files.exists(shapeFileLandusePath)) {
+				log.error("Required landuse shape file {} not found", shapeFileLandusePath);
+			}
+			if (!Files.exists(shapeFileBuildingsPath)) {
+				log.error("Required OSM buildings shape file {} not found", shapeFileBuildingsPath);
+			}
+			if (!Files.exists(shapeFileZonePath)) {
+				log.error("Required distrcits shape file {} not found", shapeFileZonePath);
+			}
+
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
+					.createInputDataDistribution(output, landuseCategoriesAndDataConnection, inputDataDirectory,
+							usedLanduseConfiguration.toString(), shapeFileLandusePath, shapeFileZonePath,
+							shapeFileBuildingsPath, buildingsPerZone);
+
+			ArrayList<String> modesORvehTypes;
+			switch (usedTrafficType) {
+			case businessTraffic:
+				switch (usedModeDifferentiationForPassangerTraffic) {
+				case createOneODMatrix:
+					modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
+					break;
+				case createSeperateODMatricesForModes:
+					modesORvehTypes = new ArrayList<String>(Arrays.asList("pt", "it", "op"));
+					break;
+				default:
+					throw new RuntimeException("No mode differentiation selected.");
+				}
+				break;
+			case freightTraffic:
+				modesORvehTypes = new ArrayList<String>(
+						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
+				break;
+			default:
+				throw new RuntimeException("No traffic type selected.");
+			}
+
+			TrafficVolumeGeneration.loadInputParamters(inputDataDirectory, usedTrafficType.toString());
+
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
+					.createTrafficVolume_start(resultingDataPerZone, output, inputDataDirectory, sample,
+							modesORvehTypes);
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
+					.createTrafficVolume_stop(resultingDataPerZone, output, inputDataDirectory, sample,
+							modesORvehTypes);
+			ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
+			final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
+					trafficVolumePerTypeAndZone_stop, shpZones);
+
+			createCarriers(config, scenario, odMatrix, resultingDataPerZone, usedTrafficType.toString());
+
+			controler = prepareControler(scenario);
+
+			FreightUtils.runJsprit(controler.getScenario());
 			break;
-		case freightTraffic:
-			modesORvehTypes = new ArrayList<String>(
-					Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
-			break;
-		default:
-			throw new RuntimeException("No traffic type selected.");
 		}
-
-		TrafficVolumeGeneration.loadInputParamters(inputDataDirectory, usedTrafficType.toString());
-
-		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
-				.createTrafficVolume_start(resultingDataPerZone, output, inputDataDirectory, sample, modesORvehTypes);
-		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
-				.createTrafficVolume_stop(resultingDataPerZone, output, inputDataDirectory, sample, modesORvehTypes);
-		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
-		final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
-				trafficVolumePerTypeAndZone_stop, shpZones);
-
-		createCarriers(config, scenario, odMatrix, resultingDataPerZone, usedTrafficType.toString());
-		Controler controler = prepareControler(scenario);
-
-		FreightUtils.runJsprit(controler.getScenario());
-		controler.run();
+		SmallScaleFreightTrafficUtils.createPlansBasedOnCarrierPlans(controler, usedTrafficType.toString(), sample, output);
+		
 		new CarrierPlanXmlWriterV2((Carriers) controler.getScenario().getScenarioElement("carriers"))
-				.write(config.controler().getOutputDirectory() + "/output_jspritCarriersWithPlans.xml");
-
+		.write(config.controler().getOutputDirectory() + "/output_jspritCarriersWithPlans.xml");
+		
+		controler.run();
+		
 		FreightAnalyse.main(new String[] { scenario.getConfig().controler().getOutputDirectory() });
 
 		return 0;
@@ -269,15 +326,16 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		Freight.configure(controler);
 		controler.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
-				install(new CarrierModule());
-			}
-		});
+            @Override
+            public void install() {
+                install(new CarrierModule());
+                bind(CarrierPlanStrategyManagerFactory.class).toInstance( new MyCarrierPlanStrategyManagerFactory(FreightUtils.getCarrierVehicleTypes(scenario)) );
+                bind(CarrierScoringFunctionFactory.class).toInstance( new MyCarrierScoringFunctionFactory() );
+            }
+        });
 		return controler;
 	}
-
-	/**
+    /**
 	 * Creates the carriers and the related demand, based on the generated
 	 * TripDistributionMatrix.
 	 * 
@@ -691,5 +749,232 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 		odMatrix.writeODMatrices(output);
 		return odMatrix;
+	}
+	private static class MyCarrierScoringFunctionFactory implements CarrierScoringFunctionFactory {
+	
+	    @Inject
+	    private Network network;
+	
+	    @Override
+	    public ScoringFunction createScoringFunction(Carrier carrier) {
+	        SumScoringFunction sf = new SumScoringFunction();
+	        DriversLegScoring driverLegScoring = new DriversLegScoring(carrier, network);
+	        VehicleEmploymentScoring vehicleEmploymentScoring = new VehicleEmploymentScoring(carrier);
+	        DriversActivityScoring actScoring = new DriversActivityScoring();
+	        sf.addScoringFunction(driverLegScoring);
+	        sf.addScoringFunction(vehicleEmploymentScoring);
+	        sf.addScoringFunction(actScoring);
+	        return sf;
+	    }
+	
+	}
+	private static class MyCarrierPlanStrategyManagerFactory implements CarrierPlanStrategyManagerFactory {
+	
+	    @Inject
+	    private Network network;
+	
+	    @Inject
+	    private LeastCostPathCalculatorFactory leastCostPathCalculatorFactory;
+	
+	    @Inject
+	    private Map<String, TravelTime> modeTravelTimes;
+	
+	    private final CarrierVehicleTypes types;
+	
+	    public MyCarrierPlanStrategyManagerFactory(CarrierVehicleTypes types) {
+	        this.types = types;
+	    }
+	
+	    @Override
+	    public GenericStrategyManager<CarrierPlan, Carrier> createStrategyManager() {
+	        TravelDisutility travelDisutility = TravelDisutilities.createBaseDisutility(types, modeTravelTimes.get(TransportMode.car));
+	        final LeastCostPathCalculator router = leastCostPathCalculatorFactory.createPathCalculator(network,
+	                travelDisutility, modeTravelTimes.get(TransportMode.car));
+	
+	        final GenericStrategyManager<CarrierPlan, Carrier> strategyManager = new GenericStrategyManager<>();
+	        strategyManager.setMaxPlansPerAgent(5);
+	        {
+	            GenericPlanStrategyImpl<CarrierPlan, Carrier> strategy = new GenericPlanStrategyImpl<>(new ExpBetaPlanChanger<CarrierPlan, Carrier>(1.));
+	            //						strategy.addStrategyModule(new ReRouter(router, services.getNetwork(), services.getLinkTravelTimes(), .1));
+	            strategyManager.addStrategy(strategy, null, 1.0);
+	
+	        }
+	        //					{
+	        //						GenericPlanStrategyImpl<CarrierPlan, Carrier> strategy = new GenericPlanStrategyImpl<CarrierPlan, Carrier>( new ExpBetaPlanChanger<CarrierPlan, Carrier>(1.) ) ;
+	        //						strategy.addStrategyModule(new ReRouter(router, services.getNetwork(), services.getLinkTravelTimes(), 1.));
+	        //						strategyManager.addStrategy( strategy, null, 0.1) ;
+	        //					}
+	        {
+	            GenericPlanStrategyImpl<CarrierPlan, Carrier> strategy = new GenericPlanStrategyImpl<>(new KeepSelected<CarrierPlan, Carrier>());
+	            strategy.addStrategyModule(new TimeAllocationMutator());
+	            strategy.addStrategyModule(new ReRouteVehicles(router, network, modeTravelTimes.get(TransportMode.car), 1.));
+	            strategyManager.addStrategy(strategy, null, 0.5);
+	        }
+	        //					{
+	        //						GenericPlanStrategyImpl<CarrierPlan,Carrier> strategy = new GenericPlanStrategyImpl<CarrierPlan,Carrier>( new KeepSelected<CarrierPlan,Carrier>() ) ;
+	        //                        strategy.addStrategyModule(new ReScheduling(services.getNetwork(),types,services.getLinkTravelTimes(), "sschroeder/input/usecases/chessboard/vrpalgo/algorithm_v2.xml"));
+	        //                        strategy.addStrategyModule(new ReRouter(router, services.getNetwork(), services.getLinkTravelTimes(), 1.));
+	        //                        strategyManager.addStrategy( strategy, null, 0.1) ;
+	        //					}
+	        return strategyManager;
+	    }
+	}
+	static class DriversActivityScoring implements SumScoringFunction.BasicScoring, SumScoringFunction.ActivityScoring {
+	
+	//        private static final  Logger log = Logger.getLogger(DriversActivityScoring.class);
+	
+	        private double score;
+	        private double timeParameter = 0.008;
+	        private double missedTimeWindowPenalty = 0.01;
+	
+	        public DriversActivityScoring() {
+	            super();
+	        }
+	
+	        @Override
+	        public void finish() {
+	        }
+	
+	        @Override
+	        public double getScore() {
+	            return score;
+	        }
+	
+	        @Override
+	        public void handleFirstActivity(Activity act) {
+	            handleActivity(act);
+	        }
+	
+	        @Override
+	        public void handleActivity(Activity act) {
+	            if(act instanceof FreightActivity) {
+					double actStartTime = act.getStartTime().seconds();
+	
+	//                log.info(act + " start: " + Time.writeTime(actStartTime));
+	                TimeWindow tw = ((FreightActivity) act).getTimeWindow();
+	                if(actStartTime > tw.getEnd()){
+	                    double penalty_score = (-1)*(actStartTime - tw.getEnd())*missedTimeWindowPenalty;
+	                    if (!(penalty_score <= 0.0)) throw new AssertionError("penalty score must be negative");
+	//                    log.info("penalty " + penalty_score);
+	                    score += penalty_score;
+	
+	                }
+					double actTimeCosts = (act.getEndTime().seconds() -actStartTime)*timeParameter;
+	//                log.info("actCosts " + actTimeCosts);
+	                if (!(actTimeCosts >= 0.0)) throw new AssertionError("actTimeCosts must be positive");
+	                score += actTimeCosts*(-1);
+	            }
+	        }
+	
+	        @Override
+	        public void handleLastActivity(Activity act) {
+	            handleActivity(act);
+	        }
+	
+	    }
+
+
+	static class DriversLegScoring implements SumScoringFunction.BasicScoring, SumScoringFunction.LegScoring {
+	
+	//        private static final  Logger log = Logger.getLogger(DriversLegScoring.class);
+	
+	        private double score = 0.0;
+	        private final Network network;
+	        private final Carrier carrier;
+	        private Set<CarrierVehicle> employedVehicles;
+	
+	        public DriversLegScoring(Carrier carrier, Network network) {
+	            super();
+	            this.network = network;
+	            this.carrier = carrier;
+	            employedVehicles = new HashSet<CarrierVehicle>();
+	        }
+	
+	
+	        @Override
+	        public void finish() {
+	
+	        }
+	
+	
+	        @Override
+	        public double getScore() {
+	            return score;
+	        }
+	
+	        private double getTimeParameter(CarrierVehicle vehicle) {
+	            return vehicle.getType().getCostInformation().getCostsPerSecond();
+	        }
+	
+	
+	        private double getDistanceParameter(CarrierVehicle vehicle) {
+	            return vehicle.getType().getCostInformation().getCostsPerMeter();
+	        }
+	
+	
+	//        private CarrierVehicle getVehicle(Id vehicleId) {
+	//            CarrierUtils.getCarrierVehicle(carrier, vehicleId);
+	//            if(carrier.getCarrierCapabilities().getCarrierVehicles().containsKey(vehicleId)){
+	//                return carrier.getCarrierCapabilities().getCarrierVehicles().get(vehicleId);
+	//            }
+	//            log.error("Vehicle with Id does not exists", new IllegalStateException("vehicle with id " + vehicleId + " is missing"));
+	//            return null;
+	//        }
+	
+	        @Override
+	        public void handleLeg(Leg leg) {
+	            if(leg.getRoute() instanceof NetworkRoute){
+	                NetworkRoute nRoute = (NetworkRoute) leg.getRoute();
+	                Id<Vehicle> vehicleId = nRoute.getVehicleId();
+	                CarrierVehicle vehicle = CarrierUtils.getCarrierVehicle(carrier, vehicleId);
+	                Gbl.assertNotNull(vehicle);
+	                if(!employedVehicles.contains(vehicle)){
+	                    employedVehicles.add(vehicle);
+	                }
+	                double distance = 0.0;
+	                if(leg.getRoute() instanceof NetworkRoute){
+	                    Link startLink = network.getLinks().get(leg.getRoute().getStartLinkId());
+	                    distance += startLink.getLength();
+	                    for (Id<Link>  linkId : ((NetworkRoute) leg.getRoute()).getLinkIds()){
+	                        distance += network.getLinks().get(linkId).getLength();
+	                    }
+	                    distance += network.getLinks().get(leg.getRoute().getEndLinkId()).getLength();
+	                }
+	                double distanceCosts = distance*getDistanceParameter(vehicle);
+	                if (!(distanceCosts >= 0.0)) throw new AssertionError("distanceCosts must be positive");
+	                score += (-1) * distanceCosts;
+	        	double timeCosts = leg.getTravelTime().seconds() *getTimeParameter(vehicle);
+	                if (!(timeCosts >= 0.0)) throw new AssertionError("distanceCosts must be positive");
+	                score += (-1) * timeCosts;
+	            }
+	        }
+	    }
+	static class VehicleEmploymentScoring implements SumScoringFunction.BasicScoring {
+	
+	    private Carrier carrier;
+	
+	    public VehicleEmploymentScoring(Carrier carrier) {
+	        super();
+	        this.carrier = carrier;
+	    }
+	
+	    @Override
+	    public void finish() {
+	
+	    }
+	
+	    @Override
+	    public double getScore() {
+	        double score = 0.;
+	        CarrierPlan selectedPlan = carrier.getSelectedPlan();
+	        if(selectedPlan == null) return 0.;
+	        for(ScheduledTour tour : selectedPlan.getScheduledTours()){
+	            if(!tour.getTour().getTourElements().isEmpty()){
+	                score += (-1)*tour.getVehicle().getType().getCostInformation().getFixedCosts();
+	            }
+	        }
+	        return score;
+	    }
+	
 	}
 }
