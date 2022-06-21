@@ -157,7 +157,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--jspritIterations", description = "Set number of jsprit iterations", required = true, defaultValue = "15")
 	private static int jspritIterations;
 
-	@CommandLine.Option(names = "--CreationOption", defaultValue = "useExistingCarrierFile", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
+	@CommandLine.Option(names = "--CreationOption", defaultValue = "createNewCarrierFile", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
 	private CreationOption usedCreationOption;
 // useExistingCarrierFile, createNewCarrierFile	
 
@@ -224,10 +224,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			shapeFileLandusePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
 					.resolve("berlinBrandenburg_landuse_4326.shp");
 
-			shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-					.resolve("buildings_sample_BerlinBrandenburg_4326.shp");
-//		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-//				.resolve("buildings_BerlinBrandenburg_4326.shp");
+//			shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+//					.resolve("buildings_sample_BerlinBrandenburg_4326.shp");
+		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+				.resolve("buildings_BerlinBrandenburg_4326.shp");
 
 			if (!Files.exists(shapeFileLandusePath)) {
 				log.error("Required landuse shape file {} not found", shapeFileLandusePath);
@@ -616,8 +616,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				for (int i = 0; i < fixedNumberOfVehilcePerTypeAndLocation; i++) {
 					CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder
 							.newInstance(
-									Id.create(
-											thisType.getId().toString() + "_" + thisCarrier.getId().toString() + "_"
+									Id.create(thisCarrier.getId().toString() + "_"
 													+ (carrierCapabilities.getCarrierVehicles().size() + 1),
 											Vehicle.class),
 									Id.createLinkId(singleDepot), thisType)
