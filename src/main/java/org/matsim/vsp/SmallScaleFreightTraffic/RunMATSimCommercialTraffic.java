@@ -1,6 +1,5 @@
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
-import java.net.URL;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
@@ -27,8 +26,8 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 
 	private static final Logger log = LogManager.getLogger(RunMATSimCommercialTraffic.class);
 	
-	@CommandLine.Option(names = "config", description = "Path to the config file.", defaultValue = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/config.xml")
-	private static URL configURL;
+	@CommandLine.Option(names = "config", description = "Path to the config file.", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/config.xml")
+	private static Path configURL;
 	
 	@CommandLine.Option(names = "--output", description = "Path to output folder", required = true, defaultValue = "output/BusinessPassengerTraffic_MATSim/")
 	private Path output;
@@ -40,12 +39,12 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 	@Override
 	public Integer call() throws Exception {
 		
-		Config config = ConfigUtils.loadConfig(configURL);
+		Config config = ConfigUtils.loadConfig(configURL.toString());
 		output = output.resolve(java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay());
 		config.controler().setOutputDirectory(output.toString());
 		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
 				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
-		
+		config.counts().setInputFile("counts_berlin_Lkw.xml");
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		
 		Controler controler = prepareControler(scenario);
