@@ -32,7 +32,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -50,6 +49,8 @@ import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.utils.io.IOUtils;
+import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.VehicleUtils;
 
 import com.google.common.base.Joiner;
 
@@ -170,21 +171,19 @@ public class SmallScaleFreightTrafficUtils {
 						plan.addActivity(serviceActivity);
 					}
 					if (tourElement instanceof Tour.Leg) {
-//						Tour.Leg legElement = (Tour.Leg) tourElement;
-						Leg legActivity = popFactory.createLeg(TransportMode.walk);
-						legActivity.getAttributes().putAttribute("routingMode", "freight");
+						Leg legActivity = popFactory.createLeg("freight");
 						plan.addLeg(legActivity);
 					}
 				}
-				
 				Activity endActivity = popFactory.createActivityFromCoord("freight",scenario.getNetwork().getLinks().get(tour.getTour().getEndLinkId()).getFromNode().getCoord());
 				endActivity.setMaximumDuration(0);
+				endActivity.setStartTime(tour.getDeparture()+8*3600);
 				plan.addActivity(endActivity);
 				person.addPlan(plan);
 				population.addPerson(person);
 				PopulationUtils.putSubpopulation(person, carrier.getId().toString().split("_")[1]);
 				PopulationUtils.putPersonAttribute(person, "type", usedTrafficType.replace("Traffic", ""));
-//				VehicleUtils.insertVehicleIdsIntoAttributes(person, (new HashMap<String, Id<Vehicle>>(){{put("", vehicleNew.getId());}}));
+				VehicleUtils.insertVehicleIdsIntoAttributes(person, (new HashMap<String, Id<Vehicle>>(){{put("freight", tour.getVehicle().getId());}}));
 			}
 		}
 		PopulationUtils.writePopulation(population, output.toString() + "/berlin_"+usedTrafficType+"_"+(int)(sample*100)+"pct_plans.xml.gz");
