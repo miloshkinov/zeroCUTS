@@ -31,3 +31,8 @@ jobs:
 
       - name: Test module
         run: mvn verify --batch-mode -Dmaven.test.redirectTestOutputToFile -Dmatsim.preferLocalDtds=true --fail-at-end -Dsource.skip
+        
+concurrency: 
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+  
