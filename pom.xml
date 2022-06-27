@@ -13,6 +13,17 @@
 	<properties>
 		<matsim.version>15.0-PR1952</matsim.version>
 
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<maven.compiler.release>17</maven.compiler.release>
+		<argLine/>
+
+		<log4j.version>2.17.2</log4j.version>
+		<geotools.version>27.0</geotools.version>
+		<jts.version>1.19.0</jts.version>
+		<guice.version>5.1.0</guice.version>
+		<jackson.version>2.13.3</jackson.version>
+
 	</properties>
 
 	<repositories>
@@ -34,29 +45,6 @@
 		<repository>
 			<id>matsim</id>
 			<url>https://repo.matsim.org/repository/matsim</url>
-		</repository>
-
-		<!-- For MATSim snapshots: -->
-		<repository>
-			<id>ojo-snapshots</id>
-			<url>http://oss.jfrog.org/libs-snapshot</url>
-		</repository>
-
-		<!-- For MATSim monthly snapshots: -->
-		<repository>
-			<id>bintray-matsim-eth-matsim</id>
-			<name>bintray</name>
-			<url>https://dl.bintray.com/matsim-eth/matsim</url>
-		</repository>
-		<repository>
-			<id>jitpack.io</id>
-			<url>https://jitpack.io</url>
-		</repository>
-
-		<!-- For MATSim DVRP contrib - necessary since fall 2020 -->
-		<repository>
-			<id>SBB</id>
-			<url>https://schweizerischebundesbahnen.bintray.com/simba.mvn</url>
 		</repository>
 
 	</repositories>
@@ -94,26 +82,12 @@
 			<!--<scope>compile</scope> -->
 		</dependency>
 
-		<!-- This is the matsim dvrp contrib: -->
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>dvrp</artifactId>
-			<version>${matsim.version}</version>
-			<!--<scope>compile</scope> -->
-		</dependency>
 
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>emissions</artifactId>
 			<version>${matsim.version}</version>
 		</dependency>
-
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>taxi</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-
 
 
 		<!-- Include the JUnit testing library. Not transitive. -->
@@ -141,97 +115,72 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.0</version>
+				<version>3.10.1</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-					<source>11</source>
-					<target>11</target>
-					<showWarnings>false</showWarnings>
-					<showDeprecation>false</showDeprecation>
-					<encoding>UTF-8</encoding>
-					<!-- configure initial and maximal memory for compiling -->
-					<fork>true</fork>
-					<meminitial>128m</meminitial>
-					<maxmem>512m</maxmem>
-					<compilerArguments>
-						<Xmaxwarns>4000</Xmaxwarns>
-						<Xmaxerrs>100</Xmaxerrs>
-					</compilerArguments>
+					<properties>
+						<property>
+							<name>listener</name>
+							<value>org.matsim.api.core.v01.AutoResetIdCaches</value>
+						</property>
+					</properties>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-eclipse-plugin</artifactId>
+				<artifactId>maven-failsafe-plugin</artifactId>
 				<configuration>
-					<downloadSources>true</downloadSources>
-					<downloadJavadocs>true</downloadJavadocs>
+					<properties>
+						<property>
+							<name>listener</name>
+							<value>org.matsim.api.core.v01.AutoResetIdCaches</value>
+						</property>
+					</properties>
 				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.2.2</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<outputFile>${project.basedir}/${project.build.finalName}.jar</outputFile>
-							<transformers>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<manifestEntries>
-										<Main-Class>${mainClass}</Main-Class>
-										<Specification-Vendor>org.matsim</Specification-Vendor>
-										<Implementation-Vendor>org.matsim</Implementation-Vendor>
-										<Implementation-Version>${project.version}</Implementation-Version>
-									</manifestEntries>
-								</transformer>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-							</transformers>
-							<filters>
-								<!-- Avoid signature checking -->
-								<filter>
-									<artifact>*:*</artifact>
-									<excludes>
-										<exclude>META-INF/*.SF</exclude>
-										<exclude>META-INF/*.DSA</exclude>
-										<exclude>META-INF/*.RSA</exclude>
-									</excludes>
-								</filter>
-								<!-- Force some inclusion because of minimizing -->
-								<filter>
-									<artifact>org.apache.logging.log4j:*</artifact>
-									<includes>
-										<include>**</include>
-									</includes>
-								</filter>
-								<filter>
-									<artifact>xerces:*</artifact>
-									<includes>
-										<include>**</include>
-									</includes>
-								</filter>
-								<filter>
-									<artifact>org.hibernate.validator:*</artifact>
-									<includes>
-										<include>**</include>
-									</includes>
-								</filter>
-								<filter>
-									<artifact>org.glassfish:*</artifact>
-									<includes>
-										<include>**</include>
-									</includes>
-								</filter>
-							</filters>
-							<minimizeJar>false</minimizeJar>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
+
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>3.0.0-M7</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-failsafe-plugin</artifactId>
+					<version>3.0.0-M7</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>3.2.2</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-source-plugin</artifactId>
+					<version>3.2.1</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-resources-plugin</artifactId>
+					<version>3.2.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-install-plugin</artifactId>
+					<version>3.0.0-M1</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>3.4.0</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 </project>
