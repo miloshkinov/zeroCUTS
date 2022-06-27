@@ -64,7 +64,7 @@ import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
  */
 public class SmallScaleFreightTrafficUtils {
 
-	private static final Logger log = LogManager.getLogger(LanduseBuildingAnalysis.class);
+	private static final Logger log = LogManager.getLogger(SmallScaleFreightTrafficUtils.class);
 	private static final Joiner JOIN = Joiner.on("\t");
 
 	/**
@@ -156,7 +156,7 @@ public class SmallScaleFreightTrafficUtils {
 			for (ScheduledTour tour : carrier.getSelectedPlan().getScheduledTours()) {
 				Person person = popFactory.createPerson(Id.create(tour.getVehicle().getId(), Person.class));
 				Plan plan = popFactory.createPlan();
-				Activity startActivity = popFactory.createActivityFromCoord("freight", scenario.getNetwork().getLinks().get(tour.getTour().getStartLinkId()).getFromNode().getCoord());
+				Activity startActivity = popFactory.createActivityFromCoord("freight_tourStart", scenario.getNetwork().getLinks().get(tour.getTour().getStartLinkId()).getFromNode().getCoord());
 				startActivity.setStartTime(tour.getDeparture());
 				startActivity.setEndTime(tour.getDeparture());
 				startActivity.setMaximumDuration(0);
@@ -175,7 +175,7 @@ public class SmallScaleFreightTrafficUtils {
 						plan.addLeg(legActivity);
 					}
 				}
-				Activity endActivity = popFactory.createActivityFromCoord("freight",scenario.getNetwork().getLinks().get(tour.getTour().getEndLinkId()).getFromNode().getCoord());
+				Activity endActivity = popFactory.createActivityFromCoord("freight_tourEnd",scenario.getNetwork().getLinks().get(tour.getTour().getEndLinkId()).getFromNode().getCoord());
 				endActivity.setMaximumDuration(0);
 				endActivity.setStartTime(tour.getDeparture()+8*3600);
 				plan.addActivity(endActivity);
