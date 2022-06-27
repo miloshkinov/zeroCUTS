@@ -69,12 +69,12 @@ public class TrafficVolumeGeneration {
 	 */
 	static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_start(
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output, Path inputDataDirectory,
-			double sample, ArrayList<String> modesORvehTypes) throws MalformedURLException {
+			double sample, ArrayList<String> modesORvehTypes, String trafficType) throws MalformedURLException {
 
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
 		calculateTrafficVolumePerZone(trafficVolume_start, resultingDataPerZone, "start", modesORvehTypes);
 		Path outputFileStart = output.resolve("caculatedData")
-				.resolve("TrafficVolume_startPerZone_" + (int) (sample * 100) + "pt.csv");
+				.resolve("TrafficVolume_"+trafficType+"_"+"startPerZone_" + (int) (sample * 100) + "pt.csv");
 		writeCSVTrafficVolume(trafficVolume_start, outputFileStart, sample);
 		log.info("Write traffic volume for start trips per zone in CSV: " + outputFileStart);
 		return trafficVolume_start;
@@ -94,12 +94,12 @@ public class TrafficVolumeGeneration {
 	 */
 	static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_stop(
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output, Path inputDataDirectory,
-			double sample, ArrayList<String> modesORvehTypes) throws MalformedURLException {
+			double sample, ArrayList<String> modesORvehTypes, String trafficType) throws MalformedURLException {
 
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
 		calculateTrafficVolumePerZone(trafficVolume_stop, resultingDataPerZone, "stop", modesORvehTypes);
 		Path outputFileStop = output.resolve("caculatedData")
-				.resolve("TrafficVolume_stopPerZone_" + (int) (sample * 100) + "pt.csv");
+				.resolve("TrafficVolume_"+trafficType+"_"+"stopPerZone_" + (int) (sample * 100) + "pt.csv");
 		writeCSVTrafficVolume(trafficVolume_stop, outputFileStop, sample);
 		log.info("Write traffic volume for stop trips per zone in CSV: " + outputFileStop);
 		return trafficVolume_stop;

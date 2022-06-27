@@ -20,6 +20,7 @@
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -33,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SplittableRandom;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Level;
@@ -139,7 +141,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	}
 
 	private enum TrafficType {
-		businessTraffic, freightTraffic
+		businessTraffic, freightTraffic, bothTypes
 	}
 
 	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input")
@@ -173,7 +175,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 	@CommandLine.Option(names = "--trafficType", defaultValue = "freightTraffic", description = "Select traffic type. Options: commercialPassengerTraffic, freightTraffic")
 	private TrafficType usedTrafficType;
-// businessTraffic, freightTraffic
+// businessTraffic, freightTraffic, bothTypes
 	private final static SplittableRandom rnd = new SplittableRandom(4711);
 
 	public static void main(String[] args) {
@@ -195,7 +197,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		prepareVehicles(config);
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
-		Controler controler;
+		Controler controler = null;
 		switch (usedCreationOption) {
 		case useExistingCarrierFile:
 			String carriersFileLocation = inputDataDirectory.resolve("output_jspritCarriersWithPlans.xml").toString();
@@ -224,10 +226,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			shapeFileLandusePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
 					.resolve("berlinBrandenburg_landuse_4326.shp");
 
-//			shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-//					.resolve("buildings_sample_BerlinBrandenburg_4326.shp");
-		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-				.resolve("buildings_BerlinBrandenburg_4326.shp");
+			shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+					.resolve("buildings_sample_BerlinBrandenburg_4326.shp");
+//		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+//				.resolve("buildings_BerlinBrandenburg_4326.shp");
 
 			if (!Files.exists(shapeFileLandusePath)) {
 				log.error("Required landuse shape file {} not found", shapeFileLandusePath);
@@ -257,29 +259,32 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				default:
 					throw new RuntimeException("No mode differentiation selected.");
 				}
+				createDemandAndSolutionWithJsprit(config, controler, scenario, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
 				break;
 			case freightTraffic:
 				modesORvehTypes = new ArrayList<String>(
 						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
+				createDemandAndSolutionWithJsprit(config, controler, scenario, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
+				break;
+			case bothTypes:
+				switch (usedModeDifferentiationForPassangerTraffic) {
+				case createOneODMatrix:
+					modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
+					break;
+				case createSeperateODMatricesForModes:
+					modesORvehTypes = new ArrayList<String>(Arrays.asList("pt", "it", "op"));
+					break;
+				default:
+					throw new RuntimeException("No mode differentiation selected.");
+				}
+				createDemandAndSolutionWithJsprit(config, controler, scenario, resultingDataPerZone, modesORvehTypes, "businessTraffic");
+				modesORvehTypes = new ArrayList<String>(
+						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
+				createDemandAndSolutionWithJsprit(config, controler, scenario, resultingDataPerZone, modesORvehTypes, "freightTraffic");
 				break;
 			default:
 				throw new RuntimeException("No traffic type selected.");
 			}
-
-			TrafficVolumeGeneration.loadInputParamters(inputDataDirectory, usedTrafficType.toString());
-
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
-					.createTrafficVolume_start(resultingDataPerZone, output, inputDataDirectory, sample,
-							modesORvehTypes);
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
-					.createTrafficVolume_stop(resultingDataPerZone, output, inputDataDirectory, sample,
-							modesORvehTypes);
-			ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
-			final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
-					trafficVolumePerTypeAndZone_stop, shpZones);
-
-			createCarriers(config, scenario, odMatrix, resultingDataPerZone, usedTrafficType.toString());
-
 			controler = prepareControler(scenario);
 
 			FreightUtils.runJsprit(controler.getScenario());
@@ -295,6 +300,36 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		FreightAnalyse.main(new String[] { scenario.getConfig().controler().getOutputDirectory() });
 
 		return 0;
+	}
+
+	/**
+	 * @param config
+	 * @param scenario
+	 * @param resultingDataPerZone
+	 * @param modesORvehTypes
+	 * @return
+	 * @throws IOException
+	 * @throws MalformedURLException
+	 * @throws ExecutionException
+	 * @throws InterruptedException
+	 */
+	private void createDemandAndSolutionWithJsprit(Config config, Controler controler, Scenario scenario,
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, ArrayList<String> modesORvehTypes, String usedTrafficType)
+			throws IOException, MalformedURLException, ExecutionException, InterruptedException {
+		
+		TrafficVolumeGeneration.loadInputParamters(inputDataDirectory, usedTrafficType);
+
+		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
+				.createTrafficVolume_start(resultingDataPerZone, output, inputDataDirectory, sample,
+						modesORvehTypes, usedTrafficType);
+		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
+				.createTrafficVolume_stop(resultingDataPerZone, output, inputDataDirectory, sample,
+						modesORvehTypes, usedTrafficType);
+		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
+		final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
+				trafficVolumePerTypeAndZone_stop, shpZones, usedTrafficType);
+		
+		createCarriers(config, scenario, odMatrix, resultingDataPerZone, usedTrafficType);
 	}
 
 	/**
@@ -358,7 +393,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						for (String possibleStopZone : odMatrix.getListOfZones()) {
 							if (!modeORvehType.equals("pt") && !modeORvehType.equals("op"))
 								if (odMatrix.getTripDistributionValue(startZone, possibleStopZone, modeORvehType,
-										purpose) != 0) {
+										purpose, trafficType) != 0) {
 									isStartingLocation = true;
 									break checkIfIsStartingPosition;
 								}
@@ -487,7 +522,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							carrierName = "Carrier_" + startZone + "_purpose_" + purpose + "_" + modeORvehType;
 						} else
 							carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
-						int numberOfDepots = odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType, purpose);
+						int numberOfDepots = odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType, purpose, trafficType);
 						FleetSize fleetSize = FleetSize.FINITE;
 						int fixedNumberOfVehilcePerTypeAndLocation = 1;
 						ArrayList<String> vehicleDepots = new ArrayList<String>();
@@ -496,7 +531,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 								+ maxNumberOfCarrier + " carriers.");
 						log.info("Carrier: " + carrierName + "; depots: " + numberOfDepots + "; services: "
 								+ (int) Math
-										.ceil(odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType, purpose)
+										.ceil(odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType, purpose, trafficType)
 												/ occupancyRate));
 						createNewCarrierAndAddVehilceTypes(scenario, purpose, startZone,
 								ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), selectedStartCategory,
@@ -506,7 +541,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						for (String stopZone : odMatrix.getListOfZones()) {
 							int demand = 0;
 							int numberOfJobs = (int) Math
-									.ceil(odMatrix.getTripDistributionValue(startZone, stopZone, modeORvehType, purpose)
+									.ceil(odMatrix.getTripDistributionValue(startZone, stopZone, modeORvehType, purpose, trafficType)
 											/ occupancyRate);
 							if (numberOfJobs == 0)
 								continue;
@@ -721,17 +756,18 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param trafficVolume_start
 	 * @param trafficVolume_stop
 	 * @param shpZones
+	 * @param usedTrafficType 
 	 * @return TripDistributionMatrix
 	 * @throws UncheckedIOException
 	 * @throws MalformedURLException
 	 */
 	private TripDistributionMatrix createTripDistribution(
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, ShpOptions shpZones)
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, ShpOptions shpZones, String usedTrafficType)
 			throws UncheckedIOException, MalformedURLException {
 
 		final TripDistributionMatrix odMatrix = TripDistributionMatrix.Builder
-				.newInstance(shpZones, trafficVolume_start, trafficVolume_stop, sample).build();
+				.newInstance(shpZones, trafficVolume_start, trafficVolume_stop, sample, usedTrafficType).build();
 
 		int count = 0;
 
@@ -743,10 +779,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			for (String modeORvehType : trafficVolume_start.get(startZone).keySet())
 				for (Integer purpose : trafficVolume_start.get(startZone).get(modeORvehType).keySet())
 					for (String stopZone : trafficVolume_stop.keySet()) {
-						odMatrix.setTripDistributionValue(startZone, stopZone, modeORvehType, purpose);
+						odMatrix.setTripDistributionValue(startZone, stopZone, modeORvehType, purpose, usedTrafficType);
 					}
 		}
-		odMatrix.writeODMatrices(output);
+		odMatrix.writeODMatrices(output, usedTrafficType);
 		return odMatrix;
 	}
 	private static class MyCarrierScoringFunctionFactory implements CarrierScoringFunctionFactory {
