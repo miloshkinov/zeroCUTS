@@ -159,13 +159,14 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--jspritIterations", description = "Set number of jsprit iterations", required = true, defaultValue = "15")
 	private static int jspritIterations;
 
-	@CommandLine.Option(names = "--CreationOption", defaultValue = "createNewCarrierFile", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
+	@CommandLine.Option(names = "--creationOption", defaultValue = "createNewCarrierFile", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
 	private CreationOption usedCreationOption;
 // useExistingCarrierFile, createNewCarrierFile	
 
 	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of mode differentiation:  createOneODMatrix, createSeperateODMatricesForModes")
 	private ModeDifferentiation usedModeDifferentiationForPassangerTraffic;
-
+// createOneODMatrix, createSeperateODMatricesForModes
+	
 	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useDistricts", description = "Set option input zones. Options: useDistricts, useTrafficCells")
 	private ZoneChoice usedZoneChoice;
 // useDistricts, useTrafficCells
@@ -173,7 +174,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private LanduseConfiguration usedLanduseConfiguration;
 // useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
 
-	@CommandLine.Option(names = "--trafficType", defaultValue = "freightTraffic", description = "Select traffic type. Options: commercialPassengerTraffic, freightTraffic")
+	@CommandLine.Option(names = "--trafficType", defaultValue = "bothTypes", description = "Select traffic type. Options: commercialPassengerTraffic, freightTraffic")
 	private TrafficType usedTrafficType;
 // businessTraffic, freightTraffic, bothTypes
 	private final static SplittableRandom rnd = new SplittableRandom(4711);
@@ -517,11 +518,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 								selectedStartCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
 						} // TODO vielleicht besser lösen
 
-						String carrierName;
+						String carrierName = null;
 						if (trafficType.equals("freightTraffic")) {
-							carrierName = "Carrier_" + startZone + "_purpose_" + purpose + "_" + modeORvehType;
-						} else
-							carrierName = "Carrier_" + startZone + "_purpose_" + purpose;
+							carrierName = "Carrier_Freight_" + startZone + "_purpose_" + purpose + "_" + modeORvehType;
+						} else if (trafficType.equals("businessTraffic"))
+							carrierName = "Carrier_Business_" + startZone + "_purpose_" + purpose;
 						int numberOfDepots = odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType, purpose, trafficType);
 						FleetSize fleetSize = FleetSize.FINITE;
 						int fixedNumberOfVehilcePerTypeAndLocation = 1;
