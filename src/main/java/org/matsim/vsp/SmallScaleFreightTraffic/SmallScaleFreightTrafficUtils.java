@@ -181,8 +181,12 @@ public class SmallScaleFreightTrafficUtils {
 				plan.addActivity(endActivity);
 				person.addPlan(plan);
 				population.addPerson(person);
-				PopulationUtils.putSubpopulation(person, carrier.getId().toString().split("_")[1]);
-				PopulationUtils.putPersonAttribute(person, "type", usedTrafficType.replace("Traffic", ""));
+				if (carrier.getId().toString().split("_")[1].equals("Freight"))
+					PopulationUtils.putSubpopulation(person, "fixedFreightMode");
+				else
+					PopulationUtils.putSubpopulation(person, "modeChoicePossible");
+				PopulationUtils.putPersonAttribute(person, "trafficType", carrier.getId().toString().split("_")[1]);
+				PopulationUtils.putPersonAttribute(person, "tourStartArea", carrier.getId().toString().split("_")[2]);
 				VehicleUtils.insertVehicleIdsIntoAttributes(person, (new HashMap<String, Id<Vehicle>>(){{put("freight", tour.getVehicle().getId());}}));
 			}
 		}
