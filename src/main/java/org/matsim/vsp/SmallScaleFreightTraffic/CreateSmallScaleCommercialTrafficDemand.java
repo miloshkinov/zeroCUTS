@@ -291,13 +291,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			FreightUtils.runJsprit(controler.getScenario());
 			break;
 		}
-		SmallScaleFreightTrafficUtils.createPlansBasedOnCarrierPlans(controler, usedTrafficType.toString(), sample, output);
 		
 		new CarrierPlanXmlWriterV2((Carriers) controler.getScenario().getScenarioElement("carriers"))
 		.write(config.controler().getOutputDirectory() + "/output_jspritCarriersWithPlans.xml");
 		
 		controler.run();
-		
+		SmallScaleFreightTrafficUtils.createPlansBasedOnCarrierPlans(controler, usedTrafficType.toString(), sample, output);
 		FreightAnalyse.main(new String[] { scenario.getConfig().controler().getOutputDirectory() });
 
 		return 0;
@@ -318,7 +317,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, ArrayList<String> modesORvehTypes, String usedTrafficType)
 			throws IOException, MalformedURLException, ExecutionException, InterruptedException {
 		
-		TrafficVolumeGeneration.loadInputParamters(inputDataDirectory, usedTrafficType);
+		TrafficVolumeGeneration.setInputParamters(usedTrafficType);
 
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
 				.createTrafficVolume_start(resultingDataPerZone, output, inputDataDirectory, sample,
