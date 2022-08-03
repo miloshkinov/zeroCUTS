@@ -136,10 +136,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		useDistricts, useTrafficCells
 	}
 
-	private enum ModeDifferentiation {
-		createOneODMatrix, createSeperateODMatricesForModes
-	}
-
 	private enum TrafficType {
 		businessTraffic, freightTraffic, bothTypes
 	}
@@ -162,14 +158,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--creationOption", defaultValue = "createNewCarrierFile", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
 	private CreationOption usedCreationOption;
 // useExistingCarrierFile, createNewCarrierFile	
-
-	@CommandLine.Option(names = "--modeDifferentiation", defaultValue = "createOneODMatrix", description = "Set option of mode differentiation:  createOneODMatrix, createSeperateODMatricesForModes")
-	private ModeDifferentiation usedModeDifferentiationForPassangerTraffic;
-// createOneODMatrix, createSeperateODMatricesForModes
 	
 	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useDistricts", description = "Set option input zones. Options: useDistricts, useTrafficCells")
 	private ZoneChoice usedZoneChoice;
 // useDistricts, useTrafficCells
+	
 	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useOSMBuildingsAndLanduse", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
 	private LanduseConfiguration usedLanduseConfiguration;
 // useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
@@ -208,9 +201,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			log.info("Load carriers from: " + carriersFileLocation);
 			controler = prepareControler(scenario);
 			break;
-
 		default:
-
 			switch (usedZoneChoice) {
 			case useDistricts:
 				shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
@@ -250,16 +241,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			ArrayList<String> modesORvehTypes;
 			switch (usedTrafficType) {
 			case businessTraffic:
-				switch (usedModeDifferentiationForPassangerTraffic) {
-				case createOneODMatrix:
-					modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
-					break;
-				case createSeperateODMatricesForModes:
-					modesORvehTypes = new ArrayList<String>(Arrays.asList("pt", "it", "op"));
-					break;
-				default:
-					throw new RuntimeException("No mode differentiation selected.");
-				}
+				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
 				createDemandAndSolutionWithJsprit(config, controler, scenario, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
 				break;
 			case freightTraffic:
@@ -268,16 +250,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				createDemandAndSolutionWithJsprit(config, controler, scenario, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
 				break;
 			case bothTypes:
-				switch (usedModeDifferentiationForPassangerTraffic) {
-				case createOneODMatrix:
-					modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
-					break;
-				case createSeperateODMatricesForModes:
-					modesORvehTypes = new ArrayList<String>(Arrays.asList("pt", "it", "op"));
-					break;
-				default:
-					throw new RuntimeException("No mode differentiation selected.");
-				}
+				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
 				createDemandAndSolutionWithJsprit(config, controler, scenario, resultingDataPerZone, modesORvehTypes, "businessTraffic");
 				modesORvehTypes = new ArrayList<String>(
 						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
