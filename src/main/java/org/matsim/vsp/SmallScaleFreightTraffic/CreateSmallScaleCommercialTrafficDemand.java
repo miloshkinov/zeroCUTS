@@ -120,8 +120,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private static Path shapeFileLandusePath = null;
 	private static Path shapeFileZonePath = null;
 	private static Path shapeFileBuildingsPath = null;
-	private static List<Link> links = new ArrayList<Link>();
-	private static Map<String, List<Link>> regionLinksMap = new HashMap<>();
+//	private static List<Link> links = new ArrayList<Link>();
+//	private static Map<String, List<Link>> regionLinksMap = new HashMap<>();
 	private static HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
 
 	private enum CreationOption {
@@ -242,19 +242,19 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			switch (usedTrafficType) {
 			case businessTraffic:
 				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
-				createDemandAndSolutionWithJsprit(config, controler, scenario, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
+				createCarriersAndDemand(config, controler, scenario, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
 				break;
 			case freightTraffic:
 				modesORvehTypes = new ArrayList<String>(
 						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
-				createDemandAndSolutionWithJsprit(config, controler, scenario, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
+				createCarriersAndDemand(config, controler, scenario, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
 				break;
 			case bothTypes:
 				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
-				createDemandAndSolutionWithJsprit(config, controler, scenario, resultingDataPerZone, modesORvehTypes, "businessTraffic");
+				createCarriersAndDemand(config, controler, scenario, resultingDataPerZone, modesORvehTypes, "businessTraffic");
 				modesORvehTypes = new ArrayList<String>(
 						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
-				createDemandAndSolutionWithJsprit(config, controler, scenario, resultingDataPerZone, modesORvehTypes, "freightTraffic");
+				createCarriersAndDemand(config, controler, scenario, resultingDataPerZone, modesORvehTypes, "freightTraffic");
 				break;
 			default:
 				throw new RuntimeException("No traffic type selected.");
@@ -286,7 +286,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
-	private void createDemandAndSolutionWithJsprit(Config config, Controler controler, Scenario scenario,
+	private void createCarriersAndDemand(Config config, Controler controler, Scenario scenario,
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, ArrayList<String> modesORvehTypes, String usedTrafficType)
 			throws IOException, MalformedURLException, ExecutionException, InterruptedException {
 		
@@ -299,10 +299,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				.createTrafficVolume_stop(resultingDataPerZone, output, inputDataDirectory, sample,
 						modesORvehTypes, usedTrafficType);
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
-		final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
-				trafficVolumePerTypeAndZone_stop, shpZones, usedTrafficType);
+		Map<String, List<Link>> regionLinksMap = filterLinksForZones(shpZones, SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath));
 		
-		createCarriers(config, scenario, odMatrix, resultingDataPerZone, usedTrafficType);
+		final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
+				trafficVolumePerTypeAndZone_stop, shpZones, usedTrafficType, scenario.getNetwork(), regionLinksMap);
+		
+		createCarriers(config, scenario, odMatrix, resultingDataPerZone, usedTrafficType, regionLinksMap);
 	}
 
 	/**
@@ -352,9 +354,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param odMatrix
 	 * @param resultingDataPerZone
 	 * @param trafficType
+     * @param regionLinksMap 
 	 */
 	private void createCarriers(Config config, Scenario scenario, TripDistributionMatrix odMatrix,
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String trafficType) {
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String trafficType, Map<String, List<Link>> regionLinksMap) {
 		int maxNumberOfCarrier = odMatrix.getListOfPurposes().size() * odMatrix.getListOfZones().size()
 				* odMatrix.getListOfModesOrVehTypes().size();
 		int createdCarrier = 0;
@@ -509,7 +512,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						createNewCarrierAndAddVehilceTypes(scenario, purpose, startZone,
 								ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), selectedStartCategory,
 								carrierName, vehilceTypes, numberOfDepots, fleetSize,
-								fixedNumberOfVehilcePerTypeAndLocation, vehicleDepots);
+								fixedNumberOfVehilcePerTypeAndLocation, vehicleDepots, regionLinksMap);
 						log.info("Create services for carrier: " + carrierName);
 						for (String stopZone : odMatrix.getListOfZones()) {
 							int demand = 0;
@@ -524,7 +527,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							String[] serviceArea = new String[] { stopZone };
 							TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 20 * 3600);
 							createServices(scenario, purpose, vehicleDepots, selectedStopCategory, carrierName, demand,
-									numberOfJobs, serviceArea, serviceTimePerStop, serviceTimeWindow);
+									numberOfJobs, serviceArea, serviceTimePerStop, serviceTimeWindow, regionLinksMap);
 						}
 					}
 				}
@@ -553,16 +556,17 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param serviceArea
 	 * @param serviceTimePerStop
 	 * @param serviceTimeWindow
+	 * @param regionLinksMap 
 	 */
 	private void createServices(Scenario scenario, Integer purpose, ArrayList<String> noPossibleLinks,
 			String selectedStopCategory, String carrierName, int demand, int numberOfJobs, String[] serviceArea,
-			Integer serviceTimePerStop, TimeWindow serviceTimeWindow) {
+			Integer serviceTimePerStop, TimeWindow serviceTimeWindow, Map<String, List<Link>> regionLinksMap) {
 
 		String stopZone = serviceArea[0];
 
 		for (int i = 0; i < numberOfJobs; i++) {
 
-			Id<Link> linkId = findPossibleLink(stopZone, selectedStopCategory, noPossibleLinks);
+			Id<Link> linkId = findPossibleLink(stopZone, selectedStopCategory, noPossibleLinks, regionLinksMap);
 			Id<CarrierService> idNewService = Id.create(carrierName + "_" + linkId + "_" + rnd.nextInt(10000),
 					CarrierService.class);
 
@@ -588,11 +592,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param fleetSize
 	 * @param fixedNumberOfVehilcePerTypeAndLocation
 	 * @param vehicleDepots
+	 * @param regionLinksMap 
 	 */
 	private void createNewCarrierAndAddVehilceTypes(Scenario scenario, Integer purpose, String startZone,
 			FreightConfigGroup freightConfigGroup, String selectedStartCategory, String carrierName,
 			String[] vehilceTypes, int numberOfDepots, FleetSize fleetSize, int fixedNumberOfVehilcePerTypeAndLocation,
-			ArrayList<String> vehicleDepots) {
+			ArrayList<String> vehicleDepots, Map<String, List<Link>> regionLinksMap) {
 
 		Carriers carriers = FreightUtils.addOrGetCarriers(scenario);
 		CarrierVehicleTypes carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
@@ -610,7 +615,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		carriers.addCarrier(thisCarrier);
 
 		while (vehicleDepots.size() < numberOfDepots) {
-			Id<Link> link = findPossibleLink(startZone, selectedStartCategory, null);
+			Id<Link> link = findPossibleLink(startZone, selectedStartCategory, null, regionLinksMap);
 			vehicleDepots.add(link.toString());
 		}
 		for (String singleDepot : vehicleDepots) {
@@ -645,28 +650,18 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param zone
 	 * @param selectedCategory
 	 * @param noPossibleLinks
+	 * @param regionLinksMap 
 	 * @return
 	 */
-	private Id<Link> findPossibleLink(String zone, String selectedCategory, ArrayList<String> noPossibleLinks) {
+	private Id<Link> findPossibleLink(String zone, String selectedCategory, ArrayList<String> noPossibleLinks, Map<String, List<Link>> regionLinksMap) {
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
 
 //		Index indexLanduse = SmallScaleFreightTrafficUtils.getIndexLanduse(shapeFileLandusePath);
 		Index indexZones = SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath);
-
-		if (links.isEmpty()) {
-			log.info("Filtering and assign links to zones. This take some time...");
-			Network networkToChange = NetworkUtils.readNetwork(networkPath.toString());
-			links = networkToChange.getLinks().values().stream().filter(l -> l.getAllowedModes().contains("car"))
-					.collect(Collectors.toList());
-			links.forEach(l -> l.getAttributes().putAttribute("newCoord",
-					shpZones.createTransformation("EPSG:31468").transform(l.getCoord())));
-			links.forEach(l -> l.getAttributes().putAttribute("zone",
-					indexZones.query((Coord) l.getAttributes().getAttribute("newCoord"))));
-			links = links.stream().filter(l -> l.getAttributes().getAttribute("zone") != null)
-					.collect(Collectors.toList());
-			links.forEach(l -> regionLinksMap
-					.computeIfAbsent((String) l.getAttributes().getAttribute("zone"), (k) -> new ArrayList<>()).add(l));
-		}
+//		List<Link> links = new ArrayList<Link>();
+		
+			
+		
 		if (buildingsPerZone.isEmpty()) {
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
 			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
@@ -704,6 +699,29 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	}
 
 	/**
+	 * @param shpZones
+	 * @param indexZones
+	 * @return 
+	 */
+	private Map<String, List<Link>> filterLinksForZones(ShpOptions shpZones, Index indexZones) {
+		Map<String, List<Link>> regionLinksMap = new HashMap<>();
+		List<Link> links;
+		log.info("Filtering and assign links to zones. This take some time...");
+		Network networkToChange = NetworkUtils.readNetwork(networkPath.toString());
+		links = networkToChange.getLinks().values().stream().filter(l -> l.getAllowedModes().contains("car"))
+				.collect(Collectors.toList());
+		links.forEach(l -> l.getAttributes().putAttribute("newCoord",
+				shpZones.createTransformation("EPSG:31468").transform(l.getCoord())));
+		links.forEach(l -> l.getAttributes().putAttribute("zone",
+				indexZones.query((Coord) l.getAttributes().getAttribute("newCoord"))));
+		links = links.stream().filter(l -> l.getAttributes().getAttribute("zone") != null)
+				.collect(Collectors.toList());
+		links.forEach(l -> regionLinksMap
+				.computeIfAbsent((String) l.getAttributes().getAttribute("zone"), (k) -> new ArrayList<>()).add(l));
+		return regionLinksMap;
+	}
+
+	/**
 	 * Reads the vehicle types.
 	 * 
 	 * @param config
@@ -730,13 +748,15 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param trafficVolume_stop
 	 * @param shpZones
 	 * @param usedTrafficType 
+	 * @param scenario 
+	 * @param regionLinksMap 
 	 * @return TripDistributionMatrix
 	 * @throws UncheckedIOException
 	 * @throws MalformedURLException
 	 */
 	private TripDistributionMatrix createTripDistribution(
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, ShpOptions shpZones, String usedTrafficType)
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, ShpOptions shpZones, String usedTrafficType, Network network, Map<String, List<Link>> regionLinksMap)
 			throws UncheckedIOException, MalformedURLException {
 
 		final TripDistributionMatrix odMatrix = TripDistributionMatrix.Builder
@@ -752,7 +772,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			for (String modeORvehType : trafficVolume_start.get(startZone).keySet())
 				for (Integer purpose : trafficVolume_start.get(startZone).get(modeORvehType).keySet())
 					for (String stopZone : trafficVolume_stop.keySet()) {
-						odMatrix.setTripDistributionValue(startZone, stopZone, modeORvehType, purpose, usedTrafficType);
+						odMatrix.setTripDistributionValue(startZone, stopZone, modeORvehType, purpose, usedTrafficType, network, regionLinksMap);
 					}
 		}
 		odMatrix.writeODMatrices(output, usedTrafficType);

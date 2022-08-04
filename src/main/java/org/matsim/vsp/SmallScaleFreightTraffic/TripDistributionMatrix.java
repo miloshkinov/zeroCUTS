@@ -25,20 +25,29 @@ import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Point;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.options.ShpOptions;
+import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.io.UncheckedIOException;
+import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.VehicleUtils;
 import org.opengis.feature.simple.SimpleFeature;
 
 import com.google.common.base.Joiner;
+import com.graphhopper.jsprit.core.problem.Location;
+import com.graphhopper.jsprit.core.problem.vehicle.Vehicle;
+import com.graphhopper.jsprit.core.problem.vehicle.VehicleImpl;
 
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
@@ -314,12 +323,14 @@ public class TripDistributionMatrix {
 	 * @param modeORvehType
 	 * @param purpose
 	 * @param trafficType
+	 * @param scenario 
+	 * @param regionLinksMap 
 	 */
-	void setTripDistributionValue(String startZone, String stopZone, String modeORvehType, Integer purpose, String trafficType) {
+	void setTripDistributionValue(String startZone, String stopZone, String modeORvehType, Integer purpose, String trafficType, Network network, Map<String, List<Link>> regionLinksMap) {
 		double volumeStart = trafficVolume_start.get(startZone).get(modeORvehType).getDouble(purpose);
 		double volumeStop = trafficVolume_stop.get(stopZone).get(modeORvehType).getDouble(purpose);
-		double resistanceValue = getResistanceFunktionValue(startZone, stopZone);
-		double gravityConstantA = getGravityConstant(startZone, trafficVolume_stop, modeORvehType, purpose);
+		double resistanceValue = getResistanceFunktionValue(startZone, stopZone, network, regionLinksMap);
+		double gravityConstantA = getGravityConstant(startZone, trafficVolume_stop, modeORvehType, purpose, network, regionLinksMap);
 		roundingError.computeIfAbsent(startZone, (k) -> new Object2DoubleOpenHashMap<>());
 		/*
 		 * gravity model Anpassungen: Faktor anpassen, z.B. reale Reisezeiten im Netz,
@@ -359,11 +370,20 @@ public class TripDistributionMatrix {
 	 * 
 	 * @param startZone
 	 * @param stopZone
+	 * @param scenario 
+	 * @param regionLinksMap 
 	 * @return
 	 */
-	private Double getResistanceFunktionValue(String startZone, String stopZone) {
+	private Double getResistanceFunktionValue(String startZone, String stopZone, Network network, Map<String, List<Link>> regionLinksMap) {
 		startZone = startZone.replaceFirst(startZone.split("_")[0]+"_", "");
 		stopZone = stopZone.replaceFirst(stopZone.split("_")[0]+"_", "");
+		
+		VehicleType vehicleType = VehicleUtils.createVehicleType(Id.create("vwCaddy", VehicleType.class));
+		vehicleType.getCostInformation().setCostsPerMeter(0.00017).setCostsPerSecond(0.00948).setFixedCost(22.73);
+		NetworkBasedTransportCosts.Builder netBuilder = NetworkBasedTransportCosts.Builder.newInstance(
+				network, Arrays.asList(vehicleType));
+		final NetworkBasedTransportCosts netBasedCosts = netBuilder.build();
+		
 		if (!resistanceFunktionCache.containsKey(makeResistanceFunktionKey(startZone, stopZone)))
 			for (SimpleFeature startZoneFeature : zonesFeatures) {
 				String zone1 = String.valueOf(startZoneFeature.getAttribute("id"));
@@ -378,16 +398,21 @@ public class TripDistributionMatrix {
 					if (zone1.equals(zone2))
 						distance = 0;
 					else {
-						Point geometryStartZone = ((Geometry) startZoneFeature.getDefaultGeometry()).getCentroid();
-						Point geometryStopZone = ((Geometry) stopZoneFeature.getDefaultGeometry()).getCentroid();
-
-						distance = geometryStartZone.distance(geometryStopZone);
+						Location startLocation = Location.newInstance(regionLinksMap.get(startZone).iterator().next().getId().toString());
+						Location stopLocation = Location.newInstance(regionLinksMap.get(stopZone).iterator().next().getId().toString());
+						Vehicle exampleVehicle = getExampleVehicle(startLocation);
+						distance = netBasedCosts.getDistance(startLocation, stopLocation, 5., exampleVehicle);
 					}
 					double resistanceFunktionResult = Math.exp(-distance);
 					resistanceFunktionCache.put(makeResistanceFunktionKey(zone1, zone2), resistanceFunktionResult);
 				}
 			}
 		return resistanceFunktionCache.get(makeResistanceFunktionKey(startZone, stopZone));
+	}
+	private VehicleImpl getExampleVehicle(Location fromId) {
+		return VehicleImpl.Builder.newInstance("vwCaddy").setType(
+				com.graphhopper.jsprit.core.problem.vehicle.VehicleTypeImpl.Builder.newInstance("vwCaddy").build())
+				.setStartLocation(fromId).build();
 	}
 
 	/**
@@ -397,18 +422,20 @@ public class TripDistributionMatrix {
 	 * @param trafficVolume
 	 * @param modeORvehType
 	 * @param purpose
+	 * @param scenario 
+	 * @param regionLinksMap 
 	 * @return gravity constant
 	 */
 	private double getGravityConstant(String baseZone,
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume, String modeORvehType,
-			Integer purpose) {
+			Integer purpose, Network network, Map<String, List<Link>> regionLinksMap) {
 
 		GravityConstantKey gravityKey = makeGravityKey(baseZone, modeORvehType, purpose);
 		if (!gravityConstantACache.containsKey(gravityKey)) {
 			double sum = 0;
 			for (String zone : trafficVolume.keySet()) {
 				double volume = trafficVolume.get(zone).get(modeORvehType).getDouble(purpose);
-				double resistanceValue = getResistanceFunktionValue(baseZone, zone);
+				double resistanceValue = getResistanceFunktionValue(baseZone, zone, network, regionLinksMap);
 				sum = sum + (volume * resistanceValue);
 			}
 			double getGravityCostant = 1 / sum;
