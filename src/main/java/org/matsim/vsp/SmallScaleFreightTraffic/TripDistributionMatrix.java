@@ -312,6 +312,7 @@ public class TripDistributionMatrix {
 	private final ConcurrentHashMap<GravityConstantKey, Double> gravityConstantACache = new ConcurrentHashMap<GravityConstantKey, Double>();
 //	private final ConcurrentHashMap<String, Double> gravityConstantBCache = new ConcurrentHashMap<String, Double>();
 	private final ConcurrentHashMap<String, Object2DoubleMap<String>> roundingError = new ConcurrentHashMap<>();
+	private NetworkBasedTransportCosts netBasedCosts = null;
 	private int createdVolume = 0;
 
 	/**
@@ -378,12 +379,12 @@ public class TripDistributionMatrix {
 		startZone = startZone.replaceFirst(startZone.split("_")[0]+"_", "");
 		stopZone = stopZone.replaceFirst(stopZone.split("_")[0]+"_", "");
 		
-		VehicleType vehicleType = VehicleUtils.createVehicleType(Id.create("vwCaddy", VehicleType.class));
-		vehicleType.getCostInformation().setCostsPerMeter(0.00017).setCostsPerSecond(0.00948).setFixedCost(22.73);
-		NetworkBasedTransportCosts.Builder netBuilder = NetworkBasedTransportCosts.Builder.newInstance(
-				network, Arrays.asList(vehicleType));
-		final NetworkBasedTransportCosts netBasedCosts = netBuilder.build();
-		
+		if (netBasedCosts == null) {
+			VehicleType vehicleType = VehicleUtils.createVehicleType(Id.create("vwCaddy", VehicleType.class));
+			vehicleType.getCostInformation().setCostsPerMeter(0.00017).setCostsPerSecond(0.00948).setFixedCost(22.73);
+			NetworkBasedTransportCosts.Builder netBuilder = NetworkBasedTransportCosts.Builder.newInstance(network, Arrays.asList(vehicleType));
+			netBasedCosts = netBuilder.build();
+		}
 		if (!resistanceFunktionCache.containsKey(makeResistanceFunktionKey(startZone, stopZone)))
 			for (SimpleFeature startZoneFeature : zonesFeatures) {
 				String zone1 = String.valueOf(startZoneFeature.getAttribute("id"));
@@ -393,18 +394,23 @@ public class TripDistributionMatrix {
 					String zone2 = String.valueOf(stopZoneFeature.getAttribute("id"));
 					if (!stopZone.equals(zone2))
 						continue;
-					double distance = Double.MAX_VALUE;
-
-					if (zone1.equals(zone2))
-						distance = 0;
+//					double distance = Double.MAX_VALUE;
+					double travelCosts = Double.MAX_VALUE;
+					if (zone1.equals(zone2)) {
+						travelCosts = 0;
+//						distance = 0;
+					}
 					else {
 						Location startLocation = Location.newInstance(regionLinksMap.get(startZone).iterator().next().getId().toString());
 						Location stopLocation = Location.newInstance(regionLinksMap.get(stopZone).iterator().next().getId().toString());
 						Vehicle exampleVehicle = getExampleVehicle(startLocation);
-						distance = netBasedCosts.getDistance(startLocation, stopLocation, 5., exampleVehicle);
+//						distance = netBasedCosts.getDistance(startLocation, stopLocation, 21600., exampleVehicle);
+						travelCosts = netBasedCosts.getTransportCost(startLocation, stopLocation, 21600., null, exampleVehicle);
 					}
-					double resistanceFunktionResult = Math.exp(-distance);
+					double resistanceFunktionResult = Math.exp(-travelCosts);
+//					double resistanceFunktionResult = 1 / (travelCosts*travelCosts);
 					resistanceFunktionCache.put(makeResistanceFunktionKey(zone1, zone2), resistanceFunktionResult);
+					resistanceFunktionCache.put(makeResistanceFunktionKey(zone2, zone1), resistanceFunktionResult);
 				}
 			}
 		return resistanceFunktionCache.get(makeResistanceFunktionKey(startZone, stopZone));
