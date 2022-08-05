@@ -120,8 +120,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private static Path shapeFileLandusePath = null;
 	private static Path shapeFileZonePath = null;
 	private static Path shapeFileBuildingsPath = null;
-//	private static List<Link> links = new ArrayList<Link>();
-//	private static Map<String, List<Link>> regionLinksMap = new HashMap<>();
 	private static HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
 
 	private enum CreationOption {
@@ -146,7 +144,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
 	private static Path networkPath;
 
-	@CommandLine.Option(names = "--sample", defaultValue = "0.01", description = "Scaling factor of the freight traffic (0, 1)", required = true)
+	@CommandLine.Option(names = "--sample", defaultValue = "0.001", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
 	@CommandLine.Option(names = "--output", description = "Path to output folder", required = true, defaultValue = "output/BusinessPassengerTraffic/")
@@ -259,6 +257,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			default:
 				throw new RuntimeException("No traffic type selected.");
 			}
+
+			new CarrierPlanXmlWriterV2(FreightUtils.addOrGetCarriers(scenario))
+					.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemand.xml");
 			controler = prepareControler(scenario);
 
 			FreightUtils.runJsprit(controler.getScenario());
@@ -266,7 +267,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 		
 		new CarrierPlanXmlWriterV2((Carriers) controler.getScenario().getScenarioElement("carriers"))
-		.write(config.controler().getOutputDirectory() + "/output_jspritCarriersWithPlans.xml");
+		.write(config.controler().getOutputDirectory() + "/output_CarrierDemandWithPlans.xml");
 		
 		controler.run();
 		SmallScaleFreightTrafficUtils.createPlansBasedOnCarrierPlans(controler, usedTrafficType.toString(), sample, output);
@@ -485,13 +486,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 								serviceTimePerStop = (int) Math.round(65 * 60);
 							}
 						}
+						
 						String selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
-						for (int i = 0; resultingDataPerZone.get(startZone).getDouble(selectedStartCategory) == 0
-								&& i < startCategory.size() * 30; i++) {
-							selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
-							if (i > startCategory.size() * 20)
-								selectedStartCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
-						} // TODO vielleicht besser lösen
+						while (resultingDataPerZone.get(startZone).getDouble(selectedStartCategory) == 0)
+							selectedStartCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
 
 						String carrierName = null;
 						if (trafficType.equals("freightTraffic")) {
@@ -538,9 +536,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 		log.warn("The jspritIterations are now set to " + jspritIterations + " in this simulation!");
 		log.info("Finished creating " + createdCarrier + " carriers including related services.");
-
-		new CarrierPlanXmlWriterV2(FreightUtils.addOrGetCarriers(scenario))
-				.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierPlans.xml");
 	}
 
 	/**
