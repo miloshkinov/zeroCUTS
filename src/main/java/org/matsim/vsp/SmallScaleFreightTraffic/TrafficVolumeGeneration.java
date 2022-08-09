@@ -1066,7 +1066,6 @@ public class TrafficVolumeGeneration {
 			commitmentRates.put("6_4", ratesPerPurpose1_4);
 			commitmentRates.put("6_5", ratesPerPurpose1_5);
 		}
-
 		return commitmentRates;
 	}
 }
