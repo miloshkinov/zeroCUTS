@@ -97,8 +97,10 @@ import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.SumScoringFunction;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.io.UncheckedIOException;
+import org.matsim.vehicles.CostInformation;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.VehicleUtils;
 import org.matsim.vsp.freightAnalysis.FreightAnalyse;
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -237,22 +239,25 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							shapeFileBuildingsPath, buildingsPerZone);
 
 			ArrayList<String> modesORvehTypes;
+			ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
+			Map<String, List<Link>> regionLinksMap = filterLinksForZones(shpZones, SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath));
+
 			switch (usedTrafficType) {
 			case businessTraffic:
 				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
-				createCarriersAndDemand(config, controler, scenario, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
+				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
 				break;
 			case freightTraffic:
 				modesORvehTypes = new ArrayList<String>(
 						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
-				createCarriersAndDemand(config, controler, scenario, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
+				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
 				break;
 			case bothTypes:
 				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
-				createCarriersAndDemand(config, controler, scenario, resultingDataPerZone, modesORvehTypes, "businessTraffic");
+				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone, modesORvehTypes, "businessTraffic");
 				modesORvehTypes = new ArrayList<String>(
 						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
-				createCarriersAndDemand(config, controler, scenario, resultingDataPerZone, modesORvehTypes, "freightTraffic");
+				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone, modesORvehTypes, "freightTraffic");
 				break;
 			default:
 				throw new RuntimeException("No traffic type selected.");
@@ -279,6 +284,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	/**
 	 * @param config
 	 * @param scenario
+	 * @param shpZones 
+	 * @param regionLinksMap 
 	 * @param resultingDataPerZone
 	 * @param modesORvehTypes
 	 * @return
@@ -288,7 +295,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @throws InterruptedException
 	 */
 	private void createCarriersAndDemand(Config config, Controler controler, Scenario scenario,
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, ArrayList<String> modesORvehTypes, String usedTrafficType)
+			ShpOptions shpZones, Map<String, List<Link>> regionLinksMap, HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, ArrayList<String> modesORvehTypes, String usedTrafficType)
 			throws IOException, MalformedURLException, ExecutionException, InterruptedException {
 		
 		TrafficVolumeGeneration.setInputParamters(usedTrafficType);
@@ -299,12 +306,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
 				.createTrafficVolume_stop(resultingDataPerZone, output, inputDataDirectory, sample,
 						modesORvehTypes, usedTrafficType);
-		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
-		Map<String, List<Link>> regionLinksMap = filterLinksForZones(shpZones, SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath));
 		
 		final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
 				trafficVolumePerTypeAndZone_stop, shpZones, usedTrafficType, scenario.getNetwork(), regionLinksMap);
-		
+		int a = 0;
+		if (usedTrafficType.equals("freightTraffic"))
+			a=9;
 		createCarriers(config, scenario, odMatrix, resultingDataPerZone, usedTrafficType, regionLinksMap);
 	}
 
@@ -599,6 +606,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		if (carrierVehicleTypes.getVehicleTypes().isEmpty()) {
 			new CarrierVehicleTypeReader(carrierVehicleTypes)
 					.readFile(freightConfigGroup.getCarriersVehicleTypesFile());
+			for (VehicleType vehicleType : carrierVehicleTypes.getVehicleTypes().values()) {
+				CostInformation costInformation = vehicleType.getCostInformation();
+				VehicleUtils.setCostsPerSecondInService(costInformation, costInformation.getCostsPerSecond());
+				VehicleUtils.setCostsPerSecondWaiting(costInformation, costInformation.getCostsPerSecond());
+			}
 		} else
 			carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
 		CarrierCapabilities carrierCapabilities = null;
@@ -731,9 +743,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			freightConfigGroup.setCarriersVehicleTypesFile(vehicleTypesFileLocation);
 			log.info("Get vehicleTypes from: " + vehicleTypesFileLocation);
 		}
-		FreightUtils.addOrGetCarriers(ScenarioUtils.loadScenario(config));
-		CarrierVehicleTypes carrierVehicleTypes = new CarrierVehicleTypes();
-		new CarrierVehicleTypeReader(carrierVehicleTypes).readFile(freightConfigGroup.getCarriersVehicleTypesFile());
 	}
 
 	/**
