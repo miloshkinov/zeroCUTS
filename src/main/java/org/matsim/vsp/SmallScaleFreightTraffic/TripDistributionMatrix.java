@@ -313,7 +313,7 @@ public class TripDistributionMatrix {
 //	private final ConcurrentHashMap<String, Double> gravityConstantBCache = new ConcurrentHashMap<String, Double>();
 	private final ConcurrentHashMap<String, Object2DoubleMap<String>> roundingError = new ConcurrentHashMap<>();
 	private NetworkBasedTransportCosts netBasedCosts = null;
-	private int createdVolume = 0;
+//	private int createdVolume = 0;
 
 	/**
 	 * Calculates the traffic volume between two zones for a specific modeORvehType
@@ -342,12 +342,12 @@ public class TripDistributionMatrix {
 		int roundedSampledVolume = (int) Math.floor(sampledVolume);
 		double certainRoundingError = sampledVolume - roundedSampledVolume;
 		roundingError.get(startZone).merge((modeORvehType + "_" + purpose), certainRoundingError, Double::sum);
-		if (roundingError.get(startZone).getDouble((modeORvehType + "_" + purpose)) >= 1) {
+		if (roundingError.get(startZone).getDouble((modeORvehType + "_" + purpose)) > 0) {
 			roundedSampledVolume++;
 			roundingError.get(startZone).merge((modeORvehType + "_" + purpose), -1, Double::sum);
 		} // TODO eventuell methodik für den letzten error rest am Ende
 		TripDistributionMatrixKey matrixKey = makeKey(startZone, stopZone, modeORvehType, purpose, trafficType);
-		createdVolume = createdVolume + roundedSampledVolume;
+//		createdVolume = createdVolume + roundedSampledVolume;
 		matrixCache.put(matrixKey, roundedSampledVolume);
 	}
 
@@ -407,7 +407,8 @@ public class TripDistributionMatrix {
 //						distance = netBasedCosts.getDistance(startLocation, stopLocation, 21600., exampleVehicle);
 						travelCosts = netBasedCosts.getTransportCost(startLocation, stopLocation, 21600., null, exampleVehicle);
 					}
-					double resistanceFunktionResult = Math.exp(-travelCosts);
+					double resistanceFactor = 0.005;
+					double resistanceFunktionResult = Math.exp(-resistanceFactor*travelCosts);
 //					double resistanceFunktionResult = 1 / (travelCosts*travelCosts);
 					resistanceFunktionCache.put(makeResistanceFunktionKey(zone1, zone2), resistanceFunktionResult);
 					resistanceFunktionCache.put(makeResistanceFunktionKey(zone2, zone1), resistanceFunktionResult);
@@ -415,6 +416,10 @@ public class TripDistributionMatrix {
 			}
 		return resistanceFunktionCache.get(makeResistanceFunktionKey(startZone, stopZone));
 	}
+	/** Create example vehicle for netBasedCosts calculation.
+	 * @param fromId
+	 * @return
+	 */
 	private VehicleImpl getExampleVehicle(Location fromId) {
 		return VehicleImpl.Builder.newInstance("vwCaddy").setType(
 				com.graphhopper.jsprit.core.problem.vehicle.VehicleTypeImpl.Builder.newInstance("vwCaddy").build())
@@ -444,8 +449,8 @@ public class TripDistributionMatrix {
 				double resistanceValue = getResistanceFunktionValue(baseZone, zone, network, regionLinksMap);
 				sum = sum + (volume * resistanceValue);
 			}
-			double getGravityCostant = 1 / sum;
-			gravityConstantACache.put(gravityKey, getGravityCostant);
+			double gravityCostant = 1 / sum;
+			gravityConstantACache.put(gravityKey, gravityCostant);
 		}
 		return gravityConstantACache.get(gravityKey);
 
