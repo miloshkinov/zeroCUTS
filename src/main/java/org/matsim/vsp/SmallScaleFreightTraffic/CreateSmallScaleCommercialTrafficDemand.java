@@ -20,13 +20,12 @@
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SplittableRandom;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Level;
@@ -96,7 +94,6 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.SumScoringFunction;
 import org.matsim.core.utils.geometry.geotools.MGC;
-import org.matsim.core.utils.io.UncheckedIOException;
 import org.matsim.vehicles.CostInformation;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
@@ -125,7 +122,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private static HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
 
 	private enum CreationOption {
-		useExistingCarrierFile, createNewCarrierFile
+		useExistingCarrierFileWithSolution, createNewCarrierFile, useExistingCarrierFileWithoutSolution
 	}
 
 	private enum LanduseConfiguration {
@@ -157,9 +154,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 	@CommandLine.Option(names = "--creationOption", defaultValue = "createNewCarrierFile", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
 	private CreationOption usedCreationOption;
-// useExistingCarrierFile, createNewCarrierFile	
+// useExistingCarrierFileWithSolution, createNewCarrierFile, useExistingCarrierFileWithoutSolution
 	
-	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useDistricts", description = "Set option input zones. Options: useDistricts, useTrafficCells")
+	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useTrafficCells", description = "Set option input zones. Options: useDistricts, useTrafficCells")
 	private ZoneChoice usedZoneChoice;
 // useDistricts, useTrafficCells
 	
@@ -192,14 +189,26 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Controler controler = null;
+		String carriersFileLocation = null;
+		FreightConfigGroup freightConfigGroup = null;
 		switch (usedCreationOption) {
-		case useExistingCarrierFile:
-			String carriersFileLocation = inputDataDirectory.resolve("output_jspritCarriersWithPlans.xml").toString();
-			FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
+		
+		case useExistingCarrierFileWithSolution:
+			carriersFileLocation = inputDataDirectory.resolve("output_CarrierDemandWithPlans.xml").toString();
+			freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 			freightConfigGroup.setCarriersFile(carriersFileLocation);
 			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 			log.info("Load carriers from: " + carriersFileLocation);
 			controler = prepareControler(scenario);
+			break;
+		case useExistingCarrierFileWithoutSolution:
+			carriersFileLocation = inputDataDirectory.resolve("output_CarrierDemand.xml").toString();
+			freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
+			freightConfigGroup.setCarriersFile(carriersFileLocation);
+			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
+			log.info("Load carriers from: " + carriersFileLocation);
+			controler = prepareControler(scenario);
+			FreightUtils.runJsprit(controler.getScenario());
 			break;
 		default:
 			switch (usedZoneChoice) {
@@ -289,14 +298,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param resultingDataPerZone
 	 * @param modesORvehTypes
 	 * @return
-	 * @throws IOException
-	 * @throws MalformedURLException
-	 * @throws ExecutionException
-	 * @throws InterruptedException
+	 * @throws Exception 
 	 */
 	private void createCarriersAndDemand(Config config, Controler controler, Scenario scenario,
 			ShpOptions shpZones, Map<String, List<Link>> regionLinksMap, HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, ArrayList<String> modesORvehTypes, String usedTrafficType)
-			throws IOException, MalformedURLException, ExecutionException, InterruptedException {
+			throws Exception {
 		
 		TrafficVolumeGeneration.setInputParamters(usedTrafficType);
 
@@ -309,9 +315,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		
 		final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
 				trafficVolumePerTypeAndZone_stop, shpZones, usedTrafficType, scenario.getNetwork(), regionLinksMap);
-		int a = 0;
-		if (usedTrafficType.equals("freightTraffic"))
-			a=9;
 		createCarriers(config, scenario, odMatrix, resultingDataPerZone, usedTrafficType, regionLinksMap);
 	}
 
@@ -521,9 +524,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						log.info("Create services for carrier: " + carrierName);
 						for (String stopZone : odMatrix.getListOfZones()) {
 							int demand = 0;
-							int numberOfJobs = (int) Math
-									.ceil(odMatrix.getTripDistributionValue(startZone, stopZone, modeORvehType, purpose, trafficType)
-											/ occupancyRate);
+							int trafficVolumeForOD = (int)Math.round(odMatrix.getTripDistributionValue(startZone, stopZone, modeORvehType, purpose, trafficType));
+							int numberOfJobs = (int) Math.ceil(trafficVolumeForOD / occupancyRate);
 							if (numberOfJobs == 0)
 								continue;
 							String selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
@@ -755,17 +757,16 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param scenario 
 	 * @param regionLinksMap 
 	 * @return TripDistributionMatrix
-	 * @throws UncheckedIOException
-	 * @throws MalformedURLException
+	 * @throws Exception 
 	 */
 	private TripDistributionMatrix createTripDistribution(
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, ShpOptions shpZones, String usedTrafficType, Network network, Map<String, List<Link>> regionLinksMap)
-			throws UncheckedIOException, MalformedURLException {
+			throws Exception {
 
 		final TripDistributionMatrix odMatrix = TripDistributionMatrix.Builder
-				.newInstance(shpZones, trafficVolume_start, trafficVolume_stop, sample, usedTrafficType).build();
-
+				.newInstance(shpZones, trafficVolume_start, trafficVolume_stop, usedTrafficType).build();
+		List<String> listOfZones = new ArrayList<>(trafficVolume_start.keySet());
 		int count = 0;
 
 		for (String startZone : trafficVolume_start.keySet()) {
@@ -774,11 +775,14 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				log.info("Create OD pair " + count + " of " + trafficVolume_start.size());
 
 			for (String modeORvehType : trafficVolume_start.get(startZone).keySet())
-				for (Integer purpose : trafficVolume_start.get(startZone).get(modeORvehType).keySet())
-					for (String stopZone : trafficVolume_stop.keySet()) {
+				for (Integer purpose : trafficVolume_start.get(startZone).get(modeORvehType).keySet()) {
+					Collections.shuffle(listOfZones);
+					for (String stopZone : listOfZones) {
 						odMatrix.setTripDistributionValue(startZone, stopZone, modeORvehType, purpose, usedTrafficType, network, regionLinksMap);
 					}
+				}
 		}
+		odMatrix.clearRoundingError();
 		odMatrix.writeODMatrices(output, usedTrafficType);
 		return odMatrix;
 	}
