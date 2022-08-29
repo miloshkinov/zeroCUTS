@@ -31,21 +31,17 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.Identifiable;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
+import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.api.core.v01.population.PopulationFactory;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.application.options.ShpOptions.Index;
-import org.matsim.contrib.freight.carrier.Carrier;
-import org.matsim.contrib.freight.carrier.Carriers;
-import org.matsim.contrib.freight.carrier.ScheduledTour;
-import org.matsim.contrib.freight.carrier.Tour;
-import org.matsim.contrib.freight.carrier.Tour.TourElement;
-import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.utils.io.IOUtils;
@@ -148,47 +144,49 @@ public class SmallScaleFreightTrafficUtils {
 	
 	static void createPlansBasedOnCarrierPlans(Controler controler, String usedTrafficType, double sample, Path output) {
 		Scenario scenario = controler.getScenario();
-		Carriers carriers = FreightUtils.getCarriers(scenario);
 		Population population = controler.getScenario().getPopulation();
 		
 		PopulationFactory popFactory = population.getFactory();
-		for (Carrier carrier : carriers.getCarriers().values()) {
-			for (ScheduledTour tour : carrier.getSelectedPlan().getScheduledTours()) {
-				Person person = popFactory.createPerson(Id.create(tour.getVehicle().getId(), Person.class));
+		
+		Population population2 = (Population) scenario.getScenarioElement("allpersons");
+		for (Person person : population2.getPersons().values()) {
+			
+				Person newPerson = popFactory.createPerson(person.getId());
 				Plan plan = popFactory.createPlan();
-				Activity startActivity = popFactory.createActivityFromCoord("freight_tourStart", scenario.getNetwork().getLinks().get(tour.getTour().getStartLinkId()).getFromNode().getCoord());
-				startActivity.setStartTime(tour.getDeparture());
-				startActivity.setEndTime(tour.getDeparture());
-				startActivity.setMaximumDuration(0);
-				plan.addActivity(startActivity);
-				List<TourElement> tourElements = tour.getTour().getTourElements();
-				for (TourElement tourElement : tourElements) {
+
+				List<PlanElement> tourElements = person.getSelectedPlan().getPlanElements();
+				double tourStartTime = 0;
+				for (PlanElement tourElement : tourElements) {
 					
-					if (tourElement instanceof Tour.ServiceActivity) {
-						Tour.ServiceActivity service = (Tour.ServiceActivity) tourElement;
-						Activity serviceActivity = popFactory.createActivityFromCoord("freight", scenario.getNetwork().getLinks().get(service.getLocation()).getFromNode().getCoord());
-						serviceActivity.setMaximumDuration(service.getService().getServiceDuration());
-						plan.addActivity(serviceActivity);
+					if (tourElement instanceof Activity) {
+						Activity service = (Activity) tourElement;
+						service.setCoord(scenario.getNetwork().getLinks().get(service.getLinkId()).getFromNode().getCoord());
+						if (!service.getType().equals("start"))
+							service.setEndTimeUndefined();
+						else
+							tourStartTime = service.getEndTime().seconds();
+						if (service.getType().equals("end"))
+							service.setStartTime(tourStartTime +8*3600);
+						plan.addActivity(service);
 					}
-					if (tourElement instanceof Tour.Leg) {
-						Leg legActivity = popFactory.createLeg("freight");
+					if (tourElement instanceof Leg) {
+						Leg legActivity = null;
+						if (person.getId().toString().split("_")[2].equals("businessTraffic"))
+							legActivity = popFactory.createLeg("car");
+						else if (person.getId().toString().split("_")[2].equals("freightTraffic"))
+							legActivity = popFactory.createLeg("freight");
 						plan.addLeg(legActivity);
 					}
 				}
-				Activity endActivity = popFactory.createActivityFromCoord("freight_tourEnd",scenario.getNetwork().getLinks().get(tour.getTour().getEndLinkId()).getFromNode().getCoord());
-				endActivity.setMaximumDuration(0);
-				endActivity.setStartTime(tour.getDeparture()+8*3600);
-				plan.addActivity(endActivity);
-				person.addPlan(plan);
-				population.addPerson(person);
-				if (carrier.getId().toString().split("_")[1].equals("Freight"))
-					PopulationUtils.putSubpopulation(person, "fixedFreightMode");
+				newPerson.addPlan(plan);
+				population.addPerson(newPerson);
+				if (person.getId().toString().split("_")[2].equals("Freight"))
+					PopulationUtils.putSubpopulation(newPerson, "fixedFreightMode");
 				else
-					PopulationUtils.putSubpopulation(person, "modeChoicePossible");
-				PopulationUtils.putPersonAttribute(person, "trafficType", carrier.getId().toString().split("_")[1]);
-				PopulationUtils.putPersonAttribute(person, "tourStartArea", carrier.getId().toString().split("_")[2]);
-				VehicleUtils.insertVehicleIdsIntoAttributes(person, (new HashMap<String, Id<Vehicle>>(){{put("freight", tour.getVehicle().getId());}}));
-			}
+					PopulationUtils.putSubpopulation(newPerson, "modeChoicePossible");
+				PopulationUtils.putPersonAttribute(newPerson, "trafficType", person.getId().toString().split("_")[2]);
+				PopulationUtils.putPersonAttribute(newPerson, "tourStartArea", person.getId().toString().split("_")[3]);
+				VehicleUtils.insertVehicleIdsIntoAttributes(newPerson, (new HashMap<String, Id<Vehicle>>(){{put("freight", ((Identifiable<Vehicle>) person.getSelectedPlan().getAttributes().getAttribute("carrierVehicle")).getId());}}));
 		}
 		PopulationUtils.writePopulation(population, output.toString() + "/berlin_"+usedTrafficType+"_"+(int)(sample*100)+"pct_plans.xml.gz");
 		controler.getScenario().getPopulation().getPersons().clear();
