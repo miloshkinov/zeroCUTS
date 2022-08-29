@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +68,6 @@ public class TripDistributionMatrix {
 	private final List<SimpleFeature> zonesFeatures;
 	private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start;
 	private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop;
-	private final double sample;
 	private final String trafficType;
 
 	static class TripDistributionMatrixKey {
@@ -272,25 +272,23 @@ public class TripDistributionMatrix {
 		private final List<SimpleFeature> zonesFeatures;
 		private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start;
 		private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop;
-		private final double sample;
 		private final String trafficType;
 
 		public static Builder newInstance(ShpOptions shpZones,
 				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
-				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, double sample,
+				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop,
 				String trafficType) {
-			return new Builder(shpZones, trafficVolume_start, trafficVolume_stop, sample, trafficType);
+			return new Builder(shpZones, trafficVolume_start, trafficVolume_stop, trafficType);
 		}
 
 		private Builder(ShpOptions shpZones,
 				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
-				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, double sample,
+				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop,
 				String trafficType) {
 			super();
 			this.zonesFeatures = shpZones.readFeatures();
 			this.trafficVolume_start = trafficVolume_start;
 			this.trafficVolume_stop = trafficVolume_stop;
-			this.sample = sample;
 			this.trafficType = trafficType;
 		}
 
@@ -303,7 +301,6 @@ public class TripDistributionMatrix {
 		zonesFeatures = builder.zonesFeatures;
 		trafficVolume_start = builder.trafficVolume_start;
 		trafficVolume_stop = builder.trafficVolume_stop;
-		sample = builder.sample;
 		trafficType = builder.trafficType;
 	}
 
@@ -313,7 +310,6 @@ public class TripDistributionMatrix {
 //	private final ConcurrentHashMap<String, Double> gravityConstantBCache = new ConcurrentHashMap<String, Double>();
 	private final ConcurrentHashMap<String, Object2DoubleMap<String>> roundingError = new ConcurrentHashMap<>();
 	private NetworkBasedTransportCosts netBasedCosts = null;
-//	private int createdVolume = 0;
 
 	/**
 	 * Calculates the traffic volume between two zones for a specific modeORvehType
@@ -331,24 +327,21 @@ public class TripDistributionMatrix {
 		double volumeStart = trafficVolume_start.get(startZone).get(modeORvehType).getDouble(purpose);
 		double volumeStop = trafficVolume_stop.get(stopZone).get(modeORvehType).getDouble(purpose);
 		double resistanceValue = getResistanceFunktionValue(startZone, stopZone, network, regionLinksMap);
-		double gravityConstantA = getGravityConstant(startZone, trafficVolume_stop, modeORvehType, purpose, network, regionLinksMap);
-		roundingError.computeIfAbsent(startZone, (k) -> new Object2DoubleOpenHashMap<>());
-		/*
-		 * gravity model Anpassungen: Faktor anpassen, z.B. reale Reisezeiten im Netz,
-		 * auch besonders für ÖV Bisher: Gravity model mit fixem Quellverkehr
-		 */
-		double volume = gravityConstantA * volumeStart * volumeStop * resistanceValue;
-		double sampledVolume = sample * volume;
-		int roundedSampledVolume = (int) Math.floor(sampledVolume);
-		double certainRoundingError = sampledVolume - roundedSampledVolume;
-		roundingError.get(startZone).merge((modeORvehType + "_" + purpose), certainRoundingError, Double::sum);
-		if (roundingError.get(startZone).getDouble((modeORvehType + "_" + purpose)) > 0) {
-			roundedSampledVolume++;
-			roundingError.get(startZone).merge((modeORvehType + "_" + purpose), -1, Double::sum);
-		} // TODO eventuell methodik für den letzten error rest am Ende
+		double gravityConstantA = getGravityConstant(stopZone, trafficVolume_start, modeORvehType, purpose, network, regionLinksMap);
+		roundingError.computeIfAbsent(stopZone, (k) -> new Object2DoubleOpenHashMap<>());
+
+		//Bisher: Gravity model mit fixem Zielverkehr
+		double volume = gravityConstantA * volumeStart * volumeStop * resistanceValue;	
+		int roundedVolume = (int) Math.floor(volume);
+		double certainRoundingError = (roundedVolume - volume) * -1;
+		// roundingError based on stopZone, because gravity model is stopVolume fixed
+		roundingError.get(stopZone).merge((modeORvehType + "_" + purpose), certainRoundingError, Double::sum);
+		if (roundingError.get(stopZone).getDouble((modeORvehType + "_" + purpose)) >= 1) {
+			roundedVolume++;
+			roundingError.get(stopZone).merge((modeORvehType + "_" + purpose), -1, Double::sum);
+		} 
 		TripDistributionMatrixKey matrixKey = makeKey(startZone, stopZone, modeORvehType, purpose, trafficType);
-//		createdVolume = createdVolume + roundedSampledVolume;
-		matrixCache.put(matrixKey, roundedSampledVolume);
+		matrixCache.put(matrixKey, roundedVolume);
 	}
 
 	/**
@@ -394,13 +387,19 @@ public class TripDistributionMatrix {
 					String zone2 = String.valueOf(stopZoneFeature.getAttribute("id"));
 					if (!stopZone.equals(zone2))
 						continue;
-//					double distance = Double.MAX_VALUE;
+					double distance = Double.MAX_VALUE;
 					double travelCosts = Double.MAX_VALUE;
 					if (zone1.equals(zone2)) {
 						travelCosts = 0;
-//						distance = 0;
+						distance = 0;
 					}
 					else {
+						
+//						Point geometryStartZone = ((Geometry) startZoneFeature.getDefaultGeometry()).getCentroid();
+//						Point geometryStopZone = ((Geometry) stopZoneFeature.getDefaultGeometry()).getCentroid();
+//
+//						distance = geometryStartZone.distance(geometryStopZone);
+						
 						Location startLocation = Location.newInstance(regionLinksMap.get(startZone).iterator().next().getId().toString());
 						Location stopLocation = Location.newInstance(regionLinksMap.get(stopZone).iterator().next().getId().toString());
 						Vehicle exampleVehicle = getExampleVehicle(startLocation);
@@ -408,6 +407,7 @@ public class TripDistributionMatrix {
 						travelCosts = netBasedCosts.getTransportCost(startLocation, stopLocation, 21600., null, exampleVehicle);
 					}
 					double resistanceFactor = 0.005;
+//					double resistanceFunktionResult = Math.exp(-distance);
 					double resistanceFunktionResult = Math.exp(-resistanceFactor*travelCosts);
 //					double resistanceFunktionResult = 1 / (travelCosts*travelCosts);
 					resistanceFunktionCache.put(makeResistanceFunktionKey(zone1, zone2), resistanceFunktionResult);
@@ -416,6 +416,42 @@ public class TripDistributionMatrix {
 			}
 		return resistanceFunktionCache.get(makeResistanceFunktionKey(startZone, stopZone));
 	}
+
+	/** Corrects missing trafficVolume in the OD because of roundingErrors based on trafficVolume_stop
+	 * 
+	 */
+	public void clearRoundingError(){
+
+		for (String stopZone : getListOfZones()) {
+			for (String modeORvehType : getListOfModesOrVehTypes()) {
+				for (Integer purpose : getListOfPurposes()) {
+					double trafficVolume = trafficVolume_stop.get(stopZone).get(modeORvehType).getDouble(purpose);
+					int generatedTrafficVolume = getSumOfServicesForStopZone(stopZone, modeORvehType, purpose, trafficType);
+					if (trafficVolume > generatedTrafficVolume) {
+						if (generatedTrafficVolume == 0) {
+							TripDistributionMatrixKey matrixKey = makeKey(stopZone, stopZone, modeORvehType, purpose,
+									trafficType);
+							matrixCache.replace(matrixKey, matrixCache.get(matrixKey) + 1);
+							generatedTrafficVolume = getSumOfServicesForStopZone(stopZone, modeORvehType, purpose, trafficType);
+						} else {
+							ArrayList<String> shuffeldZones = new ArrayList<String>(getListOfZones());
+							Collections.shuffle(shuffeldZones);
+							for (String startZone : shuffeldZones) {
+								TripDistributionMatrixKey matrixKey = makeKey(startZone, stopZone, modeORvehType,
+										purpose, trafficType);
+								if (matrixCache.get(matrixKey) > 0) {
+									matrixCache.replace(matrixKey, matrixCache.get(matrixKey) + 1);
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+
 	/** Create example vehicle for netBasedCosts calculation.
 	 * @param fromId
 	 * @return
@@ -550,8 +586,22 @@ public class TripDistributionMatrix {
 	int getSumOfServicesForStartZone(String startZone, String modeORvehType, int purpose, String trafficType) {
 		int numberOfTrips = 0;
 		ArrayList<String> zones = getListOfZones();
-		for (String stopZone : zones)
-			numberOfTrips = numberOfTrips + matrixCache.get(makeKey(startZone, stopZone, modeORvehType, purpose, trafficType));
+		for (String stopZone : zones) 
+			numberOfTrips = numberOfTrips + (int)Math.round(matrixCache.get(makeKey(startZone, stopZone, modeORvehType, purpose, trafficType)));
+		return numberOfTrips;
+	}
+	/**
+	 * @param stopZone
+	 * @param modeORvehType
+	 * @param purpose
+	 * @param trafficType
+	 * @return numberOfTrips
+	 */
+	int getSumOfServicesForStopZone(String stopZone, String modeORvehType, int purpose, String trafficType) {
+		int numberOfTrips = 0;
+		ArrayList<String> zones = getListOfZones();
+		for (String startZone : zones) 
+			numberOfTrips = numberOfTrips + (int)Math.round(matrixCache.get(makeKey(startZone, stopZone, modeORvehType, purpose, trafficType)));
 		return numberOfTrips;
 	}
 
