@@ -68,10 +68,10 @@ public class TrafficVolumeGeneration {
 			double sample, ArrayList<String> modesORvehTypes, String trafficType) throws MalformedURLException {
 
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
-		calculateTrafficVolumePerZone(trafficVolume_start, resultingDataPerZone, "start", modesORvehTypes);
+		calculateTrafficVolumePerZone(trafficVolume_start, resultingDataPerZone, "start", modesORvehTypes, sample);
 		Path outputFileStart = output.resolve("caculatedData")
 				.resolve("TrafficVolume_" + trafficType + "_" + "startPerZone_" + (int) (sample * 100) + "pt.csv");
-		writeCSVTrafficVolume(trafficVolume_start, outputFileStart, sample);
+		writeCSVTrafficVolume(trafficVolume_start, outputFileStart);
 		log.info("Write traffic volume for start trips per zone in CSV: " + outputFileStart);
 		return trafficVolume_start;
 	}
@@ -91,12 +91,12 @@ public class TrafficVolumeGeneration {
 	static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_stop(
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output, Path inputDataDirectory,
 			double sample, ArrayList<String> modesORvehTypes, String trafficType) throws MalformedURLException {
-
+//TODO change type to Object2IntMap<Integer>
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
-		calculateTrafficVolumePerZone(trafficVolume_stop, resultingDataPerZone, "stop", modesORvehTypes);
+		calculateTrafficVolumePerZone(trafficVolume_stop, resultingDataPerZone, "stop", modesORvehTypes, sample);
 		Path outputFileStop = output.resolve("caculatedData")
 				.resolve("TrafficVolume_" + trafficType + "_" + "stopPerZone_" + (int) (sample * 100) + "pt.csv");
-		writeCSVTrafficVolume(trafficVolume_stop, outputFileStop, sample);
+		writeCSVTrafficVolume(trafficVolume_stop, outputFileStop);
 		log.info("Write traffic volume for stop trips per zone in CSV: " + outputFileStop);
 		return trafficVolume_stop;
 	}
@@ -108,12 +108,13 @@ public class TrafficVolumeGeneration {
 	 * @param resultingDataPerZone
 	 * @param volumeType
 	 * @param modesORvehTypes
+	 * @param sample 
 	 * @return trafficVolume
 	 */
 	private static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> calculateTrafficVolumePerZone(
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume,
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String volumeType,
-			ArrayList<String> modesORvehTypes) {
+			ArrayList<String> modesORvehTypes, double sample) {
 
 		HashMap<Integer, HashMap<String, Double>> generationRates = new HashMap<Integer, HashMap<String, Double>>();
 		HashMap<String, HashMap<String, Double>> commitmentRates = new HashMap<String, HashMap<String, Double>>();
@@ -146,10 +147,11 @@ public class TrafficVolumeGeneration {
 										.get(category);
 							double generationFactor = generationRates.get(purpose).get(category);
 							double newValue = resultingDataPerZone.get(zoneId).getDouble(category) * generationFactor
-									* commitmentFactor;
+									* commitmentFactor;					
 							trafficValuesPerPurpose.merge(purpose, newValue, Double::sum);
 						}
-					trafficValuesPerPurpose.replace(purpose, trafficValuesPerPurpose.getDouble(purpose)); // notwendig?
+					int sampledVolume = (int)Math.round(sample * trafficValuesPerPurpose.getDouble(purpose));
+					trafficValuesPerPurpose.replace(purpose, sampledVolume); //TODO notwendig?
 				}
 				valuesForZone.put(modeORvehType, trafficValuesPerPurpose);
 			}
@@ -167,7 +169,7 @@ public class TrafficVolumeGeneration {
 	 * @throws MalformedURLException
 	 */
 	private static void writeCSVTrafficVolume(HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume,
-			Path outputFileInInputFolder, double sample) throws MalformedURLException {
+			Path outputFileInInputFolder) throws MalformedURLException {
 		BufferedWriter writer = IOUtils.getBufferedWriter(outputFileInInputFolder.toUri().toURL(),
 				StandardCharsets.UTF_8, true);
 		try {
@@ -181,8 +183,8 @@ public class TrafficVolumeGeneration {
 					row.add(modeORvehType);
 					Integer count = 1;
 					while (count < 6) {
-						row.add(String.valueOf(
-								Math.round(trafficVolume.get(zoneID).get(modeORvehType).getDouble(count) * sample)));
+						row.add(String.valueOf((int)
+								trafficVolume.get(zoneID).get(modeORvehType).getDouble(count)));
 						count++;
 					}
 					JOIN.appendTo(writer, row);
