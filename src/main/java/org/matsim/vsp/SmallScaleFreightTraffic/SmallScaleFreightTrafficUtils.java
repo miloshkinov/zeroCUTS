@@ -94,12 +94,13 @@ public class SmallScaleFreightTrafficUtils {
 	 * 
 	 * @param resultingDataPerZone
 	 * @param outputFileInOutputFolder
-	 * @param zoneIdNameConnection 
+	 * @param zoneIdNameConnection
 	 * @throws IOException
 	 * @throws MalformedURLException
 	 */
 	static void writeResultOfDataDistribution(HashMap<String, Object2DoubleMap<String>> resultingDataPerZone,
-			Path outputFileInOutputFolder, HashMap<String, String> zoneIdNameConnection) throws IOException, MalformedURLException {
+			Path outputFileInOutputFolder, HashMap<String, String> zoneIdNameConnection)
+			throws IOException, MalformedURLException {
 
 		writeCSVWithCategoryHeader(resultingDataPerZone, outputFileInOutputFolder, zoneIdNameConnection);
 		log.info("The data distribution is finished and written to: " + outputFileInOutputFolder);
@@ -110,7 +111,7 @@ public class SmallScaleFreightTrafficUtils {
 	 * 
 	 * @param resultingDataPerZone
 	 * @param outputFileInInputFolder
-	 * @param zoneIdNameConnection 
+	 * @param zoneIdNameConnection
 	 * @throws MalformedURLException
 	 */
 	private static void writeCSVWithCategoryHeader(HashMap<String, Object2DoubleMap<String>> resultingDataPerZone,
@@ -141,54 +142,63 @@ public class SmallScaleFreightTrafficUtils {
 			e.printStackTrace();
 		}
 	}
-	
-	static void createPlansBasedOnCarrierPlans(Controler controler, String usedTrafficType, double sample, Path output) {
+
+	static void createPlansBasedOnCarrierPlans(Controler controler, String usedTrafficType, double sample,
+			Path output) {
 		Scenario scenario = controler.getScenario();
 		Population population = controler.getScenario().getPopulation();
-		
+
 		PopulationFactory popFactory = population.getFactory();
-		
+
 		Population population2 = (Population) scenario.getScenarioElement("allpersons");
 		for (Person person : population2.getPersons().values()) {
-			
-				Person newPerson = popFactory.createPerson(person.getId());
-				Plan plan = popFactory.createPlan();
 
-				List<PlanElement> tourElements = person.getSelectedPlan().getPlanElements();
-				double tourStartTime = 0;
-				for (PlanElement tourElement : tourElements) {
-					
-					if (tourElement instanceof Activity) {
-						Activity service = (Activity) tourElement;
-						service.setCoord(scenario.getNetwork().getLinks().get(service.getLinkId()).getFromNode().getCoord());
-						if (!service.getType().equals("start"))
-							service.setEndTimeUndefined();
-						else
-							tourStartTime = service.getEndTime().seconds();
-						if (service.getType().equals("end"))
-							service.setStartTime(tourStartTime +8*3600);
-						plan.addActivity(service);
-					}
-					if (tourElement instanceof Leg) {
-						Leg legActivity = null;
-						if (person.getId().toString().split("_")[2].equals("businessTraffic"))
-							legActivity = popFactory.createLeg("car");
-						else if (person.getId().toString().split("_")[2].equals("freightTraffic"))
-							legActivity = popFactory.createLeg("freight");
-						plan.addLeg(legActivity);
-					}
+			Person newPerson = popFactory.createPerson(person.getId());
+			Plan plan = popFactory.createPlan();
+			String mode = null;
+			if (person.getId().toString().split("_")[2].equals("Business"))
+				mode = "car";
+			else if (person.getId().toString().split("_")[2].equals("Freight"))
+				mode = "freight";
+final String usedMainMode = mode;
+			List<PlanElement> tourElements = person.getSelectedPlan().getPlanElements();
+			double tourStartTime = 0;
+			for (PlanElement tourElement : tourElements) {
+
+				if (tourElement instanceof Activity) {
+					Activity service = (Activity) tourElement;
+					service.setCoord(
+							scenario.getNetwork().getLinks().get(service.getLinkId()).getFromNode().getCoord());
+					if (!service.getType().equals("start"))
+						service.setEndTimeUndefined();
+					else
+						tourStartTime = service.getEndTime().seconds();
+					if (service.getType().equals("end"))
+						service.setStartTime(tourStartTime + 8 * 3600);
+					plan.addActivity(service);
 				}
-				newPerson.addPlan(plan);
-				population.addPerson(newPerson);
-				if (person.getId().toString().split("_")[2].equals("Freight"))
-					PopulationUtils.putSubpopulation(newPerson, "fixedFreightMode");
-				else
-					PopulationUtils.putSubpopulation(newPerson, "modeChoicePossible");
-				PopulationUtils.putPersonAttribute(newPerson, "trafficType", person.getId().toString().split("_")[2]);
-				PopulationUtils.putPersonAttribute(newPerson, "tourStartArea", person.getId().toString().split("_")[3]);
-				VehicleUtils.insertVehicleIdsIntoAttributes(newPerson, (new HashMap<String, Id<Vehicle>>(){{put("freight", ((Identifiable<Vehicle>) person.getSelectedPlan().getAttributes().getAttribute("carrierVehicle")).getId());}}));
+				if (tourElement instanceof Leg) {
+					Leg legActivity = popFactory.createLeg(usedMainMode);
+					plan.addLeg(legActivity);
+				}
+			}
+			newPerson.addPlan(plan);
+			population.addPerson(newPerson);
+			if (person.getId().toString().split("_")[2].equals("Freight"))
+				PopulationUtils.putSubpopulation(newPerson, "fixedFreightMode");
+			else
+				PopulationUtils.putSubpopulation(newPerson, "modeChoicePossible");
+			PopulationUtils.putPersonAttribute(newPerson, "trafficType", person.getId().toString().split("_")[2]);
+			PopulationUtils.putPersonAttribute(newPerson, "tourStartArea", person.getId().toString().split("_")[3]);
+			VehicleUtils.insertVehicleIdsIntoAttributes(newPerson, (new HashMap<String, Id<Vehicle>>() {
+				{
+					put(usedMainMode, ((Identifiable<Vehicle>) person.getSelectedPlan().getAttributes()
+							.getAttribute("carrierVehicle")).getId());
+				}
+			}));
 		}
-		PopulationUtils.writePopulation(population, output.toString() + "/berlin_"+usedTrafficType+"_"+(int)(sample*100)+"pct_plans.xml.gz");
+		PopulationUtils.writePopulation(population,
+				output.toString() + "/berlin_" + usedTrafficType + "_" + (int) (sample * 100) + "pct_plans.xml.gz");
 		controler.getScenario().getPopulation().getPersons().clear();
 	}
 }
