@@ -137,13 +137,13 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		businessTraffic, freightTraffic, bothTypes
 	}
 
-	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input")
+	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/scenarios/10pct_bothTypes/")
 	private static Path inputDataDirectory;
 
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
 	private static Path networkPath;
 
-	@CommandLine.Option(names = "--sample", defaultValue = "0.001", description = "Scaling factor of the freight traffic (0, 1)", required = true)
+	@CommandLine.Option(names = "--sample", defaultValue = "0.05", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
 	@CommandLine.Option(names = "--output", description = "Path to output folder", required = true, defaultValue = "output/BusinessPassengerTraffic/")
@@ -152,14 +152,14 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--jspritIterations", description = "Set number of jsprit iterations", required = true, defaultValue = "15")
 	private static int jspritIterations;
 
-	@CommandLine.Option(names = "--creationOption", defaultValue = "createNewCarrierFile", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
+	@CommandLine.Option(names = "--creationOption", defaultValue = "useExistingCarrierFileWithoutSolution", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
 	private CreationOption usedCreationOption;
 // useExistingCarrierFileWithSolution, createNewCarrierFile, useExistingCarrierFileWithoutSolution
-	
+
 	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useTrafficCells", description = "Set option input zones. Options: useDistricts, useTrafficCells")
 	private ZoneChoice usedZoneChoice;
 // useDistricts, useTrafficCells
-	
+
 	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useOSMBuildingsAndLanduse", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
 	private LanduseConfiguration usedLanduseConfiguration;
 // useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
@@ -192,7 +192,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		String carriersFileLocation = null;
 		FreightConfigGroup freightConfigGroup = null;
 		switch (usedCreationOption) {
-		
+
 		case useExistingCarrierFileWithSolution:
 			carriersFileLocation = inputDataDirectory.resolve("output_CarrierDemandWithPlans.xml").toString();
 			freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
@@ -207,8 +207,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			freightConfigGroup.setCarriersFile(carriersFileLocation);
 			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 			log.info("Load carriers from: " + carriersFileLocation);
+
 			controler = prepareControler(scenario);
-			FreightUtils.runJsprit(controler.getScenario());
+			solveSeperatedVRPs(controler);
 			break;
 		default:
 			switch (usedZoneChoice) {
@@ -229,8 +230,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 			shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
 					.resolve("buildings_sample_BerlinBrandenburg_4326.shp");
-//		shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
-//				.resolve("buildings_BerlinBrandenburg_4326.shp");
+//			shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+//					.resolve("buildings_BerlinBrandenburg_4326.shp");
 
 			if (!Files.exists(shapeFileLandusePath)) {
 				log.error("Required landuse shape file {} not found", shapeFileLandusePath);
@@ -249,24 +250,29 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 			ArrayList<String> modesORvehTypes;
 			ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
-			Map<String, List<Link>> regionLinksMap = filterLinksForZones(shpZones, SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath));
+			Map<String, List<Link>> regionLinksMap = filterLinksForZones(shpZones,
+					SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath));
 
 			switch (usedTrafficType) {
 			case businessTraffic:
 				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
-				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
+				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone,
+						modesORvehTypes, usedTrafficType.toString());
 				break;
 			case freightTraffic:
 				modesORvehTypes = new ArrayList<String>(
 						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
-				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone, modesORvehTypes, usedTrafficType.toString());
+				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone,
+						modesORvehTypes, usedTrafficType.toString());
 				break;
 			case bothTypes:
 				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
-				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone, modesORvehTypes, "businessTraffic");
+				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone,
+						modesORvehTypes, "businessTraffic");
 				modesORvehTypes = new ArrayList<String>(
 						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
-				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone, modesORvehTypes, "freightTraffic");
+				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone,
+						modesORvehTypes, "freightTraffic");
 				break;
 			default:
 				throw new RuntimeException("No traffic type selected.");
@@ -276,43 +282,161 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemand.xml");
 			controler = prepareControler(scenario);
 
-			FreightUtils.runJsprit(controler.getScenario());
+			solveSeperatedVRPs(controler);
 			break;
 		}
-		
+
 		new CarrierPlanXmlWriterV2((Carriers) controler.getScenario().getScenarioElement("carriers"))
-		.write(config.controler().getOutputDirectory() + "/output_CarrierDemandWithPlans.xml");
-		
+				.write(config.controler().getOutputDirectory() + "/output_CarrierDemandWithPlans.xml");
+
 		controler.run();
-		SmallScaleFreightTrafficUtils.createPlansBasedOnCarrierPlans(controler, usedTrafficType.toString(), sample, output);
-		FreightAnalyse.main(new String[] { scenario.getConfig().controler().getOutputDirectory() });
+		SmallScaleFreightTrafficUtils.createPlansBasedOnCarrierPlans(controler, usedTrafficType.toString(), sample,
+				output, inputDataDirectory);
+		FreightAnalyse.main(new String[] { scenario.getConfig().controler().getOutputDirectory(), "true" });
 
 		return 0;
 	}
 
 	/**
+	 * @param controler
+	 * @throws Exception
+	 */
+	private void solveSeperatedVRPs(Controler controler) throws Exception {
+		Scenario originalScenario = controler.getScenario();
+
+		boolean splitCarrier = true;
+		boolean splitVRPs = false;
+		int maxServicesPerCarrier = 200;
+		Map<Id<Carrier>, Carrier> allCarriers = new HashMap<Id<Carrier>, Carrier>(
+				FreightUtils.getCarriers(originalScenario).getCarriers());
+		Map<Id<Carrier>, Carrier> solvedCarriers = new HashMap<Id<Carrier>, Carrier>();
+		List<Id<Carrier>> keyList = new ArrayList<>(allCarriers.keySet());
+		int carrierSteps = 30;
+		for (int i = 0; i < allCarriers.size(); i++) {
+			int fromIndex = i * carrierSteps;
+			int toIndex = (i + 1) * carrierSteps;
+			if (toIndex >= allCarriers.size())
+				toIndex = allCarriers.size();
+
+			Map<Id<Carrier>, Carrier> subCarriers = new HashMap<Id<Carrier>, Carrier>(allCarriers);
+			List<Id<Carrier>> subList = null;
+			if (splitVRPs) {
+				subList = keyList.subList(fromIndex, toIndex);
+				subCarriers.keySet().retainAll(subList);
+			} else {
+				fromIndex = 1;
+				toIndex = allCarriers.size();
+			}
+
+			if (splitCarrier) {
+				Map<Id<Carrier>, Carrier> subCarrierstoAdd = new HashMap<Id<Carrier>, Carrier>();
+				List<Id<Carrier>> keyListCarrierToRemove = new ArrayList<Id<Carrier>>();
+				for (Carrier carrier : subCarriers.values()) {
+
+					int countedServices = 0;
+					int countedVehicles = 0;
+					if (carrier.getServices().size() > maxServicesPerCarrier) {
+
+						int numberOfNewCarrier = (int) Math.ceil((double) carrier.getServices().size() / (double)maxServicesPerCarrier);
+						int numberOfServicesPerNewCarrier = Math
+								.round(carrier.getServices().size() / numberOfNewCarrier);
+
+						int maxValue = carrier.getServices().size();
+						if (carrier.getCarrierCapabilities().getCarrierVehicles().size() > maxValue)
+							maxValue = carrier.getCarrierCapabilities().getCarrierVehicles().size();
+						int j = 0;
+						while (j < numberOfNewCarrier) {
+
+//						}
+//						for (int j = 0; j < maxValue / (double) numberOfServicesPerNewCarrier; j++) {
+							
+							int numberOfServiesForNewCarrier = numberOfServicesPerNewCarrier;
+							int numberOfVehiclesForNewCarrier = numberOfServicesPerNewCarrier;
+							if (j+1 == numberOfNewCarrier) {
+								numberOfServiesForNewCarrier = carrier.getServices().size() - countedServices;
+								numberOfVehiclesForNewCarrier = carrier.getCarrierCapabilities().getCarrierVehicles()
+										.size() - countedVehicles;
+							}
+							Carrier newCarrier = CarrierUtils.createCarrier(
+									Id.create(carrier.getId().toString() + "part_" + (j + 1), Carrier.class));
+							CarrierCapabilities newCarrierCapabilities = CarrierCapabilities.Builder.newInstance()
+									.setFleetSize(carrier.getCarrierCapabilities().getFleetSize())
+									.addType(carrier.getCarrierCapabilities().getVehicleTypes().iterator().next())
+									.build();
+							newCarrierCapabilities.getCarrierVehicles()
+									.putAll(carrier.getCarrierCapabilities().getCarrierVehicles());
+							newCarrier.setCarrierCapabilities(newCarrierCapabilities);
+							newCarrier.getServices().putAll(carrier.getServices());
+							CarrierUtils.setJspritIterations(newCarrier, CarrierUtils.getJspritIterations(carrier));
+							List<Id<Vehicle>> vehiclesForNewCarrier = new ArrayList<>(
+									carrier.getCarrierCapabilities().getCarrierVehicles().keySet());
+							List<Id<CarrierService>> servicesForNewCarrier = new ArrayList<>(
+									carrier.getServices().keySet());
+
+							List<Id<Vehicle>> subListVehicles = vehiclesForNewCarrier.subList(
+									j * numberOfServicesPerNewCarrier,
+									j * numberOfServicesPerNewCarrier + numberOfVehiclesForNewCarrier);
+							List<Id<CarrierService>> subListServices = servicesForNewCarrier.subList(
+									j * numberOfServicesPerNewCarrier,
+									j * numberOfServicesPerNewCarrier + numberOfServiesForNewCarrier);
+
+							newCarrier.getCarrierCapabilities().getCarrierVehicles().keySet()
+									.retainAll(subListVehicles);
+							newCarrier.getServices().keySet().retainAll(subListServices);
+
+							countedVehicles += newCarrier.getCarrierCapabilities().getCarrierVehicles().size();
+							countedServices += newCarrier.getServices().size();
+
+							subCarrierstoAdd.put(newCarrier.getId(), newCarrier);
+							j++;
+						}
+						keyListCarrierToRemove.add(carrier.getId());
+						if (countedVehicles != carrier.getCarrierCapabilities().getCarrierVehicles().size())
+							throw new Exception("Splitted parts of the carrier " + carrier.getId().toString()
+									+ " has a differnt number of vehicles than the original carrier");
+						if (countedServices != carrier.getServices().size())
+							throw new Exception("Splitted parts of the carrier " + carrier.getId().toString()
+									+ " has a differnt number of services than the original carrier");
+
+					}
+				}
+				subCarriers.putAll(subCarrierstoAdd);
+				for (Id<Carrier> id : keyListCarrierToRemove) {
+					subCarriers.remove(id);
+				}
+			}
+			FreightUtils.getCarriers(originalScenario).getCarriers().clear();
+			FreightUtils.getCarriers(originalScenario).getCarriers().putAll(subCarriers);
+			log.info("Solving carriers " + (fromIndex + 1) + "-" + (toIndex) + " of all " + allCarriers.size()
+					+ " carriers. This are " + subCarriers.size() + " VRP to solve.");
+			FreightUtils.runJsprit(originalScenario);
+			solvedCarriers.putAll(FreightUtils.getCarriers(originalScenario).getCarriers());
+			FreightUtils.getCarriers(originalScenario).getCarriers().clear();
+		}
+		FreightUtils.getCarriers(originalScenario).getCarriers().putAll(solvedCarriers);
+	}
+
+	/**
 	 * @param config
 	 * @param scenario
-	 * @param shpZones 
-	 * @param regionLinksMap 
+	 * @param shpZones
+	 * @param regionLinksMap
 	 * @param resultingDataPerZone
 	 * @param modesORvehTypes
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
-	private void createCarriersAndDemand(Config config, Controler controler, Scenario scenario,
-			ShpOptions shpZones, Map<String, List<Link>> regionLinksMap, HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, ArrayList<String> modesORvehTypes, String usedTrafficType)
-			throws Exception {
-		
+	private void createCarriersAndDemand(Config config, Controler controler, Scenario scenario, ShpOptions shpZones,
+			Map<String, List<Link>> regionLinksMap, HashMap<String, Object2DoubleMap<String>> resultingDataPerZone,
+			ArrayList<String> modesORvehTypes, String usedTrafficType) throws Exception {
+
 		TrafficVolumeGeneration.setInputParamters(usedTrafficType);
 
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
-				.createTrafficVolume_start(resultingDataPerZone, output, inputDataDirectory, sample,
-						modesORvehTypes, usedTrafficType);
+				.createTrafficVolume_start(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
-				.createTrafficVolume_stop(resultingDataPerZone, output, inputDataDirectory, sample,
-						modesORvehTypes, usedTrafficType);
-		
+				.createTrafficVolume_stop(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
+
 		final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
 				trafficVolumePerTypeAndZone_stop, shpZones, usedTrafficType, scenario.getNetwork(), regionLinksMap);
 		createCarriers(config, scenario, odMatrix, resultingDataPerZone, usedTrafficType, regionLinksMap);
@@ -347,16 +471,18 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		Freight.configure(controler);
 		controler.addOverridingModule(new AbstractModule() {
-            @Override
-            public void install() {
-                install(new CarrierModule());
-                bind(CarrierPlanStrategyManagerFactory.class).toInstance( new MyCarrierPlanStrategyManagerFactory(FreightUtils.getCarrierVehicleTypes(scenario)) );
-                bind(CarrierScoringFunctionFactory.class).toInstance( new MyCarrierScoringFunctionFactory() );
-            }
-        });
+			@Override
+			public void install() {
+				install(new CarrierModule());
+				bind(CarrierPlanStrategyManagerFactory.class).toInstance(
+						new MyCarrierPlanStrategyManagerFactory(FreightUtils.getCarrierVehicleTypes(scenario)));
+				bind(CarrierScoringFunctionFactory.class).toInstance(new MyCarrierScoringFunctionFactory());
+			}
+		});
 		return controler;
 	}
-    /**
+
+	/**
 	 * Creates the carriers and the related demand, based on the generated
 	 * TripDistributionMatrix.
 	 * 
@@ -365,10 +491,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param odMatrix
 	 * @param resultingDataPerZone
 	 * @param trafficType
-     * @param regionLinksMap 
+	 * @param regionLinksMap
 	 */
 	private void createCarriers(Config config, Scenario scenario, TripDistributionMatrix odMatrix,
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String trafficType, Map<String, List<Link>> regionLinksMap) {
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String trafficType,
+			Map<String, List<Link>> regionLinksMap) {
 		int maxNumberOfCarrier = odMatrix.getListOfPurposes().size() * odMatrix.getListOfZones().size()
 				* odMatrix.getListOfModesOrVehTypes().size();
 		int createdCarrier = 0;
@@ -496,7 +623,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 								serviceTimePerStop = (int) Math.round(65 * 60);
 							}
 						}
-						
+
 						String selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
 						while (resultingDataPerZone.get(startZone).getDouble(selectedStartCategory) == 0)
 							selectedStartCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
@@ -506,7 +633,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							carrierName = "Carrier_Freight_" + startZone + "_purpose_" + purpose + "_" + modeORvehType;
 						} else if (trafficType.equals("businessTraffic"))
 							carrierName = "Carrier_Business_" + startZone + "_purpose_" + purpose;
-						int numberOfDepots = odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType, purpose, trafficType);
+						int numberOfDepots = odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType, purpose,
+								trafficType);
 						FleetSize fleetSize = FleetSize.FINITE;
 						int fixedNumberOfVehilcePerTypeAndLocation = 1;
 						ArrayList<String> vehicleDepots = new ArrayList<String>();
@@ -514,9 +642,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						log.info("Create carrier number " + createdCarrier + " of a maximum Number of "
 								+ maxNumberOfCarrier + " carriers.");
 						log.info("Carrier: " + carrierName + "; depots: " + numberOfDepots + "; services: "
-								+ (int) Math
-										.ceil(odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType, purpose, trafficType)
-												/ occupancyRate));
+								+ (int) Math.ceil(odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType,
+										purpose, trafficType) / occupancyRate));
 						createNewCarrierAndAddVehilceTypes(scenario, purpose, startZone,
 								ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), selectedStartCategory,
 								carrierName, vehilceTypes, numberOfDepots, fleetSize,
@@ -524,7 +651,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						log.info("Create services for carrier: " + carrierName);
 						for (String stopZone : odMatrix.getListOfZones()) {
 							int demand = 0;
-							int trafficVolumeForOD = (int)Math.round(odMatrix.getTripDistributionValue(startZone, stopZone, modeORvehType, purpose, trafficType));
+							int trafficVolumeForOD = (int) Math.round(odMatrix.getTripDistributionValue(startZone,
+									stopZone, modeORvehType, purpose, trafficType));
 							int numberOfJobs = (int) Math.ceil(trafficVolumeForOD / occupancyRate);
 							if (numberOfJobs == 0)
 								continue;
@@ -560,7 +688,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param serviceArea
 	 * @param serviceTimePerStop
 	 * @param serviceTimeWindow
-	 * @param regionLinksMap 
+	 * @param regionLinksMap
 	 */
 	private void createServices(Scenario scenario, Integer purpose, ArrayList<String> noPossibleLinks,
 			String selectedStopCategory, String carrierName, int demand, int numberOfJobs, String[] serviceArea,
@@ -596,7 +724,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param fleetSize
 	 * @param fixedNumberOfVehilcePerTypeAndLocation
 	 * @param vehicleDepots
-	 * @param regionLinksMap 
+	 * @param regionLinksMap
 	 */
 	private void createNewCarrierAndAddVehilceTypes(Scenario scenario, Integer purpose, String startZone,
 			FreightConfigGroup freightConfigGroup, String selectedStartCategory, String carrierName,
@@ -638,7 +766,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				for (int i = 0; i < fixedNumberOfVehilcePerTypeAndLocation; i++) {
 					CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder
 							.newInstance(
-									Id.create(thisCarrier.getId().toString() + "_"
+									Id.create(
+											thisCarrier.getId().toString() + "_"
 													+ (carrierCapabilities.getCarrierVehicles().size() + 1),
 											Vehicle.class),
 									Id.createLinkId(singleDepot), thisType)
@@ -659,18 +788,17 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param zone
 	 * @param selectedCategory
 	 * @param noPossibleLinks
-	 * @param regionLinksMap 
+	 * @param regionLinksMap
 	 * @return
 	 */
-	private Id<Link> findPossibleLink(String zone, String selectedCategory, ArrayList<String> noPossibleLinks, Map<String, List<Link>> regionLinksMap) {
+	private Id<Link> findPossibleLink(String zone, String selectedCategory, ArrayList<String> noPossibleLinks,
+			Map<String, List<Link>> regionLinksMap) {
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
 
 //		Index indexLanduse = SmallScaleFreightTrafficUtils.getIndexLanduse(shapeFileLandusePath);
 		Index indexZones = SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath);
 //		List<Link> links = new ArrayList<Link>();
-		
-			
-		
+
 		if (buildingsPerZone.isEmpty()) {
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
 			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
@@ -710,7 +838,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	/**
 	 * @param shpZones
 	 * @param indexZones
-	 * @return 
+	 * @return
 	 */
 	private Map<String, List<Link>> filterLinksForZones(ShpOptions shpZones, Index indexZones) {
 		Map<String, List<Link>> regionLinksMap = new HashMap<>();
@@ -723,8 +851,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				shpZones.createTransformation("EPSG:31468").transform(l.getCoord())));
 		links.forEach(l -> l.getAttributes().putAttribute("zone",
 				indexZones.query((Coord) l.getAttributes().getAttribute("newCoord"))));
-		links = links.stream().filter(l -> l.getAttributes().getAttribute("zone") != null)
-				.collect(Collectors.toList());
+		links = links.stream().filter(l -> l.getAttributes().getAttribute("zone") != null).collect(Collectors.toList());
 		links.forEach(l -> regionLinksMap
 				.computeIfAbsent((String) l.getAttributes().getAttribute("zone"), (k) -> new ArrayList<>()).add(l));
 		return regionLinksMap;
@@ -737,7 +864,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 */
 	private void prepareVehicles(Config config) {
 
-		String vehicleTypesFileLocation = inputDataDirectory.resolve("vehicleTypes.xml").toString();
+		String vehicleTypesFileLocation = inputDataDirectory.getParent().getParent().resolve("vehicleTypes.xml")
+				.toString();
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 		if (vehicleTypesFileLocation == "")
 			throw new RuntimeException("No path to the vehicleTypes selected");
@@ -753,16 +881,16 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param trafficVolume_start
 	 * @param trafficVolume_stop
 	 * @param shpZones
-	 * @param usedTrafficType 
-	 * @param scenario 
-	 * @param regionLinksMap 
+	 * @param usedTrafficType
+	 * @param scenario
+	 * @param regionLinksMap
 	 * @return TripDistributionMatrix
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	private TripDistributionMatrix createTripDistribution(
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, ShpOptions shpZones, String usedTrafficType, Network network, Map<String, List<Link>> regionLinksMap)
-			throws Exception {
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, ShpOptions shpZones,
+			String usedTrafficType, Network network, Map<String, List<Link>> regionLinksMap) throws Exception {
 
 		final TripDistributionMatrix odMatrix = TripDistributionMatrix.Builder
 				.newInstance(shpZones, trafficVolume_start, trafficVolume_stop, usedTrafficType).build();
@@ -778,7 +906,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				for (Integer purpose : trafficVolume_start.get(startZone).get(modeORvehType).keySet()) {
 					Collections.shuffle(listOfZones);
 					for (String stopZone : listOfZones) {
-						odMatrix.setTripDistributionValue(startZone, stopZone, modeORvehType, purpose, usedTrafficType, network, regionLinksMap);
+						odMatrix.setTripDistributionValue(startZone, stopZone, modeORvehType, purpose, usedTrafficType,
+								network, regionLinksMap);
 					}
 				}
 		}
@@ -786,231 +915,250 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		odMatrix.writeODMatrices(output, usedTrafficType);
 		return odMatrix;
 	}
-	private static class MyCarrierScoringFunctionFactory implements CarrierScoringFunctionFactory {
-	
-	    @Inject
-	    private Network network;
-	
-	    @Override
-	    public ScoringFunction createScoringFunction(Carrier carrier) {
-	        SumScoringFunction sf = new SumScoringFunction();
-	        DriversLegScoring driverLegScoring = new DriversLegScoring(carrier, network);
-	        VehicleEmploymentScoring vehicleEmploymentScoring = new VehicleEmploymentScoring(carrier);
-	        DriversActivityScoring actScoring = new DriversActivityScoring();
-	        sf.addScoringFunction(driverLegScoring);
-	        sf.addScoringFunction(vehicleEmploymentScoring);
-	        sf.addScoringFunction(actScoring);
-	        return sf;
-	    }
-	
-	}
-	private static class MyCarrierPlanStrategyManagerFactory implements CarrierPlanStrategyManagerFactory {
-	
-	    @Inject
-	    private Network network;
-	
-	    @Inject
-	    private LeastCostPathCalculatorFactory leastCostPathCalculatorFactory;
-	
-	    @Inject
-	    private Map<String, TravelTime> modeTravelTimes;
-	
-	    private final CarrierVehicleTypes types;
-	
-	    public MyCarrierPlanStrategyManagerFactory(CarrierVehicleTypes types) {
-	        this.types = types;
-	    }
-	
-	    @Override
-	    public GenericStrategyManager<CarrierPlan, Carrier> createStrategyManager() {
-	        TravelDisutility travelDisutility = TravelDisutilities.createBaseDisutility(types, modeTravelTimes.get(TransportMode.car));
-	        final LeastCostPathCalculator router = leastCostPathCalculatorFactory.createPathCalculator(network,
-	                travelDisutility, modeTravelTimes.get(TransportMode.car));
-	
-	        final GenericStrategyManager<CarrierPlan, Carrier> strategyManager = new GenericStrategyManager<>();
-	        strategyManager.setMaxPlansPerAgent(5);
-	        {
-	            GenericPlanStrategyImpl<CarrierPlan, Carrier> strategy = new GenericPlanStrategyImpl<>(new ExpBetaPlanChanger<CarrierPlan, Carrier>(1.));
-	            //						strategy.addStrategyModule(new ReRouter(router, services.getNetwork(), services.getLinkTravelTimes(), .1));
-	            strategyManager.addStrategy(strategy, null, 1.0);
-	
-	        }
-	        //					{
-	        //						GenericPlanStrategyImpl<CarrierPlan, Carrier> strategy = new GenericPlanStrategyImpl<CarrierPlan, Carrier>( new ExpBetaPlanChanger<CarrierPlan, Carrier>(1.) ) ;
-	        //						strategy.addStrategyModule(new ReRouter(router, services.getNetwork(), services.getLinkTravelTimes(), 1.));
-	        //						strategyManager.addStrategy( strategy, null, 0.1) ;
-	        //					}
-	        {
-	            GenericPlanStrategyImpl<CarrierPlan, Carrier> strategy = new GenericPlanStrategyImpl<>(new KeepSelected<CarrierPlan, Carrier>());
-	            strategy.addStrategyModule(new TimeAllocationMutator());
-	            strategy.addStrategyModule(new ReRouteVehicles(router, network, modeTravelTimes.get(TransportMode.car), 1.));
-	            strategyManager.addStrategy(strategy, null, 0.5);
-	        }
-	        //					{
-	        //						GenericPlanStrategyImpl<CarrierPlan,Carrier> strategy = new GenericPlanStrategyImpl<CarrierPlan,Carrier>( new KeepSelected<CarrierPlan,Carrier>() ) ;
-	        //                        strategy.addStrategyModule(new ReScheduling(services.getNetwork(),types,services.getLinkTravelTimes(), "sschroeder/input/usecases/chessboard/vrpalgo/algorithm_v2.xml"));
-	        //                        strategy.addStrategyModule(new ReRouter(router, services.getNetwork(), services.getLinkTravelTimes(), 1.));
-	        //                        strategyManager.addStrategy( strategy, null, 0.1) ;
-	        //					}
-	        return strategyManager;
-	    }
-	}
-	static class DriversActivityScoring implements SumScoringFunction.BasicScoring, SumScoringFunction.ActivityScoring {
-	
-	//        private static final  Logger log = Logger.getLogger(DriversActivityScoring.class);
-	
-	        private double score;
-	        private double timeParameter = 0.008;
-	        private double missedTimeWindowPenalty = 0.01;
-	
-	        public DriversActivityScoring() {
-	            super();
-	        }
-	
-	        @Override
-	        public void finish() {
-	        }
-	
-	        @Override
-	        public double getScore() {
-	            return score;
-	        }
-	
-	        @Override
-	        public void handleFirstActivity(Activity act) {
-	            handleActivity(act);
-	        }
-	
-	        @Override
-	        public void handleActivity(Activity act) {
-	            if(act instanceof FreightActivity) {
-					double actStartTime = act.getStartTime().seconds();
-	
-	//                log.info(act + " start: " + Time.writeTime(actStartTime));
-	                TimeWindow tw = ((FreightActivity) act).getTimeWindow();
-	                if(actStartTime > tw.getEnd()){
-	                    double penalty_score = (-1)*(actStartTime - tw.getEnd())*missedTimeWindowPenalty;
-	                    if (!(penalty_score <= 0.0)) throw new AssertionError("penalty score must be negative");
-	//                    log.info("penalty " + penalty_score);
-	                    score += penalty_score;
-	
-	                }
-					double actTimeCosts = (act.getEndTime().seconds() -actStartTime)*timeParameter;
-	//                log.info("actCosts " + actTimeCosts);
-	                if (!(actTimeCosts >= 0.0)) throw new AssertionError("actTimeCosts must be positive");
-	                score += actTimeCosts*(-1);
-	            }
-	        }
-	
-	        @Override
-	        public void handleLastActivity(Activity act) {
-	            handleActivity(act);
-	        }
-	
-	    }
 
+	private static class MyCarrierScoringFunctionFactory implements CarrierScoringFunctionFactory {
+
+		@Inject
+		private Network network;
+
+		@Override
+		public ScoringFunction createScoringFunction(Carrier carrier) {
+			SumScoringFunction sf = new SumScoringFunction();
+			DriversLegScoring driverLegScoring = new DriversLegScoring(carrier, network);
+			VehicleEmploymentScoring vehicleEmploymentScoring = new VehicleEmploymentScoring(carrier);
+			DriversActivityScoring actScoring = new DriversActivityScoring();
+			sf.addScoringFunction(driverLegScoring);
+			sf.addScoringFunction(vehicleEmploymentScoring);
+			sf.addScoringFunction(actScoring);
+			return sf;
+		}
+
+	}
+
+	private static class MyCarrierPlanStrategyManagerFactory implements CarrierPlanStrategyManagerFactory {
+
+		@Inject
+		private Network network;
+
+		@Inject
+		private LeastCostPathCalculatorFactory leastCostPathCalculatorFactory;
+
+		@Inject
+		private Map<String, TravelTime> modeTravelTimes;
+
+		private final CarrierVehicleTypes types;
+
+		public MyCarrierPlanStrategyManagerFactory(CarrierVehicleTypes types) {
+			this.types = types;
+		}
+
+		@Override
+		public GenericStrategyManager<CarrierPlan, Carrier> createStrategyManager() {
+			TravelDisutility travelDisutility = TravelDisutilities.createBaseDisutility(types,
+					modeTravelTimes.get(TransportMode.car));
+			final LeastCostPathCalculator router = leastCostPathCalculatorFactory.createPathCalculator(network,
+					travelDisutility, modeTravelTimes.get(TransportMode.car));
+
+			final GenericStrategyManager<CarrierPlan, Carrier> strategyManager = new GenericStrategyManager<>();
+			strategyManager.setMaxPlansPerAgent(5);
+			{
+				GenericPlanStrategyImpl<CarrierPlan, Carrier> strategy = new GenericPlanStrategyImpl<>(
+						new ExpBetaPlanChanger<CarrierPlan, Carrier>(1.));
+				// strategy.addStrategyModule(new ReRouter(router, services.getNetwork(),
+				// services.getLinkTravelTimes(), .1));
+				strategyManager.addStrategy(strategy, null, 1.0);
+
+			}
+			// {
+			// GenericPlanStrategyImpl<CarrierPlan, Carrier> strategy = new
+			// GenericPlanStrategyImpl<CarrierPlan, Carrier>( new
+			// ExpBetaPlanChanger<CarrierPlan, Carrier>(1.) ) ;
+			// strategy.addStrategyModule(new ReRouter(router, services.getNetwork(),
+			// services.getLinkTravelTimes(), 1.));
+			// strategyManager.addStrategy( strategy, null, 0.1) ;
+			// }
+			{
+				GenericPlanStrategyImpl<CarrierPlan, Carrier> strategy = new GenericPlanStrategyImpl<>(
+						new KeepSelected<CarrierPlan, Carrier>());
+				strategy.addStrategyModule(new TimeAllocationMutator());
+				strategy.addStrategyModule(
+						new ReRouteVehicles(router, network, modeTravelTimes.get(TransportMode.car), 1.));
+				strategyManager.addStrategy(strategy, null, 0.5);
+			}
+			// {
+			// GenericPlanStrategyImpl<CarrierPlan,Carrier> strategy = new
+			// GenericPlanStrategyImpl<CarrierPlan,Carrier>( new
+			// KeepSelected<CarrierPlan,Carrier>() ) ;
+			// strategy.addStrategyModule(new
+			// ReScheduling(services.getNetwork(),types,services.getLinkTravelTimes(),
+			// "sschroeder/input/usecases/chessboard/vrpalgo/algorithm_v2.xml"));
+			// strategy.addStrategyModule(new ReRouter(router, services.getNetwork(),
+			// services.getLinkTravelTimes(), 1.));
+			// strategyManager.addStrategy( strategy, null, 0.1) ;
+			// }
+			return strategyManager;
+		}
+	}
+
+	static class DriversActivityScoring implements SumScoringFunction.BasicScoring, SumScoringFunction.ActivityScoring {
+
+		// private static final Logger log =
+		// Logger.getLogger(DriversActivityScoring.class);
+
+		private double score;
+		private double timeParameter = 0.008;
+		private double missedTimeWindowPenalty = 0.01;
+
+		public DriversActivityScoring() {
+			super();
+		}
+
+		@Override
+		public void finish() {
+		}
+
+		@Override
+		public double getScore() {
+			return score;
+		}
+
+		@Override
+		public void handleFirstActivity(Activity act) {
+			handleActivity(act);
+		}
+
+		@Override
+		public void handleActivity(Activity act) {
+			if (act instanceof FreightActivity) {
+				double actStartTime = act.getStartTime().seconds();
+
+				// log.info(act + " start: " + Time.writeTime(actStartTime));
+				TimeWindow tw = ((FreightActivity) act).getTimeWindow();
+				if (actStartTime > tw.getEnd()) {
+					double penalty_score = (-1) * (actStartTime - tw.getEnd()) * missedTimeWindowPenalty;
+					if (!(penalty_score <= 0.0))
+						throw new AssertionError("penalty score must be negative");
+					// log.info("penalty " + penalty_score);
+					score += penalty_score;
+
+				}
+				double actTimeCosts = (act.getEndTime().seconds() - actStartTime) * timeParameter;
+				// log.info("actCosts " + actTimeCosts);
+				if (!(actTimeCosts >= 0.0))
+					throw new AssertionError("actTimeCosts must be positive");
+				score += actTimeCosts * (-1);
+			}
+		}
+
+		@Override
+		public void handleLastActivity(Activity act) {
+			handleActivity(act);
+		}
+
+	}
 
 	static class DriversLegScoring implements SumScoringFunction.BasicScoring, SumScoringFunction.LegScoring {
-	
-	//        private static final  Logger log = Logger.getLogger(DriversLegScoring.class);
-	
-	        private double score = 0.0;
-	        private final Network network;
-	        private final Carrier carrier;
-	        private Set<CarrierVehicle> employedVehicles;
-	
-	        public DriversLegScoring(Carrier carrier, Network network) {
-	            super();
-	            this.network = network;
-	            this.carrier = carrier;
-	            employedVehicles = new HashSet<CarrierVehicle>();
-	        }
-	
-	
-	        @Override
-	        public void finish() {
-	
-	        }
-	
-	
-	        @Override
-	        public double getScore() {
-	            return score;
-	        }
-	
-	        private double getTimeParameter(CarrierVehicle vehicle) {
-	            return vehicle.getType().getCostInformation().getCostsPerSecond();
-	        }
-	
-	
-	        private double getDistanceParameter(CarrierVehicle vehicle) {
-	            return vehicle.getType().getCostInformation().getCostsPerMeter();
-	        }
-	
-	
-	//        private CarrierVehicle getVehicle(Id vehicleId) {
-	//            CarrierUtils.getCarrierVehicle(carrier, vehicleId);
-	//            if(carrier.getCarrierCapabilities().getCarrierVehicles().containsKey(vehicleId)){
-	//                return carrier.getCarrierCapabilities().getCarrierVehicles().get(vehicleId);
-	//            }
-	//            log.error("Vehicle with Id does not exists", new IllegalStateException("vehicle with id " + vehicleId + " is missing"));
-	//            return null;
-	//        }
-	
-	        @Override
-	        public void handleLeg(Leg leg) {
-	            if(leg.getRoute() instanceof NetworkRoute){
-	                NetworkRoute nRoute = (NetworkRoute) leg.getRoute();
-	                Id<Vehicle> vehicleId = nRoute.getVehicleId();
-	                CarrierVehicle vehicle = CarrierUtils.getCarrierVehicle(carrier, vehicleId);
-	                Gbl.assertNotNull(vehicle);
-	                if(!employedVehicles.contains(vehicle)){
-	                    employedVehicles.add(vehicle);
-	                }
-	                double distance = 0.0;
-	                if(leg.getRoute() instanceof NetworkRoute){
-	                    Link startLink = network.getLinks().get(leg.getRoute().getStartLinkId());
-	                    distance += startLink.getLength();
-	                    for (Id<Link>  linkId : ((NetworkRoute) leg.getRoute()).getLinkIds()){
-	                        distance += network.getLinks().get(linkId).getLength();
-	                    }
-	                    distance += network.getLinks().get(leg.getRoute().getEndLinkId()).getLength();
-	                }
-	                double distanceCosts = distance*getDistanceParameter(vehicle);
-	                if (!(distanceCosts >= 0.0)) throw new AssertionError("distanceCosts must be positive");
-	                score += (-1) * distanceCosts;
-	        	double timeCosts = leg.getTravelTime().seconds() *getTimeParameter(vehicle);
-	                if (!(timeCosts >= 0.0)) throw new AssertionError("distanceCosts must be positive");
-	                score += (-1) * timeCosts;
-	            }
-	        }
-	    }
+
+		// private static final Logger log = Logger.getLogger(DriversLegScoring.class);
+
+		private double score = 0.0;
+		private final Network network;
+		private final Carrier carrier;
+		private Set<CarrierVehicle> employedVehicles;
+
+		public DriversLegScoring(Carrier carrier, Network network) {
+			super();
+			this.network = network;
+			this.carrier = carrier;
+			employedVehicles = new HashSet<CarrierVehicle>();
+		}
+
+		@Override
+		public void finish() {
+
+		}
+
+		@Override
+		public double getScore() {
+			return score;
+		}
+
+		private double getTimeParameter(CarrierVehicle vehicle) {
+			return vehicle.getType().getCostInformation().getCostsPerSecond();
+		}
+
+		private double getDistanceParameter(CarrierVehicle vehicle) {
+			return vehicle.getType().getCostInformation().getCostsPerMeter();
+		}
+
+		// private CarrierVehicle getVehicle(Id vehicleId) {
+		// CarrierUtils.getCarrierVehicle(carrier, vehicleId);
+		// if(carrier.getCarrierCapabilities().getCarrierVehicles().containsKey(vehicleId)){
+		// return carrier.getCarrierCapabilities().getCarrierVehicles().get(vehicleId);
+		// }
+		// log.error("Vehicle with Id does not exists", new
+		// IllegalStateException("vehicle with id " + vehicleId + " is missing"));
+		// return null;
+		// }
+
+		@Override
+		public void handleLeg(Leg leg) {
+			if (leg.getRoute() instanceof NetworkRoute) {
+				NetworkRoute nRoute = (NetworkRoute) leg.getRoute();
+				Id<Vehicle> vehicleId = nRoute.getVehicleId();
+				CarrierVehicle vehicle = CarrierUtils.getCarrierVehicle(carrier, vehicleId);
+				Gbl.assertNotNull(vehicle);
+				if (!employedVehicles.contains(vehicle)) {
+					employedVehicles.add(vehicle);
+				}
+				double distance = 0.0;
+				if (leg.getRoute() instanceof NetworkRoute) {
+					Link startLink = network.getLinks().get(leg.getRoute().getStartLinkId());
+					distance += startLink.getLength();
+					for (Id<Link> linkId : ((NetworkRoute) leg.getRoute()).getLinkIds()) {
+						distance += network.getLinks().get(linkId).getLength();
+					}
+					distance += network.getLinks().get(leg.getRoute().getEndLinkId()).getLength();
+				}
+				double distanceCosts = distance * getDistanceParameter(vehicle);
+				if (!(distanceCosts >= 0.0))
+					throw new AssertionError("distanceCosts must be positive");
+				score += (-1) * distanceCosts;
+				double timeCosts = leg.getTravelTime().seconds() * getTimeParameter(vehicle);
+				if (!(timeCosts >= 0.0))
+					throw new AssertionError("distanceCosts must be positive");
+				score += (-1) * timeCosts;
+			}
+		}
+	}
+
 	static class VehicleEmploymentScoring implements SumScoringFunction.BasicScoring {
-	
-	    private Carrier carrier;
-	
-	    public VehicleEmploymentScoring(Carrier carrier) {
-	        super();
-	        this.carrier = carrier;
-	    }
-	
-	    @Override
-	    public void finish() {
-	
-	    }
-	
-	    @Override
-	    public double getScore() {
-	        double score = 0.;
-	        CarrierPlan selectedPlan = carrier.getSelectedPlan();
-	        if(selectedPlan == null) return 0.;
-	        for(ScheduledTour tour : selectedPlan.getScheduledTours()){
-	            if(!tour.getTour().getTourElements().isEmpty()){
-	                score += (-1)*tour.getVehicle().getType().getCostInformation().getFixedCosts();
-	            }
-	        }
-	        return score;
-	    }
-	
+
+		private Carrier carrier;
+
+		public VehicleEmploymentScoring(Carrier carrier) {
+			super();
+			this.carrier = carrier;
+		}
+
+		@Override
+		public void finish() {
+
+		}
+
+		@Override
+		public double getScore() {
+			double score = 0.;
+			CarrierPlan selectedPlan = carrier.getSelectedPlan();
+			if (selectedPlan == null)
+				return 0.;
+			for (ScheduledTour tour : selectedPlan.getScheduledTours()) {
+				if (!tour.getTour().getTourElements().isEmpty()) {
+					score += (-1) * tour.getVehicle().getType().getCostInformation().getFixedCosts();
+				}
+			}
+			return score;
+		}
+
 	}
 }
