@@ -31,7 +31,6 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.Identifiable;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
@@ -47,7 +46,6 @@ import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleUtils;
-
 import com.google.common.base.Joiner;
 
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
@@ -143,24 +141,39 @@ public class SmallScaleFreightTrafficUtils {
 		}
 	}
 
+	/** Creates a population including the plans in preparation for the MATSim run.
+	 * @param controler
+	 * @param usedTrafficType
+	 * @param sample
+	 * @param output
+	 * @param inputDataDirectory 
+	 */
 	static void createPlansBasedOnCarrierPlans(Controler controler, String usedTrafficType, double sample,
-			Path output) {
+			Path output, Path inputDataDirectory) {
 		Scenario scenario = controler.getScenario();
-		Population population = controler.getScenario().getPopulation();
-
+		Population population;
+		if (usedTrafficType.equals("businessTraffic"))
+			population = controler.getScenario().getPopulation();
+		else {
+			population = PopulationUtils.readPopulation(inputDataDirectory.resolve("berlin_longDistanceFreight_"+ (int) (sample * 100) +"pct.xml.gz").toString());
+			log.info("Number of inported tours of longDistance freight traffic: " + population.getPersons().size());
+		}
 		PopulationFactory popFactory = population.getFactory();
 
-		Population population2 = (Population) scenario.getScenarioElement("allpersons");
-		for (Person person : population2.getPersons().values()) {
+		Population populationFromCarrier = (Population) scenario.getScenarioElement("allpersons");
+		for (Person person : populationFromCarrier.getPersons().values()) {
 
-			Person newPerson = popFactory.createPerson(person.getId());
 			Plan plan = popFactory.createPlan();
 			String mode = null;
-			if (person.getId().toString().split("_")[2].equals("Business"))
+			String subpopulation = null;
+			if (person.getId().toString().split("_")[2].equals("Business")) {
 				mode = "car";
-			else if (person.getId().toString().split("_")[2].equals("Freight"))
+				subpopulation = "businessTraffic";
+			} else if (person.getId().toString().split("_")[2].equals("Freight")) {
 				mode = "freight";
-final String usedMainMode = mode;
+				subpopulation = "freight";
+			}
+			final String usedMainMode = mode;
 			List<PlanElement> tourElements = person.getSelectedPlan().getPlanElements();
 			double tourStartTime = 0;
 			for (PlanElement tourElement : tourElements) {
@@ -182,20 +195,17 @@ final String usedMainMode = mode;
 					plan.addLeg(legActivity);
 				}
 			}
+			Person newPerson = popFactory.createPerson(person.getId());
 			newPerson.addPlan(plan);
 			population.addPerson(newPerson);
-			if (person.getId().toString().split("_")[2].equals("Freight"))
-				PopulationUtils.putSubpopulation(newPerson, "fixedFreightMode");
-			else
-				PopulationUtils.putSubpopulation(newPerson, "modeChoicePossible");
-			PopulationUtils.putPersonAttribute(newPerson, "trafficType", person.getId().toString().split("_")[2]);
+			PopulationUtils.putSubpopulation(newPerson, subpopulation);
 			PopulationUtils.putPersonAttribute(newPerson, "tourStartArea", person.getId().toString().split("_")[3]);
 			VehicleUtils.insertVehicleIdsIntoAttributes(newPerson, (new HashMap<String, Id<Vehicle>>() {
 				{
-					put(usedMainMode, ((Identifiable<Vehicle>) person.getSelectedPlan().getAttributes()
-							.getAttribute("carrierVehicle")).getId());
+					put(usedMainMode, (Id.createVehicleId(person.getId().toString())));
 				}
 			}));
+
 		}
 		PopulationUtils.writePopulation(population,
 				output.toString() + "/berlin_" + usedTrafficType + "_" + (int) (sample * 100) + "pct_plans.xml.gz");
