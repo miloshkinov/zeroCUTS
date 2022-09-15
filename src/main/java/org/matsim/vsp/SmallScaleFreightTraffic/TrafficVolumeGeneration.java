@@ -64,7 +64,7 @@ public class TrafficVolumeGeneration {
 	 * @throws MalformedURLException
 	 */
 	static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_start(
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output, Path inputDataDirectory,
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output,
 			double sample, ArrayList<String> modesORvehTypes, String trafficType) throws MalformedURLException {
 
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
@@ -89,7 +89,7 @@ public class TrafficVolumeGeneration {
 	 * @throws MalformedURLException
 	 */
 	static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_stop(
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output, Path inputDataDirectory,
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output,
 			double sample, ArrayList<String> modesORvehTypes, String trafficType) throws MalformedURLException {
 //TODO change type to Object2IntMap<Integer>
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
