@@ -23,6 +23,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -155,9 +156,15 @@ public class SmallScaleFreightTrafficUtils {
 		if (usedTrafficType.equals("businessTraffic"))
 			population = controler.getScenario().getPopulation();
 		else {
+			if (Files.exists(inputDataDirectory.resolve("berlin_longDistanceFreight_"+ (int) (sample * 100) +"pct.xml.gz"))) {
+				log.error("Required landuse shape file {} not found", inputDataDirectory.resolve("berlin_longDistanceFreight_"+ (int) (sample * 100) +"pct.xml.gz"));
+		
 			population = PopulationUtils.readPopulation(inputDataDirectory.resolve("berlin_longDistanceFreight_"+ (int) (sample * 100) +"pct.xml.gz").toString());
-			log.info("Number of inported tours of longDistance freight traffic: " + population.getPersons().size());
-		}
+			log.info("Number of imported tours of longDistance freight traffic: " + population.getPersons().size());
+			}
+			else
+				population = PopulationUtils.createPopulation(controler.getConfig());
+			}
 		PopulationFactory popFactory = population.getFactory();
 
 		Population populationFromCarrier = (Population) scenario.getScenarioElement("allpersons");
