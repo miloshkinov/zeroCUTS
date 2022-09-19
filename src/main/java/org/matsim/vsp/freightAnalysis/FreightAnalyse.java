@@ -38,14 +38,13 @@ public class FreightAnalyse {
 		RUN_DIR = args[0] + "/";
 		OUTPUT_DIR = RUN_DIR + "Analysis/";
 		OutputDirectoryLogging.initLoggingWithOutputDirectory(OUTPUT_DIR);
-
+		if (args.length > 1)
+			onlyAllCarrierResults = Boolean.parseBoolean(args[1]);
 		FreightAnalyse analysis = new FreightAnalyse();
 		analysis.run();
 		log.info("### Finished ###");
 		OutputDirectoryLogging.closeOutputDirLogging();
 
-		if (args.length > 1)
-			onlyAllCarrierResults = Boolean.getBoolean(args[1]);
 	}
 
 	private void run() throws UncheckedIOException, IOException {
@@ -79,11 +78,11 @@ public class FreightAnalyse {
 		log.info("Reading the event file... Done.");
 
 		TripWriter tripWriter = new TripWriter(tripHandler, OUTPUT_DIR);
-		for (Carrier carrier : carriers.getCarriers().values()) {
-			// tripWriter.writeDetailedResultsSingleCarrier(carrier.getId().toString());
-			tripWriter.writeTourResultsSingleCarrier(carrier.getId().toString());
-		}
 		if (!onlyAllCarrierResults) {
+			for (Carrier carrier : carriers.getCarriers().values()) {
+				// tripWriter.writeDetailedResultsSingleCarrier(carrier.getId().toString());
+				tripWriter.writeTourResultsSingleCarrier(carrier.getId().toString());
+			}
 			tripWriter.writeResultsPerVehicleTypes();
 			tripWriter.writeTourResultsAllCarrier();
 		}
