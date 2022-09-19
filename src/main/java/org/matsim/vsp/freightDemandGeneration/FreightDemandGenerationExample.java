@@ -70,7 +70,7 @@ public class FreightDemandGenerationExample {
 		}
 		Collections.sort(fileData);
 		File lastFile = fileData.get(fileData.size()-1);
-		String[] argsAnalysis = { lastFile.toString()};
+		String[] argsAnalysis = { lastFile.toString(), "true"};
 		FreightAnalyse.main(argsAnalysis);
 	}}
 
