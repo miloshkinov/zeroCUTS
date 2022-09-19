@@ -72,14 +72,17 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 
 	private static final Logger log = LogManager.getLogger(RunMATSimCommercialTraffic.class);
 
-	@CommandLine.Option(names = "INPUT", description = "Path to the config file.", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/scenarios/5pct_bothTypes/")
+	@CommandLine.Option(names = "INPUT", description = "Path to the config file.", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/scenarios/10pct_bothTypes/")
 	private static Path inputPath;
 
 	@CommandLine.Option(names = "--output", description = "Path to output folder", required = true, defaultValue = "output/BusinessPassengerTraffic_MATSim/")
 	private Path output;
 
-	@CommandLine.Option(names = "--scale", description = "Scale of the input.", required = true, defaultValue = "0.05")
+	@CommandLine.Option(names = "--scale", description = "Scale of the input.", required = true, defaultValue = "0.10")
 	private double inputScale;
+
+	@CommandLine.Option(names = "--addLongDistanceFreight", description = "If it is set to true the long distance freight will be read in from related plans file. If you need no long distance freight traffic or the traffic is already included to the plans file, you should set this to false.", required = true, defaultValue = "false")
+	private boolean addLongDistanceFreight;
 
 	public static void main(String[] args) {
 		System.exit(new CommandLine(new RunMATSimCommercialTraffic()).execute(args));
@@ -103,7 +106,8 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 		config.plans().setInputFile("berlin_bothTypes_" + (int) (inputScale * 100) + "pct_plans.xml.gz");
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
-		addLongDistanceFreightTraffic(scenario);
+		if (addLongDistanceFreight)
+			addLongDistanceFreightTraffic(scenario);
 		createActivityParams(scenario);
 
 		Controler controler = prepareControler(scenario);
@@ -142,6 +146,9 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 		return 0;
 	}
 
+	/** The long distance freight traffic will be added.
+	 * @param scenario
+	 */
 	private void addLongDistanceFreightTraffic(Scenario scenario) {
 
 		Population longDistanceFreightPopulation = PopulationUtils.readPopulation(
@@ -159,7 +166,7 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 						scenario.getVehicles().getVehicleTypes().get(Id.create("medium18t", VehicleType.class)))));
 		longDistanceFreightPopulation.getPersons().values()
 				.forEach(person -> scenario.getPopulation().addPerson(person));
-		
+
 		log.info(longDistanceFreightPopulation.getPersons().size() + " Agents for the long distance freight added");
 	}
 
@@ -176,7 +183,8 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 		for (Person person : population.getPersons().values()) {
 			countPersons++;
 			if (countPersons % 1000 == 0)
-				log.info("Activities for "+ countPersons + " of " + population.getPersons().size() + " persons generated.");
+				log.info("Activities for " + countPersons + " of " + population.getPersons().size()
+						+ " persons generated.");
 			double tourStartTime = 0;
 			for (PlanElement planElement : person.getSelectedPlan().getPlanElements()) {
 				if (planElement instanceof Activity) {
