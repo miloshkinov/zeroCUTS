@@ -19,15 +19,11 @@
  * *********************************************************************** */
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.application.prepare.freight.tripExtraction.ExtractRelevantFreightTrips;
-import org.matsim.core.population.PersonUtils;
 import org.matsim.core.population.PopulationUtils;
 
 /** Extracts the long distance freight traffic for Berlin/Brandenburg.
@@ -44,12 +40,12 @@ public class ExtractLongDistanceFreightTraffic {
 		Path networkPath = Path.of("../public-svn/matsim/scenarios/countries/de/german-wide-freight/v2/germany-europe-network.xml.gz");
 
 		Path outputPath = Path.of("../zeroCUTS/output/");
-		Path shpPath = Path.of("../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/shp/berlinBrandenburg/berlinBrandenburg_Zones_districts_4326.shp");
+		Path shpPath = Path.of("../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/shp/berlinBrandenburg/berlinBrandenburg_4326.shp");
 		String inputCRS = "EPSG:25832";
 		String shpCRS = "EPSG:4326";
 		String targetCRS = "EPSG:31468";
 		double inputPopulationSample = 0.25;
-		double samplePopulationTo = 0.05;
+		double samplePopulationTo = 0.1;
 		
 		if (samplePopulationTo > inputPopulationSample)
 			throw new Exception("The sample of the input population is smaller then the expected output sample. This is not possible.");
