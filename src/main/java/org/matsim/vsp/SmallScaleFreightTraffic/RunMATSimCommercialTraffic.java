@@ -19,6 +19,7 @@
  * *********************************************************************** */
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
@@ -146,20 +147,34 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 		return 0;
 	}
 
-	/** The long distance freight traffic will be added.
+	/**
+	 * The long distance freight traffic will be added.
+	 * 
 	 * @param scenario
 	 */
 	private void addLongDistanceFreightTraffic(Scenario scenario) {
 
-		Population longDistanceFreightPopulation = PopulationUtils.readPopulation(
-				inputPath.resolve("berlin_longDistanceFreight_" + (int) (inputScale * 100) + "pct.xml.gz").toString());
+		scenario.getPopulation().getPersons().values().forEach(person -> {
+			if (PopulationUtils.getSubpopulation(person).equals("longDistanceFreight")) {
+				log.error("The input population already has agents for the long distance traffic. Please check!");
+			}
+		});
 
-		longDistanceFreightPopulation.getPersons().values().forEach(
-				person -> VehicleUtils.insertVehicleIdsIntoAttributes(person, (new HashMap<String, Id<Vehicle>>() {
-					{
-						put("freight", Id.createVehicleId(person.getId().toString()));
-					}
-				})));
+		Path longDistancePopulation = inputPath
+				.resolve("berlin_longDistanceFreight_" + (int) (inputScale * 100) + "pct.xml.gz");
+
+		if (!Files.exists(longDistancePopulation)) {
+			log.error("Required population for the long distance freight {} not found", longDistancePopulation);
+		}
+		Population longDistanceFreightPopulation = PopulationUtils.readPopulation(longDistancePopulation.toString());
+
+		longDistanceFreightPopulation.getPersons().values()
+				.forEach(person -> VehicleUtils.insertVehicleIdsIntoAttributes(
+						scenario.getPopulation().getPersons().get(person.getId()), (new HashMap<String, Id<Vehicle>>() {
+							{
+								put("freight", Id.createVehicleId(person.getId().toString()));
+							}
+						})));
 		longDistanceFreightPopulation.getPersons().values()
 				.forEach(person -> scenario.getVehicles().addVehicle(VehicleUtils.createVehicle(
 						Id.createVehicleId(person.getId().toString()),
