@@ -46,6 +46,7 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
 import com.google.common.base.Joiner;
 
@@ -142,29 +143,45 @@ public class SmallScaleFreightTrafficUtils {
 		}
 	}
 
-	/** Creates a population including the plans in preparation for the MATSim run.
+	/**
+	 * Creates a population including the plans in preparation for the MATSim run.
+	 * 
 	 * @param controler
 	 * @param usedTrafficType
 	 * @param sample
 	 * @param output
-	 * @param inputDataDirectory 
+	 * @param inputDataDirectory
 	 */
-	static void createPlansBasedOnCarrierPlans(Controler controler, String usedTrafficType, double sample,
-			Path output, Path inputDataDirectory) {
+	static void createPlansBasedOnCarrierPlans(Controler controler, String usedTrafficType, double sample, Path output,
+			Path inputDataDirectory) {
 		Scenario scenario = controler.getScenario();
 		Population population;
 		if (usedTrafficType.equals("businessTraffic"))
 			population = controler.getScenario().getPopulation();
 		else {
-			if (Files.exists(inputDataDirectory.resolve("berlin_longDistanceFreight_"+ (int) (sample * 100) +"pct.xml.gz"))) {
-				log.error("Required landuse shape file {} not found", inputDataDirectory.resolve("berlin_longDistanceFreight_"+ (int) (sample * 100) +"pct.xml.gz"));
-		
-			population = PopulationUtils.readPopulation(inputDataDirectory.resolve("berlin_longDistanceFreight_"+ (int) (sample * 100) +"pct.xml.gz").toString());
-			log.info("Number of imported tours of longDistance freight traffic: " + population.getPersons().size());
-			}
-			else
+			Path longDistancePopulation = inputDataDirectory
+					.resolve("berlin_longDistanceFreight_" + (int) (sample * 100) + "pct.xml.gz");
+			if (Files.exists(longDistancePopulation)) {
+				log.error("Required population for the long distance freight {} not found", longDistancePopulation);
+
+				population = PopulationUtils.readPopulation(longDistancePopulation.toString());
+				log.info("Number of imported tours of longDistance freight traffic: " + population.getPersons().size());
+				population.getPersons().values()
+						.forEach(person -> VehicleUtils.insertVehicleIdsIntoAttributes(
+								scenario.getPopulation().getPersons().get(person.getId()),
+								(new HashMap<String, Id<Vehicle>>() {
+									{
+										put("freight", Id.createVehicleId(person.getId().toString()));
+									}
+								})));
+				population.getPersons().values()
+						.forEach(person -> scenario.getVehicles()
+								.addVehicle(VehicleUtils.createVehicle(Id.createVehicleId(person.getId().toString()),
+										scenario.getVehicles().getVehicleTypes()
+												.get(Id.create("heavy40t", VehicleType.class)))));
+			} else
 				population = PopulationUtils.createPopulation(controler.getConfig());
-			}
+		}
 		PopulationFactory popFactory = population.getFactory();
 
 		Population populationFromCarrier = (Population) scenario.getScenarioElement("allpersons");
