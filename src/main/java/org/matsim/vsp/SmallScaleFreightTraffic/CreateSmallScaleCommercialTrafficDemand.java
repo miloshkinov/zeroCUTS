@@ -137,7 +137,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		businessTraffic, freightTraffic, bothTypes
 	}
 
-	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/scenarios/10pct_bothTypes/")
+	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/scenarios/1pct_bothTypes/")
 	private static Path inputDataDirectory;
 
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
@@ -152,7 +152,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--jspritIterations", description = "Set number of jsprit iterations", required = true, defaultValue = "15")
 	private static int jspritIterations;
 
-	@CommandLine.Option(names = "--creationOption", defaultValue = "useExistingCarrierFileWithoutSolution", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
+	@CommandLine.Option(names = "--creationOption", defaultValue = "createNewCarrierFile", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
 	private CreationOption usedCreationOption;
 // useExistingCarrierFileWithSolution, createNewCarrierFile, useExistingCarrierFileWithoutSolution
 
@@ -214,33 +214,33 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		default:
 			switch (usedZoneChoice) {
 			case useDistricts:
-				shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+				shapeFileZonePath = inputDataDirectory.getParent().getParent().resolve("shp").resolve("berlinBrandenburg")
 						.resolve("berlinBrandenburg_Zones_districts_4326.shp");
 				break;
 			case useTrafficCells:
-				shapeFileZonePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+				shapeFileZonePath = inputDataDirectory.getParent().getParent().resolve("shp").resolve("berlinBrandenburg")
 						.resolve("berlinBrandenburg_Zones_VKZ_4326.shp");
 				break;
 			default:
 				break;
 			}
 
-			shapeFileLandusePath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+			shapeFileLandusePath = inputDataDirectory.getParent().getParent().resolve("shp").resolve("berlinBrandenburg")
 					.resolve("berlinBrandenburg_landuse_4326.shp");
 
-			shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+			shapeFileBuildingsPath = inputDataDirectory.getParent().getParent().resolve("shp").resolve("berlinBrandenburg")
 					.resolve("buildings_sample_BerlinBrandenburg_4326.shp");
-//			shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve("berlinBrandenburg")
+//			shapeFileBuildingsPath = inputDataDirectory.getParent().getParent().resolve("shp").resolve("berlinBrandenburg")
 //					.resolve("buildings_BerlinBrandenburg_4326.shp");
 
 			if (!Files.exists(shapeFileLandusePath)) {
-				log.error("Required landuse shape file {} not found", shapeFileLandusePath);
+				throw new Exception ("Required landuse shape file not found:" + shapeFileLandusePath.toString());
 			}
 			if (!Files.exists(shapeFileBuildingsPath)) {
-				log.error("Required OSM buildings shape file {} not found", shapeFileBuildingsPath);
+				throw new Exception ("Required OSM buildings shape file {} not found" + shapeFileBuildingsPath.toString());
 			}
 			if (!Files.exists(shapeFileZonePath)) {
-				log.error("Required distrcits shape file {} not found", shapeFileZonePath);
+				throw new Exception ("Required distrcits shape file {} not found" + shapeFileZonePath.toString());
 			}
 
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
@@ -306,7 +306,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		boolean splitCarrier = true;
 		boolean splitVRPs = false;
-		int maxServicesPerCarrier = 200;
+		int maxServicesPerCarrier = 100;
 		Map<Id<Carrier>, Carrier> allCarriers = new HashMap<Id<Carrier>, Carrier>(
 				FreightUtils.getCarriers(originalScenario).getCarriers());
 		Map<Id<Carrier>, Carrier> solvedCarriers = new HashMap<Id<Carrier>, Carrier>();
@@ -324,7 +324,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				subList = keyList.subList(fromIndex, toIndex);
 				subCarriers.keySet().retainAll(subList);
 			} else {
-				fromIndex = 1;
+				fromIndex = 0;
 				toIndex = allCarriers.size();
 			}
 
@@ -412,6 +412,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			FreightUtils.runJsprit(originalScenario);
 			solvedCarriers.putAll(FreightUtils.getCarriers(originalScenario).getCarriers());
 			FreightUtils.getCarriers(originalScenario).getCarriers().clear();
+			if (!splitVRPs)
+				break;
 		}
 		FreightUtils.getCarriers(originalScenario).getCarriers().putAll(solvedCarriers);
 	}

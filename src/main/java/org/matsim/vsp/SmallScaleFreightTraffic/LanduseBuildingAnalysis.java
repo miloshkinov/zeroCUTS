@@ -385,7 +385,7 @@ public class LanduseBuildingAnalysis {
 	private static void readAreaData(HashMap<String, HashMap<String, Integer>> areaData, Path inputDataDirectory)
 			throws IOException {
 
-		Path areaDataPath = inputDataDirectory.resolve("investigationAreaData.csv");
+		Path areaDataPath = inputDataDirectory.getParent().getParent().resolve("investigationAreaData.csv");
 		if (!Files.exists(areaDataPath)) {
 			log.error("Required input data file {} not found", areaDataPath);
 		}
