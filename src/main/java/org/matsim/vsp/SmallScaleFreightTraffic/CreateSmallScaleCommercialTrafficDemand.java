@@ -214,33 +214,34 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		default:
 			switch (usedZoneChoice) {
 			case useDistricts:
-				shapeFileZonePath = inputDataDirectory.getParent().getParent().resolve("shp").resolve("berlinBrandenburg")
-						.resolve("berlinBrandenburg_Zones_districts_4326.shp");
+				shapeFileZonePath = inputDataDirectory.getParent().getParent().resolve("shp")
+						.resolve("berlinBrandenburg").resolve("berlinBrandenburg_Zones_districts_4326.shp");
 				break;
 			case useTrafficCells:
-				shapeFileZonePath = inputDataDirectory.getParent().getParent().resolve("shp").resolve("berlinBrandenburg")
-						.resolve("berlinBrandenburg_Zones_VKZ_4326.shp");
+				shapeFileZonePath = inputDataDirectory.getParent().getParent().resolve("shp")
+						.resolve("berlinBrandenburg").resolve("berlinBrandenburg_Zones_VKZ_4326.shp");
 				break;
 			default:
 				break;
 			}
 
-			shapeFileLandusePath = inputDataDirectory.getParent().getParent().resolve("shp").resolve("berlinBrandenburg")
-					.resolve("berlinBrandenburg_landuse_4326.shp");
+			shapeFileLandusePath = inputDataDirectory.getParent().getParent().resolve("shp")
+					.resolve("berlinBrandenburg").resolve("berlinBrandenburg_landuse_4326.shp");
 
-			shapeFileBuildingsPath = inputDataDirectory.getParent().getParent().resolve("shp").resolve("berlinBrandenburg")
-					.resolve("buildings_sample_BerlinBrandenburg_4326.shp");
+			shapeFileBuildingsPath = inputDataDirectory.getParent().getParent().resolve("shp")
+					.resolve("berlinBrandenburg").resolve("buildings_sample_BerlinBrandenburg_4326.shp");
 //			shapeFileBuildingsPath = inputDataDirectory.getParent().getParent().resolve("shp").resolve("berlinBrandenburg")
 //					.resolve("buildings_BerlinBrandenburg_4326.shp");
 
 			if (!Files.exists(shapeFileLandusePath)) {
-				throw new Exception ("Required landuse shape file not found:" + shapeFileLandusePath.toString());
+				throw new Exception("Required landuse shape file not found:" + shapeFileLandusePath.toString());
 			}
 			if (!Files.exists(shapeFileBuildingsPath)) {
-				throw new Exception ("Required OSM buildings shape file {} not found" + shapeFileBuildingsPath.toString());
+				throw new Exception(
+						"Required OSM buildings shape file {} not found" + shapeFileBuildingsPath.toString());
 			}
 			if (!Files.exists(shapeFileZonePath)) {
-				throw new Exception ("Required distrcits shape file {} not found" + shapeFileZonePath.toString());
+				throw new Exception("Required distrcits shape file {} not found" + shapeFileZonePath.toString());
 			}
 
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
@@ -337,7 +338,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					int countedVehicles = 0;
 					if (carrier.getServices().size() > maxServicesPerCarrier) {
 
-						int numberOfNewCarrier = (int) Math.ceil((double) carrier.getServices().size() / (double)maxServicesPerCarrier);
+						int numberOfNewCarrier = (int) Math
+								.ceil((double) carrier.getServices().size() / (double) maxServicesPerCarrier);
 						int numberOfServicesPerNewCarrier = Math
 								.round(carrier.getServices().size() / numberOfNewCarrier);
 
@@ -349,10 +351,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 //						}
 //						for (int j = 0; j < maxValue / (double) numberOfServicesPerNewCarrier; j++) {
-							
+
 							int numberOfServiesForNewCarrier = numberOfServicesPerNewCarrier;
 							int numberOfVehiclesForNewCarrier = numberOfServicesPerNewCarrier;
-							if (j+1 == numberOfNewCarrier) {
+							if (j + 1 == numberOfNewCarrier) {
 								numberOfServiesForNewCarrier = carrier.getServices().size() - countedServices;
 								numberOfVehiclesForNewCarrier = carrier.getCarrierCapabilities().getCarrierVehicles()
 										.size() - countedVehicles;
@@ -797,9 +799,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			Map<String, List<Link>> regionLinksMap) {
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
 
-//		Index indexLanduse = SmallScaleFreightTrafficUtils.getIndexLanduse(shapeFileLandusePath);
 		Index indexZones = SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath);
-//		List<Link> links = new ArrayList<Link>();
 
 		if (buildingsPerZone.isEmpty()) {
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
@@ -816,11 +816,13 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					.point2Coord(((Geometry) possibleBuilding.getDefaultGeometry()).getCentroid());
 			double minDistance = Double.MAX_VALUE;
 			int numberOfPossibleLinks = regionLinksMap.get(zone.replaceFirst(zone.split("_")[0] + "_", "")).size();
-//TODO eventuell auch opposite Links als noPossible deklarieren
+
 			searchLink: for (Link possibleLink : regionLinksMap.get(zone.replaceFirst(zone.split("_")[0] + "_", ""))) {
 				if (noPossibleLinks != null && numberOfPossibleLinks > noPossibleLinks.size())
 					for (String depotLink : noPossibleLinks) {
-						if (depotLink.equals(possibleLink.getId().toString()))
+						if (depotLink.equals(possibleLink.getId().toString())
+								|| (NetworkUtils.findLinkInOppositeDirection(possibleLink) != null && depotLink.equals(
+										NetworkUtils.findLinkInOppositeDirection(possibleLink).getId().toString())))
 							continue searchLink;
 					}
 				double distance = NetworkUtils.getEuclideanDistance(centroidPointOfBuildingPolygon,
