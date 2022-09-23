@@ -19,6 +19,7 @@
  * *********************************************************************** */
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
+import java.io.File;
 import java.nio.file.Path;
 
 import org.matsim.api.core.v01.population.Person;
@@ -26,9 +27,9 @@ import org.matsim.api.core.v01.population.Population;
 import org.matsim.application.prepare.freight.tripExtraction.ExtractRelevantFreightTrips;
 import org.matsim.core.population.PopulationUtils;
 
-/** Extracts the long distance freight traffic for Berlin/Brandenburg.
+/** Extracts the long distance freight traffic for Berlin/Brandenburg and samples the population to the required sample size.
  * 
- * @author Ricardo
+ * @author Ricardo Ewert
  *
  */
 public class ExtractLongDistanceFreightTraffic {
@@ -39,7 +40,7 @@ public class ExtractLongDistanceFreightTraffic {
 //		Path networkPath = Path.of("../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz");
 		Path networkPath = Path.of("../public-svn/matsim/scenarios/countries/de/german-wide-freight/v2/germany-europe-network.xml.gz");
 
-		Path outputPath = Path.of("../zeroCUTS/output/");
+		Path outputPath = Path.of("../zeroCUTS/output/longDistanceFreight");
 		Path shpPath = Path.of("../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/shp/berlinBrandenburg/berlinBrandenburg_4326.shp");
 		String inputCRS = "EPSG:25832";
 		String shpCRS = "EPSG:4326";
@@ -66,5 +67,6 @@ public class ExtractLongDistanceFreightTraffic {
 		}
 		PopulationUtils.sampleDown(population, samplePopulationTo/inputPopulationSample);
 		PopulationUtils.writePopulation(population, outputPath.toString() + "/berlin_longDistanceFreight_"+(int)(samplePopulationTo*100)+"pct.xml.gz");
+		new File (outputPath.toString() + "/extracted-population.xml.gz").delete();
 	}
 }
