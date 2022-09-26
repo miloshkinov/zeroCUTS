@@ -111,7 +111,7 @@ public class LanduseBuildingAnalysis {
 				.addAll(landuseCategoriesAndDataConnection.get("Employee Tertiary Sector Rest"));
 
 		if (usedLanduseConfiguration.equals("useExistingDataDistribution")) {
-			Path existingDataDistribution = inputDataDirectory.resolve("dataDistributionPerZone.csv");
+			Path existingDataDistribution = inputDataDirectory.getParent().getParent().resolve("dataDistributionPerZone.csv");
 
 			if (!Files.exists(existingDataDistribution)) {
 				log.error("Required data per zone file {} not found", existingDataDistribution);
