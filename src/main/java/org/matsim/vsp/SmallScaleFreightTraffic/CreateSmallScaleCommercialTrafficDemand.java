@@ -167,6 +167,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--trafficType", defaultValue = "bothTypes", description = "Select traffic type. Options: commercialPassengerTraffic, freightTraffic")
 	private TrafficType usedTrafficType;
 // businessTraffic, freightTraffic, bothTypes
+
+	@CommandLine.Option(names = "--includeExistingModels", description = "If models for some segments exist they can be included.", defaultValue = "false")
+	private boolean includeExistingModels;
+
 	private final static SplittableRandom rnd = new SplittableRandom(4711);
 
 	public static void main(String[] args) {
@@ -177,7 +181,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	public Integer call() throws Exception {
 		Configurator.setLevel("org.matsim.core.utils.geometry.geotools.MGC", Level.ERROR);
 		/*
-		 * Fragen: bei only landuse; was passiert mit construction?
+		 * TODO: bei only landuse; was passiert mit construction?
 		 */
 
 		output = output.resolve(java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay()
@@ -194,6 +198,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		switch (usedCreationOption) {
 
 		case useExistingCarrierFileWithSolution:
+			if (includeExistingModels)
+				throw new Exception(
+						"You set that existing models should included to the new model. This is only possible for a creation of the new carrier file and not by using an existing.");
 			carriersFileLocation = inputDataDirectory.resolve("output_CarrierDemandWithPlans.xml").toString();
 			freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 			freightConfigGroup.setCarriersFile(carriersFileLocation);
@@ -202,12 +209,14 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			controler = prepareControler(scenario);
 			break;
 		case useExistingCarrierFileWithoutSolution:
+			if (includeExistingModels)
+				throw new Exception(
+						"You set that existing models should included to the new model. This is only possible for a creation of the new carrier file and not by using an existing.");
 			carriersFileLocation = inputDataDirectory.resolve("output_CarrierDemand.xml").toString();
 			freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 			freightConfigGroup.setCarriersFile(carriersFileLocation);
 			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 			log.info("Load carriers from: " + carriersFileLocation);
-
 			controler = prepareControler(scenario);
 			solveSeperatedVRPs(controler);
 			break;
@@ -230,8 +239,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 			shapeFileBuildingsPath = inputDataDirectory.getParent().getParent().resolve("shp")
 					.resolve("berlinBrandenburg").resolve("buildings_sample_BerlinBrandenburg_4326.shp");
-//			shapeFileBuildingsPath = inputDataDirectory.getParent().getParent().resolve("shp").resolve("berlinBrandenburg")
-//					.resolve("buildings_BerlinBrandenburg_4326.shp");
+//			shapeFileBuildingsPath = inputDataDirectory.getParent().getParent().resolve("shp")
+//					.resolve("berlinBrandenburg").resolve("buildings_BerlinBrandenburg_4326.shp");
 
 			if (!Files.exists(shapeFileLandusePath)) {
 				throw new Exception("Required landuse shape file not found:" + shapeFileLandusePath.toString());
@@ -251,29 +260,27 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 			ArrayList<String> modesORvehTypes;
 			ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
-			Map<String, List<Link>> regionLinksMap = filterLinksForZones(shpZones,
-					SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath));
 
 			switch (usedTrafficType) {
 			case businessTraffic:
 				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
-				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone,
-						modesORvehTypes, usedTrafficType.toString());
+				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, modesORvehTypes,
+						usedTrafficType.toString(), inputDataDirectory, includeExistingModels);
 				break;
 			case freightTraffic:
 				modesORvehTypes = new ArrayList<String>(
 						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
-				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone,
-						modesORvehTypes, usedTrafficType.toString());
+				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, modesORvehTypes,
+						usedTrafficType.toString(), inputDataDirectory, includeExistingModels);
 				break;
 			case bothTypes:
 				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
-				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone,
-						modesORvehTypes, "businessTraffic");
+				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, modesORvehTypes,
+						"businessTraffic", inputDataDirectory, includeExistingModels);
 				modesORvehTypes = new ArrayList<String>(
 						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
-				createCarriersAndDemand(config, controler, scenario, shpZones, regionLinksMap, resultingDataPerZone,
-						modesORvehTypes, "freightTraffic");
+				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, modesORvehTypes,
+						"freightTraffic", inputDataDirectory, includeExistingModels);
 				break;
 			default:
 				throw new RuntimeException("No traffic type selected.");
@@ -312,6 +319,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				FreightUtils.getCarriers(originalScenario).getCarriers());
 		Map<Id<Carrier>, Carrier> solvedCarriers = new HashMap<Id<Carrier>, Carrier>();
 		List<Id<Carrier>> keyList = new ArrayList<>(allCarriers.keySet());
+		FreightUtils.getCarriers(originalScenario).getCarriers().values().forEach(carrier -> {
+			if (CarrierUtils.getJspritIterations(carrier) == 0) {
+				allCarriers.remove(carrier.getId());
+				solvedCarriers.put(carrier.getId(), carrier);
+			}
+		});
 		int carrierSteps = 30;
 		for (int i = 0; i < allCarriers.size(); i++) {
 			int fromIndex = i * carrierSteps;
@@ -349,9 +362,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						int j = 0;
 						while (j < numberOfNewCarrier) {
 
-//						}
-//						for (int j = 0; j < maxValue / (double) numberOfServicesPerNewCarrier; j++) {
-
 							int numberOfServiesForNewCarrier = numberOfServicesPerNewCarrier;
 							int numberOfVehiclesForNewCarrier = numberOfServicesPerNewCarrier;
 							if (j + 1 == numberOfNewCarrier) {
@@ -360,7 +370,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 										.size() - countedVehicles;
 							}
 							Carrier newCarrier = CarrierUtils.createCarrier(
-									Id.create(carrier.getId().toString() + "part_" + (j + 1), Carrier.class));
+									Id.create(carrier.getId().toString() + "_part_" + (j + 1), Carrier.class));
 							CarrierCapabilities newCarrierCapabilities = CarrierCapabilities.Builder.newInstance()
 									.setFleetSize(carrier.getCarrierCapabilities().getFleetSize())
 									.addType(carrier.getCarrierCapabilities().getVehicleTypes().iterator().next())
@@ -370,6 +380,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							newCarrier.setCarrierCapabilities(newCarrierCapabilities);
 							newCarrier.getServices().putAll(carrier.getServices());
 							CarrierUtils.setJspritIterations(newCarrier, CarrierUtils.getJspritIterations(carrier));
+							carrier.getAttributes().getAsMap().keySet().forEach(attribute -> newCarrier.getAttributes()
+									.putAttribute(attribute, carrier.getAttributes().getAttribute(attribute)));
+
 							List<Id<Vehicle>> vehiclesForNewCarrier = new ArrayList<>(
 									carrier.getCarrierCapabilities().getCarrierVehicles().keySet());
 							List<Id<CarrierService>> servicesForNewCarrier = new ArrayList<>(
@@ -427,19 +440,27 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param regionLinksMap
 	 * @param resultingDataPerZone
 	 * @param modesORvehTypes
+	 * @param inputDataDirectory
+	 * @param includeExistingModels
 	 * @return
 	 * @throws Exception
 	 */
 	private void createCarriersAndDemand(Config config, Controler controler, Scenario scenario, ShpOptions shpZones,
-			Map<String, List<Link>> regionLinksMap, HashMap<String, Object2DoubleMap<String>> resultingDataPerZone,
-			ArrayList<String> modesORvehTypes, String usedTrafficType) throws Exception {
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, ArrayList<String> modesORvehTypes,
+			String usedTrafficType, Path inputDataDirectory, boolean includeExistingModels) throws Exception {
 
 		TrafficVolumeGeneration.setInputParamters(usedTrafficType);
+
+		if (includeExistingModels)
+			SmallScaleFreightTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory);
 
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
 				.createTrafficVolume_start(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
 				.createTrafficVolume_stop(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
+
+		Map<String, List<Link>> regionLinksMap = filterLinksForZones(shpZones,
+				SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath));
 
 		final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
 				trafficVolumePerTypeAndZone_stop, shpZones, usedTrafficType, scenario.getNetwork(), regionLinksMap);
@@ -503,6 +524,21 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		int maxNumberOfCarrier = odMatrix.getListOfPurposes().size() * odMatrix.getListOfZones().size()
 				* odMatrix.getListOfModesOrVehTypes().size();
 		int createdCarrier = 0;
+
+		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
+		CarrierVehicleTypes carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
+		CarrierVehicleTypes additionalCarrierVehicleTypes = new CarrierVehicleTypes();
+		new CarrierVehicleTypeReader(additionalCarrierVehicleTypes)
+				.readFile(freightConfigGroup.getCarriersVehicleTypesFile());
+		additionalCarrierVehicleTypes.getVehicleTypes().values().forEach(
+				vehicleType -> carrierVehicleTypes.getVehicleTypes().putIfAbsent(vehicleType.getId(), vehicleType));
+
+		for (VehicleType vehicleType : carrierVehicleTypes.getVehicleTypes().values()) {
+			CostInformation costInformation = vehicleType.getCostInformation();
+			VehicleUtils.setCostsPerSecondInService(costInformation, costInformation.getCostsPerSecond());
+			VehicleUtils.setCostsPerSecondWaiting(costInformation, costInformation.getCostsPerSecond());
+		}
+
 		for (Integer purpose : odMatrix.getListOfPurposes()) {
 			for (String startZone : odMatrix.getListOfZones()) {
 				for (String modeORvehType : odMatrix.getListOfModesOrVehTypes()) {
@@ -623,7 +659,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 								vehilceTypes = new String[] { "light8t" };
 								serviceTimePerStop = (int) Math.round(75 * 60);
 							} else if (modeORvehType.equals("vehTyp5")) {
-								vehilceTypes = new String[] { "medium18t" };
+								vehilceTypes = new String[] { "medium18t" }; // TODO perhaps add more options
 								serviceTimePerStop = (int) Math.round(65 * 60);
 							}
 						}
@@ -648,10 +684,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 						log.info("Carrier: " + carrierName + "; depots: " + numberOfDepots + "; services: "
 								+ (int) Math.ceil(odMatrix.getSumOfServicesForStartZone(startZone, modeORvehType,
 										purpose, trafficType) / occupancyRate));
-						createNewCarrierAndAddVehilceTypes(scenario, purpose, startZone,
-								ConfigUtils.addOrGetModule(config, FreightConfigGroup.class), selectedStartCategory,
-								carrierName, vehilceTypes, numberOfDepots, fleetSize,
-								fixedNumberOfVehilcePerTypeAndLocation, vehicleDepots, regionLinksMap);
+						createNewCarrierAndAddVehilceTypes(scenario, purpose, startZone, freightConfigGroup,
+								selectedStartCategory, carrierName, vehilceTypes, numberOfDepots, fleetSize,
+								fixedNumberOfVehilcePerTypeAndLocation, vehicleDepots, regionLinksMap, trafficType);
 						log.info("Create services for carrier: " + carrierName);
 						for (String stopZone : odMatrix.getListOfZones()) {
 							int demand = 0;
@@ -671,9 +706,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					}
 				}
 			}
-		}
-		for (Carrier carrier : FreightUtils.getCarriers(scenario).getCarriers().values()) {
-			CarrierUtils.setJspritIterations(carrier, jspritIterations);
 		}
 		log.warn("The jspritIterations are now set to " + jspritIterations + " in this simulation!");
 		log.info("Finished creating " + createdCarrier + " carriers including related services.");
@@ -729,27 +761,22 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param fixedNumberOfVehilcePerTypeAndLocation
 	 * @param vehicleDepots
 	 * @param regionLinksMap
+	 * @param trafficType
 	 */
 	private void createNewCarrierAndAddVehilceTypes(Scenario scenario, Integer purpose, String startZone,
 			FreightConfigGroup freightConfigGroup, String selectedStartCategory, String carrierName,
 			String[] vehilceTypes, int numberOfDepots, FleetSize fleetSize, int fixedNumberOfVehilcePerTypeAndLocation,
-			ArrayList<String> vehicleDepots, Map<String, List<Link>> regionLinksMap) {
+			ArrayList<String> vehicleDepots, Map<String, List<Link>> regionLinksMap, String trafficType) {
 
 		Carriers carriers = FreightUtils.addOrGetCarriers(scenario);
 		CarrierVehicleTypes carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
-		if (carrierVehicleTypes.getVehicleTypes().isEmpty()) {
-			new CarrierVehicleTypeReader(carrierVehicleTypes)
-					.readFile(freightConfigGroup.getCarriersVehicleTypesFile());
-			for (VehicleType vehicleType : carrierVehicleTypes.getVehicleTypes().values()) {
-				CostInformation costInformation = vehicleType.getCostInformation();
-				VehicleUtils.setCostsPerSecondInService(costInformation, costInformation.getCostsPerSecond());
-				VehicleUtils.setCostsPerSecondWaiting(costInformation, costInformation.getCostsPerSecond());
-			}
-		} else
-			carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
+
 		CarrierCapabilities carrierCapabilities = null;
 
 		Carrier thisCarrier = CarrierUtils.createCarrier(Id.create(carrierName, Carrier.class));
+		thisCarrier.getAttributes().putAttribute("subpopulation", trafficType);
+		thisCarrier.getAttributes().putAttribute("purpose", purpose);
+		thisCarrier.getAttributes().putAttribute("tourStartArea", startZone);
 		if (jspritIterations > 0)
 			CarrierUtils.setJspritIterations(thisCarrier, jspritIterations);
 		carrierCapabilities = CarrierCapabilities.Builder.newInstance().setFleetSize(fleetSize).build();
