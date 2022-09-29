@@ -29,6 +29,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -42,6 +45,19 @@ import org.matsim.api.core.v01.population.Population;
 import org.matsim.api.core.v01.population.PopulationFactory;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.application.options.ShpOptions.Index;
+import org.matsim.contrib.freight.carrier.Carrier;
+import org.matsim.contrib.freight.carrier.CarrierPlanXmlReader;
+import org.matsim.contrib.freight.carrier.CarrierUtils;
+import org.matsim.contrib.freight.carrier.CarrierVehicle;
+import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
+import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
+import org.matsim.contrib.freight.carrier.Carriers;
+import org.matsim.contrib.freight.carrier.ScheduledTour;
+import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
+import org.matsim.contrib.freight.carrier.Tour.Pickup;
+import org.matsim.contrib.freight.carrier.Tour.ServiceActivity;
+import org.matsim.contrib.freight.carrier.Tour.TourElement;
+import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.utils.io.IOUtils;
@@ -188,31 +204,33 @@ public class SmallScaleFreightTrafficUtils {
 		for (Person person : populationFromCarrier.getPersons().values()) {
 
 			Plan plan = popFactory.createPlan();
+			String carrierName = person.getId().toString().split("freight_")[1].split("_veh_")[0];
+			Carrier relatedCarrier = FreightUtils.addOrGetCarriers(scenario).getCarriers()
+					.get(Id.create(carrierName, Carrier.class));
+			String subpopulation = relatedCarrier.getAttributes().getAttribute("subpopulation").toString();
 			String mode = null;
-			String subpopulation = null;
-			if (person.getId().toString().split("_")[2].equals("Business")) {
+			if (subpopulation.equals("businessTraffic"))
 				mode = "car";
-				subpopulation = "businessTraffic";
-			} else if (person.getId().toString().split("_")[2].equals("Freight")) {
+			else if (subpopulation.equals("freightTraffic"))
 				mode = "freight";
-				subpopulation = "freight";
-			}
+			else if (subpopulation.equals("dispersedTraffic"))
+				mode = relatedCarrier.getAttributes().getAttribute("mode").toString();
 			final String usedMainMode = mode;
 			List<PlanElement> tourElements = person.getSelectedPlan().getPlanElements();
 			double tourStartTime = 0;
 			for (PlanElement tourElement : tourElements) {
 
 				if (tourElement instanceof Activity) {
-					Activity service = (Activity) tourElement;
-					service.setCoord(
-							scenario.getNetwork().getLinks().get(service.getLinkId()).getFromNode().getCoord());
-					if (!service.getType().equals("start"))
-						service.setEndTimeUndefined();
+					Activity activity = (Activity) tourElement;
+					activity.setCoord(
+							scenario.getNetwork().getLinks().get(activity.getLinkId()).getFromNode().getCoord());
+					if (!activity.getType().equals("start"))
+						activity.setEndTimeUndefined();
 					else
-						tourStartTime = service.getEndTime().seconds();
-					if (service.getType().equals("end"))
-						service.setStartTime(tourStartTime + 8 * 3600);
-					plan.addActivity(service);
+						tourStartTime = activity.getEndTime().seconds();
+					if (activity.getType().equals("end"))
+						activity.setStartTime(tourStartTime + 8 * 3600);
+					plan.addActivity(activity);
 				}
 				if (tourElement instanceof Leg) {
 					Leg legActivity = popFactory.createLeg(usedMainMode);
@@ -221,18 +239,201 @@ public class SmallScaleFreightTrafficUtils {
 			}
 			Person newPerson = popFactory.createPerson(person.getId());
 			newPerson.addPlan(plan);
-			population.addPerson(newPerson);
 			PopulationUtils.putSubpopulation(newPerson, subpopulation);
-			PopulationUtils.putPersonAttribute(newPerson, "tourStartArea", person.getId().toString().split("_")[3]);
+			//TODO also for existing carriers
+			if (relatedCarrier.getAttributes().getAsMap().containsKey("tourStartArea"))
+				PopulationUtils.putPersonAttribute(newPerson, "tourStartArea",
+						relatedCarrier.getAttributes().getAttribute("tourStartArea"));
 			VehicleUtils.insertVehicleIdsIntoAttributes(newPerson, (new HashMap<String, Id<Vehicle>>() {
 				{
 					put(usedMainMode, (Id.createVehicleId(person.getId().toString())));
 				}
 			}));
-
+			population.addPerson(newPerson);
 		}
 		PopulationUtils.writePopulation(population,
 				output.toString() + "/berlin_" + usedTrafficType + "_" + (int) (sample * 100) + "pct_plans.xml.gz");
 		controler.getScenario().getPopulation().getPersons().clear();
+	}
+
+	/**
+	 * Reads existing scenarios and add them to the scenario. If the scenario is
+	 * part of the freightTraffic or businessTraffic the demand of the existing
+	 * scenario reduces the demand of the small scale commercial traffic. The
+	 * dispersedTraffic will be added additionally.
+	 * 
+	 * @param scenario
+	 * @param sampleScenario
+	 * @param inputDataDirectory 
+	 * @throws Exception
+	 */
+	static void readExistingModels(Scenario scenario, double sampleScenario, Path inputDataDirectory) throws Exception {
+		// TODO
+
+		String locationOfExistingModels = inputDataDirectory.getParent().getParent().resolve("existingModels")
+				.resolve("existingModels.csv").toString();
+		CSVParser parse = CSVFormat.DEFAULT.withDelimiter('\t').withFirstRecordAsHeader()
+				.parse(IOUtils.getBufferedReader(locationOfExistingModels));
+		for (CSVRecord record : parse) {
+			String modelName = record.get("model");
+			double sampleSizeExistingScenario = Double.parseDouble(record.get("sampleSize"));
+			String modelTrafficType = record.get("trafficType");
+			Integer modelPurpose = 0; // TODO input notwendig?
+			if (record.get("purpose") != "")
+				modelPurpose = Integer.parseInt(record.get("purpose"));
+			final Integer usedModelPurpose = modelPurpose;
+			String vehicleType = null; // TODO input notwendig?
+			if (record.get("vehicleType") != "")
+				vehicleType = record.get("vehicleType");
+			String modelMode = "tba";
+			if (record.get("mode") != "")
+				modelMode = record.get("mode");
+			final String usedMode = modelMode;
+			Path scenarioLocation = inputDataDirectory.getParent().getParent().resolve("existingModels")
+					.resolve(modelName);
+			if (!Files.exists(scenarioLocation.resolve("output_carriers.xml.gz")))
+				throw new Exception("For the existig model " + modelName
+						+ " no carrierFile exists. The carrierFile should have the name 'output_carriers.xml.gz'");
+			if (!Files.exists(scenarioLocation.resolve("vehicleTypes.xml.gz")))
+				throw new Exception("For the existig model " + modelName
+						+ " no vehcileTypesFile exists. The vehcileTypesFile should have the name 'vehicleTypes.xml.gz'");
+
+			log.info("Integrating existing scenario: " + modelName);
+
+			CarrierVehicleTypes readVehicleTypes = new CarrierVehicleTypes();
+			CarrierVehicleTypes usedVehicleTypes = new CarrierVehicleTypes();
+			new CarrierVehicleTypeReader(readVehicleTypes)
+					.readFile(scenarioLocation.resolve("vehicleTypes.xml.gz").toString());
+
+			Carriers carriers = new Carriers();
+			new CarrierPlanXmlReader(carriers, readVehicleTypes)
+					.readFile(scenarioLocation.resolve("output_carriers.xml.gz").toString());
+
+			if (sampleSizeExistingScenario < sampleScenario)
+				throw new Exception("The sample size of the existing scenario " + modelName
+						+ "is smaler than the sample size of the scenario. No upscaling for existing scenarios inplemented.");
+
+			double sampleFactor = sampleScenario / sampleSizeExistingScenario;
+
+			int numberOfToursExistingScenario = 0;
+			for (Carrier carrier : carriers.getCarriers().values()) {
+				numberOfToursExistingScenario = numberOfToursExistingScenario
+						+ carrier.getSelectedPlan().getScheduledTours().size();
+			}
+			int sampledNumberOfToursExistingScenario = (int) Math.round(numberOfToursExistingScenario * sampleFactor);
+			List<Carrier> carrierToRemove = new ArrayList<Carrier>();
+			int countCarrier = 0;
+			int remaindTours = 0;
+			double roundingError = 0.;
+
+			log.info("The existing scenario " + modelName + " is a " + (int) (sampleSizeExistingScenario * 100)
+					+ "% scenario and has " + numberOfToursExistingScenario + " tours");
+			log.info("The existing scenario " + modelName + " will be sampled down to the scenario sample size of "
+					+ (int) (sampleScenario) + "%which results in " + sampledNumberOfToursExistingScenario + " tours.");
+			for (Carrier carrier : carriers.getCarriers().values()) {
+
+				countCarrier++;
+				int numberOfOriginalTours = carrier.getSelectedPlan().getScheduledTours().size();
+				int numberOfRemainingTours = (int) Math.round(numberOfOriginalTours * sampleFactor);
+				roundingError = roundingError + numberOfRemainingTours - (numberOfOriginalTours * sampleFactor);
+				int numberOfToursToRemove = numberOfOriginalTours - numberOfRemainingTours;
+				List<ScheduledTour> toursToRemove = new ArrayList<ScheduledTour>();
+
+				if (roundingError <= -1 && numberOfToursToRemove > 0) {
+					numberOfToursToRemove = numberOfToursToRemove - 1;
+					numberOfRemainingTours = numberOfRemainingTours + 1;
+					roundingError = roundingError + 1;
+				}
+				if (roundingError >= 1 && numberOfRemainingTours != numberOfToursToRemove) {
+					numberOfToursToRemove = numberOfToursToRemove + 1;
+					numberOfRemainingTours = numberOfRemainingTours - 1;
+					roundingError = roundingError - 1;
+				}
+				remaindTours = remaindTours + numberOfRemainingTours;
+				if (remaindTours > sampledNumberOfToursExistingScenario) {
+					remaindTours = remaindTours - 1;
+					numberOfRemainingTours = numberOfRemainingTours - 1;
+					numberOfToursToRemove = numberOfToursToRemove + 1;
+				}
+				if (countCarrier == carriers.getCarriers().size()
+						&& remaindTours != sampledNumberOfToursExistingScenario) {
+					numberOfRemainingTours = sampledNumberOfToursExistingScenario - remaindTours;
+					numberOfToursToRemove = numberOfOriginalTours - numberOfRemainingTours;
+					remaindTours = remaindTours + numberOfRemainingTours;
+				}
+				if (numberOfOriginalTours == numberOfToursToRemove) {
+					carrierToRemove.add(carrier);
+					continue;
+				}
+
+				for (ScheduledTour tour : carrier.getSelectedPlan().getScheduledTours()) {
+					if (toursToRemove.size() < numberOfToursToRemove)
+						toursToRemove.add(tour);
+					else
+						break;
+				}
+
+				carrier.getSelectedPlan().getScheduledTours().removeAll(toursToRemove);
+
+				// remove services/shipments from removed tours
+				if (carrier.getServices().size() != 0) {
+					for (ScheduledTour removedTour : toursToRemove) {
+						for (TourElement tourElement : removedTour.getTour().getTourElements()) {
+							if (tourElement instanceof ServiceActivity) {
+								ServiceActivity service = (ServiceActivity) tourElement;
+								carrier.getServices().remove(service.getService().getId());
+							}
+						}
+					}
+				} else if (carrier.getShipments().size() != 0) {
+					for (ScheduledTour removedTour : toursToRemove) {
+						for (TourElement tourElement : removedTour.getTour().getTourElements()) {
+							if (tourElement instanceof Pickup) {
+								Pickup pickup = (Pickup) tourElement;
+								carrier.getShipments().remove(pickup.getShipment().getId());
+							}
+						}
+					}
+				}
+				// remove vehicles of removed tours and check if all vehicleTypes are still
+				// needed
+				if (carrier.getCarrierCapabilities().getFleetSize().equals(FleetSize.FINITE)) {
+					for (ScheduledTour removedTour : toursToRemove) {
+						carrier.getCarrierCapabilities().getCarrierVehicles().remove(removedTour.getVehicle().getId());
+					}
+				}
+				List<VehicleType> vehcileTypesToRemove = new ArrayList<VehicleType>();
+				for (VehicleType existingVehicleType : carrier.getCarrierCapabilities().getVehicleTypes()) {
+					boolean vehicleTypeNeeded = false;
+					for (CarrierVehicle vehicle : carrier.getCarrierCapabilities().getCarrierVehicles().values()) {
+						if (vehicle.getType().equals(existingVehicleType)) {
+							vehicleTypeNeeded = true;
+							usedVehicleTypes.getVehicleTypes().put(existingVehicleType.getId(), existingVehicleType);
+						}
+					}
+					if (vehicleTypeNeeded == false)
+						vehcileTypesToRemove.add(existingVehicleType);
+				}
+				carrier.getCarrierCapabilities().getVehicleTypes().removeAll(vehcileTypesToRemove);
+			}
+			carrierToRemove.forEach(carrier -> carriers.getCarriers().remove(carrier.getId()));
+			FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().putAll(usedVehicleTypes.getVehicleTypes());
+			carriers.getCarriers().values().forEach(carrier -> {
+				Carrier newCarrier = CarrierUtils
+						.createCarrier(Id.create(modelName + "_" + carrier.getId().toString(), Carrier.class));
+				newCarrier.getAttributes().putAttribute("subpopulation", modelTrafficType);
+				newCarrier.getAttributes().putAttribute("purpose", usedModelPurpose);
+				newCarrier.getAttributes().putAttribute("existingModel", modelName);
+				newCarrier.getAttributes().putAttribute("mode", usedMode);
+				newCarrier.setCarrierCapabilities(carrier.getCarrierCapabilities());
+				newCarrier.setSelectedPlan(carrier.getSelectedPlan());
+				if (carrier.getServices().size() > 0)
+					newCarrier.getServices().putAll(carrier.getServices());
+				else if (carrier.getShipments().size() > 0)
+					newCarrier.getShipments().putAll(carrier.getShipments());
+				CarrierUtils.setJspritIterations(newCarrier, 0); // because carrier already has solution
+				FreightUtils.addOrGetCarriers(scenario).getCarriers().put(newCarrier.getId(), newCarrier);
+			});
+		}
 	}
 }
