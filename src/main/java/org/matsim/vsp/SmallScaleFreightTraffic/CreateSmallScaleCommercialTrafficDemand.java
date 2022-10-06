@@ -137,13 +137,13 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		businessTraffic, freightTraffic, bothTypes
 	}
 
-	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/scenarios/1pct_bothTypes/")
+	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/scenarios/0.5pct_bothTypes/")
 	private static Path inputDataDirectory;
 
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
 	private static Path networkPath;
 
-	@CommandLine.Option(names = "--sample", defaultValue = "0.05", description = "Scaling factor of the freight traffic (0, 1)", required = true)
+	@CommandLine.Option(names = "--sample", defaultValue = "0.15", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
 	@CommandLine.Option(names = "--output", description = "Path to output folder", required = true, defaultValue = "output/BusinessPassengerTraffic/")
@@ -164,11 +164,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private LanduseConfiguration usedLanduseConfiguration;
 // useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
 
-	@CommandLine.Option(names = "--trafficType", defaultValue = "bothTypes", description = "Select traffic type. Options: commercialPassengerTraffic, freightTraffic")
+	@CommandLine.Option(names = "--trafficType", defaultValue = "freightTraffic", description = "Select traffic type. Options: commercialPassengerTraffic, freightTraffic")
 	private TrafficType usedTrafficType;
 // businessTraffic, freightTraffic, bothTypes
 
-	@CommandLine.Option(names = "--includeExistingModels", description = "If models for some segments exist they can be included.", defaultValue = "false")
+	@CommandLine.Option(names = "--includeExistingModels", description = "If models for some segments exist they can be included.", defaultValue = "true")
 	private boolean includeExistingModels;
 
 	private final static SplittableRandom rnd = new SplittableRandom(4711);
@@ -277,6 +277,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
 				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, modesORvehTypes,
 						"businessTraffic", inputDataDirectory, includeExistingModels);
+				includeExistingModels = false; // because already included in the step before
 				modesORvehTypes = new ArrayList<String>(
 						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
 				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, modesORvehTypes,
@@ -451,19 +452,21 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		TrafficVolumeGeneration.setInputParamters(usedTrafficType);
 
-		if (includeExistingModels)
-			SmallScaleFreightTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory);
-
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
 				.createTrafficVolume_start(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
 		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
 				.createTrafficVolume_stop(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
 
-		Map<String, List<Link>> regionLinksMap = filterLinksForZones(shpZones,
+		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = filterLinksForZones(shpZones,
 				SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath));
 
+		if (includeExistingModels) {
+			SmallScaleFreightTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory, regionLinksMap);
+			TrafficVolumeGeneration.reduceDemandBasedOnExistingCarriers(scenario, regionLinksMap, usedTrafficType,
+					trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop);
+		}
 		final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
-				trafficVolumePerTypeAndZone_stop, shpZones, usedTrafficType, scenario.getNetwork(), regionLinksMap);
+				trafficVolumePerTypeAndZone_stop, shpZones, usedTrafficType, scenario, regionLinksMap);
 		createCarriers(config, scenario, odMatrix, resultingDataPerZone, usedTrafficType, regionLinksMap);
 	}
 
@@ -520,7 +523,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 */
 	private void createCarriers(Config config, Scenario scenario, TripDistributionMatrix odMatrix,
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String trafficType,
-			Map<String, List<Link>> regionLinksMap) {
+			Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
 		int maxNumberOfCarrier = odMatrix.getListOfPurposes().size() * odMatrix.getListOfZones().size()
 				* odMatrix.getListOfModesOrVehTypes().size();
 		int createdCarrier = 0;
@@ -728,7 +731,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 */
 	private void createServices(Scenario scenario, Integer purpose, ArrayList<String> noPossibleLinks,
 			String selectedStopCategory, String carrierName, int demand, int numberOfJobs, String[] serviceArea,
-			Integer serviceTimePerStop, TimeWindow serviceTimeWindow, Map<String, List<Link>> regionLinksMap) {
+			Integer serviceTimePerStop, TimeWindow serviceTimeWindow,
+			Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
 
 		String stopZone = serviceArea[0];
 
@@ -766,7 +770,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private void createNewCarrierAndAddVehilceTypes(Scenario scenario, Integer purpose, String startZone,
 			FreightConfigGroup freightConfigGroup, String selectedStartCategory, String carrierName,
 			String[] vehilceTypes, int numberOfDepots, FleetSize fleetSize, int fixedNumberOfVehilcePerTypeAndLocation,
-			ArrayList<String> vehicleDepots, Map<String, List<Link>> regionLinksMap, String trafficType) {
+			ArrayList<String> vehicleDepots, Map<String, HashMap<Id<Link>, Link>> regionLinksMap, String trafficType) {
 
 		Carriers carriers = FreightUtils.addOrGetCarriers(scenario);
 		CarrierVehicleTypes carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
@@ -823,7 +827,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @return
 	 */
 	private Id<Link> findPossibleLink(String zone, String selectedCategory, ArrayList<String> noPossibleLinks,
-			Map<String, List<Link>> regionLinksMap) {
+			Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
 
 		Index indexZones = SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath);
@@ -842,9 +846,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			Coord centroidPointOfBuildingPolygon = MGC
 					.point2Coord(((Geometry) possibleBuilding.getDefaultGeometry()).getCentroid());
 			double minDistance = Double.MAX_VALUE;
-			int numberOfPossibleLinks = regionLinksMap.get(zone.replaceFirst(zone.split("_")[0] + "_", "")).size();
+			int numberOfPossibleLinks = regionLinksMap.get(zone).size();
 
-			searchLink: for (Link possibleLink : regionLinksMap.get(zone.replaceFirst(zone.split("_")[0] + "_", ""))) {
+			searchLink: for (Link possibleLink : regionLinksMap.get(zone).values()) {
 				if (noPossibleLinks != null && numberOfPossibleLinks > noPossibleLinks.size())
 					for (String depotLink : noPossibleLinks) {
 						if (depotLink.equals(possibleLink.getId().toString())
@@ -871,8 +875,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @param indexZones
 	 * @return
 	 */
-	private Map<String, List<Link>> filterLinksForZones(ShpOptions shpZones, Index indexZones) {
-		Map<String, List<Link>> regionLinksMap = new HashMap<>();
+	private Map<String, HashMap<Id<Link>, Link>> filterLinksForZones(ShpOptions shpZones, Index indexZones) {
+		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = new HashMap<>();
 		List<Link> links;
 		log.info("Filtering and assign links to zones. This take some time...");
 		Network networkToChange = NetworkUtils.readNetwork(networkPath.toString());
@@ -884,7 +888,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				indexZones.query((Coord) l.getAttributes().getAttribute("newCoord"))));
 		links = links.stream().filter(l -> l.getAttributes().getAttribute("zone") != null).collect(Collectors.toList());
 		links.forEach(l -> regionLinksMap
-				.computeIfAbsent((String) l.getAttributes().getAttribute("zone"), (k) -> new ArrayList<>()).add(l));
+				.computeIfAbsent((String) l.getAttributes().getAttribute("zone"), (k) -> new HashMap<>())
+				.put(l.getId(), l));
 		return regionLinksMap;
 	}
 
@@ -921,11 +926,13 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private TripDistributionMatrix createTripDistribution(
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, ShpOptions shpZones,
-			String usedTrafficType, Network network, Map<String, List<Link>> regionLinksMap) throws Exception {
+			String usedTrafficType, Scenario scenario, Map<String, HashMap<Id<Link>, Link>> regionLinksMap)
+			throws Exception {
 
 		final TripDistributionMatrix odMatrix = TripDistributionMatrix.Builder
 				.newInstance(shpZones, trafficVolume_start, trafficVolume_stop, usedTrafficType).build();
 		List<String> listOfZones = new ArrayList<>(trafficVolume_start.keySet());
+		Network network = scenario.getNetwork();
 		int count = 0;
 
 		for (String startZone : trafficVolume_start.keySet()) {
