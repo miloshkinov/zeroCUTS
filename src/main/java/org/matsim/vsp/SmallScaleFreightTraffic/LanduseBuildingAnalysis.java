@@ -314,10 +314,10 @@ public class LanduseBuildingAnalysis {
 		for (SimpleFeature singleZone : zonesFeatures) {
 			Object2DoubleMap<String> landusePerCategory = new Object2DoubleOpenHashMap<>();
 			landuseCategoriesPerZone.put(
-					(String) singleZone.getAttribute("region") + "_" + (String) singleZone.getAttribute("id"),
+					(String) singleZone.getAttribute("areaID"),
 					landusePerCategory);
 			zoneIdNameConnection.put(
-					(String) singleZone.getAttribute("region") + "_" + (String) singleZone.getAttribute("id"),
+					(String) singleZone.getAttribute("areaID"),
 					(String) singleZone.getAttribute("name"));
 		}
 
@@ -359,20 +359,6 @@ public class LanduseBuildingAnalysis {
 						continue;
 					}
 			}
-	}
-
-	/**Changes the key of the buildingsPerZone map to include the region into the name.
-	 * @param buildingsPerZone
-	 * @param zonesFeatures
-	 */
-	private static void changeNameOfKey(HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone,
-			List<SimpleFeature> zonesFeatures) {
-		for (SimpleFeature singleZone : zonesFeatures) {
-			if (buildingsPerZone.containsKey(((String) singleZone.getAttribute("id"))))
-				buildingsPerZone.put(
-						(String) singleZone.getAttribute("region") + "_" + (String) singleZone.getAttribute("id"),
-						buildingsPerZone.remove((String) singleZone.getAttribute("id")));
-		}
 	}
 
 	/**
@@ -456,7 +442,6 @@ public class LanduseBuildingAnalysis {
 						.computeIfAbsent(c, k -> new ArrayList<SimpleFeature>()).add(singleBuildingFeature));
 			}
 		}
-		changeNameOfKey(buildingsPerZone, zonesFeatures);
 		log.info("Finished anlyzing buildings types.");
 	}
 }
