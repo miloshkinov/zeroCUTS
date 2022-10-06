@@ -25,11 +25,22 @@ import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.contrib.freight.carrier.Carrier;
+import org.matsim.contrib.freight.carrier.ScheduledTour;
+import org.matsim.contrib.freight.carrier.Tour.Pickup;
+import org.matsim.contrib.freight.carrier.Tour.ServiceActivity;
+import org.matsim.contrib.freight.carrier.Tour.TourElement;
+import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.utils.io.IOUtils;
 
 import com.google.common.base.Joiner;
@@ -173,7 +184,7 @@ public class TrafficVolumeGeneration {
 		BufferedWriter writer = IOUtils.getBufferedWriter(outputFileInInputFolder.toUri().toURL(),
 				StandardCharsets.UTF_8, true);
 		try {
-			String[] header = new String[] { "areaID", "mode", "1", "2", "3", "4", "5" };
+			String[] header = new String[] { "areaID", "mode/vehType", "1", "2", "3", "4", "5" };
 			JOIN.appendTo(writer, header);
 			writer.write("\n");
 			for (String zoneID : trafficVolume.keySet()) {
@@ -217,6 +228,90 @@ public class TrafficVolumeGeneration {
 
 		// Set commitment rates for stop potentials
 		commitmentRatesStop = setCommitmentRates(trafficType, "stop");
+	}
+
+	/** Reduces the traffic volumes based on the added existing models.
+	 * @param scenario
+	 * @param regionLinksMap
+	 * @param usedTrafficType
+	 * @param trafficVolumePerTypeAndZone_start
+	 * @param trafficVolumePerTypeAndZone_stop
+	 */
+	public static void reduceDemandBasedOnExistingCarriers(Scenario scenario,
+			Map<String, HashMap<Id<Link>, Link>> regionLinksMap, String usedTrafficType,
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start,
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop) {
+		
+		for (Carrier carrier : FreightUtils.addOrGetCarriers(scenario).getCarriers().values()) {
+			if (!carrier.getAttributes().getAsMap().containsKey("subpopulation") || !carrier.getAttributes().getAttribute("subpopulation").equals(usedTrafficType))
+				continue;
+			String modeORvehType = null;
+			if (usedTrafficType.equals("freightTraffic"))
+				modeORvehType = (String) carrier.getAttributes().getAttribute("vehicleType");
+			else
+				modeORvehType = "total";
+			Integer purpose = (Integer) carrier.getAttributes().getAttribute("purpose");
+			for (ScheduledTour tour : carrier.getSelectedPlan().getScheduledTours()) {
+				String startZone = SmallScaleFreightTrafficUtils.findZoneOfLink(tour.getTour().getStartLinkId(), regionLinksMap);
+				for (TourElement tourElement : tour.getTour().getTourElements()) {
+					if (tourElement instanceof ServiceActivity) {
+						ServiceActivity service = (ServiceActivity) tourElement;
+						String stopZone = SmallScaleFreightTrafficUtils.findZoneOfLink(service.getLocation(), regionLinksMap);
+						reduzeVolumeForThisExistingJobElement(trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop, modeORvehType,
+								purpose, startZone, stopZone);
+					}
+					if (tourElement instanceof Pickup) {
+						Pickup shipment = (Pickup) tourElement;
+						startZone = SmallScaleFreightTrafficUtils.findZoneOfLink(shipment.getShipment().getFrom(), regionLinksMap);
+						String stopZone = SmallScaleFreightTrafficUtils.findZoneOfLink(shipment.getShipment().getTo(), regionLinksMap);
+						reduzeVolumeForThisExistingJobElement(trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop, modeORvehType,
+								purpose, startZone, stopZone);
+					}
+				}
+			}
+		}	
+	}
+
+	/** Reduces the demand for certain zone.
+	 * @param trafficVolumePerTypeAndZone_start
+	 * @param trafficVolumePerTypeAndZone_stop
+	 * @param modeORvehType
+	 * @param purpose
+	 * @param startZone
+	 * @param stopZone
+	 */
+	private static void reduzeVolumeForThisExistingJobElement(
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start,
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop,
+			String modeORvehType, Integer purpose, String startZone, String stopZone) {
+		
+		if (trafficVolumePerTypeAndZone_start.get(startZone).get(modeORvehType).getDouble(purpose) == 0)
+			reduzeVolumeForOtherArea(trafficVolumePerTypeAndZone_start, modeORvehType, purpose);
+		else
+			trafficVolumePerTypeAndZone_start.get(startZone).get(modeORvehType).mergeDouble(purpose, -1, Double::sum);
+		if (trafficVolumePerTypeAndZone_stop.get(stopZone).get(modeORvehType).getDouble(purpose) == 0)
+			reduzeVolumeForOtherArea(trafficVolumePerTypeAndZone_stop, modeORvehType, purpose);
+		else
+			trafficVolumePerTypeAndZone_stop.get(stopZone).get(modeORvehType).mergeDouble(purpose, -1, Double::sum);
+	}
+
+	/** Find zone with demand and reduces the demand by 1.
+	 * @param trafficVolumePerTypeAndZone
+	 * @param modeORvehType
+	 * @param purpose
+	 */
+	private static void reduzeVolumeForOtherArea(
+			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone,
+			String modeORvehType, Integer purpose) {
+		ArrayList<String> shuffeldZones = new ArrayList<String>(trafficVolumePerTypeAndZone.keySet());
+		Collections.shuffle(shuffeldZones);
+		for (String zone : shuffeldZones) {
+			if (trafficVolumePerTypeAndZone.get(zone).get(modeORvehType).getDouble(purpose) > 0) {
+				trafficVolumePerTypeAndZone.get(zone).get(modeORvehType).mergeDouble(purpose, -1, Double::sum);
+				log.warn("Volume of other zone was reduzed because the volume for the zone where an existing model has a demand has generated demand of 0");
+				break;
+			}
+		}
 	}
 
 	/**
