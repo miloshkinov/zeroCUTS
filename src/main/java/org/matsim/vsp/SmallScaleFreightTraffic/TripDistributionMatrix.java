@@ -31,9 +31,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+//import org.locationtech.jts.geom.Geometry;
+//import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
@@ -323,7 +324,7 @@ public class TripDistributionMatrix {
 	 * @param scenario 
 	 * @param regionLinksMap 
 	 */
-	void setTripDistributionValue(String startZone, String stopZone, String modeORvehType, Integer purpose, String trafficType, Network network, Map<String, List<Link>> regionLinksMap) {
+	void setTripDistributionValue(String startZone, String stopZone, String modeORvehType, Integer purpose, String trafficType, Network network, Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
 		double volumeStart = trafficVolume_start.get(startZone).get(modeORvehType).getDouble(purpose);
 		double volumeStop = trafficVolume_stop.get(stopZone).get(modeORvehType).getDouble(purpose);
 		double resistanceValue = getResistanceFunktionValue(startZone, stopZone, network, regionLinksMap);
@@ -368,7 +369,7 @@ public class TripDistributionMatrix {
 	 * @param regionLinksMap 
 	 * @return
 	 */
-	private Double getResistanceFunktionValue(String startZone, String stopZone, Network network, Map<String, List<Link>> regionLinksMap) {
+	private Double getResistanceFunktionValue(String startZone, String stopZone, Network network, Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
 		startZone = startZone.replaceFirst(startZone.split("_")[0]+"_", "");
 		stopZone = stopZone.replaceFirst(stopZone.split("_")[0]+"_", "");
 		
@@ -400,10 +401,10 @@ public class TripDistributionMatrix {
 //
 //						distance = geometryStartZone.distance(geometryStopZone);
 						
-						Location startLocation = Location.newInstance(regionLinksMap.get(startZone).iterator().next().getId().toString());
-						Location stopLocation = Location.newInstance(regionLinksMap.get(stopZone).iterator().next().getId().toString());
+						Location startLocation = Location.newInstance(regionLinksMap.get(startZone).keySet().iterator().next().toString());
+						Location stopLocation = Location.newInstance(regionLinksMap.get(stopZone).keySet().iterator().next().toString());
 						Vehicle exampleVehicle = getExampleVehicle(startLocation);
-//						distance = netBasedCosts.getDistance(startLocation, stopLocation, 21600., exampleVehicle);
+////						distance = netBasedCosts.getDistance(startLocation, stopLocation, 21600., exampleVehicle);
 						travelCosts = netBasedCosts.getTransportCost(startLocation, stopLocation, 21600., null, exampleVehicle);
 					}
 					double resistanceFactor = 0.005;
@@ -475,7 +476,7 @@ public class TripDistributionMatrix {
 	 */
 	private double getGravityConstant(String baseZone,
 			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume, String modeORvehType,
-			Integer purpose, Network network, Map<String, List<Link>> regionLinksMap) {
+			Integer purpose, Network network, Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
 
 		GravityConstantKey gravityKey = makeGravityKey(baseZone, modeORvehType, purpose);
 		if (!gravityConstantACache.containsKey(gravityKey)) {
