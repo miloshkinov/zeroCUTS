@@ -250,7 +250,6 @@ public class SmallScaleFreightTrafficUtils {
 			Person newPerson = popFactory.createPerson(person.getId());
 			newPerson.addPlan(plan);
 			PopulationUtils.putSubpopulation(newPerson, subpopulation);
-			//TODO also for existing carriers
 			if (relatedCarrier.getAttributes().getAsMap().containsKey("tourStartArea"))
 				PopulationUtils.putPersonAttribute(newPerson, "tourStartArea",
 						relatedCarrier.getAttributes().getAttribute("tourStartArea"));
@@ -274,12 +273,12 @@ public class SmallScaleFreightTrafficUtils {
 	 * 
 	 * @param scenario
 	 * @param sampleScenario
-	 * @param inputDataDirectory 
-	 * @param regionLinksMap 
+	 * @param inputDataDirectory
+	 * @param regionLinksMap
 	 * @throws Exception
 	 */
-	static void readExistingModels(Scenario scenario, double sampleScenario, Path inputDataDirectory, Map<String, HashMap<Id<Link>, Link>> regionLinksMap) throws Exception {
-		// TODO
+	static void readExistingModels(Scenario scenario, double sampleScenario, Path inputDataDirectory,
+			Map<String, HashMap<Id<Link>, Link>> regionLinksMap) throws Exception {
 
 		String locationOfExistingModels = inputDataDirectory.getParent().getParent().resolve("existingModels")
 				.resolve("existingModels.csv").toString();
@@ -289,21 +288,17 @@ public class SmallScaleFreightTrafficUtils {
 			String modelName = record.get("model");
 			double sampleSizeExistingScenario = Double.parseDouble(record.get("sampleSize"));
 			String modelTrafficType = record.get("trafficType");
-			final Integer modelPurpose; // TODO input notwendig?
+			final Integer modelPurpose;
 			if (record.get("purpose") != "")
 				modelPurpose = Integer.parseInt(record.get("purpose"));
-			else 
-				modelPurpose = 0;
-			final String vehicleType; // TODO input notwendig?
+			else
+				modelPurpose = null;
+			final String vehicleType;
 			if (record.get("vehicleType") != "")
 				vehicleType = record.get("vehicleType");
 			else
-				vehicleType = "nn";
-			final String modelMode;
-			if (record.get("networkMode") != "")
-				modelMode = record.get("networkMode");
-			else
-				modelMode = "tba";
+				vehicleType = null;
+			final String modelMode = record.get("networkMode");
 
 			Path scenarioLocation = inputDataDirectory.getParent().getParent().resolve("existingModels")
 					.resolve(modelName);
@@ -345,9 +340,9 @@ public class SmallScaleFreightTrafficUtils {
 			log.info("The existing scenario " + modelName + " is a " + (int) (sampleSizeExistingScenario * 100)
 					+ "% scenario and has " + numberOfToursExistingScenario + " tours");
 			log.info("The existing scenario " + modelName + " will be sampled down to the scenario sample size of "
-					+ (int) (sampleScenario) + "%which results in " + sampledNumberOfToursExistingScenario + " tours.");
+					+ (int) (sampleScenario) + "% which results in " + sampledNumberOfToursExistingScenario + " tours.");
+			
 			for (Carrier carrier : carriers.getCarriers().values()) {
-
 				countCarrier++;
 				int numberOfOriginalTours = carrier.getSelectedPlan().getScheduledTours().size();
 				int numberOfRemainingTours = (int) Math.round(numberOfOriginalTours * sampleFactor);
@@ -417,11 +412,11 @@ public class SmallScaleFreightTrafficUtils {
 					for (ScheduledTour removedTour : toursToRemove) {
 						carrier.getCarrierCapabilities().getCarrierVehicles().remove(removedTour.getVehicle().getId());
 					}
-				}
-				else if (carrier.getCarrierCapabilities().getFleetSize().equals(FleetSize.INFINITE)) {
+				} else if (carrier.getCarrierCapabilities().getFleetSize().equals(FleetSize.INFINITE)) {
 					carrier.getCarrierCapabilities().getCarrierVehicles().clear();
 					for (ScheduledTour tour : carrier.getSelectedPlan().getScheduledTours()) {
-						carrier.getCarrierCapabilities().getCarrierVehicles().put(tour.getVehicle().getId(), tour.getVehicle());
+						carrier.getCarrierCapabilities().getCarrierVehicles().put(tour.getVehicle().getId(),
+								tour.getVehicle());
 					}
 				}
 				List<VehicleType> vehcileTypesToRemove = new ArrayList<VehicleType>();
@@ -445,36 +440,41 @@ public class SmallScaleFreightTrafficUtils {
 				Carrier newCarrier = CarrierUtils
 						.createCarrier(Id.create(modelName + "_" + carrier.getId().toString(), Carrier.class));
 				newCarrier.getAttributes().putAttribute("subpopulation", modelTrafficType);
-				newCarrier.getAttributes().putAttribute("purpose", modelPurpose);
+				if (modelPurpose != null)
+					newCarrier.getAttributes().putAttribute("purpose", modelPurpose);
 				newCarrier.getAttributes().putAttribute("existingModel", modelName);
 				newCarrier.getAttributes().putAttribute("networkMode", modelMode);
-				newCarrier.getAttributes().putAttribute("vehicleType", vehicleType);
+				if (vehicleType != null)
+					newCarrier.getAttributes().putAttribute("vehicleType", vehicleType);
 				newCarrier.setCarrierCapabilities(carrier.getCarrierCapabilities());
 				newCarrier.setSelectedPlan(carrier.getSelectedPlan());
-				
+
 				List<String> startAreas = new ArrayList<String>();
 				for (ScheduledTour tour : newCarrier.getSelectedPlan().getScheduledTours()) {
 					startAreas.add(findZoneOfLink(tour.getTour().getStartLinkId(), regionLinksMap));
 				}
-				newCarrier.getAttributes().putAttribute("tourStartArea", startAreas.stream().collect(Collectors.joining(";")));
-				
+				newCarrier.getAttributes().putAttribute("tourStartArea",
+						startAreas.stream().collect(Collectors.joining(";")));
+
 				if (carrier.getServices().size() > 0)
 					newCarrier.getServices().putAll(carrier.getServices());
 				else if (carrier.getShipments().size() > 0)
 					newCarrier.getShipments().putAll(carrier.getShipments());
 				CarrierUtils.setJspritIterations(newCarrier, 0); // because carrier already has solution
-				
-				//recalculate score for selectedPlan
-		        VehicleRoutingProblem vrp = MatsimJspritFactory.createRoutingProblemBuilder(carrier, scenario.getNetwork()).build();
-				VehicleRoutingProblemSolution solution = MatsimJspritFactory.createSolution(newCarrier.getSelectedPlan(), vrp);
-		        SolutionCostCalculator solutionCostsCalculator = getObjectiveFunction(vrp, Double.MAX_VALUE);
-		        double costs = solutionCostsCalculator.getCosts(solution) *(-1);
-		        carrier.getSelectedPlan().setScore(costs);
+
+				// recalculate score for selectedPlan
+				VehicleRoutingProblem vrp = MatsimJspritFactory
+						.createRoutingProblemBuilder(carrier, scenario.getNetwork()).build();
+				VehicleRoutingProblemSolution solution = MatsimJspritFactory
+						.createSolution(newCarrier.getSelectedPlan(), vrp);
+				SolutionCostCalculator solutionCostsCalculator = getObjectiveFunction(vrp, Double.MAX_VALUE);
+				double costs = solutionCostsCalculator.getCosts(solution) * (-1);
+				carrier.getSelectedPlan().setScore(costs);
 				FreightUtils.addOrGetCarriers(scenario).getCarriers().put(newCarrier.getId(), newCarrier);
 			});
 		}
 	}
-	
+
 	/**
 	 * @param linkId
 	 * @param regionLinksMap
@@ -487,44 +487,50 @@ public class SmallScaleFreightTrafficUtils {
 		}
 		return null;
 	}
-    /**
-     * @param vrp
-     * @param maxCosts
-     * @return
-     */
-    private static SolutionCostCalculator getObjectiveFunction(final VehicleRoutingProblem vrp, final double maxCosts) {
 
-        SolutionCostCalculator solutionCostCalculator = new SolutionCostCalculator() {
-            @Override
-            public double getCosts(VehicleRoutingProblemSolution solution) {
-                double costs = 0.;
+	/**
+	 * @param vrp
+	 * @param maxCosts
+	 * @return
+	 */
+	private static SolutionCostCalculator getObjectiveFunction(final VehicleRoutingProblem vrp, final double maxCosts) {
 
-                for (VehicleRoute route : solution.getRoutes()) {
-                    costs += route.getVehicle().getType().getVehicleCostParams().fix;
-                    boolean hasBreak = false;
-                    TourActivity prevAct = route.getStart();
-                    for (TourActivity act : route.getActivities()) {
-                        if (act instanceof BreakActivity) hasBreak = true;
-                        costs += vrp.getTransportCosts().getTransportCost(prevAct.getLocation(), act.getLocation(), prevAct.getEndTime(), route.getDriver(), route.getVehicle());
-                        costs += vrp.getActivityCosts().getActivityCost(act, act.getArrTime(), route.getDriver(), route.getVehicle());
-                        prevAct = act;
-                    }
-                    costs += vrp.getTransportCosts().getTransportCost(prevAct.getLocation(), route.getEnd().getLocation(), prevAct.getEndTime(), route.getDriver(), route.getVehicle());
-                    if (route.getVehicle().getBreak() != null) {
-                        if (!hasBreak) {
-                            //break defined and required but not assigned penalty
-                            if (route.getEnd().getArrTime() > route.getVehicle().getBreak().getTimeWindow().getEnd()) {
-                                costs += 4 * (maxCosts * 2 + route.getVehicle().getBreak().getServiceDuration() * route.getVehicle().getType().getVehicleCostParams().perServiceTimeUnit);
-                            }
-                        }
-                    }
-                }
-                for(Job j : solution.getUnassignedJobs()){
-                    costs += maxCosts * 2 * (11 - j.getPriority());
-                }
-                return costs;
-            }
-        };
-        return solutionCostCalculator;
-    }
+		SolutionCostCalculator solutionCostCalculator = new SolutionCostCalculator() {
+			@Override
+			public double getCosts(VehicleRoutingProblemSolution solution) {
+				double costs = 0.;
+
+				for (VehicleRoute route : solution.getRoutes()) {
+					costs += route.getVehicle().getType().getVehicleCostParams().fix;
+					boolean hasBreak = false;
+					TourActivity prevAct = route.getStart();
+					for (TourActivity act : route.getActivities()) {
+						if (act instanceof BreakActivity)
+							hasBreak = true;
+						costs += vrp.getTransportCosts().getTransportCost(prevAct.getLocation(), act.getLocation(),
+								prevAct.getEndTime(), route.getDriver(), route.getVehicle());
+						costs += vrp.getActivityCosts().getActivityCost(act, act.getArrTime(), route.getDriver(),
+								route.getVehicle());
+						prevAct = act;
+					}
+					costs += vrp.getTransportCosts().getTransportCost(prevAct.getLocation(),
+							route.getEnd().getLocation(), prevAct.getEndTime(), route.getDriver(), route.getVehicle());
+					if (route.getVehicle().getBreak() != null) {
+						if (!hasBreak) {
+							// break defined and required but not assigned penalty
+							if (route.getEnd().getArrTime() > route.getVehicle().getBreak().getTimeWindow().getEnd()) {
+								costs += 4 * (maxCosts * 2 + route.getVehicle().getBreak().getServiceDuration()
+										* route.getVehicle().getType().getVehicleCostParams().perServiceTimeUnit);
+							}
+						}
+					}
+				}
+				for (Job j : solution.getUnassignedJobs()) {
+					costs += maxCosts * 2 * (11 - j.getPriority());
+				}
+				return costs;
+			}
+		};
+		return solutionCostCalculator;
+	}
 }
