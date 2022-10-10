@@ -370,8 +370,8 @@ public class TripDistributionMatrix {
 	 * @return
 	 */
 	private Double getResistanceFunktionValue(String startZone, String stopZone, Network network, Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
-		startZone = startZone.replaceFirst(startZone.split("_")[0]+"_", "");
-		stopZone = stopZone.replaceFirst(stopZone.split("_")[0]+"_", "");
+//		startZone = startZone.replaceFirst(startZone.split("_")[0]+"_", "");
+//		stopZone = stopZone.replaceFirst(stopZone.split("_")[0]+"_", "");
 		
 		if (netBasedCosts == null) {
 			VehicleType vehicleType = VehicleUtils.createVehicleType(Id.create("vwCaddy", VehicleType.class));
@@ -381,11 +381,11 @@ public class TripDistributionMatrix {
 		}
 		if (!resistanceFunktionCache.containsKey(makeResistanceFunktionKey(startZone, stopZone)))
 			for (SimpleFeature startZoneFeature : zonesFeatures) {
-				String zone1 = String.valueOf(startZoneFeature.getAttribute("id"));
+				String zone1 = String.valueOf(startZoneFeature.getAttribute("areaID"));
 				if (!startZone.equals(zone1))
 					continue;
 				for (SimpleFeature stopZoneFeature : zonesFeatures) {
-					String zone2 = String.valueOf(stopZoneFeature.getAttribute("id"));
+					String zone2 = String.valueOf(stopZoneFeature.getAttribute("areaID"));
 					if (!stopZone.equals(zone2))
 						continue;
 					double distance = Double.MAX_VALUE;
