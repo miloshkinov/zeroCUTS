@@ -370,8 +370,6 @@ public class TripDistributionMatrix {
 	 * @return
 	 */
 	private Double getResistanceFunktionValue(String startZone, String stopZone, Network network, Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
-//		startZone = startZone.replaceFirst(startZone.split("_")[0]+"_", "");
-//		stopZone = stopZone.replaceFirst(stopZone.split("_")[0]+"_", "");
 		
 		if (netBasedCosts == null) {
 			VehicleType vehicleType = VehicleUtils.createVehicleType(Id.create("vwCaddy", VehicleType.class));
