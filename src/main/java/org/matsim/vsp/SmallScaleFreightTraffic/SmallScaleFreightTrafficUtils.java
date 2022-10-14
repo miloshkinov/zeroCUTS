@@ -178,36 +178,18 @@ public class SmallScaleFreightTrafficUtils {
 	 * @param output
 	 * @param inputDataDirectory
 	 */
+	/**
+	 * @param controler
+	 * @param usedTrafficType
+	 * @param sample
+	 * @param output
+	 * @param inputDataDirectory
+	 */
 	static void createPlansBasedOnCarrierPlans(Controler controler, String usedTrafficType, double sample, Path output,
 			Path inputDataDirectory) {
+		
 		Scenario scenario = controler.getScenario();
-		Population population;
-		if (usedTrafficType.equals("businessTraffic"))
-			population = controler.getScenario().getPopulation();
-		else {
-			Path longDistancePopulation = inputDataDirectory
-					.resolve("berlin_longDistanceFreight_" + (int) (sample * 100) + "pct.xml.gz");
-			if (Files.exists(longDistancePopulation)) {
-				log.error("Required population for the long distance freight {} not found", longDistancePopulation);
-
-				population = PopulationUtils.readPopulation(longDistancePopulation.toString());
-				log.info("Number of imported tours of longDistance freight traffic: " + population.getPersons().size());
-				population.getPersons().values()
-						.forEach(person -> VehicleUtils.insertVehicleIdsIntoAttributes(
-								scenario.getPopulation().getPersons().get(person.getId()),
-								(new HashMap<String, Id<Vehicle>>() {
-									{
-										put("freight", Id.createVehicleId(person.getId().toString()));
-									}
-								})));
-				population.getPersons().values()
-						.forEach(person -> scenario.getVehicles()
-								.addVehicle(VehicleUtils.createVehicle(Id.createVehicleId(person.getId().toString()),
-										scenario.getVehicles().getVehicleTypes()
-												.get(Id.create("heavy40t", VehicleType.class)))));
-			} else
-				population = PopulationUtils.createPopulation(controler.getConfig());
-		}
+		Population population = controler.getScenario().getPopulation();
 		PopulationFactory popFactory = population.getFactory();
 
 		Population populationFromCarrier = (Population) scenario.getScenarioElement("allpersons");
@@ -218,14 +200,13 @@ public class SmallScaleFreightTrafficUtils {
 			Carrier relatedCarrier = FreightUtils.addOrGetCarriers(scenario).getCarriers()
 					.get(Id.create(carrierName, Carrier.class));
 			String subpopulation = relatedCarrier.getAttributes().getAttribute("subpopulation").toString();
-			String mode = null;
+			final String mode;
 			if (subpopulation.equals("businessTraffic"))
 				mode = "car";
 			else if (subpopulation.equals("freightTraffic"))
 				mode = "freight";
-			else if (subpopulation.equals("dispersedTraffic"))
+			else
 				mode = relatedCarrier.getAttributes().getAttribute("networkMode").toString();
-			final String usedMainMode = mode;
 			List<PlanElement> tourElements = person.getSelectedPlan().getPlanElements();
 			double tourStartTime = 0;
 			for (PlanElement tourElement : tourElements) {
@@ -243,7 +224,7 @@ public class SmallScaleFreightTrafficUtils {
 					plan.addActivity(activity);
 				}
 				if (tourElement instanceof Leg) {
-					Leg legActivity = popFactory.createLeg(usedMainMode);
+					Leg legActivity = popFactory.createLeg(mode);
 					plan.addLeg(legActivity);
 				}
 			}
@@ -255,7 +236,7 @@ public class SmallScaleFreightTrafficUtils {
 						relatedCarrier.getAttributes().getAttribute("tourStartArea"));
 			VehicleUtils.insertVehicleIdsIntoAttributes(newPerson, (new HashMap<String, Id<Vehicle>>() {
 				{
-					put(usedMainMode, (Id.createVehicleId(person.getId().toString())));
+					put(mode, (Id.createVehicleId(person.getId().toString())));
 				}
 			}));
 			population.addPerson(newPerson);
@@ -340,8 +321,9 @@ public class SmallScaleFreightTrafficUtils {
 			log.info("The existing scenario " + modelName + " is a " + (int) (sampleSizeExistingScenario * 100)
 					+ "% scenario and has " + numberOfToursExistingScenario + " tours");
 			log.info("The existing scenario " + modelName + " will be sampled down to the scenario sample size of "
-					+ (int) (sampleScenario) + "% which results in " + sampledNumberOfToursExistingScenario + " tours.");
-			
+					+ (int) (sampleScenario) + "% which results in " + sampledNumberOfToursExistingScenario
+					+ " tours.");
+
 			for (Carrier carrier : carriers.getCarriers().values()) {
 				countCarrier++;
 				int numberOfOriginalTours = carrier.getSelectedPlan().getScheduledTours().size();
