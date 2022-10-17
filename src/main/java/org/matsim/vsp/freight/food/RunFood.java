@@ -27,10 +27,11 @@ import com.graphhopper.jsprit.core.algorithm.listener.VehicleRoutingAlgorithmLis
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.util.Solutions;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contrib.freight.Freight;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
@@ -56,7 +57,7 @@ import java.util.stream.Collectors;
 
 class RunFood {
 
-    static final Logger log = Logger.getLogger(RunFood.class);
+    static final Logger log = LogManager.getLogger(RunFood.class);
 
     private static int nuOfJspritIteration;
 
@@ -147,16 +148,7 @@ class RunFood {
     private static Controler prepareControler(Scenario scenario) {
         Controler controler = new Controler(scenario);
 
-        Freight.configure(controler);
-
-        controler.addOverridingModule(new AbstractModule() {
-            @Override
-            public void install() {
-                install(new CarrierModule());
-//                bind(CarrierPlanStrategyManagerFactory.class).toInstance( null );
-//                bind(CarrierScoringFunctionFactory.class).toInstance(null );
-            }
-        });
+        controler.addOverridingModule(new CarrierModule());
 
         return controler;
     }

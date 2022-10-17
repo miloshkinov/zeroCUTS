@@ -49,7 +49,6 @@ import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.application.options.ShpOptions.Index;
-import org.matsim.contrib.freight.Freight;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities;
@@ -65,8 +64,9 @@ import org.matsim.contrib.freight.carrier.TimeWindow;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
 import org.matsim.contrib.freight.controler.CarrierModule;
-import org.matsim.contrib.freight.controler.CarrierPlanStrategyManagerFactory;
 import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
+import org.matsim.contrib.freight.controler.CarrierStrategyManager;
+import org.matsim.contrib.freight.controler.CarrierStrategyManagerImpl;
 import org.matsim.contrib.freight.controler.FreightActivity;
 import org.matsim.contrib.freight.controler.ReRouteVehicles;
 import org.matsim.contrib.freight.controler.TimeAllocationMutator;
@@ -102,6 +102,7 @@ import org.matsim.vsp.freightAnalysis.FreightAnalyse;
 import org.opengis.feature.simple.SimpleFeature;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import org.locationtech.jts.geom.Geometry;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
@@ -137,13 +138,13 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		businessTraffic, freightTraffic, bothTypes
 	}
 
-	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/scenarios/0.5pct_bothTypes/")
+	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/scenarios/1pct_bothTypes/")
 	private static Path inputDataDirectory;
 
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
 	private static Path networkPath;
 
-	@CommandLine.Option(names = "--sample", defaultValue = "0.15", description = "Scaling factor of the freight traffic (0, 1)", required = true)
+	@CommandLine.Option(names = "--sample", defaultValue = "0.01", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
 	@CommandLine.Option(names = "--output", description = "Path to output folder", required = true, defaultValue = "output/BusinessPassengerTraffic/")
@@ -152,7 +153,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	@CommandLine.Option(names = "--jspritIterations", description = "Set number of jsprit iterations", required = true, defaultValue = "15")
 	private static int jspritIterations;
 
-	@CommandLine.Option(names = "--creationOption", defaultValue = "createNewCarrierFile", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
+	@CommandLine.Option(names = "--creationOption", defaultValue = "useExistingCarrierFileWithSolution", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
 	private CreationOption usedCreationOption;
 // useExistingCarrierFileWithSolution, createNewCarrierFile, useExistingCarrierFileWithoutSolution
 
@@ -168,8 +169,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private TrafficType usedTrafficType;
 // businessTraffic, freightTraffic, bothTypes
 
-	@CommandLine.Option(names = "--includeExistingModels", description = "If models for some segments exist they can be included.", defaultValue = "true")
-	private boolean includeExistingModels;
+	@CommandLine.Option(names = "--includeExistingModels", description = "If models for some segments exist they can be included.", defaultValue = "false")
+	private String includeExistingModels_Input;
 
 	private final static SplittableRandom rnd = new SplittableRandom(4711);
 
@@ -186,6 +187,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		output = output.resolve(java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay()
 				+ "_" + usedTrafficType.toString());
+		boolean includeExistingModels = Boolean.parseBoolean(includeExistingModels_Input);
 
 		Config config = prepareConfig();
 
@@ -297,7 +299,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 		new CarrierPlanXmlWriterV2((Carriers) controler.getScenario().getScenarioElement("carriers"))
 				.write(config.controler().getOutputDirectory() + "/output_CarrierDemandWithPlans.xml");
-
 		controler.run();
 		SmallScaleFreightTrafficUtils.createPlansBasedOnCarrierPlans(controler, usedTrafficType.toString(), sample,
 				output, inputDataDirectory);
@@ -497,12 +498,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private Controler prepareControler(Scenario scenario) {
 		Controler controler = new Controler(scenario);
 
-		Freight.configure(controler);
+		controler.addOverridingModule(new CarrierModule());
 		controler.addOverridingModule(new AbstractModule() {
 			@Override
 			public void install() {
-				install(new CarrierModule());
-				bind(CarrierPlanStrategyManagerFactory.class).toInstance(
+				bind(CarrierStrategyManager.class).toProvider(
 						new MyCarrierPlanStrategyManagerFactory(FreightUtils.getCarrierVehicleTypes(scenario)));
 				bind(CarrierScoringFunctionFactory.class).toInstance(new MyCarrierScoringFunctionFactory());
 			}
@@ -778,7 +778,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		CarrierCapabilities carrierCapabilities = null;
 
 		Carrier thisCarrier = CarrierUtils.createCarrier(Id.create(carrierName, Carrier.class));
-		thisCarrier.getAttributes().putAttribute("subpopulation", trafficType);
+		thisCarrier.getAttributes().putAttribute("subpopulation", trafficType); //TODO was ist mit businessTraffic ohne MC
 		thisCarrier.getAttributes().putAttribute("purpose", purpose);
 		thisCarrier.getAttributes().putAttribute("tourStartArea", startZone);
 		if (jspritIterations > 0)
@@ -973,7 +973,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 	}
 
-	private static class MyCarrierPlanStrategyManagerFactory implements CarrierPlanStrategyManagerFactory {
+	private static class MyCarrierPlanStrategyManagerFactory implements Provider<CarrierStrategyManager> {
 
 		@Inject
 		private Network network;
@@ -991,13 +991,14 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		}
 
 		@Override
-		public GenericStrategyManager<CarrierPlan, Carrier> createStrategyManager() {
+		public CarrierStrategyManager get() {
 			TravelDisutility travelDisutility = TravelDisutilities.createBaseDisutility(types,
 					modeTravelTimes.get(TransportMode.car));
 			final LeastCostPathCalculator router = leastCostPathCalculatorFactory.createPathCalculator(network,
 					travelDisutility, modeTravelTimes.get(TransportMode.car));
 
-			final GenericStrategyManager<CarrierPlan, Carrier> strategyManager = new GenericStrategyManager<>();
+//			final GenericStrategyManager<CarrierPlan, Carrier> strategyManager = new GenericStrategyManager<>();
+            final CarrierStrategyManager strategyManager = new CarrierStrategyManagerImpl();
 			strategyManager.setMaxPlansPerAgent(5);
 			{
 				GenericPlanStrategyImpl<CarrierPlan, Carrier> strategy = new GenericPlanStrategyImpl<>(

@@ -2,7 +2,8 @@ package org.matsim.vsp.DistanceConstraint;
 
 import java.util.Collection;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.freight.carrier.Carrier;
@@ -52,7 +53,7 @@ import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
  *
  */
 class DistanceConstraintUtils {
-	static final Logger log = Logger.getLogger(DistanceConstraintUtils.class);
+	static final Logger log = LogManager.getLogger(DistanceConstraintUtils.class);
 
 	/**
 	 * Creates a VehicleRoutingCostMatrix for calculating the distance between all

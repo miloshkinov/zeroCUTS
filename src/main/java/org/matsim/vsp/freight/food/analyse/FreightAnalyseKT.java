@@ -1,6 +1,7 @@
 package org.matsim.vsp.freight.food.analyse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.freight.carrier.*;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -91,7 +92,7 @@ public class FreightAnalyseKT {
 
 	private static final String OUTPUT_DIR = RUN_DIR + "Analysis2/" ;
 
-	private static final Logger log = Logger.getLogger(FreightAnalyseKT.class);
+	private static final Logger log = LogManager.getLogger(FreightAnalyseKT.class);
 
 	public static void main(String[] args) throws UncheckedIOException, IOException {
 		OutputDirectoryLogging.initLoggingWithOutputDirectory(OUTPUT_DIR);

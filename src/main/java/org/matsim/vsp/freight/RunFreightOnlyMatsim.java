@@ -19,15 +19,17 @@
  */
 package org.matsim.vsp.freight;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.*;
 import org.matsim.contrib.freight.controler.CarrierModule;
-import org.matsim.contrib.freight.controler.CarrierPlanStrategyManagerFactory;
 import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
+import org.matsim.contrib.freight.controler.CarrierStrategyManager;
+import org.matsim.contrib.freight.controler.CarrierStrategyManagerImpl;
 import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -67,7 +69,7 @@ import java.time.LocalDateTime;
  */
 public class RunFreightOnlyMatsim {
 
-	private static final Logger log = Logger.getLogger(RunFreightOnlyMatsim.class);
+	private static final Logger log = LogManager.getLogger(RunFreightOnlyMatsim.class);
 	private static final Level loggingLevel = Level.INFO; 		//Set to info to avoid all Debug-Messages, e.g. from VehicleRountingAlgorithm, but can be set to other values if needed. KMT feb/18. 
 
 	private enum CostsModififier {av, avFix110pct, avDist110pct, avVehCapUp}
@@ -99,7 +101,7 @@ public class RunFreightOnlyMatsim {
 	private static Config config;
 
 	public static void main(String[] args) throws IOException, InvalidAttributeValueException {
-		Logger.getRootLogger().setLevel(loggingLevel);
+		LogManager.getRootLogger().atLevel(loggingLevel);
 		OutputDirectoryLogging.initLoggingWithOutputDirectory(LOG_DIR);
 
 		log.info("#### Starting Run: ");
@@ -237,7 +239,7 @@ public class RunFreightOnlyMatsim {
 		final Controler controler = new Controler( scenario ) ;
 
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2(scenario);
-		CarrierPlanStrategyManagerFactory planStrategyManagerFactory =  createMyStrategymanager(); //Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
+		CarrierStrategyManager planStrategyManagerFactory =  createMyStrategymanager(); //Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
 
 		FreightConfigGroup freightConfig = ConfigUtils.addOrGetModule( scenario.getConfig(), FreightConfigGroup.class );
 		freightConfig.setTimeWindowHandling(FreightConfigGroup.TimeWindowHandling.enforceBeginnings);
@@ -248,23 +250,19 @@ public class RunFreightOnlyMatsim {
 			@Override
 			public void install(){
 				bind( CarrierScoringFunctionFactory.class ).toInstance(scoringFunctionFactory) ;
-				bind( CarrierPlanStrategyManagerFactory.class ).toInstance(planStrategyManagerFactory);
+				bind( CarrierStrategyManager.class ).toInstance(planStrategyManagerFactory);
 			}
 		} ) ;
-		controler.addOverridingModule(listener) ;
+		controler.addOverridingModule(listener);
 		controler.run();
 	}
 
 
 	//Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
 	//Da keine Strategy notwendig, hier zunächst eine "leere" Factory
-	private static CarrierPlanStrategyManagerFactory createMyStrategymanager(){
-		return new CarrierPlanStrategyManagerFactory() {
-			@Override
-			public GenericStrategyManager<CarrierPlan, Carrier> createStrategyManager() {
-				return null;
-			}
-		};
+	private static CarrierStrategyManager createMyStrategymanager() {
+		final CarrierStrategyManager strategyManager = new CarrierStrategyManagerImpl();
+		return strategyManager;
 	}
 
 

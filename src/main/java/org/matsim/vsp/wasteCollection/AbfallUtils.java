@@ -13,7 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Id;
@@ -21,7 +22,6 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.contrib.freight.Freight;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
@@ -71,7 +71,7 @@ import com.graphhopper.jsprit.core.util.Solutions;
  */
 class AbfallUtils {
 
-	static final Logger log = Logger.getLogger(AbfallUtils.class);
+	static final Logger log = LogManager.getLogger(AbfallUtils.class);
 
 	static int amountOfCollectedDustbins;
 	static int matsimIterations;
@@ -649,16 +649,7 @@ class AbfallUtils {
 	static Controler prepareControler(Scenario scenario) {
 		Controler controler = new Controler(scenario);
 
-		Freight.configure(controler);
-
-		controler.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
-				install(new CarrierModule());
-//                bind(CarrierPlanStrategyManagerFactory.class).toInstance( null );
-//                bind(CarrierScoringFunctionFactory.class).toInstance(null );
-			}
-		});
+		controler.addOverridingModule(new CarrierModule());
 
 		return controler;
 	}

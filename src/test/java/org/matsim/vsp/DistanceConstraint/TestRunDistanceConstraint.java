@@ -3,7 +3,9 @@ package org.matsim.vsp.DistanceConstraint;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
@@ -23,8 +25,9 @@ import org.matsim.contrib.freight.carrier.TimeWindow;
 import org.matsim.contrib.freight.carrier.Tour;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
 import org.matsim.contrib.freight.controler.CarrierModule;
-import org.matsim.contrib.freight.controler.CarrierPlanStrategyManagerFactory;
 import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
+import org.matsim.contrib.freight.controler.CarrierStrategyManager;
+import org.matsim.contrib.freight.controler.CarrierStrategyManagerImpl;
 import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
 import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts;
 import org.matsim.contrib.freight.jsprit.NetworkRouter;
@@ -42,6 +45,7 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.replanning.GenericStrategyManager;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.testcases.MatsimTestUtils;
 
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
@@ -66,7 +70,7 @@ import org.matsim.vehicles.VehicleUtils;
  *
  */
 public class TestRunDistanceConstraint {
-	static final Logger log = Logger.getLogger(TestRunDistanceConstraint.class);
+	static final Logger log = LogManager.getLogger(TestRunDistanceConstraint.class);
 
 	private static final String original_Chessboard = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 
@@ -584,7 +588,7 @@ public class TestRunDistanceConstraint {
 	 */
 	static void scoringAndManagerFactory(Scenario scenario, Carriers carriers, final Controler controler) {
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2(scenario);
-		CarrierPlanStrategyManagerFactory planStrategyManagerFactory = createMyStrategymanager();
+		CarrierStrategyManager planStrategyManagerFactory = createMyStrategymanager();
 
 		FreightUtils.addOrGetCarriers(scenario);
 		CarrierModule listener = new CarrierModule();
@@ -592,7 +596,7 @@ public class TestRunDistanceConstraint {
 			@Override
 			public void install(){
 				bind( CarrierScoringFunctionFactory.class ).toInstance(scoringFunctionFactory) ;
-				bind( CarrierPlanStrategyManagerFactory.class ).toInstance(planStrategyManagerFactory);
+				bind( CarrierStrategyManager.class ).toInstance(planStrategyManagerFactory);
 			}
 		} ) ;
 		controler.addOverridingModule(listener);
@@ -602,20 +606,23 @@ public class TestRunDistanceConstraint {
 	 * @param scenario
 	 * @return
 	 */
-	private static CarrierScoringFunctionFactoryImpl createMyScoringFunction2(final Scenario scenario) {
+	private static CarrierScoringFunctionFactory createMyScoringFunction2(final Scenario scenario) {
 
-		return new CarrierScoringFunctionFactoryImpl(scenario.getNetwork());
+		return new CarrierScoringFunctionFactory() {
+			
+			@Override
+			public ScoringFunction createScoringFunction(Carrier carrier) {
+				// TODO Auto-generated method stub
+				return null;
+			}
+		};
 	}
 
 	/**
 	 * @return
 	 */
-	private static CarrierPlanStrategyManagerFactory createMyStrategymanager() {
-		return new CarrierPlanStrategyManagerFactory() {
-			@Override
-			public GenericStrategyManager<CarrierPlan, Carrier> createStrategyManager() {
-				return null;
-			}
-		};
-	}
+		private static CarrierStrategyManager createMyStrategymanager() {
+			final CarrierStrategyManager strategyManager = new CarrierStrategyManagerImpl();
+			return strategyManager;
+		}
 }
