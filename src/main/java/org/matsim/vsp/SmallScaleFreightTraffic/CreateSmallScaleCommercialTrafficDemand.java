@@ -52,7 +52,6 @@ import org.matsim.application.options.ShpOptions.Index;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities;
-import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
 import org.matsim.contrib.freight.carrier.CarrierService;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
 import org.matsim.contrib.freight.carrier.CarrierVehicle;
@@ -63,6 +62,7 @@ import org.matsim.contrib.freight.carrier.ScheduledTour;
 import org.matsim.contrib.freight.carrier.TimeWindow;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
+import org.matsim.contrib.freight.carrier.CarrierPlanWriter;
 import org.matsim.contrib.freight.controler.CarrierModule;
 import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
 import org.matsim.contrib.freight.controler.CarrierStrategyManager;
@@ -83,7 +83,6 @@ import org.matsim.core.gbl.Gbl;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.replanning.GenericPlanStrategyImpl;
-import org.matsim.core.replanning.GenericStrategyManager;
 import org.matsim.core.replanning.selectors.ExpBetaPlanChanger;
 import org.matsim.core.replanning.selectors.KeepSelected;
 import org.matsim.core.router.util.LeastCostPathCalculator;
@@ -288,17 +287,15 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			default:
 				throw new RuntimeException("No traffic type selected.");
 			}
-
-			new CarrierPlanXmlWriterV2(FreightUtils.addOrGetCarriers(scenario))
+			new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
 					.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemand.xml");
 			controler = prepareControler(scenario);
 
 			solveSeperatedVRPs(controler);
 			break;
 		}
-
-		new CarrierPlanXmlWriterV2((Carriers) controler.getScenario().getScenarioElement("carriers"))
-				.write(config.controler().getOutputDirectory() + "/output_CarrierDemandWithPlans.xml");
+		new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
+		.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemandWithPlans.xml");
 		controler.run();
 		SmallScaleFreightTrafficUtils.createPlansBasedOnCarrierPlans(controler, usedTrafficType.toString(), sample,
 				output, inputDataDirectory);
@@ -375,7 +372,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 									Id.create(carrier.getId().toString() + "_part_" + (j + 1), Carrier.class));
 							CarrierCapabilities newCarrierCapabilities = CarrierCapabilities.Builder.newInstance()
 									.setFleetSize(carrier.getCarrierCapabilities().getFleetSize())
-									.addType(carrier.getCarrierCapabilities().getVehicleTypes().iterator().next())
 									.build();
 							newCarrierCapabilities.getCarrierVehicles()
 									.putAll(carrier.getCarrierCapabilities().getCarrierVehicles());
@@ -998,7 +994,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 					travelDisutility, modeTravelTimes.get(TransportMode.car));
 
 //			final GenericStrategyManager<CarrierPlan, Carrier> strategyManager = new GenericStrategyManager<>();
-            final CarrierStrategyManager strategyManager = new CarrierStrategyManagerImpl();
+			final CarrierStrategyManager strategyManager = new CarrierStrategyManagerImpl();
 			strategyManager.setMaxPlansPerAgent(5);
 			{
 				GenericPlanStrategyImpl<CarrierPlan, Carrier> strategy = new GenericPlanStrategyImpl<>(

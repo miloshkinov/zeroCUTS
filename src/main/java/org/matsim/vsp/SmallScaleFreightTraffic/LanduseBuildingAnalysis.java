@@ -118,7 +118,8 @@ public class LanduseBuildingAnalysis {
 			}
 
 			try (BufferedReader reader = IOUtils.getBufferedReader(existingDataDistribution.toString())) {
-				CSVParser parse = CSVFormat.DEFAULT.withDelimiter('\t').withFirstRecordAsHeader().parse(reader);
+				CSVParser parse = CSVFormat.Builder.create(CSVFormat.DEFAULT).setDelimiter('\t').setHeader()
+				.setSkipHeaderRecord(true).build().parse(reader);
 
 				for (CSVRecord record : parse) {
 					String zoneID = record.get("areaID");
@@ -376,7 +377,7 @@ public class LanduseBuildingAnalysis {
 			log.error("Required input data file {} not found", areaDataPath);
 		}
 		try (CSVParser parser = new CSVParser(Files.newBufferedReader(areaDataPath),
-				CSVFormat.TDF.withFirstRecordAsHeader())) {
+				CSVFormat.Builder.create(CSVFormat.TDF).setHeader().setSkipHeaderRecord(true).build())) {
 
 			for (CSVRecord record : parser) {
 				HashMap<String, Integer> lookUpTable = new HashMap<>();

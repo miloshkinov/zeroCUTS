@@ -187,7 +187,7 @@ public class SmallScaleFreightTrafficUtils {
 	 */
 	static void createPlansBasedOnCarrierPlans(Controler controler, String usedTrafficType, double sample, Path output,
 			Path inputDataDirectory) {
-		
+
 		Scenario scenario = controler.getScenario();
 		Population population = controler.getScenario().getPopulation();
 		PopulationFactory popFactory = population.getFactory();
@@ -232,7 +232,7 @@ public class SmallScaleFreightTrafficUtils {
 			newPerson.addPlan(plan);
 			PopulationUtils.putSubpopulation(newPerson, subpopulation);
 			if (relatedCarrier.getAttributes().getAsMap().containsKey("tourStartArea"))
-				PopulationUtils.putPersonAttribute(newPerson, "tourStartArea",
+				newPerson.getAttributes().putAttribute("tourStartArea",
 						relatedCarrier.getAttributes().getAttribute("tourStartArea"));
 			VehicleUtils.insertVehicleIdsIntoAttributes(newPerson, (new HashMap<String, Id<Vehicle>>() {
 				{
@@ -263,8 +263,8 @@ public class SmallScaleFreightTrafficUtils {
 
 		String locationOfExistingModels = inputDataDirectory.getParent().getParent().resolve("existingModels")
 				.resolve("existingModels.csv").toString();
-		CSVParser parse = CSVFormat.DEFAULT.withDelimiter('\t').withFirstRecordAsHeader()
-				.parse(IOUtils.getBufferedReader(locationOfExistingModels));
+		CSVParser parse = CSVFormat.Builder.create(CSVFormat.DEFAULT).setDelimiter('\t').setHeader()
+				.setSkipHeaderRecord(true).build().parse(IOUtils.getBufferedReader(locationOfExistingModels));
 		for (CSVRecord record : parse) {
 			String modelName = record.get("model");
 			double sampleSizeExistingScenario = Double.parseDouble(record.get("sampleSize"));
