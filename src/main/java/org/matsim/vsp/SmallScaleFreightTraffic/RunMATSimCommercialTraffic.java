@@ -38,6 +38,7 @@ import org.matsim.api.core.v01.population.Population;
 import org.matsim.contrib.cadyts.car.CadytsCarModule;
 import org.matsim.contrib.cadyts.car.CadytsContext;
 import org.matsim.contrib.cadyts.general.CadytsConfigGroup;
+import org.matsim.contrib.cadyts.general.CadytsPlanChanger;
 import org.matsim.contrib.cadyts.general.CadytsScoring;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -47,6 +48,9 @@ import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.population.PopulationUtils;
+import org.matsim.core.replanning.PlanStrategy;
+import org.matsim.core.replanning.PlanStrategyImpl;
+import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.ScoringFunctionFactory;
@@ -114,7 +118,22 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 		Controler controler = prepareControler(scenario);
 
 		controler.addOverridingModule(new CadytsCarModule());
-
+		controler.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+//		        bind(MainModeIdentifier.class).to(MainModeIdentifierImpl.class);
+//		        bind(AnalysisMainModeIdentifier.class).to(MainModeIdentifier.class);
+		        bind(AnalysisMainModeIdentifier.class).to(TransportPlanningMainModeIdentifierRE.class);
+				addPlanStrategyBinding("planChangerCadyts").toProvider(new javax.inject.Provider<PlanStrategy>() {
+					@Inject Scenario scenario;
+					@Inject CadytsContext cadytsContext;
+					@Override
+					public PlanStrategy get() {
+						return new PlanStrategyImpl.Builder((new CadytsPlanChanger(scenario, cadytsContext))).build();
+					}
+				});
+			}
+		});
 		// include cadyts into the plan scoring (this will add the cadyts corrections to
 		// the scores)
 		controler.setScoringFunctionFactory(new ScoringFunctionFactory() {
