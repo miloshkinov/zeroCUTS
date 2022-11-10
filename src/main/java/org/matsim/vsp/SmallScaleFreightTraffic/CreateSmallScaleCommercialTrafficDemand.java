@@ -824,7 +824,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 */
 	private Id<Link> findPossibleLink(String zone, String selectedCategory, ArrayList<String> noPossibleLinks,
 			Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
-		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
 
 		Index indexZones = SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath);
 
@@ -832,7 +831,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
 			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
 			LanduseBuildingAnalysis.analyzeBuildingType(buildingsFeatures, buildingsPerZone,
-					landuseCategoriesAndDataConnection, shapeFileLandusePath, indexZones, shpZones.readFeatures());
+					landuseCategoriesAndDataConnection, shapeFileLandusePath, indexZones);
 		}
 		Id<Link> newLink = null;
 		for (int a = 0; newLink == null && a < buildingsPerZone.get(zone).get(selectedCategory).size() * 2; a++) {

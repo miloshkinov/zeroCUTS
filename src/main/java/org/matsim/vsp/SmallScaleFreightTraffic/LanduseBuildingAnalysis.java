@@ -327,7 +327,7 @@ public class LanduseBuildingAnalysis {
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, null, StandardCharsets.UTF_8);
 			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
 			analyzeBuildingType(buildingsFeatures, buildingsPerZone, landuseCategoriesAndDataConnection,
-					shapeFileLandusePath, indexZones, zonesFeatures);
+					shapeFileLandusePath, indexZones);
 
 			for (String zone : buildingsPerZone.keySet())
 				for (String category : buildingsPerZone.get(zone).keySet())
@@ -403,7 +403,7 @@ public class LanduseBuildingAnalysis {
 	static void analyzeBuildingType(List<SimpleFeature> buildingsFeatures,
 			HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone,
 			HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection, Path shapeFileLandusePath,
-			Index indexZones, List<SimpleFeature> zonesFeatures) {
+			Index indexZones) {
 
 		Index indexLanduse = SmallScaleFreightTrafficUtils.getIndexLanduse(shapeFileLandusePath);
 
