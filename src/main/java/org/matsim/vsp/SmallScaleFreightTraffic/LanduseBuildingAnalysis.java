@@ -96,22 +96,10 @@ public class LanduseBuildingAnalysis {
 				Arrays.asList("commercial", "post_office", "storage", "storage_tank", "warehouse")));
 		landuseCategoriesAndDataConnection.put("Employee Tertiary Sector Rest", new ArrayList<String>(
 				Arrays.asList("commercial", "embassy", "foundation", "government", "office", "townhall")));
-		landuseCategoriesAndDataConnection.put("Employee", new ArrayList<String>());
-		landuseCategoriesAndDataConnection.get("Employee")
-				.addAll(landuseCategoriesAndDataConnection.get("Employee Primary Sector"));
-		landuseCategoriesAndDataConnection.get("Employee")
-				.addAll(landuseCategoriesAndDataConnection.get("Employee Construction"));
-		landuseCategoriesAndDataConnection.get("Employee")
-				.addAll(landuseCategoriesAndDataConnection.get("Employee Secondary Sector Rest"));
-		landuseCategoriesAndDataConnection.get("Employee")
-				.addAll(landuseCategoriesAndDataConnection.get("Employee Retail"));
-		landuseCategoriesAndDataConnection.get("Employee")
-				.addAll(landuseCategoriesAndDataConnection.get("Employee Traffic/Parcels"));
-		landuseCategoriesAndDataConnection.get("Employee")
-				.addAll(landuseCategoriesAndDataConnection.get("Employee Tertiary Sector Rest"));
 
 		if (usedLanduseConfiguration.equals("useExistingDataDistribution")) {
-			Path existingDataDistribution = inputDataDirectory.getParent().getParent().resolve("dataDistributionPerZone.csv");
+			Path existingDataDistribution = inputDataDirectory.getParent().getParent()
+					.resolve("dataDistributionPerZone.csv");
 
 			if (!Files.exists(existingDataDistribution)) {
 				log.error("Required data per zone file {} not found", existingDataDistribution);
@@ -119,7 +107,7 @@ public class LanduseBuildingAnalysis {
 
 			try (BufferedReader reader = IOUtils.getBufferedReader(existingDataDistribution.toString())) {
 				CSVParser parse = CSVFormat.Builder.create(CSVFormat.DEFAULT).setDelimiter('\t').setHeader()
-				.setSkipHeaderRecord(true).build().parse(reader);
+						.setSkipHeaderRecord(true).build().parse(reader);
 
 				for (CSVRecord record : parse) {
 					String zoneID = record.get("areaID");
@@ -143,14 +131,15 @@ public class LanduseBuildingAnalysis {
 			createLanduseDistribution(landuseCategoriesPerZone, shapeFileLandusePath, shapeFileZonePath,
 					usedLanduseConfiguration, shapeFileBuildingsPath, landuseCategoriesAndDataConnection,
 					buildingsPerZone, zoneIdNameConnection);
-			
+
 			HashMap<String, HashMap<String, Integer>> investigationAreaData = new HashMap<String, HashMap<String, Integer>>();
 			readAreaData(investigationAreaData, inputDataDirectory);
-			
+
 			createResultingDataForLanduseInZones(landuseCategoriesPerZone, investigationAreaData, resultingDataPerZone,
 					landuseCategoriesAndDataConnection);
 
-			SmallScaleFreightTrafficUtils.writeResultOfDataDistribution(resultingDataPerZone, outputFileInOutputFolder, zoneIdNameConnection);
+			SmallScaleFreightTrafficUtils.writeResultOfDataDistribution(resultingDataPerZone, outputFileInOutputFolder,
+					zoneIdNameConnection);
 		}
 
 		return resultingDataPerZone;
@@ -184,18 +173,25 @@ public class LanduseBuildingAnalysis {
 				c -> totalEmployeesInCategoriesPerZone.computeIfAbsent(c, k -> new Object2DoubleOpenHashMap<>()));
 		investigationAreaData.keySet()
 				.forEach(c -> totalEmployeesPerCategories.computeIfAbsent(c, k -> new Object2DoubleOpenHashMap<>()));
+
 		// connects the collected landuse data with the needed categories
 		for (String zoneId : landuseCategoriesPerZone.keySet()) {
 			String investigationArea = zoneId.split("_")[0];
 			resultingDataPerZone.put(zoneId, new Object2DoubleOpenHashMap<>());
 			for (String categoryLanduse : landuseCategoriesPerZone.get(zoneId).keySet())
-				for (String categoryData : landuseCategoriesAndDataConnection.keySet())
+				for (String categoryData : landuseCategoriesAndDataConnection.keySet()) {
+					resultingDataPerZone.get(zoneId).mergeDouble(categoryData, 0., Double::sum);
 					if (landuseCategoriesAndDataConnection.get(categoryData).contains(categoryLanduse)) {
 						double additionalArea = landuseCategoriesPerZone.get(zoneId).getDouble(categoryLanduse);
+						// because the category commercial is in two categories (traffic/parcels and
+						// Tertiary Sector Rest
+						if (categoryLanduse.equals("commercial"))
+							additionalArea = additionalArea * 0.5;
 						resultingDataPerZone.get(zoneId).mergeDouble(categoryData, additionalArea, Double::sum);
 						totalSquareMetersPerCategory.get(investigationArea).mergeDouble(categoryData, additionalArea,
 								Double::sum);
 					}
+				}
 		}
 
 		/*
@@ -223,63 +219,22 @@ public class LanduseBuildingAnalysis {
 							+ checkPercentages.get(investigationArea).getDouble(category) + "%");
 		}
 		// calculates the data per zone and category data
-		for (String zoneId : resultingDataPerZone.keySet())
+		for (String zoneId : resultingDataPerZone.keySet()) {
+			String investigationArea = zoneId.split("_")[0];
 			for (String categoryData : resultingDataPerZone.get(zoneId).keySet()) {
-				String investigationArea = zoneId.split("_")[0];
 				double percentageValue = resultingDataPerZone.get(zoneId).getDouble(categoryData);
 				int inputDataForCategory = investigationAreaData.get(investigationArea).get(categoryData);
 				double resultingNumberPerCategory = percentageValue * inputDataForCategory;
 				resultingDataPerZone.get(zoneId).replace(categoryData, percentageValue, resultingNumberPerCategory);
 				totalEmployeesPerCategories.get(investigationArea).mergeDouble(categoryData, resultingNumberPerCategory,
 						Double::sum);
-				if (!categoryData.equals("Employee") && !categoryData.equals("Inhabitants"))
+				if (!categoryData.equals("Inhabitants"))
 					totalEmployeesInCategoriesPerZone.get(investigationArea).mergeDouble(zoneId,
 							resultingNumberPerCategory, Double::sum);
-
 			}
-		// corrects the number of employees in the categories so that the sum is correct
-		for (int i = 0; i < 30; i++) { // TODO perhaps find number of iterations
-			for (String zoneId : resultingDataPerZone.keySet()) {
-				String investigationArea = zoneId.split("_")[0];
-				for (String categoryData : resultingDataPerZone.get(zoneId).keySet())
-					if (!categoryData.equals("Employee") && !categoryData.equals("Inhabitants")) {
-						double correctionFactor = resultingDataPerZone.get(zoneId).getDouble("Employee")
-								/ totalEmployeesInCategoriesPerZone.get(investigationArea).getDouble(zoneId);
-						double resultingNumberPerCategory = correctionFactor
-								* resultingDataPerZone.get(zoneId).getDouble(categoryData);
-						resultingDataPerZone.get(zoneId).replace(categoryData,
-								resultingDataPerZone.get(zoneId).getDouble(categoryData), resultingNumberPerCategory);
-					}
-			}
-			for (String categoryData : landuseCategoriesAndDataConnection.keySet())
-				for (String zoneId : resultingDataPerZone.keySet()) {
-					String investigationArea = zoneId.split("_")[0];
-					if (!categoryData.equals("Employee") && !categoryData.equals("Inhabitants")) {
-						double correctionFactor = investigationAreaData.get(investigationArea).get(categoryData)
-								/ totalEmployeesPerCategories.get(investigationArea).getDouble(categoryData);
-						double resultingNumberPerCategory = correctionFactor
-								* resultingDataPerZone.get(zoneId).getDouble(categoryData);
-						resultingDataPerZone.get(zoneId).replace(categoryData,
-								resultingDataPerZone.get(zoneId).getDouble(categoryData), resultingNumberPerCategory);
-					}
-				}
-			// update totals per sum because of the changes before
-			totalEmployeesInCategoriesPerZone.clear();
-			totalEmployeesPerCategories.clear();
-			for (String zoneId : resultingDataPerZone.keySet()) {
-				String investigationArea = zoneId.split("_")[0];
-				totalEmployeesPerCategories.computeIfAbsent(investigationArea, k -> new Object2DoubleOpenHashMap<>());
-				totalEmployeesInCategoriesPerZone.computeIfAbsent(investigationArea,
-						k -> new Object2DoubleOpenHashMap<>());
-				for (String categoryData : resultingDataPerZone.get(zoneId).keySet()) {
-					totalEmployeesPerCategories.get(investigationArea).mergeDouble(categoryData,
-							resultingDataPerZone.get(zoneId).getDouble(categoryData), Double::sum);
-					if (!categoryData.equals("Employee") && !categoryData.equals("Inhabitants"))
-						totalEmployeesInCategoriesPerZone.get(investigationArea).mergeDouble(zoneId,
-								resultingDataPerZone.get(zoneId).getDouble(categoryData), Double::sum);
-				}
-			}
-		}
+			resultingDataPerZone.get(zoneId).mergeDouble("Employee",
+					totalEmployeesInCategoriesPerZone.get(investigationArea).getDouble(zoneId), Double::sum);
+		}	
 	}
 
 	/**
@@ -295,7 +250,7 @@ public class LanduseBuildingAnalysis {
 	 * @param buildingsPerZone
 	 * @param zoneIdNameConnection
 	 */
-	static void createLanduseDistribution(HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone,
+	private static void createLanduseDistribution(HashMap<String, Object2DoubleMap<String>> landuseCategoriesPerZone,
 			Path shapeFileLandusePath, Path shapeFileZonePath, String usedLanduseConfiguration,
 			Path shapeFileBuildingsPath, HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection,
 			HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone,
@@ -314,11 +269,8 @@ public class LanduseBuildingAnalysis {
 
 		for (SimpleFeature singleZone : zonesFeatures) {
 			Object2DoubleMap<String> landusePerCategory = new Object2DoubleOpenHashMap<>();
-			landuseCategoriesPerZone.put(
-					(String) singleZone.getAttribute("areaID"),
-					landusePerCategory);
-			zoneIdNameConnection.put(
-					(String) singleZone.getAttribute("areaID"),
+			landuseCategoriesPerZone.put((String) singleZone.getAttribute("areaID"), landusePerCategory);
+			zoneIdNameConnection.put((String) singleZone.getAttribute("areaID"),
 					(String) singleZone.getAttribute("name"));
 		}
 
@@ -331,18 +283,21 @@ public class LanduseBuildingAnalysis {
 
 			for (String zone : buildingsPerZone.keySet())
 				for (String category : buildingsPerZone.get(zone).keySet())
-					for (SimpleFeature building : buildingsPerZone.get(zone).get(category)) {
-						String[] buildingTypes = ((String) building.getAttribute("type")).split(";");
-						for (String singleCategoryOfBuilding : buildingTypes) {
-							double buildingLevels;
-							if (building.getAttribute("levels") == null)
-								buildingLevels = 1;
-							else
-								buildingLevels = (int) (long) building.getAttribute("levels") / buildingTypes.length;
-							double area = (int) (long) building.getAttribute("area") * buildingLevels;
-							landuseCategoriesPerZone.get(zone).mergeDouble(singleCategoryOfBuilding, area, Double::sum);
+					if (category.equals("Employee") || category.equals("Inhabitants"))
+						for (SimpleFeature building : buildingsPerZone.get(zone).get(category)) {
+							String[] buildingTypes = ((String) building.getAttribute("type")).split(";");
+							for (String singleCategoryOfBuilding : buildingTypes) {
+								double buildingLevels;
+								if (building.getAttribute("levels") == null)
+									buildingLevels = 1;
+								else
+									buildingLevels = (long) building.getAttribute("levels")
+											/ (double) buildingTypes.length;
+								double area = (int) (long) building.getAttribute("area") * buildingLevels;
+								landuseCategoriesPerZone.get(zone).mergeDouble(singleCategoryOfBuilding, area,
+										Double::sum);
+							}
 						}
-					}
 		} else if (usedLanduseConfiguration.equals("useOnlyOSMLanduse"))
 			for (SimpleFeature singleLanduseFeature : landuseFeatures) {
 				if (!neededLanduseCategories.contains((String) singleLanduseFeature.getAttribute("fclass")))
@@ -397,7 +352,7 @@ public class LanduseBuildingAnalysis {
 	 * @param buildingsPerZone
 	 * @param landuseCategoriesAndDataConnection
 	 * @param shapeFileLandusePath
-	 * @param zonesFeatures 
+	 * @param zonesFeatures
 	 * @param shapeFileZonePath
 	 */
 	static void analyzeBuildingType(List<SimpleFeature> buildingsFeatures,
@@ -429,14 +384,19 @@ public class LanduseBuildingAnalysis {
 				buildingTypes = buildingType.split(";");
 			}
 			singleBuildingFeature.setAttribute("type", String.join(";", buildingTypes));
+			boolean isEmployeeCategory = false;
 			for (String singleBuildingType : buildingTypes) {
 				for (String category : landuseCategoriesAndDataConnection.keySet()) {
 					if (landuseCategoriesAndDataConnection.get(category).contains(singleBuildingType)
 							&& !categoriesOfBuilding.contains(category)) {
 						categoriesOfBuilding.add(category);
+						if (category.contains("Employee"))
+							isEmployeeCategory = true;
 					}
 				}
 			}
+			if (isEmployeeCategory)
+				categoriesOfBuilding.add("Employee");
 			if (singleZone != null) {
 				categoriesOfBuilding.forEach(c -> buildingsPerZone
 						.computeIfAbsent(singleZone, k -> new HashMap<String, ArrayList<SimpleFeature>>())
