@@ -44,6 +44,7 @@ import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.io.UncheckedIOException;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
+import org.matsim.vsp.SmallScaleFreightTraffic.TrafficVolumeGeneration.TrafficVolumeKey;
 import org.opengis.feature.simple.SimpleFeature;
 
 import com.google.common.base.Joiner;
@@ -67,11 +68,11 @@ public class TripDistributionMatrix {
 	private ArrayList<String> listOfModesORvehTypes = new ArrayList<String>();
 	private ArrayList<Integer> listOfPurposes = new ArrayList<Integer>();
 	private final List<SimpleFeature> zonesFeatures;
-	private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start;
-	private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop;
+	private final HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_start;
+	private final HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_stop;
 	private final String trafficType;
 
-	static class TripDistributionMatrixKey {
+	private static class TripDistributionMatrixKey {
 		private final String fromZone;
 		private final String toZone;
 		private final String modeORvehType;
@@ -156,7 +157,7 @@ public class TripDistributionMatrix {
 		}
 	}
 
-	class ResistanceFunktionKey {
+	private static class ResistanceFunktionKey {
 		private final String fromZone;
 		private final String toZone;
 
@@ -165,14 +166,6 @@ public class TripDistributionMatrix {
 			this.fromZone = fromZone;
 			this.toZone = toZone;
 
-		}
-
-		public String getFromZone() {
-			return fromZone;
-		}
-
-		public String getToZone() {
-			return toZone;
 		}
 
 		@Override
@@ -207,7 +200,7 @@ public class TripDistributionMatrix {
 		}
 	}
 
-	static class GravityConstantKey {
+	private static class GravityConstantKey {
 		private final String fromZone;
 		private final String modeORvehType;
 		private final int purpose;
@@ -217,18 +210,6 @@ public class TripDistributionMatrix {
 			this.fromZone = fromZone;
 			this.modeORvehType = mode;
 			this.purpose = purpose;
-		}
-
-		public String getFromZone() {
-			return fromZone;
-		}
-
-		public String getModeORvehType() {
-			return modeORvehType;
-		}
-
-		public int getPurpose() {
-			return purpose;
 		}
 
 		@Override
@@ -271,20 +252,20 @@ public class TripDistributionMatrix {
 	public static class Builder {
 
 		private final List<SimpleFeature> zonesFeatures;
-		private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start;
-		private final HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop;
+		private final HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_start;
+		private final HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_stop;
 		private final String trafficType;
 
 		public static Builder newInstance(ShpOptions shpZones,
-				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
-				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop,
+				HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_start,
+				HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_stop,
 				String trafficType) {
 			return new Builder(shpZones, trafficVolume_start, trafficVolume_stop, trafficType);
 		}
 
 		private Builder(ShpOptions shpZones,
-				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
-				HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop,
+				HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_start,
+				HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_stop,
 				String trafficType) {
 			super();
 			this.zonesFeatures = shpZones.readFeatures();
@@ -325,8 +306,8 @@ public class TripDistributionMatrix {
 	 * @param regionLinksMap 
 	 */
 	void setTripDistributionValue(String startZone, String stopZone, String modeORvehType, Integer purpose, String trafficType, Network network, Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
-		double volumeStart = trafficVolume_start.get(startZone).get(modeORvehType).getDouble(purpose);
-		double volumeStop = trafficVolume_stop.get(stopZone).get(modeORvehType).getDouble(purpose);
+		double volumeStart = trafficVolume_start.get(TrafficVolumeGeneration.makeTrafficVolumeKey(startZone, modeORvehType)).getDouble(purpose);
+		double volumeStop = trafficVolume_stop.get(TrafficVolumeGeneration.makeTrafficVolumeKey(stopZone, modeORvehType)).getDouble(purpose);
 		double resistanceValue = getResistanceFunktionValue(startZone, stopZone, network, regionLinksMap);
 		double gravityConstantA = getGravityConstant(stopZone, trafficVolume_start, modeORvehType, purpose, network, regionLinksMap);
 		roundingError.computeIfAbsent(stopZone, (k) -> new Object2DoubleOpenHashMap<>());
@@ -424,7 +405,7 @@ public class TripDistributionMatrix {
 		for (String stopZone : getListOfZones()) {
 			for (String modeORvehType : getListOfModesOrVehTypes()) {
 				for (Integer purpose : getListOfPurposes()) {
-					double trafficVolume = trafficVolume_stop.get(stopZone).get(modeORvehType).getDouble(purpose);
+					double trafficVolume = trafficVolume_stop.get(TrafficVolumeGeneration.makeTrafficVolumeKey(stopZone, modeORvehType)).getDouble(purpose);
 					int generatedTrafficVolume = getSumOfServicesForStopZone(stopZone, modeORvehType, purpose, trafficType);
 					if (trafficVolume > generatedTrafficVolume) {
 						if (generatedTrafficVolume == 0) {
@@ -473,17 +454,18 @@ public class TripDistributionMatrix {
 	 * @return gravity constant
 	 */
 	private double getGravityConstant(String baseZone,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume, String modeORvehType,
+			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>>  trafficVolume, String modeORvehType,
 			Integer purpose, Network network, Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
 
 		GravityConstantKey gravityKey = makeGravityKey(baseZone, modeORvehType, purpose);
 		if (!gravityConstantACache.containsKey(gravityKey)) {
 			double sum = 0;
-			for (String zone : trafficVolume.keySet()) {
-				double volume = trafficVolume.get(zone).get(modeORvehType).getDouble(purpose);
-				double resistanceValue = getResistanceFunktionValue(baseZone, zone, network, regionLinksMap);
+			for (TrafficVolumeKey trafficVolumeKey : trafficVolume.keySet()) {
+				if (trafficVolumeKey.getModeORvehType().equals(modeORvehType)) {
+				double volume = trafficVolume.get(trafficVolumeKey).getDouble(purpose);
+				double resistanceValue = getResistanceFunktionValue(baseZone, trafficVolumeKey.getZone(), network, regionLinksMap);
 				sum = sum + (volume * resistanceValue);
-			}
+			}}
 			double gravityCostant = 1 / sum;
 			gravityConstantACache.put(gravityKey, gravityCostant);
 		}

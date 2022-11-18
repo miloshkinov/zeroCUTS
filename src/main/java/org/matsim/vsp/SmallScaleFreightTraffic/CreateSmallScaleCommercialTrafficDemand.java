@@ -97,6 +97,7 @@ import org.matsim.vehicles.CostInformation;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
+import org.matsim.vsp.SmallScaleFreightTraffic.TrafficVolumeGeneration.TrafficVolumeKey;
 import org.matsim.vsp.freightAnalysis.FreightAnalyse;
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -259,30 +260,23 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							usedLanduseConfiguration.toString(), shapeFileLandusePath, shapeFileZonePath,
 							shapeFileBuildingsPath, buildingsPerZone);
 
-			ArrayList<String> modesORvehTypes;
 			ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
 
 			switch (usedTrafficType) {
 			case businessTraffic:
-				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
-				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, modesORvehTypes,
+				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone,
 						usedTrafficType.toString(), inputDataDirectory, includeExistingModels);
 				break;
 			case freightTraffic:
-				modesORvehTypes = new ArrayList<String>(
-						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
-				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, modesORvehTypes,
+				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone,
 						usedTrafficType.toString(), inputDataDirectory, includeExistingModels);
 				break;
 			case bothTypes:
-				modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
-				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, modesORvehTypes,
-						"businessTraffic", inputDataDirectory, includeExistingModels);
+				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, "businessTraffic",
+						inputDataDirectory, includeExistingModels);
 				includeExistingModels = false; // because already included in the step before
-				modesORvehTypes = new ArrayList<String>(
-						Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
-				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, modesORvehTypes,
-						"freightTraffic", inputDataDirectory, includeExistingModels);
+				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, "freightTraffic",
+						inputDataDirectory, includeExistingModels);
 				break;
 			default:
 				throw new RuntimeException("No traffic type selected.");
@@ -295,7 +289,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			break;
 		}
 		new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
-		.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemandWithPlans.xml");
+				.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemandWithPlans.xml");
 		controler.run();
 		SmallScaleFreightTrafficUtils.createPlansBasedOnCarrierPlans(controler, usedTrafficType.toString(), sample,
 				output, inputDataDirectory);
@@ -371,8 +365,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 							Carrier newCarrier = CarrierUtils.createCarrier(
 									Id.create(carrier.getId().toString() + "_part_" + (j + 1), Carrier.class));
 							CarrierCapabilities newCarrierCapabilities = CarrierCapabilities.Builder.newInstance()
-									.setFleetSize(carrier.getCarrierCapabilities().getFleetSize())
-									.build();
+									.setFleetSize(carrier.getCarrierCapabilities().getFleetSize()).build();
 							newCarrierCapabilities.getCarrierVehicles()
 									.putAll(carrier.getCarrierCapabilities().getCarrierVehicles());
 							newCarrier.setCarrierCapabilities(newCarrierCapabilities);
@@ -444,14 +437,23 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @throws Exception
 	 */
 	private void createCarriersAndDemand(Config config, Controler controler, Scenario scenario, ShpOptions shpZones,
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, ArrayList<String> modesORvehTypes,
-			String usedTrafficType, Path inputDataDirectory, boolean includeExistingModels) throws Exception {
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String usedTrafficType,
+			Path inputDataDirectory, boolean includeExistingModels) throws Exception {
+
+		ArrayList<String> modesORvehTypes;
+		if (usedTrafficType.equals("freightTraffic"))
+			modesORvehTypes = new ArrayList<String>(
+					Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
+		else if (usedTrafficType.equals("businessTraffic"))
+			modesORvehTypes = new ArrayList<String>(Arrays.asList("total"));
+		else
+			throw new Exception("Invalid traffic type selected!");
 
 		TrafficVolumeGeneration.setInputParamters(usedTrafficType);
 
-		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
+		HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
 				.createTrafficVolume_start(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
-		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
+		HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
 				.createTrafficVolume_stop(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
 
 		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = filterLinksForZones(shpZones,
@@ -919,30 +921,35 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @throws Exception
 	 */
 	private TripDistributionMatrix createTripDistribution(
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop, ShpOptions shpZones,
+			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_start,
+			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_stop, ShpOptions shpZones,
 			String usedTrafficType, Scenario scenario, Map<String, HashMap<Id<Link>, Link>> regionLinksMap)
 			throws Exception {
 
 		final TripDistributionMatrix odMatrix = TripDistributionMatrix.Builder
 				.newInstance(shpZones, trafficVolume_start, trafficVolume_stop, usedTrafficType).build();
-		List<String> listOfZones = new ArrayList<>(trafficVolume_start.keySet());
+		ArrayList<String> listOfZones = new ArrayList<>();
+		trafficVolume_start.forEach((k, v) -> {
+			if (!listOfZones.contains(k.getZone()))
+				listOfZones.add(k.getZone());
+		});
 		Network network = scenario.getNetwork();
 		int count = 0;
 
-		for (String startZone : trafficVolume_start.keySet()) {
+		for (TrafficVolumeKey trafficVolumeKey : trafficVolume_start.keySet()) {
 			count++;
 			if (count % 50 == 0 || count == 1)
 				log.info("Create OD pair " + count + " of " + trafficVolume_start.size());
 
-			for (String modeORvehType : trafficVolume_start.get(startZone).keySet())
-				for (Integer purpose : trafficVolume_start.get(startZone).get(modeORvehType).keySet()) {
-					Collections.shuffle(listOfZones);
-					for (String stopZone : listOfZones) {
-						odMatrix.setTripDistributionValue(startZone, stopZone, modeORvehType, purpose, usedTrafficType,
-								network, regionLinksMap);
-					}
+			String startZone = trafficVolumeKey.getZone();
+			String modeORvehType = trafficVolumeKey.getModeORvehType();
+			for (Integer purpose : trafficVolume_start.get(trafficVolumeKey).keySet()) {
+				Collections.shuffle(listOfZones);
+				for (String stopZone : listOfZones) {
+					odMatrix.setTripDistributionValue(startZone, stopZone, modeORvehType, purpose, usedTrafficType,
+							network, regionLinksMap);
 				}
+			}
 		}
 		odMatrix.clearRoundingError();
 		odMatrix.writeODMatrices(output, usedTrafficType);

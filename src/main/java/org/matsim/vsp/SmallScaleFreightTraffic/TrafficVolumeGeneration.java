@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -42,7 +41,6 @@ import org.matsim.contrib.freight.carrier.Tour.ServiceActivity;
 import org.matsim.contrib.freight.carrier.Tour.TourElement;
 import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.utils.io.IOUtils;
-
 import com.google.common.base.Joiner;
 
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
@@ -62,6 +60,60 @@ public class TrafficVolumeGeneration {
 	private static HashMap<String, HashMap<String, Double>> commitmentRatesStart = new HashMap<String, HashMap<String, Double>>();
 	private static HashMap<String, HashMap<String, Double>> commitmentRatesStop = new HashMap<String, HashMap<String, Double>>();
 
+	static class TrafficVolumeKey {
+		private final String zone;
+		private final String modeORvehType;
+
+		public TrafficVolumeKey(String zone, String modeORvehType) {
+			super();
+			this.zone = zone;
+			this.modeORvehType = modeORvehType;
+		}
+
+		public String getZone() {
+			return zone;
+		}
+
+		public String getModeORvehType() {
+			return modeORvehType;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((zone == null) ? 0 : zone.hashCode());
+			result = prime * result + ((modeORvehType == null) ? 0 : modeORvehType.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			TrafficVolumeKey other = (TrafficVolumeKey) obj;
+			if (zone == null) {
+				if (other.zone != null)
+					return false;
+			} else if (!zone.equals(other.zone))
+				return false;
+			if (modeORvehType == null) {
+				if (other.modeORvehType != null)
+					return false;
+			} else if (!modeORvehType.equals(other.modeORvehType))
+				return false;
+			return true;
+		}
+	}
+
+	static TrafficVolumeKey makeTrafficVolumeKey(String zone, String modeORvehType) {
+		return new TrafficVolumeKey(zone, modeORvehType);
+	}
+
 	/**
 	 * Creates the traffic volume (start) for each zone separated in the
 	 * modesORvehTypes and the purposes.
@@ -74,12 +126,12 @@ public class TrafficVolumeGeneration {
 	 * @return trafficVolume_start
 	 * @throws MalformedURLException
 	 */
-	static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_start(
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output,
-			double sample, ArrayList<String> modesORvehTypes, String trafficType) throws MalformedURLException {
+	static HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> createTrafficVolume_start(
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output, double sample,
+			ArrayList<String> modesORvehTypes, String trafficType) throws MalformedURLException {
 
-		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_start = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
-		calculateTrafficVolumePerZone(trafficVolume_start, resultingDataPerZone, "start", modesORvehTypes, sample);
+		HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_start = new HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>>();
+		calculateTrafficVolumePerZone(trafficVolume_start, resultingDataPerZone, "start", sample, modesORvehTypes);
 		Path outputFileStart = output.resolve("caculatedData")
 				.resolve("TrafficVolume_" + trafficType + "_" + "startPerZone_" + (int) (sample * 100) + "pt.csv");
 		writeCSVTrafficVolume(trafficVolume_start, outputFileStart);
@@ -99,12 +151,12 @@ public class TrafficVolumeGeneration {
 	 * @return trafficVolume_stop
 	 * @throws MalformedURLException
 	 */
-	static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> createTrafficVolume_stop(
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output,
-			double sample, ArrayList<String> modesORvehTypes, String trafficType) throws MalformedURLException {
-//TODO change type to Object2IntMap<Integer>
-		HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume_stop = new HashMap<String, HashMap<String, Object2DoubleMap<Integer>>>();
-		calculateTrafficVolumePerZone(trafficVolume_stop, resultingDataPerZone, "stop", modesORvehTypes, sample);
+	static HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> createTrafficVolume_stop(
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Path output, double sample,
+			ArrayList<String> modesORvehTypes, String trafficType) throws MalformedURLException {
+
+		HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_stop = new HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>>();
+		calculateTrafficVolumePerZone(trafficVolume_stop, resultingDataPerZone, "stop", sample, modesORvehTypes);
 		Path outputFileStop = output.resolve("caculatedData")
 				.resolve("TrafficVolume_" + trafficType + "_" + "stopPerZone_" + (int) (sample * 100) + "pt.csv");
 		writeCSVTrafficVolume(trafficVolume_stop, outputFileStop);
@@ -119,13 +171,13 @@ public class TrafficVolumeGeneration {
 	 * @param resultingDataPerZone
 	 * @param volumeType
 	 * @param modesORvehTypes
-	 * @param sample 
+	 * @param sample
 	 * @return trafficVolume
 	 */
-	private static HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> calculateTrafficVolumePerZone(
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume,
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String volumeType,
-			ArrayList<String> modesORvehTypes, double sample) {
+	private static HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> calculateTrafficVolumePerZone(
+			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume,
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String volumeType, double sample,
+			ArrayList<String> modesORvehTypes) {
 
 		HashMap<Integer, HashMap<String, Double>> generationRates = new HashMap<Integer, HashMap<String, Double>>();
 		HashMap<String, HashMap<String, Double>> commitmentRates = new HashMap<String, HashMap<String, Double>>();
@@ -140,8 +192,8 @@ public class TrafficVolumeGeneration {
 			throw new RuntimeException("No generation and commitment rates selected. Please check!");
 
 		for (String zoneId : resultingDataPerZone.keySet()) {
-			HashMap<String, Object2DoubleMap<Integer>> valuesForZone = new HashMap<String, Object2DoubleMap<Integer>>();
 			for (String modeORvehType : modesORvehTypes) {
+				TrafficVolumeKey key = makeTrafficVolumeKey(zoneId, modeORvehType);
 				Object2DoubleMap<Integer> trafficValuesPerPurpose = new Object2DoubleOpenHashMap<>();
 				for (Integer purpose : generationRates.keySet()) {
 
@@ -158,15 +210,14 @@ public class TrafficVolumeGeneration {
 										.get(category);
 							double generationFactor = generationRates.get(purpose).get(category);
 							double newValue = resultingDataPerZone.get(zoneId).getDouble(category) * generationFactor
-									* commitmentFactor;					
+									* commitmentFactor;
 							trafficValuesPerPurpose.merge(purpose, newValue, Double::sum);
 						}
-					int sampledVolume = (int)Math.round(sample * trafficValuesPerPurpose.getDouble(purpose));
-					trafficValuesPerPurpose.replace(purpose, sampledVolume); //TODO notwendig?
+					int sampledVolume = (int) Math.round(sample * trafficValuesPerPurpose.getDouble(purpose));
+					trafficValuesPerPurpose.replace(purpose, sampledVolume);
 				}
-				valuesForZone.put(modeORvehType, trafficValuesPerPurpose);
+				trafficVolume.put(key, trafficValuesPerPurpose);
 			}
-			trafficVolume.put(zoneId, valuesForZone);
 		}
 		return trafficVolume;
 	}
@@ -179,7 +230,7 @@ public class TrafficVolumeGeneration {
 	 * @param sample
 	 * @throws MalformedURLException
 	 */
-	private static void writeCSVTrafficVolume(HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolume,
+	private static void writeCSVTrafficVolume(HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume,
 			Path outputFileInInputFolder) throws MalformedURLException {
 		BufferedWriter writer = IOUtils.getBufferedWriter(outputFileInInputFolder.toUri().toURL(),
 				StandardCharsets.UTF_8, true);
@@ -187,20 +238,17 @@ public class TrafficVolumeGeneration {
 			String[] header = new String[] { "areaID", "mode/vehType", "1", "2", "3", "4", "5" };
 			JOIN.appendTo(writer, header);
 			writer.write("\n");
-			for (String zoneID : trafficVolume.keySet()) {
-				for (String modeORvehType : trafficVolume.get(zoneID).keySet()) {
-					List<String> row = new ArrayList<>();
-					row.add(zoneID);
-					row.add(modeORvehType);
-					Integer count = 1;
-					while (count < 6) {
-						row.add(String.valueOf((int)
-								trafficVolume.get(zoneID).get(modeORvehType).getDouble(count)));
-						count++;
-					}
-					JOIN.appendTo(writer, row);
-					writer.write("\n");
+			for (TrafficVolumeKey trafficVolumeKey : trafficVolume.keySet()) {
+				List<String> row = new ArrayList<>();
+				row.add(trafficVolumeKey.getZone());
+				row.add(trafficVolumeKey.getModeORvehType());
+				Integer count = 1;
+				while (count < 6) {
+					row.add(String.valueOf((int) trafficVolume.get(trafficVolumeKey).getDouble(count)));
+					count++;
 				}
+				JOIN.appendTo(writer, row);
+				writer.write("\n");
 			}
 			writer.close();
 
@@ -230,7 +278,9 @@ public class TrafficVolumeGeneration {
 		commitmentRatesStop = setCommitmentRates(trafficType, "stop");
 	}
 
-	/** Reduces the traffic volumes based on the added existing models.
+	/**
+	 * Reduces the traffic volumes based on the added existing models.
+	 * 
 	 * @param scenario
 	 * @param regionLinksMap
 	 * @param usedTrafficType
@@ -239,11 +289,12 @@ public class TrafficVolumeGeneration {
 	 */
 	public static void reduceDemandBasedOnExistingCarriers(Scenario scenario,
 			Map<String, HashMap<Id<Link>, Link>> regionLinksMap, String usedTrafficType,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop) {
-		
+			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_start,
+			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_stop) {
+
 		for (Carrier carrier : FreightUtils.addOrGetCarriers(scenario).getCarriers().values()) {
-			if (!carrier.getAttributes().getAsMap().containsKey("subpopulation") || !carrier.getAttributes().getAttribute("subpopulation").equals(usedTrafficType))
+			if (!carrier.getAttributes().getAsMap().containsKey("subpopulation")
+					|| !carrier.getAttributes().getAttribute("subpopulation").equals(usedTrafficType))
 				continue;
 			String modeORvehType = null;
 			if (usedTrafficType.equals("freightTraffic"))
@@ -252,27 +303,33 @@ public class TrafficVolumeGeneration {
 				modeORvehType = "total";
 			Integer purpose = (Integer) carrier.getAttributes().getAttribute("purpose");
 			for (ScheduledTour tour : carrier.getSelectedPlan().getScheduledTours()) {
-				String startZone = SmallScaleFreightTrafficUtils.findZoneOfLink(tour.getTour().getStartLinkId(), regionLinksMap);
+				String startZone = SmallScaleFreightTrafficUtils.findZoneOfLink(tour.getTour().getStartLinkId(),
+						regionLinksMap);
 				for (TourElement tourElement : tour.getTour().getTourElements()) {
 					if (tourElement instanceof ServiceActivity) {
 						ServiceActivity service = (ServiceActivity) tourElement;
-						String stopZone = SmallScaleFreightTrafficUtils.findZoneOfLink(service.getLocation(), regionLinksMap);
-						reduzeVolumeForThisExistingJobElement(trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop, modeORvehType,
-								purpose, startZone, stopZone);
+						String stopZone = SmallScaleFreightTrafficUtils.findZoneOfLink(service.getLocation(),
+								regionLinksMap);
+						reduzeVolumeForThisExistingJobElement(trafficVolumePerTypeAndZone_start,
+								trafficVolumePerTypeAndZone_stop, modeORvehType, purpose, startZone, stopZone);
 					}
 					if (tourElement instanceof Pickup) {
 						Pickup shipment = (Pickup) tourElement;
-						startZone = SmallScaleFreightTrafficUtils.findZoneOfLink(shipment.getShipment().getFrom(), regionLinksMap);
-						String stopZone = SmallScaleFreightTrafficUtils.findZoneOfLink(shipment.getShipment().getTo(), regionLinksMap);
-						reduzeVolumeForThisExistingJobElement(trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop, modeORvehType,
-								purpose, startZone, stopZone);
+						startZone = SmallScaleFreightTrafficUtils.findZoneOfLink(shipment.getShipment().getFrom(),
+								regionLinksMap);
+						String stopZone = SmallScaleFreightTrafficUtils.findZoneOfLink(shipment.getShipment().getTo(),
+								regionLinksMap);
+						reduzeVolumeForThisExistingJobElement(trafficVolumePerTypeAndZone_start,
+								trafficVolumePerTypeAndZone_stop, modeORvehType, purpose, startZone, stopZone);
 					}
 				}
 			}
-		}	
+		}
 	}
 
-	/** Reduces the demand for certain zone.
+	/**
+	 * Reduces the demand for certain zone.
+	 * 
 	 * @param trafficVolumePerTypeAndZone_start
 	 * @param trafficVolumePerTypeAndZone_stop
 	 * @param modeORvehType
@@ -281,34 +338,41 @@ public class TrafficVolumeGeneration {
 	 * @param stopZone
 	 */
 	private static void reduzeVolumeForThisExistingJobElement(
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_start,
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone_stop,
-			String modeORvehType, Integer purpose, String startZone, String stopZone) {
-		
-		if (trafficVolumePerTypeAndZone_start.get(startZone).get(modeORvehType).getDouble(purpose) == 0)
+			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_start,
+			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_stop, String modeORvehType,
+			Integer purpose, String startZone, String stopZone) {
+
+		TrafficVolumeKey trafficVolumeKey_start = makeTrafficVolumeKey(startZone, modeORvehType);
+		TrafficVolumeKey trafficVolumeKey_stop = makeTrafficVolumeKey(stopZone, modeORvehType);
+		if (trafficVolumePerTypeAndZone_start.get(trafficVolumeKey_start).getDouble(purpose) == 0)
 			reduzeVolumeForOtherArea(trafficVolumePerTypeAndZone_start, modeORvehType, purpose);
 		else
-			trafficVolumePerTypeAndZone_start.get(startZone).get(modeORvehType).mergeDouble(purpose, -1, Double::sum);
-		if (trafficVolumePerTypeAndZone_stop.get(stopZone).get(modeORvehType).getDouble(purpose) == 0)
+			trafficVolumePerTypeAndZone_start.get(trafficVolumeKey_start).mergeDouble(purpose, -1, Double::sum);
+		if (trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey_stop).getDouble(purpose) == 0)
 			reduzeVolumeForOtherArea(trafficVolumePerTypeAndZone_stop, modeORvehType, purpose);
 		else
-			trafficVolumePerTypeAndZone_stop.get(stopZone).get(modeORvehType).mergeDouble(purpose, -1, Double::sum);
+			trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey_stop).mergeDouble(purpose, -1, Double::sum);
 	}
 
-	/** Find zone with demand and reduces the demand by 1.
+	/**
+	 * Find zone with demand and reduces the demand by 1.
+	 * 
 	 * @param trafficVolumePerTypeAndZone
 	 * @param modeORvehType
 	 * @param purpose
 	 */
 	private static void reduzeVolumeForOtherArea(
-			HashMap<String, HashMap<String, Object2DoubleMap<Integer>>> trafficVolumePerTypeAndZone,
-			String modeORvehType, Integer purpose) {
-		ArrayList<String> shuffeldZones = new ArrayList<String>(trafficVolumePerTypeAndZone.keySet());
-		Collections.shuffle(shuffeldZones);
-		for (String zone : shuffeldZones) {
-			if (trafficVolumePerTypeAndZone.get(zone).get(modeORvehType).getDouble(purpose) > 0) {
-				trafficVolumePerTypeAndZone.get(zone).get(modeORvehType).mergeDouble(purpose, -1, Double::sum);
-				log.warn("Volume of other zone was reduzed because the volume for the zone where an existing model has a demand has generated demand of 0");
+			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone, String modeORvehType,
+			Integer purpose) {
+		ArrayList<TrafficVolumeKey> shuffeldKeys = new ArrayList<TrafficVolumeKey>(
+				trafficVolumePerTypeAndZone.keySet());
+		Collections.shuffle(shuffeldKeys);
+		for (TrafficVolumeKey trafficVolumeKey : shuffeldKeys) {
+			if (trafficVolumeKey.getModeORvehType().equals(modeORvehType)
+					&& trafficVolumePerTypeAndZone.get(trafficVolumeKey).getDouble(purpose) > 0) {
+				trafficVolumePerTypeAndZone.get(trafficVolumeKey).mergeDouble(purpose, -1, Double::sum);
+				log.warn(
+						"Volume of other zone was reduzed because the volume for the zone where an existing model has a demand has generated demand of 0");
 				break;
 			}
 		}
