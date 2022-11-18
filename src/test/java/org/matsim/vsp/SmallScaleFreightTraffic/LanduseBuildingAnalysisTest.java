@@ -1,3 +1,22 @@
+/* *********************************************************************** *
+ * project: org.matsim.*
+ * Controler.java
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ * copyright       : (C) 2007 by the members listed in the COPYING,        *
+ *                   LICENSE and WARRANTY file.                            *
+ * email           : info at matsim dot org                                *
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *   See also COPYING, LICENSE and WARRANTY file                           *
+ *                                                                         *
+ * *********************************************************************** */
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
 import java.io.File;
@@ -75,39 +94,39 @@ public class LanduseBuildingAnalysisTest {
 			Assert.assertEquals(categories.getDouble("Employee"), employeeSum, MatsimTestUtils.EPSILON);
 
 			if (zone.equals("testArea1_area1")) {
-				Assert.assertEquals(800, resultingDataPerZone.get(zone).getDouble("Inhabitants"),
+				Assert.assertEquals(4000, resultingDataPerZone.get(zone).getDouble("Inhabitants"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(1000, resultingDataPerZone.get(zone).getDouble("Employee"),
+				Assert.assertEquals(3500, resultingDataPerZone.get(zone).getDouble("Employee"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(50, resultingDataPerZone.get(zone).getDouble("Employee Primary Sector"),
+				Assert.assertEquals(0, resultingDataPerZone.get(zone).getDouble("Employee Primary Sector"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(200, resultingDataPerZone.get(zone).getDouble("Employee Construction"),
+				Assert.assertEquals(500, resultingDataPerZone.get(zone).getDouble("Employee Construction"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(100, resultingDataPerZone.get(zone).getDouble("Employee Secondary Sector Rest"),
+				Assert.assertEquals(500, resultingDataPerZone.get(zone).getDouble("Employee Secondary Sector Rest"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(150, resultingDataPerZone.get(zone).getDouble("Employee Retail"),
+				Assert.assertEquals(1000, resultingDataPerZone.get(zone).getDouble("Employee Retail"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(200, resultingDataPerZone.get(zone).getDouble("Employee Traffic/Parcels"),
+				Assert.assertEquals(500, resultingDataPerZone.get(zone).getDouble("Employee Traffic/Parcels"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(300, resultingDataPerZone.get(zone).getDouble("Employee Tertiary Sector Rest"),
+				Assert.assertEquals(1000, resultingDataPerZone.get(zone).getDouble("Employee Tertiary Sector Rest"),
 						MatsimTestUtils.EPSILON);
 			}
 			if (zone.equals("testArea1_area2")) {
-				Assert.assertEquals(800, resultingDataPerZone.get(zone).getDouble("Inhabitants"),
+				Assert.assertEquals(4000, resultingDataPerZone.get(zone).getDouble("Inhabitants"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(1000, resultingDataPerZone.get(zone).getDouble("Employee"),
+				Assert.assertEquals(6500, resultingDataPerZone.get(zone).getDouble("Employee"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(50, resultingDataPerZone.get(zone).getDouble("Employee Primary Sector"),
+				Assert.assertEquals(500, resultingDataPerZone.get(zone).getDouble("Employee Primary Sector"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(200, resultingDataPerZone.get(zone).getDouble("Employee Construction"),
+				Assert.assertEquals(1500, resultingDataPerZone.get(zone).getDouble("Employee Construction"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(100, resultingDataPerZone.get(zone).getDouble("Employee Secondary Sector Rest"),
+				Assert.assertEquals(500, resultingDataPerZone.get(zone).getDouble("Employee Secondary Sector Rest"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(150, resultingDataPerZone.get(zone).getDouble("Employee Retail"),
+				Assert.assertEquals(500, resultingDataPerZone.get(zone).getDouble("Employee Retail"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(200, resultingDataPerZone.get(zone).getDouble("Employee Traffic/Parcels"),
+				Assert.assertEquals(1500, resultingDataPerZone.get(zone).getDouble("Employee Traffic/Parcels"),
 						MatsimTestUtils.EPSILON);
-				Assert.assertEquals(300, resultingDataPerZone.get(zone).getDouble("Employee Tertiary Sector Rest"),
+				Assert.assertEquals(2000, resultingDataPerZone.get(zone).getDouble("Employee Tertiary Sector Rest"),
 						MatsimTestUtils.EPSILON);
 			}
 			if (zone.equals("testArea2_area3")) {
