@@ -287,7 +287,7 @@ public class TrafficVolumeGeneration {
 	 * @param trafficVolumePerTypeAndZone_start
 	 * @param trafficVolumePerTypeAndZone_stop
 	 */
-	public static void reduceDemandBasedOnExistingCarriers(Scenario scenario,
+	static void reduceDemandBasedOnExistingCarriers(Scenario scenario,
 			Map<String, HashMap<Id<Link>, Link>> regionLinksMap, String usedTrafficType,
 			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_start,
 			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_stop) {
@@ -780,7 +780,7 @@ public class TrafficVolumeGeneration {
 				ratesPerPurpose3_4.put("Employee Secondary Sector Rest", 0.0);
 				ratesPerPurpose3_4.put("Employee Retail", 0.06);
 				ratesPerPurpose3_4.put("Employee Traffic/Parcels", 0.0);
-				ratesPerPurpose3_4.put("Employee Tertiary Sector Rest", 0.2);
+				ratesPerPurpose3_4.put("Employee Tertiary Sector Rest", 0.02);
 
 				ratesPerPurpose3_5.put("Inhabitants", 0.0);
 				ratesPerPurpose3_5.put("Employee", 0.0);
@@ -1201,31 +1201,31 @@ public class TrafficVolumeGeneration {
 			commitmentRates.put("1_3", ratesPerPurpose1_3);
 			commitmentRates.put("1_4", ratesPerPurpose1_4);
 			commitmentRates.put("1_5", ratesPerPurpose1_5);
-			commitmentRates.put("2_1", ratesPerPurpose1_1);
-			commitmentRates.put("2_2", ratesPerPurpose1_2);
-			commitmentRates.put("2_3", ratesPerPurpose1_3);
-			commitmentRates.put("2_4", ratesPerPurpose1_4);
-			commitmentRates.put("2_5", ratesPerPurpose1_5);
-			commitmentRates.put("3_1", ratesPerPurpose1_1);
-			commitmentRates.put("3_2", ratesPerPurpose1_2);
-			commitmentRates.put("3_3", ratesPerPurpose1_3);
-			commitmentRates.put("3_4", ratesPerPurpose1_4);
-			commitmentRates.put("3_5", ratesPerPurpose1_5);
-			commitmentRates.put("4_1", ratesPerPurpose1_1);
-			commitmentRates.put("4_2", ratesPerPurpose1_2);
-			commitmentRates.put("4_3", ratesPerPurpose1_3);
-			commitmentRates.put("4_4", ratesPerPurpose1_4);
-			commitmentRates.put("4_5", ratesPerPurpose1_5);
-			commitmentRates.put("5_1", ratesPerPurpose1_1);
-			commitmentRates.put("5_2", ratesPerPurpose1_2);
-			commitmentRates.put("5_3", ratesPerPurpose1_3);
-			commitmentRates.put("5_4", ratesPerPurpose1_4);
-			commitmentRates.put("5_5", ratesPerPurpose1_5);
-			commitmentRates.put("6_1", ratesPerPurpose1_1);
-			commitmentRates.put("6_2", ratesPerPurpose1_2);
-			commitmentRates.put("6_3", ratesPerPurpose1_3);
-			commitmentRates.put("6_4", ratesPerPurpose1_4);
-			commitmentRates.put("6_5", ratesPerPurpose1_5);
+			commitmentRates.put("2_1", ratesPerPurpose2_1);
+			commitmentRates.put("2_2", ratesPerPurpose2_2);
+			commitmentRates.put("2_3", ratesPerPurpose2_3);
+			commitmentRates.put("2_4", ratesPerPurpose2_4);
+			commitmentRates.put("2_5", ratesPerPurpose2_5);
+			commitmentRates.put("3_1", ratesPerPurpose3_1);
+			commitmentRates.put("3_2", ratesPerPurpose3_2);
+			commitmentRates.put("3_3", ratesPerPurpose3_3);
+			commitmentRates.put("3_4", ratesPerPurpose3_4);
+			commitmentRates.put("3_5", ratesPerPurpose3_5);
+			commitmentRates.put("4_1", ratesPerPurpose4_1);
+			commitmentRates.put("4_2", ratesPerPurpose4_2);
+			commitmentRates.put("4_3", ratesPerPurpose4_3);
+			commitmentRates.put("4_4", ratesPerPurpose4_4);
+			commitmentRates.put("4_5", ratesPerPurpose4_5);
+			commitmentRates.put("5_1", ratesPerPurpose5_1);
+			commitmentRates.put("5_2", ratesPerPurpose5_2);
+			commitmentRates.put("5_3", ratesPerPurpose5_3);
+			commitmentRates.put("5_4", ratesPerPurpose5_4);
+			commitmentRates.put("5_5", ratesPerPurpose5_5);
+			commitmentRates.put("6_1", ratesPerPurpose6_1);
+			commitmentRates.put("6_2", ratesPerPurpose6_2);
+			commitmentRates.put("6_3", ratesPerPurpose6_3);
+			commitmentRates.put("6_4", ratesPerPurpose6_4);
+			commitmentRates.put("6_5", ratesPerPurpose6_5);
 		}
 		return commitmentRates;
 	}
