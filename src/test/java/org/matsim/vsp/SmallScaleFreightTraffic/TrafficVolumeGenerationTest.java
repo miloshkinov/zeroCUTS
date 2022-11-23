@@ -45,7 +45,7 @@ public class TrafficVolumeGenerationTest {
 	public MatsimTestUtils utils = new MatsimTestUtils();
 
 	@Test
-	public void trafficVolumeGenerationBusinessTraffic() throws IOException {
+	public void testTrafficVolumeGenerationBusinessTraffic() throws IOException {
 
 		HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
 		HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone = new HashMap<>();
@@ -175,7 +175,7 @@ public class TrafficVolumeGenerationTest {
 	}
 	
 	@Test
-	public void trafficVolumeGenerationFreightTraffic() throws IOException {
+	public void testTrafficVolumeGenerationFreightTraffic() throws IOException {
 
 		HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
 		HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone = new HashMap<>();
@@ -375,6 +375,10 @@ public class TrafficVolumeGenerationTest {
 			Assert.assertEquals(estimatesStart.get(i), sumStart, MatsimTestUtils.EPSILON);
 			Assert.assertEquals(estimatesStop.get(i), sumStop, MatsimTestUtils.EPSILON);
 		}
-		int a = 9;
+	}
+	
+	@Test
+	public void testAddingExistingScenarios() throws IOException {
+		//TODO
 	}
 }
