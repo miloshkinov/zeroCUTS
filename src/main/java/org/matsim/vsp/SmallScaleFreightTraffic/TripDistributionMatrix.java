@@ -400,7 +400,7 @@ public class TripDistributionMatrix {
 	/** Corrects missing trafficVolume in the OD because of roundingErrors based on trafficVolume_stop
 	 * 
 	 */
-	public void clearRoundingError(){
+	void clearRoundingError(){
 
 		for (String stopZone : getListOfZones()) {
 			for (String modeORvehType : getListOfModesOrVehTypes()) {
