@@ -264,18 +264,18 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 
 			switch (usedTrafficType) {
 			case businessTraffic:
-				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone,
+				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone,
 						usedTrafficType.toString(), inputDataDirectory, includeExistingModels);
 				break;
 			case freightTraffic:
-				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone,
+				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone,
 						usedTrafficType.toString(), inputDataDirectory, includeExistingModels);
 				break;
 			case bothTypes:
-				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, "businessTraffic",
+				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone, "businessTraffic",
 						inputDataDirectory, includeExistingModels);
 				includeExistingModels = false; // because already included in the step before
-				createCarriersAndDemand(config, controler, scenario, shpZones, resultingDataPerZone, "freightTraffic",
+				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone, "freightTraffic",
 						inputDataDirectory, includeExistingModels);
 				break;
 			default:
@@ -436,7 +436,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	 * @return
 	 * @throws Exception
 	 */
-	private void createCarriersAndDemand(Config config, Controler controler, Scenario scenario, ShpOptions shpZones,
+	private void createCarriersAndDemand(Config config, Scenario scenario, ShpOptions shpZones,
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String usedTrafficType,
 			Path inputDataDirectory, boolean includeExistingModels) throws Exception {
 
