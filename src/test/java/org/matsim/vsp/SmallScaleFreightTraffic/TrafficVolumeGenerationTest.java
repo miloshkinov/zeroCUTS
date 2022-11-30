@@ -21,14 +21,27 @@ package org.matsim.vsp.SmallScaleFreightTraffic;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.application.options.ShpOptions;
+import org.matsim.contrib.freight.carrier.Carrier;
+import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
+import org.matsim.contrib.freight.carrier.CarrierUtils;
+import org.matsim.contrib.freight.utils.FreightUtils;
+import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.testcases.MatsimTestUtils;
 import org.matsim.vsp.SmallScaleFreightTraffic.TrafficVolumeGeneration.TrafficVolumeKey;
 import org.opengis.feature.simple.SimpleFeature;
@@ -348,7 +361,7 @@ public class TrafficVolumeGenerationTest {
 			Assert.assertEquals(estimatesStop.get(i), sumStop, MatsimTestUtils.EPSILON);
 		}
 		
-		// test for "testArea2_area23"
+		// test for "testArea2_area3"
 		estimatesStart = new HashMap<>();
 		estimatesStart.put(1, 2.);
 		estimatesStart.put(2, 7.);
@@ -378,7 +391,284 @@ public class TrafficVolumeGenerationTest {
 	}
 	
 	@Test
-	public void testAddingExistingScenarios() throws IOException {
-		//TODO
+	public void testAddingExistingScenarios() throws Exception {
+		
+		Path inputDataDirectory = Path.of(utils.getPackageInputDirectory());
+		Path shapeFileZonePath = inputDataDirectory.resolve("testShape/testZones.shp");
+		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
+		String networkPath = "https://raw.githubusercontent.com/matsim-org/matsim-libs/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
+		double sample = 1.;
+		Config config = ConfigUtils.createConfig();
+		config.global().setCoordinateSystem("EPSG:4326");
+		config.network().setInputFile(networkPath);
+		config.network().setInputCRS("EPSG:4326");
+		Scenario scenario = ScenarioUtils.loadScenario(config);
+		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = CreateSmallScaleCommercialTrafficDemand
+				.filterLinksForZones(scenario, shpZones, SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath),
+						networkPath);
+		
+		SmallScaleFreightTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory.resolve("scenarios/testScenario"), regionLinksMap);
+	
+		Assert.assertEquals(3, FreightUtils.getCarriers(scenario).getCarriers().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().size(), MatsimTestUtils.EPSILON);
+		Assert.assertTrue(FreightUtils.getCarriers(scenario).getCarriers().containsKey(Id.create("exampleServiceCarrier_carrier1", Carrier.class)));
+		Assert.assertTrue(FreightUtils.getCarriers(scenario).getCarriers().containsKey(Id.create("exampleServiceCarrier_carrier2", Carrier.class)));
+		Assert.assertTrue(FreightUtils.getCarriers(scenario).getCarriers().containsKey(Id.create("exampleShipmentCarrier_carrier1", Carrier.class)));
+
+		Carrier addedCarrier1 = FreightUtils.getCarriers(scenario).getCarriers().get(Id.create("exampleServiceCarrier_carrier1", Carrier.class));
+		Assert.assertFalse(addedCarrier1.getSelectedPlan() == null);
+		Assert.assertEquals(0, CarrierUtils.getJspritIterations(addedCarrier1), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, addedCarrier1.getCarrierCapabilities().getCarrierVehicles().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, addedCarrier1.getCarrierCapabilities().getVehicleTypes().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(3, addedCarrier1.getSelectedPlan().getScheduledTours().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(30, addedCarrier1.getServices().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(6, addedCarrier1.getAttributes().size(), MatsimTestUtils.EPSILON);
+		Assert.assertTrue(addedCarrier1.getAttributes().getAttribute("subpopulation").equals("businessTraffic"));
+		Assert.assertTrue((int) addedCarrier1.getAttributes().getAttribute("purpose") == 2);
+		Assert.assertTrue(addedCarrier1.getAttributes().getAttribute("existingModel").equals("exampleServiceCarrier"));
+		Assert.assertTrue(addedCarrier1.getAttributes().getAttribute("networkMode").equals("car"));
+		Assert.assertTrue(addedCarrier1.getAttributes().getAttribute("vehicleType") == null);
+		Assert.assertTrue(addedCarrier1.getAttributes().getAttribute("tourStartArea").equals("testArea2_area3"));
+
+		Carrier addedCarrier2 = FreightUtils.getCarriers(scenario).getCarriers().get(Id.create("exampleServiceCarrier_carrier2", Carrier.class));
+		Assert.assertFalse(addedCarrier2.getSelectedPlan() == null);
+		Assert.assertEquals(0, CarrierUtils.getJspritIterations(addedCarrier2), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, addedCarrier2.getCarrierCapabilities().getCarrierVehicles().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, addedCarrier2.getCarrierCapabilities().getVehicleTypes().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(2, addedCarrier2.getSelectedPlan().getScheduledTours().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(20, addedCarrier2.getServices().size(), MatsimTestUtils.EPSILON);
+		Assert.assertTrue(addedCarrier2.getAttributes().getAttribute("subpopulation").equals("businessTraffic"));
+		Assert.assertTrue((int) addedCarrier2.getAttributes().getAttribute("purpose") == 2);
+		Assert.assertTrue(addedCarrier2.getAttributes().getAttribute("existingModel").equals("exampleServiceCarrier"));
+		Assert.assertTrue(addedCarrier2.getAttributes().getAttribute("networkMode").equals("car"));
+		Assert.assertTrue(addedCarrier2.getAttributes().getAttribute("vehicleType") == null);
+		Assert.assertTrue(addedCarrier2.getAttributes().getAttribute("tourStartArea").equals("testArea2_area3"));
+		
+		Carrier addedCarrier3 = FreightUtils.getCarriers(scenario).getCarriers().get(Id.create("exampleShipmentCarrier_carrier1", Carrier.class));
+		Assert.assertTrue(addedCarrier3.getSelectedPlan() == null);
+		Assert.assertEquals(50, CarrierUtils.getJspritIterations(addedCarrier3), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, addedCarrier3.getCarrierCapabilities().getCarrierVehicles().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, addedCarrier3.getCarrierCapabilities().getVehicleTypes().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(FleetSize.INFINITE, addedCarrier3.getCarrierCapabilities().getFleetSize());
+		Assert.assertEquals(0, addedCarrier3.getServices().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(5, addedCarrier3.getShipments().size(), MatsimTestUtils.EPSILON);
+	}
+	
+	@Test
+	public void testAddingExistingScenariosWithSample() throws Exception {
+		
+		Path inputDataDirectory = Path.of(utils.getPackageInputDirectory());
+		Path shapeFileZonePath = inputDataDirectory.resolve("testShape/testZones.shp");
+		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
+		String networkPath = "https://raw.githubusercontent.com/matsim-org/matsim-libs/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
+		double sample = 0.2;
+		Config config = ConfigUtils.createConfig();
+		config.global().setCoordinateSystem("EPSG:4326");
+		config.network().setInputFile(networkPath);
+		config.network().setInputCRS("EPSG:4326");
+		Scenario scenario = ScenarioUtils.loadScenario(config);
+		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = CreateSmallScaleCommercialTrafficDemand
+				.filterLinksForZones(scenario, shpZones, SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath),
+						networkPath);
+		
+		SmallScaleFreightTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory.resolve("scenarios/testScenario"), regionLinksMap);
+	
+		Assert.assertEquals(2, FreightUtils.getCarriers(scenario).getCarriers().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().size(), MatsimTestUtils.EPSILON);
+		Assert.assertTrue(FreightUtils.getCarriers(scenario).getCarriers().containsKey(Id.create("exampleServiceCarrier_carrier1", Carrier.class)));
+		Assert.assertTrue(FreightUtils.getCarriers(scenario).getCarriers().containsKey(Id.create("exampleShipmentCarrier_carrier1", Carrier.class)));
+
+		Carrier addedCarrier1 = FreightUtils.getCarriers(scenario).getCarriers().get(Id.create("exampleServiceCarrier_carrier1", Carrier.class));
+		Assert.assertFalse(addedCarrier1.getSelectedPlan() == null);
+		Assert.assertEquals(0, CarrierUtils.getJspritIterations(addedCarrier1), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, addedCarrier1.getCarrierCapabilities().getCarrierVehicles().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, addedCarrier1.getCarrierCapabilities().getVehicleTypes().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, addedCarrier1.getSelectedPlan().getScheduledTours().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(10, addedCarrier1.getServices().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(6, addedCarrier1.getAttributes().size(), MatsimTestUtils.EPSILON);
+		Assert.assertTrue(addedCarrier1.getAttributes().getAttribute("subpopulation").equals("businessTraffic"));
+		Assert.assertTrue((int) addedCarrier1.getAttributes().getAttribute("purpose") == 2);
+		Assert.assertTrue(addedCarrier1.getAttributes().getAttribute("existingModel").equals("exampleServiceCarrier"));
+		Assert.assertTrue(addedCarrier1.getAttributes().getAttribute("networkMode").equals("car"));
+		Assert.assertTrue(addedCarrier1.getAttributes().getAttribute("vehicleType") == null);
+		Assert.assertTrue(addedCarrier1.getAttributes().getAttribute("tourStartArea").equals("testArea2_area3"));
+		
+		Carrier addedCarrier3 = FreightUtils.getCarriers(scenario).getCarriers().get(Id.create("exampleShipmentCarrier_carrier1", Carrier.class));
+		Assert.assertTrue(addedCarrier3.getSelectedPlan() == null);
+		Assert.assertEquals(50, CarrierUtils.getJspritIterations(addedCarrier3), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, addedCarrier3.getCarrierCapabilities().getCarrierVehicles().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, addedCarrier3.getCarrierCapabilities().getVehicleTypes().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(FleetSize.INFINITE, addedCarrier3.getCarrierCapabilities().getFleetSize());
+		Assert.assertEquals(0, addedCarrier3.getServices().size(), MatsimTestUtils.EPSILON);
+		Assert.assertEquals(1, addedCarrier3.getShipments().size(), MatsimTestUtils.EPSILON);
+	}
+	
+	@Test
+	public void testReducingDemandAfterAddingExistingScenarios() throws Exception {
+		HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection = new HashMap<String, ArrayList<String>>();
+		HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone = new HashMap<>();
+		
+		Path output = Path.of(utils.getOutputDirectory());
+		new File(output.resolve("caculatedData").toString()).mkdir();
+		Path inputDataDirectory = Path.of(utils.getPackageInputDirectory());
+		String usedLanduseConfiguration = "useExistingDataDistribution";
+		Path shapeFileLandusePath = inputDataDirectory.resolve("testShape/testLanduse.shp");
+		Path shapeFileZonePath = inputDataDirectory.resolve("testShape/testZones.shp");
+		Path shapeFileBuildingsPath = inputDataDirectory.resolve("testShape/testBuildings.shp");
+		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
+		String networkPath = "https://raw.githubusercontent.com/matsim-org/matsim-libs/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
+		String usedTrafficType = "freightTraffic";
+		double sample = 1.;
+		ArrayList<String> modesORvehTypes = new ArrayList<String>(
+				Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
+		Config config = ConfigUtils.createConfig();
+		config.global().setCoordinateSystem("EPSG:4326");
+		config.network().setInputFile(networkPath);
+		config.network().setInputCRS("EPSG:4326");
+		Scenario scenario = ScenarioUtils.loadScenario(config);
+		TrafficVolumeGeneration.setInputParamters(usedTrafficType);
+
+		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
+				.createInputDataDistribution(output, landuseCategoriesAndDataConnection,
+						inputDataDirectory.resolve("scenarios/testScenario"), usedLanduseConfiguration,
+						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, buildingsPerZone);
+		
+		HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
+				.createTrafficVolume_start(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
+		HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
+				.createTrafficVolume_stop(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
+
+		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = CreateSmallScaleCommercialTrafficDemand
+				.filterLinksForZones(scenario, shpZones, SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath),
+						networkPath);
+		
+		SmallScaleFreightTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory.resolve("scenarios/testScenario"), regionLinksMap);
+		
+		TrafficVolumeGeneration.reduceDemandBasedOnExistingCarriers(scenario, regionLinksMap, usedTrafficType,
+				trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop);
+		
+		// test for "testArea1_area1"
+				HashMap<Integer, Double> estimatesStart = new HashMap<>();
+				estimatesStart.put(1, 12.);
+				estimatesStart.put(2, 30.);
+				estimatesStart.put(3, 205.);
+				estimatesStart.put(4, 174.);
+				estimatesStart.put(5, 117.);
+				estimatesStart.put(6, 36.);
+				
+				HashMap<Integer, Double> estimatesStop = new HashMap<>();
+				estimatesStop.put(1, 15.);
+				estimatesStop.put(2, 36.);
+				estimatesStop.put(3, 137.);
+				estimatesStop.put(4, 300.);
+				estimatesStop.put(5, 32.);
+				estimatesStop.put(6, 31.);
+				for (int i = 1; i < 7; i++) {
+					double sumStart = 0;
+					double sumStop = 0;
+					for (String modeORvehType : modesORvehTypes) {
+						TrafficVolumeKey trafficVolumeKey = TrafficVolumeGeneration.makeTrafficVolumeKey("testArea1_area1", modeORvehType);
+						sumStart += trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(i);
+						sumStop += trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(i);
+						if (modeORvehType.equals("vehTyp3")) {
+							Assert.assertEquals(3, trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(1), MatsimTestUtils.EPSILON);
+							Assert.assertEquals(6, trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(2), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(44, trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(3), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(42, trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(4), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(28, trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(5), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(23, trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(6), MatsimTestUtils.EPSILON);
+							
+							Assert.assertEquals(4, trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(1), MatsimTestUtils.EPSILON);
+							Assert.assertEquals(8, trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(2), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(26, trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(3), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(73, trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(4), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(6, trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(5), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(15, trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(6), MatsimTestUtils.EPSILON);
+						}
+					}
+					Assert.assertEquals(estimatesStart.get(i), sumStart, MatsimTestUtils.EPSILON);
+					Assert.assertEquals(estimatesStop.get(i), sumStop, MatsimTestUtils.EPSILON);
+				}
+				
+				// test for "testArea1_area2"
+				estimatesStart = new HashMap<>();
+				estimatesStart.put(1, 12.);
+				estimatesStart.put(2, 37.);
+				estimatesStart.put(3, 201.);
+				estimatesStart.put(4, 512.);
+				estimatesStart.put(5, 343.);
+				estimatesStart.put(6, 36.);
+				
+				estimatesStop = new HashMap<>();
+				estimatesStop.put(1, 15.);
+				estimatesStop.put(2, 40.);
+				estimatesStop.put(3, 165.);
+				estimatesStop.put(4, 273.);
+				estimatesStop.put(5, 42.);
+				estimatesStop.put(6, 41.);
+				for (int i = 1; i < 7; i++) {
+					double sumStart = 0;
+					double sumStop = 0;
+					for (String modeORvehType : modesORvehTypes) {
+						TrafficVolumeKey trafficVolumeKey = TrafficVolumeGeneration.makeTrafficVolumeKey("testArea1_area2", modeORvehType);
+						sumStart += trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(i);
+						sumStop += trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(i);
+					}
+					Assert.assertEquals(estimatesStart.get(i), sumStart, MatsimTestUtils.EPSILON);
+					Assert.assertEquals(estimatesStop.get(i), sumStop, MatsimTestUtils.EPSILON);
+				}
+				
+				// test for "testArea2_area3"
+				estimatesStart = new HashMap<>();
+				estimatesStart.put(1, 2.);
+				estimatesStart.put(2, 7.);
+				estimatesStart.put(3, 40.);
+				estimatesStart.put(4, 69.);
+				estimatesStart.put(5, 46.);
+				estimatesStart.put(6, 8.);
+				
+				estimatesStop = new HashMap<>();
+				estimatesStop.put(1, 3.);
+				estimatesStop.put(2, 8.);
+				estimatesStop.put(3, 30.);
+				estimatesStop.put(4, 57.);
+				estimatesStop.put(5, 6.);
+				estimatesStop.put(6, 6.);
+				for (int i = 1; i < 7; i++) {
+					double sumStart = 0;
+					double sumStop = 0;
+					for (String modeORvehType : modesORvehTypes) {
+						TrafficVolumeKey trafficVolumeKey = TrafficVolumeGeneration.makeTrafficVolumeKey("testArea2_area3", modeORvehType);
+						sumStart += trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(i);
+						sumStop += trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(i);
+						if (modeORvehType.equals("vehTyp3")) {
+							Assert.assertEquals(1, trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(1), MatsimTestUtils.EPSILON);
+							Assert.assertEquals(1, trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(2), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(7, trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(3), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(17, trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(4), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(11, trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(5), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(5, trafficVolumePerTypeAndZone_start.get(trafficVolumeKey).getDouble(6), MatsimTestUtils.EPSILON);
+							
+							Assert.assertEquals(1, trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(1), MatsimTestUtils.EPSILON);
+							Assert.assertEquals(2, trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(2), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(6, trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(3), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(14, trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(4), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(1, trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(5), MatsimTestUtils.EPSILON);	
+							Assert.assertEquals(3, trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey).getDouble(6), MatsimTestUtils.EPSILON);
+						}
+					}
+					Assert.assertEquals(estimatesStart.get(i), sumStart, MatsimTestUtils.EPSILON);
+					Assert.assertEquals(estimatesStop.get(i), sumStop, MatsimTestUtils.EPSILON);
+				}
+	}
+	@Test
+	public void testTrafficVolumeKeyGeneration() throws Exception {
+		String zone = "zone1";
+		String mode = "modeA";
+		
+		TrafficVolumeKey newKey = TrafficVolumeGeneration.makeTrafficVolumeKey(zone, mode);
+		
+		Assert.assertTrue(newKey.getZone().equals(zone));
+		Assert.assertTrue(newKey.getModeORvehType().equals(mode));
 	}
 }
