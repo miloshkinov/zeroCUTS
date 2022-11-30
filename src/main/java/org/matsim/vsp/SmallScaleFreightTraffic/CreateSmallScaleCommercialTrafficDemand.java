@@ -456,8 +456,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
 				.createTrafficVolume_stop(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
 
-		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = filterLinksForZones(shpZones,
-				SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath));
+		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = filterLinksForZones(scenario, shpZones,
+				SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath), networkPath.toString());
 
 		if (includeExistingModels) {
 			SmallScaleFreightTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory, regionLinksMap);
@@ -476,6 +476,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		Config config = ConfigUtils.createConfig();
 		config.global().setCoordinateSystem("EPSG:4326");
 		config.network().setInputFile(networkPath.toString());
+		config.network().setInputCRS("EPSG:31468");
 		config.controler().setOutputDirectory(output.toString());
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setLastIteration(0);
@@ -868,19 +869,20 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	}
 
 	/**
+	 * @param scenario 
 	 * @param shpZones
 	 * @param indexZones
 	 * @return
 	 */
-	private Map<String, HashMap<Id<Link>, Link>> filterLinksForZones(ShpOptions shpZones, Index indexZones) {
+	static Map<String, HashMap<Id<Link>, Link>> filterLinksForZones(Scenario scenario, ShpOptions shpZones, Index indexZones, String networkPath) {
 		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = new HashMap<>();
 		List<Link> links;
 		log.info("Filtering and assign links to zones. This take some time...");
-		Network networkToChange = NetworkUtils.readNetwork(networkPath.toString());
+		Network networkToChange = NetworkUtils.readNetwork(networkPath);
 		links = networkToChange.getLinks().values().stream().filter(l -> l.getAllowedModes().contains("car"))
 				.collect(Collectors.toList());
 		links.forEach(l -> l.getAttributes().putAttribute("newCoord",
-				shpZones.createTransformation("EPSG:31468").transform(l.getCoord())));
+				shpZones.createTransformation(scenario.getConfig().network().getInputCRS()).transform(l.getCoord())));
 		links.forEach(l -> l.getAttributes().putAttribute("zone",
 				indexZones.query((Coord) l.getAttributes().getAttribute("newCoord"))));
 		links = links.stream().filter(l -> l.getAttributes().getAttribute("zone") != null).collect(Collectors.toList());
