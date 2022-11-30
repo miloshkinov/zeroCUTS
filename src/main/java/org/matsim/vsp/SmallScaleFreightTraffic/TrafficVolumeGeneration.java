@@ -35,11 +35,15 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.freight.carrier.Carrier;
+import org.matsim.contrib.freight.carrier.CarrierService;
+import org.matsim.contrib.freight.carrier.CarrierShipment;
+import org.matsim.contrib.freight.carrier.CarrierVehicle;
 import org.matsim.contrib.freight.carrier.ScheduledTour;
 import org.matsim.contrib.freight.carrier.Tour.Pickup;
 import org.matsim.contrib.freight.carrier.Tour.ServiceActivity;
 import org.matsim.contrib.freight.carrier.Tour.TourElement;
 import org.matsim.contrib.freight.utils.FreightUtils;
+import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.utils.io.IOUtils;
 import com.google.common.base.Joiner;
 
@@ -302,25 +306,70 @@ public class TrafficVolumeGeneration {
 			else
 				modeORvehType = "total";
 			Integer purpose = (Integer) carrier.getAttributes().getAttribute("purpose");
-			for (ScheduledTour tour : carrier.getSelectedPlan().getScheduledTours()) {
-				String startZone = SmallScaleFreightTrafficUtils.findZoneOfLink(tour.getTour().getStartLinkId(),
-						regionLinksMap);
-				for (TourElement tourElement : tour.getTour().getTourElements()) {
-					if (tourElement instanceof ServiceActivity) {
-						ServiceActivity service = (ServiceActivity) tourElement;
-						String stopZone = SmallScaleFreightTrafficUtils.findZoneOfLink(service.getLocation(),
-								regionLinksMap);
-						reduzeVolumeForThisExistingJobElement(trafficVolumePerTypeAndZone_start,
-								trafficVolumePerTypeAndZone_stop, modeORvehType, purpose, startZone, stopZone);
+			if (carrier.getSelectedPlan() != null) {
+				for (ScheduledTour tour : carrier.getSelectedPlan().getScheduledTours()) {
+					String startZone = SmallScaleFreightTrafficUtils.findZoneOfLink(tour.getTour().getStartLinkId(),
+							regionLinksMap);
+					for (TourElement tourElement : tour.getTour().getTourElements()) {
+						if (tourElement instanceof ServiceActivity) {
+							ServiceActivity service = (ServiceActivity) tourElement;
+							String stopZone = SmallScaleFreightTrafficUtils.findZoneOfLink(service.getLocation(),
+									regionLinksMap);
+							try {
+								reduzeVolumeForThisExistingJobElement(trafficVolumePerTypeAndZone_start,
+										trafficVolumePerTypeAndZone_stop, modeORvehType, purpose, startZone, stopZone);
+							} catch (IllegalArgumentException e) {
+								log.warn("For carrier " + carrier.getId().toString() + "a location of the service "
+										+ service.getService().getId()
+										+ " is not part of the zones. Thats why the traffic volume was not reduces by this service.");
+							}
+						}
+						if (tourElement instanceof Pickup) {
+							Pickup pickup = (Pickup) tourElement;
+							startZone = SmallScaleFreightTrafficUtils.findZoneOfLink(pickup.getShipment().getFrom(),
+									regionLinksMap);
+							String stopZone = SmallScaleFreightTrafficUtils
+									.findZoneOfLink(pickup.getShipment().getTo(), regionLinksMap);
+							try {
+								reduzeVolumeForThisExistingJobElement(trafficVolumePerTypeAndZone_start,
+										trafficVolumePerTypeAndZone_stop, modeORvehType, purpose, startZone, stopZone);
+							} catch (IllegalArgumentException e) {
+								log.warn("For carrier " + carrier.getId().toString() + "a location of the shipment "+ pickup.getShipment().getId() + " is not part of the zones. Thats why the traffic volume was not reduces by this shipment.");
+							}
+						}
 					}
-					if (tourElement instanceof Pickup) {
-						Pickup shipment = (Pickup) tourElement;
-						startZone = SmallScaleFreightTrafficUtils.findZoneOfLink(shipment.getShipment().getFrom(),
+				}
+			} else {
+				if (carrier.getServices().size() != 0) {
+					List<String> possibleStartAreas = new ArrayList<String>();
+					for (CarrierVehicle vehicle : carrier.getCarrierCapabilities().getCarrierVehicles().values()) {
+						possibleStartAreas
+								.add(SmallScaleFreightTrafficUtils.findZoneOfLink(vehicle.getLinkId(), regionLinksMap));
+					}
+					for (CarrierService service : carrier.getServices().values()) {
+						String startZone = (String) possibleStartAreas.toArray()[MatsimRandom.getRandom()
+								.nextInt(possibleStartAreas.size())];
+						String stopZone = SmallScaleFreightTrafficUtils.findZoneOfLink(service.getLocationLinkId(),
 								regionLinksMap);
-						String stopZone = SmallScaleFreightTrafficUtils.findZoneOfLink(shipment.getShipment().getTo(),
+						try {
+							reduzeVolumeForThisExistingJobElement(trafficVolumePerTypeAndZone_start,
+									trafficVolumePerTypeAndZone_stop, modeORvehType, purpose, startZone, stopZone);
+						} catch (IllegalArgumentException e) {
+							log.warn("For carrier " + carrier.getId().toString() + "a location of the service "+ service.getId() + " is not part of the zones. Thats why the traffic volume was not reduces by this service.");
+						}
+					}
+				} else if (carrier.getShipments().size() != 0) {
+					for (CarrierShipment shipment : carrier.getShipments().values()) {
+						String startZone = SmallScaleFreightTrafficUtils.findZoneOfLink(shipment.getFrom(),
 								regionLinksMap);
-						reduzeVolumeForThisExistingJobElement(trafficVolumePerTypeAndZone_start,
-								trafficVolumePerTypeAndZone_stop, modeORvehType, purpose, startZone, stopZone);
+						String stopZone = SmallScaleFreightTrafficUtils.findZoneOfLink(shipment.getTo(),
+								regionLinksMap);
+						try {
+							reduzeVolumeForThisExistingJobElement(trafficVolumePerTypeAndZone_start,
+									trafficVolumePerTypeAndZone_stop, modeORvehType, purpose, startZone, stopZone);
+						} catch (IllegalArgumentException e) {
+							log.warn("For carrier " + carrier.getId().toString() + "a location of the shipment "+ shipment.getId() + " is not part of the zones. Thats why the traffic volume was not reduces by this shipment.");
+						}
 					}
 				}
 			}
@@ -342,16 +391,21 @@ public class TrafficVolumeGeneration {
 			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_stop, String modeORvehType,
 			Integer purpose, String startZone, String stopZone) {
 
-		TrafficVolumeKey trafficVolumeKey_start = makeTrafficVolumeKey(startZone, modeORvehType);
-		TrafficVolumeKey trafficVolumeKey_stop = makeTrafficVolumeKey(stopZone, modeORvehType);
-		if (trafficVolumePerTypeAndZone_start.get(trafficVolumeKey_start).getDouble(purpose) == 0)
-			reduzeVolumeForOtherArea(trafficVolumePerTypeAndZone_start, modeORvehType, purpose);
-		else
-			trafficVolumePerTypeAndZone_start.get(trafficVolumeKey_start).mergeDouble(purpose, -1, Double::sum);
-		if (trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey_stop).getDouble(purpose) == 0)
-			reduzeVolumeForOtherArea(trafficVolumePerTypeAndZone_stop, modeORvehType, purpose);
-		else
-			trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey_stop).mergeDouble(purpose, -1, Double::sum);
+		if (startZone != null && stopZone != null) {
+			TrafficVolumeKey trafficVolumeKey_start = makeTrafficVolumeKey(startZone, modeORvehType);
+			TrafficVolumeKey trafficVolumeKey_stop = makeTrafficVolumeKey(stopZone, modeORvehType);
+			if (trafficVolumePerTypeAndZone_start.get(trafficVolumeKey_start).getDouble(purpose) == 0)
+				reduzeVolumeForOtherArea(trafficVolumePerTypeAndZone_start, modeORvehType, purpose);
+			else
+				trafficVolumePerTypeAndZone_start.get(trafficVolumeKey_start).mergeDouble(purpose, -1, Double::sum);
+			if (trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey_stop).getDouble(purpose) == 0)
+				reduzeVolumeForOtherArea(trafficVolumePerTypeAndZone_stop, modeORvehType, purpose);
+			else
+				trafficVolumePerTypeAndZone_stop.get(trafficVolumeKey_stop).mergeDouble(purpose, -1, Double::sum);
+		}
+		else {
+			throw new IllegalArgumentException();
+		}
 	}
 
 	/**
