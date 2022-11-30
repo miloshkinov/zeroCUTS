@@ -63,6 +63,7 @@ import org.matsim.contrib.freight.carrier.Tour.TourElement;
 import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
 import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.vehicles.Vehicle;
@@ -303,117 +304,141 @@ public class SmallScaleFreightTrafficUtils {
 
 			if (sampleSizeExistingScenario < sampleScenario)
 				throw new Exception("The sample size of the existing scenario " + modelName
-						+ "is smaler than the sample size of the scenario. No upscaling for existing scenarios inplemented.");
+						+ "is smaler than the sample size of the scenario. No upscaling for existing scenarios implemented.");
 
 			double sampleFactor = sampleScenario / sampleSizeExistingScenario;
 
 			int numberOfToursExistingScenario = 0;
 			for (Carrier carrier : carriers.getCarriers().values()) {
-				numberOfToursExistingScenario = numberOfToursExistingScenario
-						+ carrier.getSelectedPlan().getScheduledTours().size();
+				if (!carrier.getPlans().isEmpty())
+					numberOfToursExistingScenario = numberOfToursExistingScenario
+							+ carrier.getSelectedPlan().getScheduledTours().size();
 			}
 			int sampledNumberOfToursExistingScenario = (int) Math.round(numberOfToursExistingScenario * sampleFactor);
 			List<Carrier> carrierToRemove = new ArrayList<Carrier>();
-			int countCarrier = 0;
 			int remaindTours = 0;
 			double roundingError = 0.;
 
 			log.info("The existing scenario " + modelName + " is a " + (int) (sampleSizeExistingScenario * 100)
 					+ "% scenario and has " + numberOfToursExistingScenario + " tours");
 			log.info("The existing scenario " + modelName + " will be sampled down to the scenario sample size of "
-					+ (int) (sampleScenario) + "% which results in " + sampledNumberOfToursExistingScenario
+					+ (int) (sampleScenario * 100) + "% which results in " + sampledNumberOfToursExistingScenario
 					+ " tours.");
 
+			int numberOfAnalyzedTours = 0;
 			for (Carrier carrier : carriers.getCarriers().values()) {
-				countCarrier++;
-				int numberOfOriginalTours = carrier.getSelectedPlan().getScheduledTours().size();
-				int numberOfRemainingTours = (int) Math.round(numberOfOriginalTours * sampleFactor);
-				roundingError = roundingError + numberOfRemainingTours - (numberOfOriginalTours * sampleFactor);
-				int numberOfToursToRemove = numberOfOriginalTours - numberOfRemainingTours;
-				List<ScheduledTour> toursToRemove = new ArrayList<ScheduledTour>();
+				if (!carrier.getPlans().isEmpty()) {
+					int numberOfOriginalTours = carrier.getSelectedPlan().getScheduledTours().size();
+					numberOfAnalyzedTours += numberOfOriginalTours;
+					int numberOfRemainingTours = (int) Math.round(numberOfOriginalTours * sampleFactor);
+					roundingError = roundingError + numberOfRemainingTours - (numberOfOriginalTours * sampleFactor);
+					int numberOfToursToRemove = numberOfOriginalTours - numberOfRemainingTours;
+					List<ScheduledTour> toursToRemove = new ArrayList<ScheduledTour>();
 
-				if (roundingError <= -1 && numberOfToursToRemove > 0) {
-					numberOfToursToRemove = numberOfToursToRemove - 1;
-					numberOfRemainingTours = numberOfRemainingTours + 1;
-					roundingError = roundingError + 1;
-				}
-				if (roundingError >= 1 && numberOfRemainingTours != numberOfToursToRemove) {
-					numberOfToursToRemove = numberOfToursToRemove + 1;
-					numberOfRemainingTours = numberOfRemainingTours - 1;
-					roundingError = roundingError - 1;
-				}
-				remaindTours = remaindTours + numberOfRemainingTours;
-				if (remaindTours > sampledNumberOfToursExistingScenario) {
-					remaindTours = remaindTours - 1;
-					numberOfRemainingTours = numberOfRemainingTours - 1;
-					numberOfToursToRemove = numberOfToursToRemove + 1;
-				}
-				if (countCarrier == carriers.getCarriers().size()
-						&& remaindTours != sampledNumberOfToursExistingScenario) {
-					numberOfRemainingTours = sampledNumberOfToursExistingScenario - remaindTours;
-					numberOfToursToRemove = numberOfOriginalTours - numberOfRemainingTours;
+					if (roundingError <= -1 && numberOfToursToRemove > 0) {
+						numberOfToursToRemove = numberOfToursToRemove - 1;
+						numberOfRemainingTours = numberOfRemainingTours + 1;
+						roundingError = roundingError + 1;
+					}
+					if (roundingError >= 1 && numberOfRemainingTours != numberOfToursToRemove) {
+						numberOfToursToRemove = numberOfToursToRemove + 1;
+						numberOfRemainingTours = numberOfRemainingTours - 1;
+						roundingError = roundingError - 1;
+					}
 					remaindTours = remaindTours + numberOfRemainingTours;
-				}
-				if (numberOfOriginalTours == numberOfToursToRemove) {
-					carrierToRemove.add(carrier);
-					continue;
-				}
+					if (remaindTours > sampledNumberOfToursExistingScenario) {
+						remaindTours = remaindTours - 1;
+						numberOfRemainingTours = numberOfRemainingTours - 1;
+						numberOfToursToRemove = numberOfToursToRemove + 1;
+					}
+					// last carrier with scheduled tours
+					if (numberOfAnalyzedTours == numberOfToursExistingScenario
+							&& remaindTours != sampledNumberOfToursExistingScenario) {
+						numberOfRemainingTours = sampledNumberOfToursExistingScenario - remaindTours;
+						numberOfToursToRemove = numberOfOriginalTours - numberOfRemainingTours;
+						remaindTours = remaindTours + numberOfRemainingTours;
+					}
+					// remove carrier because no tours remaining
+					if (numberOfOriginalTours == numberOfToursToRemove) {
+						carrierToRemove.add(carrier);
+						continue;
+					}
 
-				for (ScheduledTour tour : carrier.getSelectedPlan().getScheduledTours()) {
-					if (toursToRemove.size() < numberOfToursToRemove)
+					while (toursToRemove.size() < numberOfToursToRemove) {
+						Object[] tours = carrier.getSelectedPlan().getScheduledTours().toArray();
+						ScheduledTour tour = (ScheduledTour) tours[MatsimRandom.getRandom().nextInt(tours.length)];
 						toursToRemove.add(tour);
-					else
-						break;
-				}
+						carrier.getSelectedPlan().getScheduledTours().remove(tour);
+					}
 
-				carrier.getSelectedPlan().getScheduledTours().removeAll(toursToRemove);
-
-				// remove services/shipments from removed tours
-				if (carrier.getServices().size() != 0) {
-					for (ScheduledTour removedTour : toursToRemove) {
-						for (TourElement tourElement : removedTour.getTour().getTourElements()) {
-							if (tourElement instanceof ServiceActivity) {
-								ServiceActivity service = (ServiceActivity) tourElement;
-								carrier.getServices().remove(service.getService().getId());
+					// remove services/shipments from removed tours
+					if (carrier.getServices().size() != 0) {
+						for (ScheduledTour removedTour : toursToRemove) {
+							for (TourElement tourElement : removedTour.getTour().getTourElements()) {
+								if (tourElement instanceof ServiceActivity) {
+									ServiceActivity service = (ServiceActivity) tourElement;
+									carrier.getServices().remove(service.getService().getId());
+								}
+							}
+						}
+					} else if (carrier.getShipments().size() != 0) {
+						for (ScheduledTour removedTour : toursToRemove) {
+							for (TourElement tourElement : removedTour.getTour().getTourElements()) {
+								if (tourElement instanceof Pickup) {
+									Pickup pickup = (Pickup) tourElement;
+									carrier.getShipments().remove(pickup.getShipment().getId());
+								}
 							}
 						}
 					}
-				} else if (carrier.getShipments().size() != 0) {
-					for (ScheduledTour removedTour : toursToRemove) {
-						for (TourElement tourElement : removedTour.getTour().getTourElements()) {
-							if (tourElement instanceof Pickup) {
-								Pickup pickup = (Pickup) tourElement;
-								carrier.getShipments().remove(pickup.getShipment().getId());
+					// remove vehicles of removed tours and check if all vehicleTypes are still
+					// needed
+					if (carrier.getCarrierCapabilities().getFleetSize().equals(FleetSize.FINITE)) {
+						for (ScheduledTour removedTour : toursToRemove) {
+							carrier.getCarrierCapabilities().getCarrierVehicles()
+									.remove(removedTour.getVehicle().getId());
+						}
+					} else if (carrier.getCarrierCapabilities().getFleetSize().equals(FleetSize.INFINITE)) {
+						carrier.getCarrierCapabilities().getCarrierVehicles().clear();
+						for (ScheduledTour tour : carrier.getSelectedPlan().getScheduledTours()) {
+							carrier.getCarrierCapabilities().getCarrierVehicles().put(tour.getVehicle().getId(),
+									tour.getVehicle());
+						}
+					}
+					List<VehicleType> vehcileTypesToRemove = new ArrayList<VehicleType>();
+					for (VehicleType existingVehicleType : carrier.getCarrierCapabilities().getVehicleTypes()) {
+						boolean vehicleTypeNeeded = false;
+						for (CarrierVehicle vehicle : carrier.getCarrierCapabilities().getCarrierVehicles().values()) {
+							if (vehicle.getType().equals(existingVehicleType)) {
+								vehicleTypeNeeded = true;
+								usedVehicleTypes.getVehicleTypes().put(existingVehicleType.getId(),
+										existingVehicleType);
 							}
 						}
+						if (vehicleTypeNeeded == false)
+							vehcileTypesToRemove.add(existingVehicleType);
 					}
+					carrier.getCarrierCapabilities().getVehicleTypes().removeAll(vehcileTypesToRemove);
 				}
-				// remove vehicles of removed tours and check if all vehicleTypes are still
-				// needed
-				if (carrier.getCarrierCapabilities().getFleetSize().equals(FleetSize.FINITE)) {
-					for (ScheduledTour removedTour : toursToRemove) {
-						carrier.getCarrierCapabilities().getCarrierVehicles().remove(removedTour.getVehicle().getId());
-					}
-				} else if (carrier.getCarrierCapabilities().getFleetSize().equals(FleetSize.INFINITE)) {
-					carrier.getCarrierCapabilities().getCarrierVehicles().clear();
-					for (ScheduledTour tour : carrier.getSelectedPlan().getScheduledTours()) {
-						carrier.getCarrierCapabilities().getCarrierVehicles().put(tour.getVehicle().getId(),
-								tour.getVehicle());
-					}
-				}
-				List<VehicleType> vehcileTypesToRemove = new ArrayList<VehicleType>();
-				for (VehicleType existingVehicleType : carrier.getCarrierCapabilities().getVehicleTypes()) {
-					boolean vehicleTypeNeeded = false;
-					for (CarrierVehicle vehicle : carrier.getCarrierCapabilities().getCarrierVehicles().values()) {
-						if (vehicle.getType().equals(existingVehicleType)) {
-							vehicleTypeNeeded = true;
-							usedVehicleTypes.getVehicleTypes().put(existingVehicleType.getId(), existingVehicleType);
+				// carriers without solutions
+				else {
+					if (carrier.getServices().size() != 0) {
+						int numberOfServicesToRemove = carrier.getServices().size()
+								- (int) Math.round(carrier.getServices().size() * sampleFactor);
+						for (int i = 0; i < numberOfServicesToRemove; i++) {
+							Object[] services = carrier.getServices().keySet().toArray();
+							carrier.getServices().remove(services[MatsimRandom.getRandom().nextInt(services.length)]);
 						}
 					}
-					if (vehicleTypeNeeded == false)
-						vehcileTypesToRemove.add(existingVehicleType);
+					if (carrier.getShipments().size() != 0) {
+						int numberOfShipmentsToRemove = carrier.getShipments().size()
+								- (int) Math.round(carrier.getShipments().size() * sampleFactor);
+						for (int i = 0; i < numberOfShipmentsToRemove; i++) {
+							Object[] shipments = carrier.getShipments().keySet().toArray();
+							carrier.getShipments().remove(shipments[MatsimRandom.getRandom().nextInt(shipments.length)]);
+						}
+					}
 				}
-				carrier.getCarrierCapabilities().getVehicleTypes().removeAll(vehcileTypesToRemove);
 			}
 			carrierToRemove.forEach(carrier -> carriers.getCarriers().remove(carrier.getId()));
 			FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().putAll(usedVehicleTypes.getVehicleTypes());
@@ -429,29 +454,36 @@ public class SmallScaleFreightTrafficUtils {
 				if (vehicleType != null)
 					newCarrier.getAttributes().putAttribute("vehicleType", vehicleType);
 				newCarrier.setCarrierCapabilities(carrier.getCarrierCapabilities());
-				newCarrier.setSelectedPlan(carrier.getSelectedPlan());
-
-				List<String> startAreas = new ArrayList<String>();
-				for (ScheduledTour tour : newCarrier.getSelectedPlan().getScheduledTours()) {
-					startAreas.add(findZoneOfLink(tour.getTour().getStartLinkId(), regionLinksMap));
-				}
-				newCarrier.getAttributes().putAttribute("tourStartArea",
-						startAreas.stream().collect(Collectors.joining(";")));
 
 				if (carrier.getServices().size() > 0)
 					newCarrier.getServices().putAll(carrier.getServices());
 				else if (carrier.getShipments().size() > 0)
 					newCarrier.getShipments().putAll(carrier.getShipments());
-				CarrierUtils.setJspritIterations(newCarrier, 0); // because carrier already has solution
+				if (carrier.getSelectedPlan() != null) {
+					newCarrier.setSelectedPlan(carrier.getSelectedPlan());
 
-				// recalculate score for selectedPlan
-				VehicleRoutingProblem vrp = MatsimJspritFactory
-						.createRoutingProblemBuilder(carrier, scenario.getNetwork()).build();
-				VehicleRoutingProblemSolution solution = MatsimJspritFactory
-						.createSolution(newCarrier.getSelectedPlan(), vrp);
-				SolutionCostCalculator solutionCostsCalculator = getObjectiveFunction(vrp, Double.MAX_VALUE);
-				double costs = solutionCostsCalculator.getCosts(solution) * (-1);
-				carrier.getSelectedPlan().setScore(costs);
+					List<String> startAreas = new ArrayList<String>();
+					for (ScheduledTour tour : newCarrier.getSelectedPlan().getScheduledTours()) {
+						String tourStartZone = findZoneOfLink(tour.getTour().getStartLinkId(), regionLinksMap);
+						if (!startAreas.contains(tourStartZone))
+							startAreas.add(tourStartZone);
+					}
+					newCarrier.getAttributes().putAttribute("tourStartArea",
+							startAreas.stream().collect(Collectors.joining(";")));
+					
+					CarrierUtils.setJspritIterations(newCarrier, 0);
+					// recalculate score for selectedPlan
+					VehicleRoutingProblem vrp = MatsimJspritFactory
+							.createRoutingProblemBuilder(carrier, scenario.getNetwork()).build();
+					VehicleRoutingProblemSolution solution = MatsimJspritFactory
+							.createSolution(newCarrier.getSelectedPlan(), vrp);
+					SolutionCostCalculator solutionCostsCalculator = getObjectiveFunction(vrp, Double.MAX_VALUE);
+					double costs = solutionCostsCalculator.getCosts(solution) * (-1);
+					carrier.getSelectedPlan().setScore(costs);
+				} else {
+					CarrierUtils.setJspritIterations(newCarrier, CarrierUtils.getJspritIterations(carrier));
+					newCarrier.getCarrierCapabilities().setFleetSize(carrier.getCarrierCapabilities().getFleetSize());
+				}
 				FreightUtils.addOrGetCarriers(scenario).getCarriers().put(newCarrier.getId(), newCarrier);
 			});
 		}
