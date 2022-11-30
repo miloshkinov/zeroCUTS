@@ -138,7 +138,7 @@ public class LanduseBuildingAnalysis {
 			createResultingDataForLanduseInZones(landuseCategoriesPerZone, investigationAreaData, resultingDataPerZone,
 					landuseCategoriesAndDataConnection);
 
-			SmallScaleFreightTrafficUtils.writeResultOfDataDistribution(resultingDataPerZone, outputFileInOutputFolder,
+			SmallScaleCommercialTrafficUtils.writeResultOfDataDistribution(resultingDataPerZone, outputFileInOutputFolder,
 					zoneIdNameConnection);
 		}
 
@@ -265,7 +265,7 @@ public class LanduseBuildingAnalysis {
 		List<SimpleFeature> landuseFeatures = shpLanduse.readFeatures();
 		List<SimpleFeature> zonesFeatures = shpZones.readFeatures();
 
-		Index indexZones = SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath);
+		Index indexZones = SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath);
 
 		for (SimpleFeature singleZone : zonesFeatures) {
 			Object2DoubleMap<String> landusePerCategory = new Object2DoubleOpenHashMap<>();
@@ -360,7 +360,7 @@ public class LanduseBuildingAnalysis {
 			HashMap<String, ArrayList<String>> landuseCategoriesAndDataConnection, Path shapeFileLandusePath,
 			Index indexZones) {
 
-		Index indexLanduse = SmallScaleFreightTrafficUtils.getIndexLanduse(shapeFileLandusePath);
+		Index indexLanduse = SmallScaleCommercialTrafficUtils.getIndexLanduse(shapeFileLandusePath);
 
 		int countOSMObjects = 0;
 		log.info("Analyzing buildings types. This may take some time...");

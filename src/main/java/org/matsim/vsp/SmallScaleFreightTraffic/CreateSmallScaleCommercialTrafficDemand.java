@@ -291,7 +291,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
 				.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemandWithPlans.xml");
 		controler.run();
-		SmallScaleFreightTrafficUtils.createPlansBasedOnCarrierPlans(controler, usedTrafficType.toString(), sample,
+		SmallScaleCommercialTrafficUtils.createPlansBasedOnCarrierPlans(controler, usedTrafficType.toString(), sample,
 				output, inputDataDirectory);
 		FreightAnalyse.main(new String[] { scenario.getConfig().controler().getOutputDirectory(), "true" });
 
@@ -457,10 +457,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 				.createTrafficVolume_stop(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
 
 		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = filterLinksForZones(scenario, shpZones,
-				SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath), networkPath.toString());
+				SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath), networkPath.toString());
 
 		if (includeExistingModels) {
-			SmallScaleFreightTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory, regionLinksMap);
+			SmallScaleCommercialTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory, regionLinksMap);
 			TrafficVolumeGeneration.reduceDemandBasedOnExistingCarriers(scenario, regionLinksMap, usedTrafficType,
 					trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop);
 		}
@@ -828,7 +828,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 	private Id<Link> findPossibleLink(String zone, String selectedCategory, ArrayList<String> noPossibleLinks,
 			Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
 
-		Index indexZones = SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath);
+		Index indexZones = SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath);
 
 		if (buildingsPerZone.isEmpty()) {
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);

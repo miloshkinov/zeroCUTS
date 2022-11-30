@@ -150,7 +150,7 @@ public class LanduseBuildingAnalysisTest {
 		}
 
 		// tests if the reading of the buildings works correctly
-		Index indexZones = SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath);
+		Index indexZones = SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath);
 		ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, null, StandardCharsets.UTF_8);
 		List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
 		Assert.assertEquals(31, buildingsFeatures.size(), MatsimTestUtils.EPSILON);

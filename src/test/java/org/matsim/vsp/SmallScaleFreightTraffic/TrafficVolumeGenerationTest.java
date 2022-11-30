@@ -404,10 +404,10 @@ public class TrafficVolumeGenerationTest {
 		config.network().setInputCRS("EPSG:4326");
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = CreateSmallScaleCommercialTrafficDemand
-				.filterLinksForZones(scenario, shpZones, SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath),
+				.filterLinksForZones(scenario, shpZones, SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath),
 						networkPath);
 		
-		SmallScaleFreightTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory.resolve("scenarios/testScenario"), regionLinksMap);
+		SmallScaleCommercialTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory.resolve("scenarios/testScenario"), regionLinksMap);
 	
 		Assert.assertEquals(3, FreightUtils.getCarriers(scenario).getCarriers().size(), MatsimTestUtils.EPSILON);
 		Assert.assertEquals(1, FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().size(), MatsimTestUtils.EPSILON);
@@ -468,10 +468,10 @@ public class TrafficVolumeGenerationTest {
 		config.network().setInputCRS("EPSG:4326");
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = CreateSmallScaleCommercialTrafficDemand
-				.filterLinksForZones(scenario, shpZones, SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath),
+				.filterLinksForZones(scenario, shpZones, SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath),
 						networkPath);
 		
-		SmallScaleFreightTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory.resolve("scenarios/testScenario"), regionLinksMap);
+		SmallScaleCommercialTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory.resolve("scenarios/testScenario"), regionLinksMap);
 	
 		Assert.assertEquals(2, FreightUtils.getCarriers(scenario).getCarriers().size(), MatsimTestUtils.EPSILON);
 		Assert.assertEquals(1, FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().size(), MatsimTestUtils.EPSILON);
@@ -539,10 +539,10 @@ public class TrafficVolumeGenerationTest {
 				.createTrafficVolume_stop(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
 
 		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = CreateSmallScaleCommercialTrafficDemand
-				.filterLinksForZones(scenario, shpZones, SmallScaleFreightTrafficUtils.getIndexZones(shapeFileZonePath),
+				.filterLinksForZones(scenario, shpZones, SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath),
 						networkPath);
 		
-		SmallScaleFreightTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory.resolve("scenarios/testScenario"), regionLinksMap);
+		SmallScaleCommercialTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory.resolve("scenarios/testScenario"), regionLinksMap);
 		
 		TrafficVolumeGeneration.reduceDemandBasedOnExistingCarriers(scenario, regionLinksMap, usedTrafficType,
 				trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop);

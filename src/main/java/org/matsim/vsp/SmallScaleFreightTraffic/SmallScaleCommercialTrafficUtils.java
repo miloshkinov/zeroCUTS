@@ -85,9 +85,9 @@ import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
  * @author Ricardo Ewert
  *
  */
-public class SmallScaleFreightTrafficUtils {
+public class SmallScaleCommercialTrafficUtils {
 
-	private static final Logger log = LogManager.getLogger(SmallScaleFreightTrafficUtils.class);
+	private static final Logger log = LogManager.getLogger(SmallScaleCommercialTrafficUtils.class);
 	private static final Joiner JOIN = Joiner.on("\t");
 
 	/**
