@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SplittableRandom;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Level;
@@ -47,6 +46,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.application.options.ShpOptions.Index;
 import org.matsim.contrib.freight.FreightConfigGroup;
@@ -113,7 +113,7 @@ import picocli.CommandLine;
  *
  */
 @CommandLine.Command(name = "generate-business-passenger-traffic", description = "Generate business passenger traffic model", showDefaultValues = true)
-public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer> {
+public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand {
 
 	private static final Logger log = LogManager.getLogger(CreateSmallScaleCommercialTrafficDemand.class);
 	private static HashMap<String, HashMap<String, ArrayList<SimpleFeature>>> buildingsPerZone = new HashMap<>();
