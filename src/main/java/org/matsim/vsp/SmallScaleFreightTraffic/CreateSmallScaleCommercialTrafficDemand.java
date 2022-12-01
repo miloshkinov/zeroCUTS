@@ -194,7 +194,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 		prepareVehicles(config);
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
-		Controler controler = null;
 		String carriersFileLocation = null;
 		FreightConfigGroup freightConfigGroup = null;
 		switch (usedCreationOption) {
@@ -219,8 +218,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			freightConfigGroup.setCarriersFile(carriersFileLocation);
 			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 			log.info("Load carriers from: " + carriersFileLocation);
-			controler = prepareControler(scenario);
-			solveSeperatedVRPs(controler);
+			solveSeperatedVRPs(scenario, null);
 			break;
 		default:
 			switch (usedZoneChoice) {
@@ -283,16 +281,16 @@ public class CreateSmallScaleCommercialTrafficDemand implements Callable<Integer
 			}
 			new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
 					.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemand.xml");
-			controler = prepareControler(scenario);
 
 			solveSeperatedVRPs(controler);
 			break;
 		}
 		new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
 				.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemandWithPlans.xml");
+		Controler controler = prepareControler(scenario);
 		controler.run();
-		SmallScaleCommercialTrafficUtils.createPlansBasedOnCarrierPlans(controler, usedTrafficType.toString(), sample,
-				output, inputDataDirectory);
+		SmallScaleCommercialTrafficUtils.createPlansBasedOnCarrierPlans(controler.getScenario(),
+				usedTrafficType.toString(), sample, output, inputDataDirectory);
 		FreightAnalyse.main(new String[] { scenario.getConfig().controler().getOutputDirectory(), "true" });
 
 		return 0;

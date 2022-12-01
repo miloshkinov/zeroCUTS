@@ -62,7 +62,6 @@ import org.matsim.contrib.freight.carrier.Tour.ServiceActivity;
 import org.matsim.contrib.freight.carrier.Tour.TourElement;
 import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
 import org.matsim.contrib.freight.utils.FreightUtils;
-import org.matsim.core.controler.Controler;
 import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.utils.io.IOUtils;
@@ -186,11 +185,10 @@ public class SmallScaleCommercialTrafficUtils {
 	 * @param output
 	 * @param inputDataDirectory
 	 */
-	static void createPlansBasedOnCarrierPlans(Controler controler, String usedTrafficType, double sample, Path output,
+	static void createPlansBasedOnCarrierPlans(Scenario scenario, String usedTrafficType, double sample, Path output,
 			Path inputDataDirectory) {
 
-		Scenario scenario = controler.getScenario();
-		Population population = controler.getScenario().getPopulation();
+		Population population = scenario.getPopulation();
 		PopulationFactory popFactory = population.getFactory();
 
 		Population populationFromCarrier = (Population) scenario.getScenarioElement("allpersons");
@@ -245,8 +243,8 @@ public class SmallScaleCommercialTrafficUtils {
 			population.addPerson(newPerson);
 		}
 		PopulationUtils.writePopulation(population,
-				output.toString() + "/berlin_" + usedTrafficType + "_" + (int) (sample * 100) + "pct_plans.xml.gz");
-		controler.getScenario().getPopulation().getPersons().clear();
+				output.toString() + "/berlin_" + usedTrafficType + "_" + (int) (sample * 100) + "pct_plans.xml.gz"); //TODO make general name
+		scenario.getPopulation().getPersons().clear();
 	}
 
 	/**
