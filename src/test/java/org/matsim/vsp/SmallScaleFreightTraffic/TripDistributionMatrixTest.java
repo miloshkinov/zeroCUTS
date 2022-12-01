@@ -61,9 +61,9 @@ public class TripDistributionMatrixTest {
 		new File(output.resolve("caculatedData").toString()).mkdir();
 		Path inputDataDirectory = Path.of(utils.getPackageInputDirectory());
 		String usedLanduseConfiguration = "useExistingDataDistribution";
-		Path shapeFileLandusePath = inputDataDirectory.resolve("testShape/testLanduse.shp");
-		Path shapeFileZonePath = inputDataDirectory.resolve("testShape/testZones.shp");
-		Path shapeFileBuildingsPath = inputDataDirectory.resolve("testShape/testBuildings.shp");
+		Path shapeFileLandusePath = inputDataDirectory.resolve("shp/testLanduse.shp");
+		Path shapeFileZonePath = inputDataDirectory.resolve("shp/testZones.shp");
+		Path shapeFileBuildingsPath = inputDataDirectory.resolve("shp/testBuildings.shp");
 		String networkLocation = "https://raw.githubusercontent.com/matsim-org/matsim-libs/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
 		Network network = NetworkUtils.readNetwork(networkLocation);
@@ -150,9 +150,9 @@ public class TripDistributionMatrixTest {
 		new File(output.resolve("caculatedData").toString()).mkdir();
 		Path inputDataDirectory = Path.of(utils.getPackageInputDirectory());
 		String usedLanduseConfiguration = "useExistingDataDistribution";
-		Path shapeFileLandusePath = inputDataDirectory.resolve("testShape/testLanduse.shp");
-		Path shapeFileZonePath = inputDataDirectory.resolve("testShape/testZones.shp");
-		Path shapeFileBuildingsPath = inputDataDirectory.resolve("testShape/testBuildings.shp");
+		Path shapeFileLandusePath = inputDataDirectory.resolve("shp/testLanduse.shp");
+		Path shapeFileZonePath = inputDataDirectory.resolve("shp/testZones.shp");
+		Path shapeFileBuildingsPath = inputDataDirectory.resolve("shp/testBuildings.shp");
 		String networkLocation = "https://raw.githubusercontent.com/matsim-org/matsim-libs/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
 		Network network = NetworkUtils.readNetwork(networkLocation);

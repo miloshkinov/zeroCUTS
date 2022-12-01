@@ -55,9 +55,9 @@ public class LanduseBuildingAnalysisTest {
 		new File(output.resolve("caculatedData").toString()).mkdir();
 		Path inputDataDirectory = Path.of(utils.getPackageInputDirectory());
 		String usedLanduseConfiguration = "useExistingDataDistribution";
-		Path shapeFileLandusePath = inputDataDirectory.resolve("testShape/testLanduse.shp");
-		Path shapeFileZonePath = inputDataDirectory.resolve("testShape/testZones.shp");
-		Path shapeFileBuildingsPath = inputDataDirectory.resolve("testShape/testBuildings.shp");
+		Path shapeFileLandusePath = inputDataDirectory.resolve("shp/testLanduse.shp");
+		Path shapeFileZonePath = inputDataDirectory.resolve("shp/testZones.shp");
+		Path shapeFileBuildingsPath = inputDataDirectory.resolve("shp/testBuildings.shp");
 
 		// Test if the reading of the existing data distribution works correctly
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
@@ -247,9 +247,9 @@ public class LanduseBuildingAnalysisTest {
 		new File(output.resolve("caculatedData").toString()).mkdir();
 		Path inputDataDirectory = Path.of(utils.getPackageInputDirectory());
 		String usedLanduseConfiguration = "useOSMBuildingsAndLanduse";
-		Path shapeFileLandusePath = inputDataDirectory.resolve("testShape/testLanduse.shp");
-		Path shapeFileZonePath = inputDataDirectory.resolve("testShape/testZones.shp");
-		Path shapeFileBuildingsPath = inputDataDirectory.resolve("testShape/testBuildings.shp");
+		Path shapeFileLandusePath = inputDataDirectory.resolve("shp/testLanduse.shp");
+		Path shapeFileZonePath = inputDataDirectory.resolve("shp/testZones.shp");
+		Path shapeFileBuildingsPath = inputDataDirectory.resolve("shp/testBuildings.shp");
 
 		// Analyze resultingData per zone
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis

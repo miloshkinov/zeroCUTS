@@ -67,9 +67,9 @@ public class TrafficVolumeGenerationTest {
 		new File(output.resolve("caculatedData").toString()).mkdir();
 		Path inputDataDirectory = Path.of(utils.getPackageInputDirectory());
 		String usedLanduseConfiguration = "useExistingDataDistribution";
-		Path shapeFileLandusePath = inputDataDirectory.resolve("testShape/testLanduse.shp");
-		Path shapeFileZonePath = inputDataDirectory.resolve("testShape/testZones.shp");
-		Path shapeFileBuildingsPath = inputDataDirectory.resolve("testShape/testBuildings.shp");
+		Path shapeFileLandusePath = inputDataDirectory.resolve("shp/testLanduse.shp");
+		Path shapeFileZonePath = inputDataDirectory.resolve("shp/testZones.shp");
+		Path shapeFileBuildingsPath = inputDataDirectory.resolve("shp/testBuildings.shp");
 
 	
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
@@ -197,9 +197,9 @@ public class TrafficVolumeGenerationTest {
 		new File(output.resolve("caculatedData").toString()).mkdir();
 		Path inputDataDirectory = Path.of(utils.getPackageInputDirectory());
 		String usedLanduseConfiguration = "useExistingDataDistribution";
-		Path shapeFileLandusePath = inputDataDirectory.resolve("testShape/testLanduse.shp");
-		Path shapeFileZonePath = inputDataDirectory.resolve("testShape/testZones.shp");
-		Path shapeFileBuildingsPath = inputDataDirectory.resolve("testShape/testBuildings.shp");
+		Path shapeFileLandusePath = inputDataDirectory.resolve("shp/testLanduse.shp");
+		Path shapeFileZonePath = inputDataDirectory.resolve("shp/testZones.shp");
+		Path shapeFileBuildingsPath = inputDataDirectory.resolve("shp/testBuildings.shp");
 
 	
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
@@ -394,7 +394,7 @@ public class TrafficVolumeGenerationTest {
 	public void testAddingExistingScenarios() throws Exception {
 		
 		Path inputDataDirectory = Path.of(utils.getPackageInputDirectory());
-		Path shapeFileZonePath = inputDataDirectory.resolve("testShape/testZones.shp");
+		Path shapeFileZonePath = inputDataDirectory.resolve("shp/testZones.shp");
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
 		String networkPath = "https://raw.githubusercontent.com/matsim-org/matsim-libs/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 		double sample = 1.;
@@ -458,7 +458,7 @@ public class TrafficVolumeGenerationTest {
 	public void testAddingExistingScenariosWithSample() throws Exception {
 		
 		Path inputDataDirectory = Path.of(utils.getPackageInputDirectory());
-		Path shapeFileZonePath = inputDataDirectory.resolve("testShape/testZones.shp");
+		Path shapeFileZonePath = inputDataDirectory.resolve("shp/testZones.shp");
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
 		String networkPath = "https://raw.githubusercontent.com/matsim-org/matsim-libs/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 		double sample = 0.2;
@@ -512,9 +512,9 @@ public class TrafficVolumeGenerationTest {
 		new File(output.resolve("caculatedData").toString()).mkdir();
 		Path inputDataDirectory = Path.of(utils.getPackageInputDirectory());
 		String usedLanduseConfiguration = "useExistingDataDistribution";
-		Path shapeFileLandusePath = inputDataDirectory.resolve("testShape/testLanduse.shp");
-		Path shapeFileZonePath = inputDataDirectory.resolve("testShape/testZones.shp");
-		Path shapeFileBuildingsPath = inputDataDirectory.resolve("testShape/testBuildings.shp");
+		Path shapeFileLandusePath = inputDataDirectory.resolve("shp/testLanduse.shp");
+		Path shapeFileZonePath = inputDataDirectory.resolve("shp/testZones.shp");
+		Path shapeFileBuildingsPath = inputDataDirectory.resolve("shp/testBuildings.shp");
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
 		String networkPath = "https://raw.githubusercontent.com/matsim-org/matsim-libs/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 		String usedTrafficType = "freightTraffic";
