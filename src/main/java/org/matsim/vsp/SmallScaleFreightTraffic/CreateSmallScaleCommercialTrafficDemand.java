@@ -142,9 +142,12 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	private static Path inputDataDirectory;
 
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
-	private static Path networkPath;
+	private static String networkLocation;
 
-	@CommandLine.Option(names = "--sample", defaultValue = "0.01", description = "Scaling factor of the freight traffic (0, 1)", required = true)
+	@CommandLine.Option(names = "--networkCRS", defaultValue = "EPSG:31468", description = "CRS of the network", required = true)
+	private static String networkCRS;
+
+	@CommandLine.Option(names = "--sample", defaultValue = "0.001", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
 
 	@CommandLine.Option(names = "--output", description = "Path to output folder", required = true, defaultValue = "output/BusinessPassengerTraffic/")
@@ -207,7 +210,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			freightConfigGroup.setCarriersFile(carriersFileLocation);
 			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 			log.info("Load carriers from: " + carriersFileLocation);
-			controler = prepareControler(scenario);
 			break;
 		case useExistingCarrierFileWithoutSolution:
 			if (includeExistingModels)
@@ -472,9 +474,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	 */
 	private Config prepareConfig() {
 		Config config = ConfigUtils.createConfig();
-		config.global().setCoordinateSystem("EPSG:4326");
-		config.network().setInputFile(networkPath.toString());
-		config.network().setInputCRS("EPSG:31468");
+		config.global().setCoordinateSystem("EPSG:4326"); // TODO make it global
+		config.network().setInputFile(networkLocation);
+		config.network().setInputCRS(networkCRS);
 		config.controler().setOutputDirectory(output.toString());
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 		config.controler().setLastIteration(0);
