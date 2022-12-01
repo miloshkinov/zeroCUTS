@@ -252,21 +252,23 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 							shapeFileBuildingsPath, buildingsPerZone);
 
 			ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
-
+			Map<String, HashMap<Id<Link>, Link>> regionLinksMap = filterLinksForZones(scenario, shpZones,
+					SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath), networkLocation);
+			
 			switch (usedTrafficType) {
 			case businessTraffic:
-				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone,
-						usedTrafficType.toString(), inputDataDirectory, includeExistingModels);
+				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone, regionLinksMap, usedTrafficType.toString(),
+						inputDataDirectory, includeExistingModels);
 				break;
 			case freightTraffic:
-				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone,
-						usedTrafficType.toString(), inputDataDirectory, includeExistingModels);
+				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone, regionLinksMap, usedTrafficType.toString(),
+						inputDataDirectory, includeExistingModels);
 				break;
 			case bothTypes:
-				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone, "businessTraffic",
+				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone, regionLinksMap, "businessTraffic",
 						inputDataDirectory, includeExistingModels);
 				includeExistingModels = false; // because already included in the step before
-				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone, "freightTraffic",
+				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone, regionLinksMap, "freightTraffic",
 						inputDataDirectory, includeExistingModels);
 				break;
 			default:
@@ -275,7 +277,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
 					.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemand.xml");
 
-			solveSeperatedVRPs(controler);
+			solveSeperatedVRPs(scenario, regionLinksMap);
 			break;
 		}
 		new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
@@ -290,11 +292,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	}
 
 	/**
-	 * @param controler
+	 * @param originalScenario
+	 * @param regionLinksMap 
 	 * @throws Exception
 	 */
-	private void solveSeperatedVRPs(Controler controler) throws Exception {
-		Scenario originalScenario = controler.getScenario();
+	private void solveSeperatedVRPs(Scenario originalScenario, Map<String, HashMap<Id<Link>, Link>> regionLinksMap) throws Exception {
 
 		boolean splitCarrier = true;
 		boolean splitVRPs = false;
@@ -413,6 +415,19 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 				break;
 		}
 		FreightUtils.getCarriers(originalScenario).getCarriers().putAll(solvedCarriers);
+		FreightUtils.getCarriers(originalScenario).getCarriers().values().forEach(carrier -> {
+			if (regionLinksMap != null && !carrier.getAttributes().getAsMap().containsKey("tourStartArea")) {
+				List<String> startAreas = new ArrayList<String>();
+				for (ScheduledTour tour : carrier.getSelectedPlan().getScheduledTours()) {
+					String tourStartZone = SmallScaleCommercialTrafficUtils
+							.findZoneOfLink(tour.getTour().getStartLinkId(), regionLinksMap);
+					if (!startAreas.contains(tourStartZone))
+						startAreas.add(tourStartZone);
+				}
+				carrier.getAttributes().putAttribute("tourStartArea",
+						startAreas.stream().collect(Collectors.joining(";")));
+			}
+		});
 	}
 
 	/**
@@ -421,6 +436,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	 * @param shpZones
 	 * @param regionLinksMap
 	 * @param resultingDataPerZone
+	 * @param regionLinksMap 
 	 * @param modesORvehTypes
 	 * @param inputDataDirectory
 	 * @param includeExistingModels
@@ -428,7 +444,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	 * @throws Exception
 	 */
 	private void createCarriersAndDemand(Config config, Scenario scenario, ShpOptions shpZones,
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, String usedTrafficType,
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Map<String, HashMap<Id<Link>, Link>> regionLinksMap, String usedTrafficType,
 			Path inputDataDirectory, boolean includeExistingModels) throws Exception {
 
 		ArrayList<String> modesORvehTypes;
@@ -446,9 +462,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 				.createTrafficVolume_start(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
 		HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_stop = TrafficVolumeGeneration
 				.createTrafficVolume_stop(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
-
-		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = filterLinksForZones(scenario, shpZones,
-				SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath), networkPath.toString());
 
 		if (includeExistingModels) {
 			SmallScaleCommercialTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory, regionLinksMap);
