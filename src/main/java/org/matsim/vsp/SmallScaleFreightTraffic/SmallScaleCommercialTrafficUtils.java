@@ -232,6 +232,8 @@ public class SmallScaleCommercialTrafficUtils {
 			Person newPerson = popFactory.createPerson(person.getId());
 			newPerson.addPlan(plan);
 			PopulationUtils.putSubpopulation(newPerson, subpopulation);
+			newPerson.getAttributes().putAttribute("purpose",
+					relatedCarrier.getAttributes().getAttribute("purpose"));
 			if (relatedCarrier.getAttributes().getAsMap().containsKey("tourStartArea"))
 				newPerson.getAttributes().putAttribute("tourStartArea",
 						relatedCarrier.getAttributes().getAttribute("tourStartArea"));
