@@ -130,10 +130,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
 	}
 
-	private enum ZoneChoice {
-		useDistricts, useTrafficCells
-	}
-
 	private enum TrafficType {
 		businessTraffic, freightTraffic, bothTypes
 	}
@@ -160,11 +156,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	private CreationOption usedCreationOption;
 // useExistingCarrierFileWithSolution, createNewCarrierFile, useExistingCarrierFileWithoutSolution
 
-	@CommandLine.Option(names = "--zoneChoice", defaultValue = "useTrafficCells", description = "Set option input zones. Options: useDistricts, useTrafficCells")
-	private ZoneChoice usedZoneChoice;
-// useDistricts, useTrafficCells
-
-	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useOSMBuildingsAndLanduse", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
+	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useExistingDataDistribution", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
 	private LanduseConfiguration usedLanduseConfiguration;
 // useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
 
@@ -174,6 +166,18 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 
 	@CommandLine.Option(names = "--includeExistingModels", description = "If models for some segments exist they can be included.", defaultValue = "false")
 	private String includeExistingModels_Input;
+
+	@CommandLine.Option(names = "--zoneShapeFileName", defaultValue = "berlinBrandenburg_Zones_VKZ_4326.shp", description = "Name of the zone shape file. The location of the file ")
+	private String zoneShapeFileName;
+// berlinBrandenburg_Zones_VKZ_4326.shp, berlinBrandenburg_Zones_districts_4326.shp
+
+	@CommandLine.Option(names = "--buildingsShapeFileName", defaultValue = "buildings_sample_BerlinBrandenburg_4326.shp", description = "Name of the zone shape file. The location of the file ")
+	private String buildingsShapeFileName;
+// buildings_BerlinBrandenburg_4326.shp, buildings_sample_BerlinBrandenburg_4326.shp
+
+	@CommandLine.Option(names = "--landuseShapeFileName", defaultValue = "berlinBrandenburg_landuse_4326.shp", description = "Name of the zone shape file. The location of the file ")
+	private String landuseShapeFileName;
+// berlinBrandenburg_landuse_4326.shp
 
 	private final static SplittableRandom rnd = new SplittableRandom(4711);
 
@@ -223,26 +227,13 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			solveSeperatedVRPs(scenario, null);
 			break;
 		default:
-			switch (usedZoneChoice) {
-			case useDistricts:
-				shapeFileZonePath = inputDataDirectory.getParent().getParent().resolve("shp")
-						.resolve("berlinBrandenburg").resolve("berlinBrandenburg_Zones_districts_4326.shp");
-				break;
-			case useTrafficCells:
-				shapeFileZonePath = inputDataDirectory.getParent().getParent().resolve("shp")
-						.resolve("berlinBrandenburg").resolve("berlinBrandenburg_Zones_VKZ_4326.shp");
-				break;
-			default:
-				break;
-			}
+			shapeFileZonePath = inputDataDirectory.getParent().getParent().resolve("shp").resolve(zoneShapeFileName);
 
 			shapeFileLandusePath = inputDataDirectory.getParent().getParent().resolve("shp")
-					.resolve("berlinBrandenburg").resolve("berlinBrandenburg_landuse_4326.shp");
+					.resolve(landuseShapeFileName);
 
 			shapeFileBuildingsPath = inputDataDirectory.getParent().getParent().resolve("shp")
-					.resolve("berlinBrandenburg").resolve("buildings_sample_BerlinBrandenburg_4326.shp");
-//			shapeFileBuildingsPath = inputDataDirectory.getParent().getParent().resolve("shp")
-//					.resolve("berlinBrandenburg").resolve("buildings_BerlinBrandenburg_4326.shp");
+					.resolve(buildingsShapeFileName);
 
 			if (!Files.exists(shapeFileLandusePath)) {
 				throw new Exception("Required landuse shape file not found:" + shapeFileLandusePath.toString());
