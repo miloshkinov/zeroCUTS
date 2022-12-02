@@ -119,6 +119,5 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 			countedTours += carrier_withSolution.getSelectedPlan().getScheduledTours().size();
 		}
 		Assert.assertEquals(population.getPersons().size(), countedTours, 0);
-		int a = 8;
 	}
 }
