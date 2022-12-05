@@ -134,7 +134,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		businessTraffic, freightTraffic, bothTypes
 	}
 
-	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/scenarios/1pct_bothTypes/")
+	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/berlin/scenarios/1pct_bothTypes/")
 	private static Path inputDataDirectory;
 
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
@@ -149,10 +149,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	@CommandLine.Option(names = "--output", description = "Path to output folder", required = true, defaultValue = "output/BusinessPassengerTraffic/")
 	private Path output;
 
-	@CommandLine.Option(names = "--jspritIterations", description = "Set number of jsprit iterations", required = true, defaultValue = "15")
+	@CommandLine.Option(names = "--jspritIterations", description = "Set number of jsprit iterations", required = true, defaultValue = "1")
 	private static int jspritIterations;
 
-	@CommandLine.Option(names = "--creationOption", defaultValue = "useExistingCarrierFileWithSolution", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
+	@CommandLine.Option(names = "--creationOption", defaultValue = "createNewCarrierFile", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
 	private CreationOption usedCreationOption;
 // useExistingCarrierFileWithSolution, createNewCarrierFile, useExistingCarrierFileWithoutSolution
 
@@ -191,8 +191,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		/*
 		 * TODO: bei only landuse; was passiert mit construction?
 		 */
-
-		output = output.resolve(java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay()
+		String modelName = inputDataDirectory.getParent().getParent().getFileName().toString();
+		output = output.resolve(modelName).resolve(java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay()
 				+ "_" + usedTrafficType.toString());
 		boolean includeExistingModels = Boolean.parseBoolean(includeExistingModels_Input);
 

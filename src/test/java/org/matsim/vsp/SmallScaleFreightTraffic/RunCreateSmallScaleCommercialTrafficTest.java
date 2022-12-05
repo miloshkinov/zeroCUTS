@@ -87,7 +87,7 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 		String carriersWSolutionFileLocation = null;
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 
-		for (File outputFiles : Objects.requireNonNull(outputFolder.listFiles())) {
+		for (File outputFiles : Objects.requireNonNull(outputFolder.listFiles()[0].listFiles())) {
 
 			if (outputFiles.getName().contains("pct_plans.xml.gz"))
 				population = PopulationUtils.readPopulation(outputFiles.getPath());

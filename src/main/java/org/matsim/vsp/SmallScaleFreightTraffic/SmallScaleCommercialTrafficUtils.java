@@ -242,8 +242,9 @@ public class SmallScaleCommercialTrafficUtils {
 			}));
 			population.addPerson(newPerson);
 		}
+		String modelName = inputDataDirectory.getParent().getParent().getFileName().toString();
 		PopulationUtils.writePopulation(population,
-				output.toString() + "/berlin_" + usedTrafficType + "_" + (int) (sample * 100) + "pct_plans.xml.gz"); //TODO make general name
+				output.toString() + "/"+modelName +"_" + usedTrafficType + "_" + (int) (sample * 100) + "pct_plans.xml.gz"); //TODO make general name
 		scenario.getPopulation().getPersons().clear();
 	}
 
