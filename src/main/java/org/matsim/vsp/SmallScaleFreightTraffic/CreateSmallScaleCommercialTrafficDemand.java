@@ -144,30 +144,30 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	private static int jspritIterations;
 
 	@CommandLine.Option(names = "--creationOption", defaultValue = "createNewCarrierFile", description = "Set option of mode differentiation:  useExistingCarrierFile, createNewCarrierFile")
-	private CreationOption usedCreationOption;
+	private static CreationOption usedCreationOption;
 // useExistingCarrierFileWithSolution, createNewCarrierFile, useExistingCarrierFileWithoutSolution
 
 	@CommandLine.Option(names = "--landuseConfiguration", defaultValue = "useExistingDataDistribution", description = "Set option of used OSM data. Options: useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution")
-	private LanduseConfiguration usedLanduseConfiguration;
+	private static LanduseConfiguration usedLanduseConfiguration;
 // useOnlyOSMLanduse, useOSMBuildingsAndLanduse, useExistingDataDistribution
 
 	@CommandLine.Option(names = "--trafficType", defaultValue = "freightTraffic", description = "Select traffic type. Options: commercialPassengerTraffic, freightTraffic")
-	private TrafficType usedTrafficType;
+	private static TrafficType usedTrafficType;
 // businessTraffic, freightTraffic, bothTypes
 
 	@CommandLine.Option(names = "--includeExistingModels", description = "If models for some segments exist they can be included.", defaultValue = "false")
-	private String includeExistingModels_Input;
+	private static String includeExistingModels_Input;
 
 	@CommandLine.Option(names = "--zoneShapeFileName", defaultValue = "berlinBrandenburg_Zones_VKZ_4326.shp", description = "Name of the zone shape file. The location of the file ")
-	private String zoneShapeFileName;
+	private static String zoneShapeFileName;
 // berlinBrandenburg_Zones_VKZ_4326.shp, berlinBrandenburg_Zones_districts_4326.shp
 
 	@CommandLine.Option(names = "--buildingsShapeFileName", defaultValue = "buildings_sample_BerlinBrandenburg_4326.shp", description = "Name of the zone shape file. The location of the file ")
-	private String buildingsShapeFileName;
+	private static String buildingsShapeFileName;
 // buildings_BerlinBrandenburg_4326.shp, buildings_sample_BerlinBrandenburg_4326.shp
 
 	@CommandLine.Option(names = "--landuseShapeFileName", defaultValue = "berlinBrandenburg_landuse_4326.shp", description = "Name of the zone shape file. The location of the file ")
-	private String landuseShapeFileName;
+	private static String landuseShapeFileName;
 // berlinBrandenburg_landuse_4326.shp
 
 	private final static SplittableRandom rnd = new SplittableRandom(4711);
