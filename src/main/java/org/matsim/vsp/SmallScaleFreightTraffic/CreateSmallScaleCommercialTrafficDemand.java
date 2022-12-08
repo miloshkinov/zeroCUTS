@@ -20,6 +20,7 @@
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
 import java.io.File;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -78,7 +79,6 @@ import org.matsim.core.config.groups.ControlerConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.gbl.Gbl;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.routes.NetworkRoute;
@@ -137,17 +137,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/berlin/")
 	private static Path inputDataDirectory;
 
-	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
-	private static String networkLocation;
-
-	@CommandLine.Option(names = "--networkCRS", defaultValue = "EPSG:31468", description = "CRS of the network", required = true)
-	private static String networkCRS;
-
 	@CommandLine.Option(names = "--sample", defaultValue = "0.001", description = "Scaling factor of the freight traffic (0, 1)", required = true)
 	private double sample;
-
-	@CommandLine.Option(names = "--output", description = "Path to output folder", required = true, defaultValue = "output/BusinessPassengerTraffic/")
-	private Path output;
 
 	@CommandLine.Option(names = "--jspritIterations", description = "Set number of jsprit iterations", required = true, defaultValue = "1")
 	private static int jspritIterations;
@@ -194,9 +185,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		String modelName = inputDataDirectory.getFileName().toString();
 		boolean includeExistingModels = Boolean.parseBoolean(includeExistingModels_Input);
 
-		Config config = prepareConfig();
-
-		prepareVehicles(config);
+		Config config = readAndCheckConfig(inputDataDirectory, modelName);
+		Path output = Path.of(config.controler().getOutputDirectory());
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		String carriersFileLocation = null;
@@ -259,18 +249,18 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			
 			switch (usedTrafficType) {
 			case businessTraffic:
-				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone, regionLinksMap, usedTrafficType.toString(),
+				createCarriersAndDemand(config, output, scenario, shpZones, resultingDataPerZone, regionLinksMap, usedTrafficType.toString(),
 						inputDataDirectory, includeExistingModels);
 				break;
 			case freightTraffic:
-				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone, regionLinksMap, usedTrafficType.toString(),
+				createCarriersAndDemand(config, output, scenario, shpZones, resultingDataPerZone, regionLinksMap, usedTrafficType.toString(),
 						inputDataDirectory, includeExistingModels);
 				break;
 			case bothTypes:
-				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone, regionLinksMap, "businessTraffic",
+				createCarriersAndDemand(config, output, scenario, shpZones, resultingDataPerZone, regionLinksMap, "businessTraffic",
 						inputDataDirectory, includeExistingModels);
 				includeExistingModels = false; // because already included in the step before
-				createCarriersAndDemand(config, scenario, shpZones, resultingDataPerZone, regionLinksMap, "freightTraffic",
+				createCarriersAndDemand(config, output, scenario, shpZones, resultingDataPerZone, regionLinksMap, "freightTraffic",
 						inputDataDirectory, includeExistingModels);
 				break;
 			default:
@@ -434,6 +424,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 
 	/**
 	 * @param config
+	 * @param output 
 	 * @param scenario
 	 * @param shpZones
 	 * @param regionLinksMap
@@ -445,9 +436,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	 * @return
 	 * @throws Exception
 	 */
-	private void createCarriersAndDemand(Config config, Scenario scenario, ShpOptions shpZones,
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone, Map<String, HashMap<Id<Link>, Link>> regionLinksMap, String usedTrafficType,
-			Path inputDataDirectory, boolean includeExistingModels) throws Exception {
+	private void createCarriersAndDemand(Config config, Path output, Scenario scenario, ShpOptions shpZones,
+			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone,
+			Map<String, HashMap<Id<Link>, Link>> regionLinksMap, String usedTrafficType, Path inputDataDirectory,
+			boolean includeExistingModels) throws Exception {
 
 		ArrayList<String> modesORvehTypes;
 		if (usedTrafficType.equals("freightTraffic"))
@@ -471,26 +463,42 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 					trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop);
 		}
 		final TripDistributionMatrix odMatrix = createTripDistribution(trafficVolumePerTypeAndZone_start,
-				trafficVolumePerTypeAndZone_stop, shpZones, usedTrafficType, scenario, regionLinksMap);
+				trafficVolumePerTypeAndZone_stop, shpZones, usedTrafficType, scenario, output, regionLinksMap);
 		createCarriers(config, scenario, odMatrix, resultingDataPerZone, usedTrafficType, regionLinksMap);
 	}
 
-	/**
+	/** Reads and checks config if all necessary parameter are set.
+	 * @param inputDataDirectory 
+	 * @param modelName 
 	 * @return
+	 * @throws Exception 
 	 */
-	private Config prepareConfig() {
-		Config config = ConfigUtils.createConfig();
-		config.global().setCoordinateSystem("EPSG:4326"); // TODO make it global
-		config.network().setInputFile(networkLocation);
-		config.network().setInputCRS(networkCRS);
-		config.controler().setOutputDirectory(output.toString());
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
-		config.controler().setLastIteration(0);
-		config.global().setRandomSeed(4177);
+	private Config readAndCheckConfig(Path inputDataDirectory, String modelName) throws Exception {
+		Config config = ConfigUtils
+				.loadConfig(inputDataDirectory.resolve("config_demand.xml").toString());
+
+		config.controler()
+				.setOutputDirectory(
+						Path.of(config.controler().getOutputDirectory()).resolve(modelName)
+								.resolve(java.time.LocalDate.now().toString() + "_"
+										+ java.time.LocalTime.now().toSecondOfDay() + "_" + usedTrafficType.toString())
+								.toString());
 		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
 				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
-		new File(output.resolve("caculatedData").toString()).mkdir();
+		new File(Path.of(config.controler().getOutputDirectory()).resolve("caculatedData").toString()).mkdir();
+
+		if (config.network().getInputFile() == null)
+			throw new Exception("No network file in config");
+		if (config.network().getInputCRS() == null)
+			throw new Exception("No network CRS is set in config");
+		if (config.global().getCoordinateSystem() == null)
+			throw new Exception("No global CRS is set in config");
+		if (config.controler().getOutputDirectory() == null)
+			throw new Exception("No output directory was set");
+		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
+		if (freightConfigGroup.getCarriersVehicleTypesFile() == null)
+			throw new Exception("No carrier vehicle file was set");
+
 		return config;
 	}
 
@@ -879,11 +887,19 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	 * @param shpZones
 	 * @param indexZones
 	 * @return
+	 * @throws URISyntaxException 
 	 */
-	static Map<String, HashMap<Id<Link>, Link>> filterLinksForZones(Scenario scenario, ShpOptions shpZones, Index indexZones, String networkPath) {
+	static Map<String, HashMap<Id<Link>, Link>> filterLinksForZones(Scenario scenario, ShpOptions shpZones, Index indexZones) throws URISyntaxException {
 		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = new HashMap<>();
 		List<Link> links;
 		log.info("Filtering and assign links to zones. This take some time...");
+		
+		String networkPath = null;
+		if (scenario.getConfig().network().getInputFile().startsWith( "https:" ))
+			networkPath = scenario.getConfig().network().getInputFile();
+		else
+			networkPath = scenario.getConfig().getContext().toURI().resolve(scenario.getConfig().network().getInputFile()).getPath();
+		
 		Network networkToChange = NetworkUtils.readNetwork(networkPath);
 		links = networkToChange.getLinks().values().stream().filter(l -> l.getAllowedModes().contains("car"))
 				.collect(Collectors.toList());
@@ -899,24 +915,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	}
 
 	/**
-	 * Reads the vehicle types.
-	 * 
-	 * @param config
-	 */
-	private void prepareVehicles(Config config) {
-
-		String vehicleTypesFileLocation = inputDataDirectory.getParent().getParent().resolve("vehicleTypes.xml")
-				.toString();
-		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
-		if (vehicleTypesFileLocation == "")
-			throw new RuntimeException("No path to the vehicleTypes selected");
-		else {
-			freightConfigGroup.setCarriersVehicleTypesFile(vehicleTypesFileLocation);
-			log.info("Get vehicleTypes from: " + vehicleTypesFileLocation);
-		}
-	}
-
-	/**
 	 * Creates the number of trips between the zones for each mode and purpose.
 	 * 
 	 * @param trafficVolume_start
@@ -924,6 +922,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	 * @param shpZones
 	 * @param usedTrafficType
 	 * @param scenario
+	 * @param output 
 	 * @param regionLinksMap
 	 * @return TripDistributionMatrix
 	 * @throws Exception
@@ -931,7 +930,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	private TripDistributionMatrix createTripDistribution(
 			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_start,
 			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolume_stop, ShpOptions shpZones,
-			String usedTrafficType, Scenario scenario, Map<String, HashMap<Id<Link>, Link>> regionLinksMap)
+			String usedTrafficType, Scenario scenario, Path output, Map<String, HashMap<Id<Link>, Link>> regionLinksMap)
 			throws Exception {
 
 		final TripDistributionMatrix odMatrix = TripDistributionMatrix.Builder

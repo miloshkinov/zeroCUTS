@@ -20,6 +20,7 @@
 package org.matsim.vsp.SmallScaleFreightTraffic;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -47,7 +48,7 @@ public class SmallScaleCommercialTrafficUtilsTest {
 	public MatsimTestUtils utils = new MatsimTestUtils();
 
 	@Test
-	public void findZoneOfLinksTest() throws IOException {
+	public void findZoneOfLinksTest() throws IOException, URISyntaxException {
 		
 		Path inputDataDirectory = Path.of(utils.getPackageInputDirectory());
 		Path shapeFileZonePath = inputDataDirectory.resolve("shp/testZones.shp");
@@ -60,8 +61,7 @@ public class SmallScaleCommercialTrafficUtilsTest {
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		
 		Map<String, HashMap<Id<Link>, Link>> regionLinksMap = CreateSmallScaleCommercialTrafficDemand
-				.filterLinksForZones(scenario, shpZones, SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath),
-						networkPath);
+				.filterLinksForZones(scenario, shpZones, SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath, config.global().getCoordinateSystem()));
 		
 		Assert.assertEquals(3, regionLinksMap.size(), MatsimTestUtils.EPSILON);
 		Assert.assertEquals(60, regionLinksMap.get("testArea1_area1").size(), MatsimTestUtils.EPSILON);

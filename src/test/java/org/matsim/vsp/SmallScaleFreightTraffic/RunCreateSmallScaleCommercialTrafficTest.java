@@ -52,8 +52,6 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 	public void testMainRunAndResults() throws IOException {
 		String inputDataDirectory = utils.getPackageInputDirectory();
 		String output = utils.getOutputDirectory();
-		String networkLocation = "https://raw.githubusercontent.com/matsim-org/matsim-libs/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
-		String networkCRS = "EPSG:4326";
 		String sample = "0.1";
 		String jspritIterations = "2";
 		String creationOption = "createNewCarrierFile";
@@ -65,12 +63,17 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 		String landuseShapeFileName = "testLanduse.shp";
 
 		try {
-			new CreateSmallScaleCommercialTrafficDemand().execute(inputDataDirectory, "--network", networkLocation,
-					"--networkCRS", networkCRS, "--sample", sample, "--output", output, "--jspritIterations",
-					jspritIterations, "--creationOption", creationOption, "--landuseConfiguration",
-					landuseConfiguration, "--trafficType", trafficType, "--includeExistingModels",
-					includeExistingModels, "--zoneShapeFileName", zoneShapeFileName, "--buildingsShapeFileName",
-					buildingsShapeFileName, "--landuseShapeFileName", landuseShapeFileName);
+			new CreateSmallScaleCommercialTrafficDemand().execute(
+					inputDataDirectory,
+					"--sample", sample,
+					"--jspritIterations", jspritIterations,
+					"--creationOption", creationOption,
+					"--landuseConfiguration", landuseConfiguration,
+					"--trafficType", trafficType,
+					"--includeExistingModels", includeExistingModels,
+					"--zoneShapeFileName", zoneShapeFileName,
+					"--buildingsShapeFileName", buildingsShapeFileName,
+					"--landuseShapeFileName", landuseShapeFileName);
 		} catch (Exception ee) {
 			LogManager.getLogger(this.getClass()).fatal("there was an exception: \n" + ee);
 			// if one catches an exception, then one needs to explicitly fail the test:
