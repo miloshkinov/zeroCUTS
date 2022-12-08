@@ -376,7 +376,7 @@ public class LanduseBuildingAnalysis {
 					.point2Coord(((Geometry) singleBuildingFeature.getDefaultGeometry()).getCentroid());
 			String singleZone = indexZones.query(centroidPointOfBuildingPolygon);
 			String buildingType = String.valueOf(singleBuildingFeature.getAttribute("type"));
-			if (buildingType.equals("") || buildingType.equals("null")) {
+			if (buildingType.equals("") || buildingType.equals("null") || buildingType.equals("yes")) {
 				buildingType = indexLanduse.query(centroidPointOfBuildingPolygon);
 				buildingTypes = new String[] { buildingType };
 			} else {
