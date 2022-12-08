@@ -170,6 +170,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	private static String landuseShapeFileName;
 // berlinBrandenburg_landuse_4326.shp
 
+	@CommandLine.Option(names = "--shapeCRS", defaultValue = "EPSG:4326", description = "CRS of the three input shape files( zones, landuse, buildings")
+	private static String shapeCRS;
+
 	private final static SplittableRandom rnd = new SplittableRandom(4711);
 
 	public static void main(String[] args) {
@@ -241,11 +244,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
 					.createInputDataDistribution(output, landuseCategoriesAndDataConnection, inputDataDirectory,
 							usedLanduseConfiguration.toString(), shapeFileLandusePath, shapeFileZonePath,
-							shapeFileBuildingsPath, buildingsPerZone);
+							shapeFileBuildingsPath, shapeCRS, buildingsPerZone);
 
-			ShpOptions shpZones = new ShpOptions(shapeFileZonePath, null, StandardCharsets.UTF_8);
+			ShpOptions shpZones = new ShpOptions(shapeFileZonePath, shapeCRS, StandardCharsets.UTF_8);
 			Map<String, HashMap<Id<Link>, Link>> regionLinksMap = filterLinksForZones(scenario, shpZones,
-					SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath), networkLocation);
+					SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath, shapeCRS));
 			
 			switch (usedTrafficType) {
 			case businessTraffic:
@@ -751,7 +754,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 
 		for (int i = 0; i < numberOfJobs; i++) {
 
-			Id<Link> linkId = findPossibleLink(stopZone, selectedStopCategory, noPossibleLinks, regionLinksMap);
+			Id<Link> linkId = findPossibleLink(stopZone, selectedStopCategory, noPossibleLinks, regionLinksMap, shapeCRS);
 			Id<CarrierService> idNewService = Id.create(carrierName + "_" + linkId + "_" + rnd.nextInt(10000),
 					CarrierService.class);
 
@@ -800,7 +803,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		carriers.addCarrier(thisCarrier);
 
 		while (vehicleDepots.size() < numberOfDepots) {
-			Id<Link> link = findPossibleLink(startZone, selectedStartCategory, null, regionLinksMap);
+			Id<Link> link = findPossibleLink(startZone, selectedStartCategory, null, regionLinksMap, shapeCRS);
 			vehicleDepots.add(link.toString());
 		}
 		for (String singleDepot : vehicleDepots) {
@@ -840,15 +843,15 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	 * @return
 	 */
 	private Id<Link> findPossibleLink(String zone, String selectedCategory, ArrayList<String> noPossibleLinks,
-			Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
+			Map<String, HashMap<Id<Link>, Link>> regionLinksMap, String shapeCRS) {
 
-		Index indexZones = SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath);
+		Index indexZones = SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath, shapeCRS);
 
 		if (buildingsPerZone.isEmpty()) {
 			ShpOptions shpBuildings = new ShpOptions(shapeFileBuildingsPath, "EPSG:4326", StandardCharsets.UTF_8);
 			List<SimpleFeature> buildingsFeatures = shpBuildings.readFeatures();
 			LanduseBuildingAnalysis.analyzeBuildingType(buildingsFeatures, buildingsPerZone,
-					landuseCategoriesAndDataConnection, shapeFileLandusePath, indexZones);
+					landuseCategoriesAndDataConnection, shapeFileLandusePath, indexZones, shapeCRS);
 		}
 		Id<Link> newLink = null;
 		for (int a = 0; newLink == null && a < buildingsPerZone.get(zone).get(selectedCategory).size() * 2; a++) {

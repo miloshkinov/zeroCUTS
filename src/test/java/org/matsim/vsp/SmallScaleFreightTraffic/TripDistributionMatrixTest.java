@@ -70,7 +70,7 @@ public class TripDistributionMatrixTest {
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
 				.createInputDataDistribution(output, landuseCategoriesAndDataConnection,
 						inputDataDirectory, usedLanduseConfiguration,
-						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, buildingsPerZone);
+						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, null, buildingsPerZone);
 		
 		String usedTrafficType = "businessTraffic";
 		double sample = 1.;
@@ -159,7 +159,7 @@ public class TripDistributionMatrixTest {
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
 				.createInputDataDistribution(output, landuseCategoriesAndDataConnection,
 						inputDataDirectory, usedLanduseConfiguration,
-						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, buildingsPerZone);
+						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, null, buildingsPerZone);
 		
 		String usedTrafficType = "freightTraffic";
 		double sample = 1.;

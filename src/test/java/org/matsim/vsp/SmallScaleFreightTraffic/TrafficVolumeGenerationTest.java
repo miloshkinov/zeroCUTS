@@ -75,7 +75,7 @@ public class TrafficVolumeGenerationTest {
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
 				.createInputDataDistribution(output, landuseCategoriesAndDataConnection,
 						inputDataDirectory, usedLanduseConfiguration,
-						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, buildingsPerZone);
+						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, null, buildingsPerZone);
 		
 		
 		String usedTrafficType = "businessTraffic";
@@ -205,7 +205,7 @@ public class TrafficVolumeGenerationTest {
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
 				.createInputDataDistribution(output, landuseCategoriesAndDataConnection,
 						inputDataDirectory, usedLanduseConfiguration,
-						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, buildingsPerZone);
+						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, null, buildingsPerZone);
 		
 		
 		String usedTrafficType = "freightTraffic";
@@ -531,7 +531,7 @@ public class TrafficVolumeGenerationTest {
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
 				.createInputDataDistribution(output, landuseCategoriesAndDataConnection,
 						inputDataDirectory, usedLanduseConfiguration,
-						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, buildingsPerZone);
+						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, null, buildingsPerZone);
 		
 		HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
 				.createTrafficVolume_start(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);
@@ -690,7 +690,7 @@ public class TrafficVolumeGenerationTest {
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
 				.createInputDataDistribution(output, landuseCategoriesAndDataConnection,
 						inputDataDirectory, usedLanduseConfiguration,
-						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, buildingsPerZone);
+						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, null, buildingsPerZone);
 		
 		HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
 				.createTrafficVolume_start(resultingDataPerZone, output, sample, modesORvehTypes, usedTrafficType);

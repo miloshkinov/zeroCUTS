@@ -93,12 +93,13 @@ public class SmallScaleCommercialTrafficUtils {
 	 * Creates and return the Index of the zones shape.
 	 * 
 	 * @param shapeFileZonePath
+	 * @param shapeCRS 
 	 * @return indexZones
 	 */
-	static Index getIndexZones(Path shapeFileZonePath) {
+	static Index getIndexZones(Path shapeFileZonePath, String shapeCRS) {
 
-		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, "EPSG:4326", StandardCharsets.UTF_8);
-		Index indexZones = shpZones.createIndex("EPSG:4326", "areaID");
+		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, shapeCRS, StandardCharsets.UTF_8);
+		Index indexZones = shpZones.createIndex(shapeCRS, "areaID");
 		return indexZones;
 	}
 
@@ -108,10 +109,10 @@ public class SmallScaleCommercialTrafficUtils {
 	 * @param shapeFileLandusePath
 	 * @return indexLanduse
 	 */
-	static Index getIndexLanduse(Path shapeFileLandusePath) {
+	static Index getIndexLanduse(Path shapeFileLandusePath, String shapeCRS) {
 
-		ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, "EPSG:4326", StandardCharsets.UTF_8);
-		Index indexLanduse = shpLanduse.createIndex("EPSG:4326", "fclass");
+		ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, shapeCRS, StandardCharsets.UTF_8);
+		Index indexLanduse = shpLanduse.createIndex(shapeCRS, "fclass");
 		return indexLanduse;
 	}
 

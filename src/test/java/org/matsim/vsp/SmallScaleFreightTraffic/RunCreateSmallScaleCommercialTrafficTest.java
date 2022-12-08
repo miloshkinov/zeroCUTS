@@ -61,6 +61,7 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 		String zoneShapeFileName = "testZones.shp";
 		String buildingsShapeFileName = "testBuildings.shp";
 		String landuseShapeFileName = "testLanduse.shp";
+		String shapeCRS = "EPSG:4326";
 
 		try {
 			new CreateSmallScaleCommercialTrafficDemand().execute(
@@ -73,7 +74,8 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 					"--includeExistingModels", includeExistingModels,
 					"--zoneShapeFileName", zoneShapeFileName,
 					"--buildingsShapeFileName", buildingsShapeFileName,
-					"--landuseShapeFileName", landuseShapeFileName);
+					"--landuseShapeFileName", landuseShapeFileName,
+					"--shapeCRS", shapeCRS);
 		} catch (Exception ee) {
 			LogManager.getLogger(this.getClass()).fatal("there was an exception: \n" + ee);
 			// if one catches an exception, then one needs to explicitly fail the test:
