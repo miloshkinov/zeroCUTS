@@ -74,7 +74,7 @@ public class TrafficVolumeGenerationTest {
 	
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
 				.createInputDataDistribution(output, landuseCategoriesAndDataConnection,
-						inputDataDirectory.resolve("scenarios/testScenario"), usedLanduseConfiguration,
+						inputDataDirectory, usedLanduseConfiguration,
 						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, buildingsPerZone);
 		
 		
@@ -204,7 +204,7 @@ public class TrafficVolumeGenerationTest {
 	
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
 				.createInputDataDistribution(output, landuseCategoriesAndDataConnection,
-						inputDataDirectory.resolve("scenarios/testScenario"), usedLanduseConfiguration,
+						inputDataDirectory, usedLanduseConfiguration,
 						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, buildingsPerZone);
 		
 		
@@ -407,7 +407,7 @@ public class TrafficVolumeGenerationTest {
 				.filterLinksForZones(scenario, shpZones, SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath),
 						networkPath);
 		
-		SmallScaleCommercialTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory.resolve("scenarios/testScenario"), regionLinksMap);
+		SmallScaleCommercialTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory, regionLinksMap);
 	
 		Assert.assertEquals(3, FreightUtils.getCarriers(scenario).getCarriers().size(), MatsimTestUtils.EPSILON);
 		Assert.assertEquals(1, FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().size(), MatsimTestUtils.EPSILON);
@@ -471,7 +471,7 @@ public class TrafficVolumeGenerationTest {
 				.filterLinksForZones(scenario, shpZones, SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath),
 						networkPath);
 		
-		SmallScaleCommercialTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory.resolve("scenarios/testScenario"), regionLinksMap);
+		SmallScaleCommercialTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory, regionLinksMap);
 	
 		Assert.assertEquals(2, FreightUtils.getCarriers(scenario).getCarriers().size(), MatsimTestUtils.EPSILON);
 		Assert.assertEquals(1, FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().size(), MatsimTestUtils.EPSILON);
@@ -530,7 +530,7 @@ public class TrafficVolumeGenerationTest {
 
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
 				.createInputDataDistribution(output, landuseCategoriesAndDataConnection,
-						inputDataDirectory.resolve("scenarios/testScenario"), usedLanduseConfiguration,
+						inputDataDirectory, usedLanduseConfiguration,
 						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, buildingsPerZone);
 		
 		HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
@@ -542,7 +542,7 @@ public class TrafficVolumeGenerationTest {
 				.filterLinksForZones(scenario, shpZones, SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath),
 						networkPath);
 		
-		SmallScaleCommercialTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory.resolve("scenarios/testScenario"), regionLinksMap);
+		SmallScaleCommercialTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory, regionLinksMap);
 		
 		TrafficVolumeGeneration.reduceDemandBasedOnExistingCarriers(scenario, regionLinksMap, usedTrafficType,
 				trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop);
@@ -689,7 +689,7 @@ public class TrafficVolumeGenerationTest {
 
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
 				.createInputDataDistribution(output, landuseCategoriesAndDataConnection,
-						inputDataDirectory.resolve("scenarios/testScenario"), usedLanduseConfiguration,
+						inputDataDirectory, usedLanduseConfiguration,
 						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, buildingsPerZone);
 		
 		HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>> trafficVolumePerTypeAndZone_start = TrafficVolumeGeneration
@@ -701,7 +701,7 @@ public class TrafficVolumeGenerationTest {
 				.filterLinksForZones(scenario, shpZones, SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath),
 						networkPath);
 		
-		SmallScaleCommercialTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory.resolve("scenarios/testScenario"), regionLinksMap);
+		SmallScaleCommercialTrafficUtils.readExistingModels(scenario, sample, inputDataDirectory, regionLinksMap);
 		
 		TrafficVolumeGeneration.reduceDemandBasedOnExistingCarriers(scenario, regionLinksMap, usedTrafficType,
 				trafficVolumePerTypeAndZone_start, trafficVolumePerTypeAndZone_stop);

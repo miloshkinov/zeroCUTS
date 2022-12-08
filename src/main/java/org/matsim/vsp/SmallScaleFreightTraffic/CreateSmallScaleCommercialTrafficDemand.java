@@ -134,7 +134,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		businessTraffic, freightTraffic, bothTypes
 	}
 
-	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/berlin/scenarios/1pct_bothTypes/")
+	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/berlin/")
 	private static Path inputDataDirectory;
 
 	@CommandLine.Option(names = "--network", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz", description = "Path to desired network file", required = true)
@@ -191,9 +191,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		/*
 		 * TODO: bei only landuse; was passiert mit construction?
 		 */
-		String modelName = inputDataDirectory.getParent().getParent().getFileName().toString();
-		output = output.resolve(modelName).resolve(java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay()
-				+ "_" + usedTrafficType.toString());
+		String modelName = inputDataDirectory.getFileName().toString();
 		boolean includeExistingModels = Boolean.parseBoolean(includeExistingModels_Input);
 
 		Config config = prepareConfig();
@@ -209,7 +207,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			if (includeExistingModels)
 				throw new Exception(
 						"You set that existing models should included to the new model. This is only possible for a creation of the new carrier file and not by using an existing.");
-			carriersFileLocation = inputDataDirectory.resolve("output_CarrierDemandWithPlans.xml").toString();
+			if ((sample*100) % 1 == 0)
+				carriersFileLocation = "scenarios/"+ (int)(sample *100) +"pct_"+usedTrafficType+"/output_CarrierDemandWithPlans.xml";
+			else
+				carriersFileLocation = "scenarios/"+ (sample *100) +"pct_"+usedTrafficType+"/output_CarrierDemandWithPlans.xml";
 			freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 			freightConfigGroup.setCarriersFile(carriersFileLocation);
 			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
@@ -219,7 +220,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			if (includeExistingModels)
 				throw new Exception(
 						"You set that existing models should included to the new model. This is only possible for a creation of the new carrier file and not by using an existing.");
-			carriersFileLocation = inputDataDirectory.resolve("output_CarrierDemand.xml").toString();
+			if ((sample*100) % 1 == 0)
+				carriersFileLocation = "scenarios/"+ (int)(sample *100) +"pct_"+usedTrafficType+"/output_CarrierDemand.xml";
+			else
+				carriersFileLocation = "scenarios/"+ (sample *100) +"pct_"+usedTrafficType+"/output_CarrierDemand.xml";
 			freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 			freightConfigGroup.setCarriersFile(carriersFileLocation);
 			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
@@ -227,13 +231,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			solveSeperatedVRPs(scenario, null);
 			break;
 		default:
-			shapeFileZonePath = inputDataDirectory.getParent().getParent().resolve("shp").resolve(zoneShapeFileName);
+			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve(zoneShapeFileName);
 
-			shapeFileLandusePath = inputDataDirectory.getParent().getParent().resolve("shp")
-					.resolve(landuseShapeFileName);
+			shapeFileLandusePath = inputDataDirectory.resolve("shp").resolve(landuseShapeFileName);
 
-			shapeFileBuildingsPath = inputDataDirectory.getParent().getParent().resolve("shp")
-					.resolve(buildingsShapeFileName);
+			shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve(buildingsShapeFileName);
 
 			if (!Files.exists(shapeFileLandusePath)) {
 				throw new Exception("Required landuse shape file not found:" + shapeFileLandusePath.toString());
@@ -285,7 +287,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		Controler controler = prepareControler(scenario);
 		controler.run();
 		SmallScaleCommercialTrafficUtils.createPlansBasedOnCarrierPlans(controler.getScenario(),
-				usedTrafficType.toString(), sample, output, inputDataDirectory);
+				usedTrafficType.toString(), sample, output, modelName);
 		FreightAnalyse.main(new String[] { scenario.getConfig().controler().getOutputDirectory(), "true" });
 
 		return 0;

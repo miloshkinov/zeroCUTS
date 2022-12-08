@@ -186,7 +186,7 @@ public class SmallScaleCommercialTrafficUtils {
 	 * @param inputDataDirectory
 	 */
 	static void createPlansBasedOnCarrierPlans(Scenario scenario, String usedTrafficType, double sample, Path output,
-			Path inputDataDirectory) {
+			String modelName) {
 
 		Population population = scenario.getPopulation();
 		PopulationFactory popFactory = population.getFactory();
@@ -242,7 +242,6 @@ public class SmallScaleCommercialTrafficUtils {
 			}));
 			population.addPerson(newPerson);
 		}
-		String modelName = inputDataDirectory.getParent().getParent().getFileName().toString();
 		PopulationUtils.writePopulation(population,
 				output.toString() + "/"+modelName +"_" + usedTrafficType + "_" + (int) (sample * 100) + "pct_plans.xml.gz"); //TODO make general name
 		scenario.getPopulation().getPersons().clear();
@@ -263,7 +262,7 @@ public class SmallScaleCommercialTrafficUtils {
 	static void readExistingModels(Scenario scenario, double sampleScenario, Path inputDataDirectory,
 			Map<String, HashMap<Id<Link>, Link>> regionLinksMap) throws Exception {
 
-		String locationOfExistingModels = inputDataDirectory.getParent().getParent().resolve("existingModels")
+		String locationOfExistingModels = inputDataDirectory.resolve("existingModels")
 				.resolve("existingModels.csv").toString();
 		CSVParser parse = CSVFormat.Builder.create(CSVFormat.DEFAULT).setDelimiter('\t').setHeader()
 				.setSkipHeaderRecord(true).build().parse(IOUtils.getBufferedReader(locationOfExistingModels));
@@ -283,7 +282,7 @@ public class SmallScaleCommercialTrafficUtils {
 				vehicleType = null;
 			final String modelMode = record.get("networkMode");
 
-			Path scenarioLocation = inputDataDirectory.getParent().getParent().resolve("existingModels")
+			Path scenarioLocation = inputDataDirectory.resolve("existingModels")
 					.resolve(modelName);
 			if (!Files.exists(scenarioLocation.resolve("output_carriers.xml.gz")))
 				throw new Exception("For the existig model " + modelName

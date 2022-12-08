@@ -98,8 +98,7 @@ public class LanduseBuildingAnalysis {
 				Arrays.asList("commercial", "embassy", "foundation", "government", "office", "townhall")));
 
 		if (usedLanduseConfiguration.equals("useExistingDataDistribution")) {
-			Path existingDataDistribution = inputDataDirectory.getParent().getParent()
-					.resolve("dataDistributionPerZone.csv");
+			Path existingDataDistribution = inputDataDirectory.resolve("dataDistributionPerZone.csv");
 
 			if (!Files.exists(existingDataDistribution)) {
 				log.error("Required data per zone file {} not found", existingDataDistribution);
@@ -327,7 +326,7 @@ public class LanduseBuildingAnalysis {
 	private static void readAreaData(HashMap<String, HashMap<String, Integer>> areaData, Path inputDataDirectory)
 			throws IOException {
 
-		Path areaDataPath = inputDataDirectory.getParent().getParent().resolve("investigationAreaData.csv");
+		Path areaDataPath = inputDataDirectory.resolve("investigationAreaData.csv");
 		if (!Files.exists(areaDataPath)) {
 			log.error("Required input data file {} not found", areaDataPath);
 		}

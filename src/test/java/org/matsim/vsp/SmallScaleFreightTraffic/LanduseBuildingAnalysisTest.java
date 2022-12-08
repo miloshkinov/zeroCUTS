@@ -62,8 +62,8 @@ public class LanduseBuildingAnalysisTest {
 		// Test if the reading of the existing data distribution works correctly
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
 				.createInputDataDistribution(output, landuseCategoriesAndDataConnection,
-						inputDataDirectory.resolve("scenarios/testScenario"), usedLanduseConfiguration,
-						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, buildingsPerZone);
+						inputDataDirectory, usedLanduseConfiguration,
+						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, null, buildingsPerZone);
 
 		Assert.assertEquals(3, resultingDataPerZone.size(), MatsimTestUtils.EPSILON);
 
@@ -254,8 +254,8 @@ public class LanduseBuildingAnalysisTest {
 		// Analyze resultingData per zone
 		HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
 				.createInputDataDistribution(output, landuseCategoriesAndDataConnection,
-						inputDataDirectory.resolve("scenarios/testScenario"), usedLanduseConfiguration,
-						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, buildingsPerZone);
+						inputDataDirectory, usedLanduseConfiguration,
+						shapeFileLandusePath, shapeFileZonePath, shapeFileBuildingsPath, null, buildingsPerZone);
 
 		Assert.assertEquals(3, resultingDataPerZone.size(), MatsimTestUtils.EPSILON);
 

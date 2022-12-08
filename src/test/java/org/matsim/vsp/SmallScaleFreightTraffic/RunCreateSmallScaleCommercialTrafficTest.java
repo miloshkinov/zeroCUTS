@@ -50,7 +50,7 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 
 	@Test
 	public void testMainRunAndResults() throws IOException {
-		String inputDataDirectory = utils.getPackageInputDirectory() + "scenarios/testScenario";
+		String inputDataDirectory = utils.getPackageInputDirectory();
 		String output = utils.getOutputDirectory();
 		String networkLocation = "https://raw.githubusercontent.com/matsim-org/matsim-libs/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 		String networkCRS = "EPSG:4326";
