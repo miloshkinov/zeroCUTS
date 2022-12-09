@@ -63,24 +63,18 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 		String landuseShapeFileName = "testLanduse.shp";
 		String shapeCRS = "EPSG:4326";
 
-		try {
-			new CreateSmallScaleCommercialTrafficDemand().execute(
-					inputDataDirectory,
-					"--sample", sample,
-					"--jspritIterations", jspritIterations,
-					"--creationOption", creationOption,
-					"--landuseConfiguration", landuseConfiguration,
-					"--trafficType", trafficType,
-					"--includeExistingModels", includeExistingModels,
-					"--zoneShapeFileName", zoneShapeFileName,
-					"--buildingsShapeFileName", buildingsShapeFileName,
-					"--landuseShapeFileName", landuseShapeFileName,
-					"--shapeCRS", shapeCRS);
-		} catch (Exception ee) {
-			LogManager.getLogger(this.getClass()).fatal("there was an exception: \n" + ee);
-			// if one catches an exception, then one needs to explicitly fail the test:
-			Assert.fail();
-		}
+		new CreateSmallScaleCommercialTrafficDemand().execute(
+				inputDataDirectory,
+				"--sample", sample,
+				"--jspritIterations", jspritIterations,
+				"--creationOption", creationOption,
+				"--landuseConfiguration", landuseConfiguration,
+				"--trafficType", trafficType,
+				"--includeExistingModels", includeExistingModels,
+				"--zoneShapeFileName", zoneShapeFileName,
+				"--buildingsShapeFileName", buildingsShapeFileName,
+				"--landuseShapeFileName", landuseShapeFileName,
+				"--shapeCRS", shapeCRS);
 
 		// test results of complete run before
 		Config config = ConfigUtils.createConfig();
