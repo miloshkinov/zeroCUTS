@@ -88,6 +88,9 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 
 	@CommandLine.Option(names = "--addLongDistanceFreight", description = "If it is set to true the long distance freight will be read in from related plans file. If you need no long distance freight traffic or the traffic is already included to the plans file, you should set this to false.", required = true, defaultValue = "false")
 	private boolean addLongDistanceFreight;
+	
+	@CommandLine.Option(names = "--cadytsCalibration", description = "If cadyts calibartion should be used.", required = true, defaultValue = "false")
+	private boolean cadytsCalibration;
 
 	public static void main(String[] args) {
 		System.exit(new CommandLine(new RunMATSimCommercialTraffic()).execute(args));
@@ -116,50 +119,56 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 		createActivityParams(scenario);
 
 		Controler controler = prepareControler(scenario);
-
-		controler.addOverridingModule(new CadytsCarModule());
+		if (cadytsCalibration)
+			controler.addOverridingModule(new CadytsCarModule());
 		controler.addOverridingModule(new AbstractModule() {
 			@Override
 			public void install() {
 //		        bind(MainModeIdentifier.class).to(MainModeIdentifierImpl.class);
 //		        bind(AnalysisMainModeIdentifier.class).to(MainModeIdentifier.class);
-		        bind(AnalysisMainModeIdentifier.class).to(TransportPlanningMainModeIdentifierRE.class);
-				addPlanStrategyBinding("planChangerCadyts").toProvider(new javax.inject.Provider<PlanStrategy>() {
-					@Inject Scenario scenario;
-					@Inject CadytsContext cadytsContext;
-					@Override
-					public PlanStrategy get() {
-						return new PlanStrategyImpl.Builder((new CadytsPlanChanger(scenario, cadytsContext))).build();
-					}
-				});
+				bind(AnalysisMainModeIdentifier.class).to(TransportPlanningMainModeIdentifierRE.class);
+				if (cadytsCalibration)
+					addPlanStrategyBinding("planChangerCadyts").toProvider(new javax.inject.Provider<PlanStrategy>() {
+						@Inject
+						Scenario scenario;
+						@Inject
+						CadytsContext cadytsContext;
+
+						@Override
+						public PlanStrategy get() {
+							return new PlanStrategyImpl.Builder((new CadytsPlanChanger(scenario, cadytsContext)))
+									.build();
+						}
+					});
 			}
 		});
 		// include cadyts into the plan scoring (this will add the cadyts corrections to
 		// the scores)
-		controler.setScoringFunctionFactory(new ScoringFunctionFactory() {
-			@Inject
-			CadytsContext cadytsContext;
-			@Inject
-			ScoringParametersForPerson parameters;
+		if (cadytsCalibration)
+			controler.setScoringFunctionFactory(new ScoringFunctionFactory() {
 
-			@Override
-			public ScoringFunction createNewScoringFunction(Person person) {
-				final ScoringParameters params = parameters.getScoringParameters(person);
+				@Inject
+				CadytsContext cadytsContext;
+				@Inject
+				ScoringParametersForPerson parameters;
 
-				SumScoringFunction scoringFunctionAccumulator = new SumScoringFunction();
-				scoringFunctionAccumulator.addScoringFunction(new CharyparNagelLegScoring(params,
-						controler.getScenario().getNetwork(), config.transit().getTransitModes()));
-				scoringFunctionAccumulator.addScoringFunction(new CharyparNagelActivityScoring(params));
-				scoringFunctionAccumulator.addScoringFunction(new CharyparNagelAgentStuckScoring(params));
+				@Override
+				public ScoringFunction createNewScoringFunction(Person person) {
+					final ScoringParameters params = parameters.getScoringParameters(person);
 
-				final CadytsScoring<Link> scoringFunction = new CadytsScoring<>(person.getSelectedPlan(), config,
-						cadytsContext);
-				scoringFunction.setWeightOfCadytsCorrection(30. * config.planCalcScore().getBrainExpBeta());
-				scoringFunctionAccumulator.addScoringFunction(scoringFunction);
+					SumScoringFunction scoringFunctionAccumulator = new SumScoringFunction();
+					scoringFunctionAccumulator.addScoringFunction(new CharyparNagelLegScoring(params,
+							controler.getScenario().getNetwork(), config.transit().getTransitModes()));
+					scoringFunctionAccumulator.addScoringFunction(new CharyparNagelActivityScoring(params));
+					scoringFunctionAccumulator.addScoringFunction(new CharyparNagelAgentStuckScoring(params));
+					final CadytsScoring<Link> scoringFunction = new CadytsScoring<>(person.getSelectedPlan(), config,
+							cadytsContext);
+					scoringFunction.setWeightOfCadytsCorrection(30. * config.planCalcScore().getBrainExpBeta());
+					scoringFunctionAccumulator.addScoringFunction(scoringFunction);
 
-				return scoringFunctionAccumulator;
-			}
-		});
+					return scoringFunctionAccumulator;
+				}
+			});
 
 		controler.run();
 
