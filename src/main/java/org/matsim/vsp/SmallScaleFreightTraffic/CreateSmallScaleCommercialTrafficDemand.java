@@ -490,7 +490,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
 				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
 		new File(Path.of(config.controler().getOutputDirectory()).resolve("caculatedData").toString()).mkdir();
-
+		rnd  = new SplittableRandom(config.global().getRandomSeed());
 		if (config.network().getInputFile() == null)
 			throw new Exception("No network file in config");
 		if (config.network().getInputCRS() == null)
