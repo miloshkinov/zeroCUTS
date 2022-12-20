@@ -160,18 +160,19 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 
 	@CommandLine.Option(names = "--zoneShapeFileName", defaultValue = "berlinBrandenburg_Zones_VKZ_4326.shp", description = "Name of the zone shape file. The location of the file ")
 	private static String zoneShapeFileName;
-// berlinBrandenburg_Zones_VKZ_4326.shp, berlinBrandenburg_Zones_districts_4326.shp
+// berlinBrandenburg_Zones_VKZ_4326.shp, berlinBrandenburg_Zones_districts_4326.shp, leipzig_zones_25833.shp
 
 	@CommandLine.Option(names = "--buildingsShapeFileName", defaultValue = "buildings_sample_BerlinBrandenburg_4326.shp", description = "Name of the zone shape file. The location of the file ")
 	private static String buildingsShapeFileName;
-// buildings_BerlinBrandenburg_4326.shp, buildings_sample_BerlinBrandenburg_4326.shp
+// buildings_BerlinBrandenburg_4326.shp, buildings_sample_BerlinBrandenburg_4326.shp, leipzig_buildings_25833.shp
 
 	@CommandLine.Option(names = "--landuseShapeFileName", defaultValue = "berlinBrandenburg_landuse_4326.shp", description = "Name of the zone shape file. The location of the file ")
 	private static String landuseShapeFileName;
-// berlinBrandenburg_landuse_4326.shp
+// berlinBrandenburg_landuse_4326.shp, leipzig_landuse_25833.shp
 
 	@CommandLine.Option(names = "--shapeCRS", defaultValue = "EPSG:4326", description = "CRS of the three input shape files( zones, landuse, buildings")
 	private static String shapeCRS;
+//Berlin EPSG:4326; Leipzig EPSG:25833
 
 	@CommandLine.Option(names = "--resistanceFactor", defaultValue = "0.005", description = "ResistanceFactor for the trip distribution")
 	private static double resistanceFactor;
@@ -183,11 +184,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	}
 
 	@Override
-	public Integer call() throws Exception {
+	public Integer call() throws Exception {		
 		Configurator.setLevel("org.matsim.core.utils.geometry.geotools.MGC", Level.ERROR);
-		/*
-		 * TODO: bei only landuse; was passiert mit construction?
-		 */
+
 		String modelName = inputDataDirectory.getFileName().toString();
 		boolean includeExistingModels = Boolean.parseBoolean(includeExistingModels_Input);
 		String sampleName = null;
@@ -212,8 +211,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			carriersFileLocation = "scenarios/" + sampleName + "pct_"+usedTrafficType+"/output_CarrierDemandWithPlans.xml";
 			freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 			freightConfigGroup.setCarriersFile(carriersFileLocation);
-			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 			log.info("Load carriers from: " + carriersFileLocation);
+			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 			break;
 		case useExistingCarrierFileWithoutSolution:
 			if (includeExistingModels)
@@ -222,8 +221,8 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			carriersFileLocation = "scenarios/"+ sampleName + "pct_"+usedTrafficType+"/output_CarrierDemand.xml";
 			freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 			freightConfigGroup.setCarriersFile(carriersFileLocation);
-			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 			log.info("Load carriers from: " + carriersFileLocation);
+			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 			solveSeperatedVRPs(scenario, null);
 			break;
 		default:
@@ -500,9 +499,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			throw new Exception("No global CRS is set in config");
 		if (config.controler().getOutputDirectory() == null)
 			throw new Exception("No output directory was set");
-		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
-		if (freightConfigGroup.getCarriersVehicleTypesFile() == null)
-			throw new Exception("No carrier vehicle file was set");
 
 		return config;
 	}

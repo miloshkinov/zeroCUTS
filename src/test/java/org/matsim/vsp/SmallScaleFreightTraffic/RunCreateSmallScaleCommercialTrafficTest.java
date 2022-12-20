@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
-import org.apache.logging.log4j.LogManager;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
