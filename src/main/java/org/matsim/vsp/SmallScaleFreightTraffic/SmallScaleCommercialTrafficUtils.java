@@ -184,10 +184,11 @@ public class SmallScaleCommercialTrafficUtils {
 	 * @param usedTrafficType
 	 * @param sample
 	 * @param output
+	 * @param sampleName 
 	 * @param inputDataDirectory
 	 */
 	static void createPlansBasedOnCarrierPlans(Scenario scenario, String usedTrafficType, double sample, Path output,
-			String modelName) {
+			String modelName, String sampleName) {
 
 		Population population = scenario.getPopulation();
 		PopulationFactory popFactory = population.getFactory();
@@ -244,7 +245,7 @@ public class SmallScaleCommercialTrafficUtils {
 			population.addPerson(newPerson);
 		}
 		PopulationUtils.writePopulation(population,
-				output.toString() + "/"+modelName +"_" + usedTrafficType + "_" + (int) (sample * 100) + "pct_plans.xml.gz"); //TODO make general name
+				output.toString() + "/"+modelName +"_" + usedTrafficType + "_" + sampleName + "pct_plans.xml.gz");
 		scenario.getPopulation().getPersons().clear();
 	}
 

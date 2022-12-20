@@ -190,8 +190,14 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		 */
 		String modelName = inputDataDirectory.getFileName().toString();
 		boolean includeExistingModels = Boolean.parseBoolean(includeExistingModels_Input);
+		String sampleName = null;
 
-		Config config = readAndCheckConfig(inputDataDirectory, modelName);
+		if ((sample * 100) % 1 == 0)
+			sampleName = String.valueOf((int) (sample * 100));
+		else
+			sampleName = String.valueOf((sample * 100));
+		
+		Config config = readAndCheckConfig(inputDataDirectory, modelName, sampleName);
 		Path output = Path.of(config.controler().getOutputDirectory());
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
@@ -203,10 +209,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			if (includeExistingModels)
 				throw new Exception(
 						"You set that existing models should included to the new model. This is only possible for a creation of the new carrier file and not by using an existing.");
-			if ((sample*100) % 1 == 0)
-				carriersFileLocation = "scenarios/"+ (int)(sample *100) +"pct_"+usedTrafficType+"/output_CarrierDemandWithPlans.xml";
-			else
-				carriersFileLocation = "scenarios/"+ (sample *100) +"pct_"+usedTrafficType+"/output_CarrierDemandWithPlans.xml";
+			carriersFileLocation = "scenarios/" + sampleName + "pct_"+usedTrafficType+"/output_CarrierDemandWithPlans.xml";
 			freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 			freightConfigGroup.setCarriersFile(carriersFileLocation);
 			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
@@ -216,10 +219,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			if (includeExistingModels)
 				throw new Exception(
 						"You set that existing models should included to the new model. This is only possible for a creation of the new carrier file and not by using an existing.");
-			if ((sample*100) % 1 == 0)
-				carriersFileLocation = "scenarios/"+ (int)(sample *100) +"pct_"+usedTrafficType+"/output_CarrierDemand.xml";
-			else
-				carriersFileLocation = "scenarios/"+ (sample *100) +"pct_"+usedTrafficType+"/output_CarrierDemand.xml";
+			carriersFileLocation = "scenarios/"+ sampleName + "pct_"+usedTrafficType+"/output_CarrierDemand.xml";
 			freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 			freightConfigGroup.setCarriersFile(carriersFileLocation);
 			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
@@ -283,7 +283,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		Controler controler = prepareControler(scenario);
 		controler.run();
 		SmallScaleCommercialTrafficUtils.createPlansBasedOnCarrierPlans(controler.getScenario(),
-				usedTrafficType.toString(), sample, output, modelName);
+				usedTrafficType.toString(), sample, output, modelName, sampleName);
 		FreightAnalyse.main(new String[] { scenario.getConfig().controler().getOutputDirectory(), "true" });
 
 		return 0;
@@ -476,19 +476,18 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	/** Reads and checks config if all necessary parameter are set.
 	 * @param inputDataDirectory 
 	 * @param modelName 
+	 * @param sampleName 
 	 * @return
 	 * @throws Exception 
 	 */
-	private Config readAndCheckConfig(Path inputDataDirectory, String modelName) throws Exception {
-		Config config = ConfigUtils
-				.loadConfig(inputDataDirectory.resolve("config_demand.xml").toString());
+	private Config readAndCheckConfig(Path inputDataDirectory, String modelName, String sampleName) throws Exception {
+		
+		Config config = ConfigUtils.loadConfig(inputDataDirectory.resolve("config_demand.xml").toString());
 
-		config.controler()
-				.setOutputDirectory(
-						Path.of(config.controler().getOutputDirectory()).resolve(modelName)
-								.resolve(java.time.LocalDate.now().toString() + "_"
-										+ java.time.LocalTime.now().toSecondOfDay() + "_" + usedTrafficType.toString())
-								.toString());
+		config.controler().setOutputDirectory(Path.of(config.controler().getOutputDirectory()).resolve(modelName)
+				.resolve(usedTrafficType.toString() + "_" + sampleName + "pct" + "_"
+						+ java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay() + "_" + resistanceFactor)
+				.toString());
 		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
 				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
 		new File(Path.of(config.controler().getOutputDirectory()).resolve("caculatedData").toString()).mkdir();
