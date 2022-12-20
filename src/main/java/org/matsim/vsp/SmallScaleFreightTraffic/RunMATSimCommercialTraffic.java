@@ -77,13 +77,10 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 
 	private static final Logger log = LogManager.getLogger(RunMATSimCommercialTraffic.class);
 
-	@CommandLine.Option(names = "INPUT", description = "Path to the config file.", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/scenarios/10pct_bothTypes/")
+	@CommandLine.Option(names = "INPUT", description = "Path to the config file.", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/leipzig/scenarios/1pct_bothTypes/")
 	private static Path inputPath;
 
-	@CommandLine.Option(names = "--output", description = "Path to output folder", required = true, defaultValue = "output/BusinessPassengerTraffic_MATSim/")
-	private Path output;
-
-	@CommandLine.Option(names = "--scale", description = "Scale of the input.", required = true, defaultValue = "0.10")
+	@CommandLine.Option(names = "--scale", description = "Scale of the input.", required = true, defaultValue = "0.01")
 	private double inputScale;
 
 	@CommandLine.Option(names = "--addLongDistanceFreight", description = "If it is set to true the long distance freight will be read in from related plans file. If you need no long distance freight traffic or the traffic is already included to the plans file, you should set this to false.", required = true, defaultValue = "false")
@@ -98,20 +95,30 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 
 	@Override
 	public Integer call() throws Exception {
+		
+		Config config = ConfigUtils.loadConfig(inputPath.resolve("config.xml").toString());
+		if (cadytsCalibration)
+			config.addModule(new CadytsConfigGroup());
+		String modelName = inputPath.getParent().getParent().getFileName().toString();
+		String usedTrafficType = inputPath.getFileName().toString().split("pct_")[1];
+		String sampleName = null;
 
-		Config config = ConfigUtils.loadConfig(inputPath.resolve("config.xml").toString(), new CadytsConfigGroup());
-		output = output.resolve(java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay());
-		config.controler().setOutputDirectory(output.toString());
+		if ((inputScale * 100) % 1 == 0)
+			sampleName = String.valueOf((int) (inputScale * 100));
+		else
+			sampleName = String.valueOf((inputScale * 100));
+		config.controler().setOutputDirectory(Path.of(config.controler().getOutputDirectory()).resolve(modelName)
+				.resolve(usedTrafficType.toString() + "_" + sampleName + "pct" + "_"
+						+ java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay())
+				.toString() + "_run");
+		log.info("Output folder is set to: " + config.controler().getOutputDirectory());
 		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
 				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
-		config.counts().setInputFile("../../counts_berlin_Lkw.xml");
 		config.counts().setCountsScaleFactor(1 / inputScale);
 		config.counts().setAnalyzedModes("freight");
 		config.qsim().setFlowCapFactor(inputScale);
 		config.qsim().setStorageCapFactor(inputScale);
 		config.qsim().setPcuThresholdForFlowCapacityEasing(0.5);
-		config.vehicles().setVehiclesFile("berlin_bothTypes_" + (int) (inputScale * 100) + "pct_allVehicles.xml.gz");
-		config.plans().setInputFile("berlin_bothTypes_" + (int) (inputScale * 100) + "pct_plans.xml.gz");
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		if (addLongDistanceFreight)
