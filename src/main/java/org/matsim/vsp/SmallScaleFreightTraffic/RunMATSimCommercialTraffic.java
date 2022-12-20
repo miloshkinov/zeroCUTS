@@ -194,9 +194,14 @@ public class RunMATSimCommercialTraffic implements Callable<Integer> {
 				log.error("The input population already has agents for the long distance traffic. Please check!");
 			}
 		});
-
-		Path longDistancePopulation = inputPath
-				.resolve("berlin_longDistanceFreight_" + (int) (inputScale * 100) + "pct.xml.gz");
+		String modelName = inputPath.getParent().getParent().getFileName().toString();
+		Path longDistancePopulation = null;
+		if ((inputScale * 100) % 1 == 0)
+			longDistancePopulation = inputPath
+					.resolve(modelName + "_longDistanceFreight_" + (int) (inputScale * 100) + "pct.xml.gz");
+		else
+			longDistancePopulation = inputPath
+					.resolve(modelName + "_longDistanceFreight_" + (inputScale * 100) + "pct.xml.gz");
 
 		if (!Files.exists(longDistancePopulation)) {
 			log.error("Required population for the long distance freight {} not found", longDistancePopulation);
