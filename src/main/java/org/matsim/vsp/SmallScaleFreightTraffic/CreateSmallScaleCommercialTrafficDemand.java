@@ -173,7 +173,10 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	@CommandLine.Option(names = "--shapeCRS", defaultValue = "EPSG:4326", description = "CRS of the three input shape files( zones, landuse, buildings")
 	private static String shapeCRS;
 
-	private final static SplittableRandom rnd = new SplittableRandom(4711);
+	@CommandLine.Option(names = "--resistanceFactor", defaultValue = "0.005", description = "ResistanceFactor for the trip distribution")
+	private static double resistanceFactor;
+	
+	private static SplittableRandom rnd;
 
 	public static void main(String[] args) {
 		System.exit(new CommandLine(new CreateSmallScaleCommercialTrafficDemand()).execute(args));
@@ -957,7 +960,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 				Collections.shuffle(listOfZones);
 				for (String stopZone : listOfZones) {
 					odMatrix.setTripDistributionValue(startZone, stopZone, modeORvehType, purpose, usedTrafficType,
-							network, regionLinksMap);
+							network, regionLinksMap, resistanceFactor);
 				}
 			}
 		}

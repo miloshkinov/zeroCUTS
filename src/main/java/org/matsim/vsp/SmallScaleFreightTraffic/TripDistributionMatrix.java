@@ -305,11 +305,11 @@ public class TripDistributionMatrix {
 	 * @param scenario 
 	 * @param regionLinksMap 
 	 */
-	void setTripDistributionValue(String startZone, String stopZone, String modeORvehType, Integer purpose, String trafficType, Network network, Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
+	void setTripDistributionValue(String startZone, String stopZone, String modeORvehType, Integer purpose, String trafficType, Network network, Map<String, HashMap<Id<Link>, Link>> regionLinksMap, double resistanceFactor) {
 		double volumeStart = trafficVolume_start.get(TrafficVolumeGeneration.makeTrafficVolumeKey(startZone, modeORvehType)).getDouble(purpose);
 		double volumeStop = trafficVolume_stop.get(TrafficVolumeGeneration.makeTrafficVolumeKey(stopZone, modeORvehType)).getDouble(purpose);
-		double resistanceValue = getResistanceFunktionValue(startZone, stopZone, network, regionLinksMap);
-		double gravityConstantA = getGravityConstant(stopZone, trafficVolume_start, modeORvehType, purpose, network, regionLinksMap);
+		double resistanceValue = getResistanceFunktionValue(startZone, stopZone, network, regionLinksMap, resistanceFactor);
+		double gravityConstantA = getGravityConstant(stopZone, trafficVolume_start, modeORvehType, purpose, network, regionLinksMap, resistanceFactor);
 		roundingError.computeIfAbsent(stopZone, (k) -> new Object2DoubleOpenHashMap<>());
 
 		//Bisher: Gravity model mit fixem Zielverkehr
@@ -350,7 +350,7 @@ public class TripDistributionMatrix {
 	 * @param regionLinksMap 
 	 * @return
 	 */
-	private Double getResistanceFunktionValue(String startZone, String stopZone, Network network, Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
+	private Double getResistanceFunktionValue(String startZone, String stopZone, Network network, Map<String, HashMap<Id<Link>, Link>> regionLinksMap, double resistanceFactor) {
 		
 		if (netBasedCosts == null) {
 			VehicleType vehicleType = VehicleUtils.createVehicleType(Id.create("vwCaddy", VehicleType.class));
@@ -386,7 +386,7 @@ public class TripDistributionMatrix {
 ////						distance = netBasedCosts.getDistance(startLocation, stopLocation, 21600., exampleVehicle);
 						travelCosts = netBasedCosts.getTransportCost(startLocation, stopLocation, 21600., null, exampleVehicle);
 					}
-					double resistanceFactor = 0.005;
+//					double resistanceFactor = 0.005;
 //					double resistanceFunktionResult = Math.exp(-distance);
 					double resistanceFunktionResult = Math.exp(-resistanceFactor*travelCosts);
 //					double resistanceFunktionResult = 1 / (travelCosts*travelCosts);
@@ -455,16 +455,17 @@ public class TripDistributionMatrix {
 	 */
 	private double getGravityConstant(String baseZone,
 			HashMap<TrafficVolumeKey, Object2DoubleMap<Integer>>  trafficVolume, String modeORvehType,
-			Integer purpose, Network network, Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
+			Integer purpose, Network network, Map<String, HashMap<Id<Link>, Link>> regionLinksMap, double resistanceFactor) {
 
 		GravityConstantKey gravityKey = makeGravityKey(baseZone, modeORvehType, purpose);
 		if (!gravityConstantACache.containsKey(gravityKey)) {
 			double sum = 0;
 			for (TrafficVolumeKey trafficVolumeKey : trafficVolume.keySet()) {
 				if (trafficVolumeKey.getModeORvehType().equals(modeORvehType)) {
-				double volume = trafficVolume.get(trafficVolumeKey).getDouble(purpose);
-				double resistanceValue = getResistanceFunktionValue(baseZone, trafficVolumeKey.getZone(), network, regionLinksMap);
-				sum = sum + (volume * resistanceValue);
+					double volume = trafficVolume.get(trafficVolumeKey).getDouble(purpose);
+					double resistanceValue = getResistanceFunktionValue(baseZone, trafficVolumeKey.getZone(), network,
+							regionLinksMap, resistanceFactor);
+					sum = sum + (volume * resistanceValue);
 			}}
 			double gravityCostant = 1 / sum;
 			gravityConstantACache.put(gravityKey, gravityCostant);

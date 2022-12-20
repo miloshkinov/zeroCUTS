@@ -74,6 +74,7 @@ public class TripDistributionMatrixTest {
 		
 		String usedTrafficType = "businessTraffic";
 		double sample = 1.;
+		double resistanceFactor = 0.005;
 		
 		ArrayList<String> modesORvehTypes = new ArrayList<String>(
 				Arrays.asList("total"));
@@ -100,7 +101,7 @@ public class TripDistributionMatrixTest {
 					for (Integer purpose : trafficVolumePerTypeAndZone_start
 							.get(TrafficVolumeGeneration.makeTrafficVolumeKey(startZone, modeORvehType)).keySet()) {
 						odMatrix.setTripDistributionValue(startZone, stopZone, modeORvehType, purpose, usedTrafficType,
-								network, regionLinksMap);
+								network, regionLinksMap, resistanceFactor);
 					}
 				}
 			}
@@ -163,6 +164,7 @@ public class TripDistributionMatrixTest {
 		
 		String usedTrafficType = "freightTraffic";
 		double sample = 1.;
+		double resistanceFactor = 0.005;
 		
 		ArrayList<String> modesORvehTypes = new ArrayList<String>(
 				Arrays.asList("vehTyp1", "vehTyp2", "vehTyp3", "vehTyp4", "vehTyp5"));
@@ -189,7 +191,7 @@ public class TripDistributionMatrixTest {
 					for (Integer purpose : trafficVolumePerTypeAndZone_start
 							.get(TrafficVolumeGeneration.makeTrafficVolumeKey(startZone, modeORvehType)).keySet()) {
 						odMatrix.setTripDistributionValue(startZone, stopZone, modeORvehType, purpose, usedTrafficType,
-								network, regionLinksMap);
+								network, regionLinksMap, resistanceFactor);
 					}
 				}
 			}
