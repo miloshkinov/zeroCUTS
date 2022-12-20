@@ -202,9 +202,9 @@ public class SmallScaleCommercialTrafficUtils {
 					.get(Id.create(carrierName, Carrier.class));
 			String subpopulation = relatedCarrier.getAttributes().getAttribute("subpopulation").toString();
 			final String mode;
-			if (subpopulation.equals("businessTraffic"))
+			if (subpopulation.contains("businessTraffic"))
 				mode = "car";
-			else if (subpopulation.equals("freightTraffic"))
+			else if (subpopulation.contains("freightTraffic"))
 				mode = "freight";
 			else
 				mode = relatedCarrier.getAttributes().getAttribute("networkMode").toString();
