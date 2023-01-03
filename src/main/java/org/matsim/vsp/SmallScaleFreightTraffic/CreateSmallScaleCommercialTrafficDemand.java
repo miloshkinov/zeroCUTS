@@ -131,7 +131,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	}
 
 	private enum TrafficType {
-		businessTraffic, freightTraffic, bothTypes
+		businessTraffic, freightTraffic, commercialTraffic
 	}
 
 	@CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Path to the freight data directory", defaultValue = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/berlin/")
@@ -153,7 +153,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 
 	@CommandLine.Option(names = "--trafficType", defaultValue = "freightTraffic", description = "Select traffic type. Options: commercialPassengerTraffic, freightTraffic")
 	private static TrafficType usedTrafficType;
-// businessTraffic, freightTraffic, bothTypes
+// businessTraffic, freightTraffic, commercialTraffic (contains both types)
 
 	@CommandLine.Option(names = "--includeExistingModels", description = "If models for some segments exist they can be included.", defaultValue = "false")
 	private static String includeExistingModels_Input;
@@ -261,7 +261,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 				createCarriersAndDemand(config, output, scenario, shpZones, resultingDataPerZone, regionLinksMap, usedTrafficType.toString(),
 						inputDataDirectory, includeExistingModels);
 				break;
-			case bothTypes:
+			case commercialTraffic:
 				createCarriersAndDemand(config, output, scenario, shpZones, resultingDataPerZone, regionLinksMap, "businessTraffic",
 						inputDataDirectory, includeExistingModels);
 				includeExistingModels = false; // because already included in the step before

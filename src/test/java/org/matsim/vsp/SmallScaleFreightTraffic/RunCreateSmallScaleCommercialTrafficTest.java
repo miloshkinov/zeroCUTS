@@ -55,7 +55,7 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 		String jspritIterations = "2";
 		String creationOption = "createNewCarrierFile";
 		String landuseConfiguration = "useExistingDataDistribution";
-		String trafficType = "bothTypes";
+		String trafficType = "commercialTraffic";
 		String includeExistingModels = "true";
 		String zoneShapeFileName = "testZones.shp";
 		String buildingsShapeFileName = "testBuildings.shp";
