@@ -17,7 +17,7 @@
  *   See also COPYING, LICENSE and WARRANTY file                           *
  *                                                                         *
  * *********************************************************************** */
-package org.matsim.vsp.SmallScaleFreightTraffic;
+package org.matsim.vsp.SmallScaleCommercialTraffic;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +37,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.testcases.MatsimTestUtils;
-import org.matsim.vsp.SmallScaleFreightTraffic.TrafficVolumeGeneration.TrafficVolumeKey;
+import org.matsim.vsp.SmallScaleCommercialTraffic.TrafficVolumeGeneration.TrafficVolumeKey;
 import org.opengis.feature.simple.SimpleFeature;
 
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;

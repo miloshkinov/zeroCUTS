@@ -17,7 +17,7 @@
  *   See also COPYING, LICENSE and WARRANTY file                           *
  *                                                                         *
  * *********************************************************************** */
-package org.matsim.vsp.SmallScaleFreightTraffic;
+package org.matsim.vsp.SmallScaleCommercialTraffic;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
