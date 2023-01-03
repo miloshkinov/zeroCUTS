@@ -13,7 +13,7 @@
 		<!-- Freight Carriers File, according to MATSim freight contrib -->
 		<param name="carriersFile" value="null" />
 		<!-- Carrier Vehicle Types file, according to MATSim freight contrib -->
-		<param name="carriersVehicleTypeFile" value="test/input/org/matsim/vsp/SmallScaleFreightTraffic/vehicleTypes.xml" />
+		<param name="carriersVehicleTypeFile" value="test/input/org/matsim/vsp/SmallScaleCommercialTraffic/vehicleTypes.xml" />
 		<!-- time slice width used for calculation of travel times in seconds. The smaller the value, the more precise the calculation of routing costs but the longer the computation time. Default value is 1800 seconds. -->
 		<param name="travelTimeSliceWidth" value="1800" />
 		<!-- Use distance constraint within the tour planning phase. This does NOT ensure that the tours in MATSim will respect this limitation -->
@@ -41,7 +41,7 @@
 		Depending on the chosen mobsim, you'll have to add additional config modules to configure the corresponding mobsim.
 		For 'qsim', add a module 'qsim' to the config. -->
 		<param name="mobsim" value="qsim" />
-		<param name="outputDirectory" value="test/output/org/matsim/vsp/SmallScaleFreightTraffic/RunCreateSmallScaleCommercialTrafficTest/testMainRunAndResults/" />
+		<param name="outputDirectory" value="test/output/org/matsim/vsp/SmallScaleCommercialTraffic/RunCreateSmallScaleCommercialTrafficTest/testMainRunAndResults/" />
 		<!-- Possible values: failIfDirectoryExists, overwriteExistingFiles, deleteDirectoryIfExists -->
 		<param name="overwriteFiles" value="overwriteExistingFiles" />
 		<!-- The type of routing (least cost path) algorithm used, may have the values: [Dijkstra, AStarLandmarks, FastDijkstra, FastAStarLandmarks, SpeedyALT] -->
