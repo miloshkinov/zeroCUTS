@@ -25,7 +25,6 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.emissions.EmissionModule;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
-import org.matsim.contrib.emissions.utils.EmissionsConfigGroup.HbefaRoadTypeSource;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup.NonScenarioVehicles;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
@@ -70,7 +69,6 @@ class RunOfflineAirPollutionAnalysis {
         EmissionsConfigGroup emissionsConfigGroup = ConfigUtils.addOrGetModule(config, EmissionsConfigGroup.class);
         emissionsConfigGroup.setAverageColdEmissionFactorsFile(rootDirectory + hbefaFileCold);
         emissionsConfigGroup.setAverageWarmEmissionFactorsFile(rootDirectory + hbefaFileWarm);
-        emissionsConfigGroup.setHbefaRoadTypeSource(HbefaRoadTypeSource.fromLinkAttributes);
         emissionsConfigGroup.setNonScenarioVehicles(NonScenarioVehicles.ignore);
 
         final String emissionEventOutputFile = rootDirectory + runDirectory + runId + "emission.events.offline.xml.gz";
