@@ -572,7 +572,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 					}
 					if (isStartingLocation) {
 						double occupancyRate = 0;
-						String[] vehilceTypes = null;
+						String[] possibleVehilceTypes = null;
 						Integer serviceTimePerStop = null;
 						ArrayList<String> startCategory = new ArrayList<String>();
 						ArrayList<String> stopCategory = new ArrayList<String>();
@@ -580,7 +580,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 							if (trafficType.equals("freightTraffic")) {
 								occupancyRate = 1.;
 							} else if (trafficType.equals("businessTraffic")) {
-								vehilceTypes = new String[] { "vwCaddy" };
+								possibleVehilceTypes = new String[] { "vwCaddy", "e_SpaceTourer"};
 								serviceTimePerStop = (int) Math.round(71.7 * 60);
 								occupancyRate = 1.5;
 							}
@@ -590,7 +590,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 							if (trafficType.equals("freightTraffic")) {
 								occupancyRate = 1.;
 							} else if (trafficType.equals("businessTraffic")) {
-								vehilceTypes = new String[] { "vwCaddy" };
+								possibleVehilceTypes = new String[] { "vwCaddy", "e_SpaceTourer"};
 								serviceTimePerStop = (int) Math.round(70.4 * 60); // Durschnitt aus Handel,Transp.,Einw.
 								occupancyRate = 1.6;
 							}
@@ -606,7 +606,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 							if (trafficType.equals("freightTraffic")) {
 								occupancyRate = 1.;
 							} else if (trafficType.equals("businessTraffic")) {
-								vehilceTypes = new String[] { "golf1.4" };
+								possibleVehilceTypes = new String[] { "golf1.4", "c_zero" };
 								serviceTimePerStop = (int) Math.round(70.4 * 60);
 								occupancyRate = 1.2;
 							}
@@ -623,7 +623,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 							if (trafficType.equals("freightTraffic")) {
 								occupancyRate = 1.;
 							} else if (trafficType.equals("businessTraffic")) {
-								vehilceTypes = new String[] { "golf1.4" };
+								possibleVehilceTypes = new String[] { "golf1.4", "c_zero" };
 								serviceTimePerStop = (int) Math.round(100.6 * 60);
 								occupancyRate = 1.2;
 							}
@@ -639,7 +639,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 							if (trafficType.equals("freightTraffic")) {
 								occupancyRate = 1.;
 							} else if (trafficType.equals("businessTraffic")) {
-								vehilceTypes = new String[] { "mercedes313" };
+								possibleVehilceTypes = new String[] { "mercedes313", "e_SpaceTourer" };
 								serviceTimePerStop = (int) Math.round(214.7 * 60);
 								occupancyRate = 1.7;
 							}
@@ -664,23 +664,29 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 						}
 						if (trafficType.equals("freightTraffic")) {
 							if (modeORvehType.equals("vehTyp1")) {
-								vehilceTypes = new String[] { "vwCaddy" }; // possible to add more types, see source
+								possibleVehilceTypes = new String[] { "vwCaddy", "e_SpaceTourer" }; // possible to add more types, see source
 								serviceTimePerStop = (int) Math.round(120 * 60);
 							} else if (modeORvehType.equals("vehTyp2")) {
-								vehilceTypes = new String[] { "mercedes313" };
+								possibleVehilceTypes = new String[] { "mercedes313", "e_SpaceTourer" };
 								serviceTimePerStop = (int) Math.round(150 * 60);
 							} else if (modeORvehType.equals("vehTyp3")) {
-								vehilceTypes = new String[] { "light8t" };
+								possibleVehilceTypes = new String[] { "light8t", "light8t_electro" };
 								serviceTimePerStop = (int) Math.round(120 * 60);
 							} else if (modeORvehType.equals("vehTyp4")) {
-								vehilceTypes = new String[] { "light8t" };
+								possibleVehilceTypes = new String[] { "light8t", "light8t_electro" };
 								serviceTimePerStop = (int) Math.round(75 * 60);
 							} else if (modeORvehType.equals("vehTyp5")) {
-								vehilceTypes = new String[] { "medium18t" }; // TODO perhaps add more options
+								possibleVehilceTypes = new String[] { "medium18t", "medium18t_electro", "heavy40t", "heavy40t_electro"};
 								serviceTimePerStop = (int) Math.round(65 * 60);
 							}
 						}
 
+						// use only types of the possibleTypes which are in the given types file
+						List<String> vehilceTypes = new ArrayList<String>();
+						for (String possibleVehilceType : possibleVehilceTypes) {
+							if (FreightUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().containsKey(Id.create(possibleVehilceType, VehicleType.class)))
+									vehilceTypes.add(possibleVehilceType);
+						}
 						String selectedStartCategory = startCategory.get(rnd.nextInt(startCategory.size()));
 						while (resultingDataPerZone.get(startZone).getDouble(selectedStartCategory) == 0)
 							selectedStartCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
@@ -783,7 +789,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	 */
 	private void createNewCarrierAndAddVehilceTypes(Scenario scenario, Integer purpose, String startZone,
 			FreightConfigGroup freightConfigGroup, String selectedStartCategory, String carrierName,
-			String[] vehilceTypes, int numberOfDepots, FleetSize fleetSize, int fixedNumberOfVehilcePerTypeAndLocation,
+			List<String> vehilceTypes, int numberOfDepots, FleetSize fleetSize, int fixedNumberOfVehilcePerTypeAndLocation,
 			ArrayList<String> vehicleDepots, Map<String, HashMap<Id<Link>, Link>> regionLinksMap, String trafficType) {
 
 		Carriers carriers = FreightUtils.addOrGetCarriers(scenario);
@@ -809,9 +815,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			vehicleDepots.add(link.toString());
 		}
 		for (String singleDepot : vehicleDepots) {
+			int vehicleStartTime = rnd.nextInt(6 * 3600, 14 * 3600); // TODO Verteilung über den Tag prüfen
+			int vehicleEndTime = vehicleStartTime + 8 * 3600;
 			for (String thisVehicleType : vehilceTypes) {
-				int vehicleStartTime = rnd.nextInt(6 * 3600, 14 * 3600); // TODO Verteilung über den Tag prüfen
-				int vehicleEndTime = vehicleStartTime + 8 * 3600;
 				VehicleType thisType = carrierVehicleTypes.getVehicleTypes()
 						.get(Id.create(thisVehicleType, VehicleType.class));
 				if (fixedNumberOfVehilcePerTypeAndLocation == 0)
