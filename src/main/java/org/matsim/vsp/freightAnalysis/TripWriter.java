@@ -27,6 +27,7 @@ import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.contrib.freight.carrier.Carriers;
 import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.Vehicles;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -239,8 +240,10 @@ import java.util.TreeMap;
 			Map<Id<VehicleType>,Integer> vehTypeId2NumberOfVehicles = new TreeMap<>();
 
 			//Vorbereitung: Nur Aufnehmen, wenn nicht null;
-			CarrierVehicleTypes vehicleTypes = this.handler.getVehicleTypes();
-			for (Id<VehicleType> vehicleTypeId : vehicleTypes.getVehicleTypes().keySet()){
+//			CarrierVehicleTypes vehicleTypes = this.handler.getVehicleTypes();
+			Vehicles vehicles = this.handler.getVehicles();
+
+			for (Id<VehicleType> vehicleTypeId : vehicles.getVehicleTypes().keySet()){
 				log.warn("handle vehicleType:" + vehicleTypeId);
 				if (vehTypeId2TourDistances.containsKey(vehicleTypeId)) {
 					log.fatal("vehicleType wurde bereits behandelt:" + vehicleTypeId.toString(), new RuntimeException());
@@ -336,7 +339,8 @@ import java.util.TreeMap;
 			Map<Id<Person>, Double> personId2tourDistance = this.handler.getPersonId2TourDistances();
 			Map<Id<Person>, Double> personId2tourTravelTimes = this.handler.getPersonId2TravelTimes();
 
-			CarrierVehicleTypes vehicleTypes = this.handler.getVehicleTypes();
+//			CarrierVehicleTypes vehicleTypes = this.handler.getVehicleTypes();
+			Vehicles vehicles = this.handler.getVehicles();
 
 			//write results:
 			for (Id<Person> personId : personId2tourDistance.keySet()) {
@@ -346,18 +350,18 @@ import java.util.TreeMap;
 				Double tourTravelTimeSec = personId2tourTravelTimes.get(personId);
 
 				Id<VehicleType> vehTypeId = null;
-
-				for (Id<VehicleType> vehTypeIdsAvail : vehicleTypes.getVehicleTypes().keySet()) {
-					log.debug("Trying if VehicleTypeId is matching: " + vehTypeIdsAvail.toString());
-					if(personId.toString().contains("_"+vehTypeIdsAvail.toString()+"_")){
-						if (vehTypeIdsAvail.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
-							if (vehTypeIdsAvail.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
-								vehTypeId = vehTypeIdsAvail;
-								log.debug("vehicletypeId was set to: " +vehTypeId);
-							}
-						}
-					}
-				}
+				vehTypeId = vehicles.getVehicles().get(Id.createVehicleId(personId.toString())).getType().getId();
+//				for (Id<VehicleType> vehTypeIdsAvail : vehicleTypes.getVehicleTypes().keySet()) {
+//					log.debug("Trying if VehicleTypeId is matching: " + vehTypeIdsAvail.toString());
+//					if(personId.toString().contains("_"+vehTypeIdsAvail.toString()+"_")){
+//						if (vehTypeIdsAvail.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
+//							if (vehTypeIdsAvail.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
+//								vehTypeId = vehTypeIdsAvail;
+//								log.debug("vehicletypeId was set to: " +vehTypeId);
+//							}
+//						}
+//					}
+//				}
 
 				if (vehTypeId == null) {
 					log.error("Vehicle type for person not defined: " + personId);
