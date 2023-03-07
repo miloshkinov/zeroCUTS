@@ -871,6 +871,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			double minDistance = Double.MAX_VALUE;
 			int numberOfPossibleLinks = regionLinksMap.get(zone).size();
 
+			// searches and selects the nearest link of the possible links in this zone
 			searchLink: for (Link possibleLink : regionLinksMap.get(zone).values()) {
 				if (noPossibleLinks != null && numberOfPossibleLinks > noPossibleLinks.size())
 					for (String depotLink : noPossibleLinks) {
@@ -888,8 +889,9 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			}
 		}
 		if (newLink == null)
-			throw new RuntimeException(
-					"No possible link for buildings with type '" + selectedCategory + "' in zone '" + zone + "' found");
+			throw new RuntimeException("No possible link for buildings with type '" + selectedCategory + "' in zone '"
+					+ zone + "' found. buildings in category: " + buildingsPerZone.get(zone).get(selectedCategory)
+					+ "; possibleLinks in zone: " + regionLinksMap.get(zone).size());
 		return newLink;
 	}
 
