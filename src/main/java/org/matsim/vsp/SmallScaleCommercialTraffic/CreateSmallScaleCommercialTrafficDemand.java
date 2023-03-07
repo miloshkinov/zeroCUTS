@@ -272,18 +272,18 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 				throw new RuntimeException("No traffic type selected.");
 			}
 			new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
-					.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemand.xml");
+					.write(scenario.getConfig().controler().getOutputDirectory() + "/"+scenario.getConfig().controler().getRunId() + ".output_CarrierDemand.xml");
 
 			solveSeperatedVRPs(scenario, regionLinksMap);
 			break;
 		}
 		new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
-				.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemandWithPlans.xml");
+				.write(scenario.getConfig().controler().getOutputDirectory() + "/"+scenario.getConfig().controler().getRunId() + ".output_CarrierDemandWithPlans.xml");
 		Controler controler = prepareControler(scenario);
 		controler.run();
 		SmallScaleCommercialTrafficUtils.createPlansBasedOnCarrierPlans(controler.getScenario(),
 				usedTrafficType.toString(), sample, output, modelName, sampleName);
-		FreightAnalyse.main(new String[] { scenario.getConfig().controler().getOutputDirectory(), "true" });
+		FreightAnalyse.main(new String[] { scenario.getConfig().controler().getOutputDirectory(), "true" , scenario.getConfig().controler().getRunId()+"."});
 
 		return 0;
 	}
