@@ -158,19 +158,19 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	@CommandLine.Option(names = "--includeExistingModels", description = "If models for some segments exist they can be included.", defaultValue = "false")
 	private static String includeExistingModels_Input;
 
-	@CommandLine.Option(names = "--zoneShapeFileName", defaultValue = "berlinBrandenburg_Zones_VKZ_4326.shp", description = "Name of the zone shape file. The location of the file ")
-	private static String zoneShapeFileName;
+	@CommandLine.Option(names = "--zoneShapeFileName", defaultValue = "shp/leipzig_zones_25832.shp", description = "Name of the zone shape file. The location of the file ")
+	private static Path zoneShapeFilePath;
 // berlinBrandenburg_Zones_VKZ_4326.shp, berlinBrandenburg_Zones_districts_4326.shp, leipzig_zones_25833.shp
 
-	@CommandLine.Option(names = "--buildingsShapeFileName", defaultValue = "buildings_sample_BerlinBrandenburg_4326.shp", description = "Name of the zone shape file. The location of the file ")
-	private static String buildingsShapeFileName;
+	@CommandLine.Option(names = "--buildingsShapeFileName", defaultValue = "shp/leipzig_buildings_25832.shp", description = "Name of the zone shape file. The location of the file ")
+	private static Path buildingsShapeFilePath;
 // buildings_BerlinBrandenburg_4326.shp, buildings_sample_BerlinBrandenburg_4326.shp, leipzig_buildings_25833.shp
 
-	@CommandLine.Option(names = "--landuseShapeFileName", defaultValue = "berlinBrandenburg_landuse_4326.shp", description = "Name of the zone shape file. The location of the file ")
-	private static String landuseShapeFileName;
+	@CommandLine.Option(names = "--landuseShapeFileName", defaultValue = "shp/leipzig_landuse_25832.shp", description = "Name of the zone shape file. The location of the file ")
+	private static Path landuseShapeFilePath;
 // berlinBrandenburg_landuse_4326.shp, leipzig_landuse_25833.shp
 
-	@CommandLine.Option(names = "--shapeCRS", defaultValue = "EPSG:4326", description = "CRS of the three input shape files( zones, landuse, buildings")
+	@CommandLine.Option(names = "--shapeCRS", defaultValue = "EPSG:25832", description = "CRS of the three input shape files( zones, landuse, buildings")
 	private static String shapeCRS;
 //Berlin EPSG:4326; Leipzig EPSG:25833
 
@@ -226,11 +226,11 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 			solveSeperatedVRPs(scenario, null);
 			break;
 		default:
-			shapeFileZonePath = inputDataDirectory.resolve("shp").resolve(zoneShapeFileName);
+			shapeFileZonePath = inputDataDirectory.resolve(zoneShapeFilePath);
 
-			shapeFileLandusePath = inputDataDirectory.resolve("shp").resolve(landuseShapeFileName);
+			shapeFileLandusePath = inputDataDirectory.resolve(landuseShapeFilePath);
 
-			shapeFileBuildingsPath = inputDataDirectory.resolve("shp").resolve(buildingsShapeFileName);
+			shapeFileBuildingsPath = inputDataDirectory.resolve(buildingsShapeFilePath);
 
 			if (!Files.exists(shapeFileLandusePath)) {
 				throw new Exception("Required landuse shape file not found:" + shapeFileLandusePath.toString());
