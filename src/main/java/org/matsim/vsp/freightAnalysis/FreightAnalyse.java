@@ -31,6 +31,8 @@ public class FreightAnalyse {
 
 	private static String runId = "";
 	
+	private static String networkCRS = null;
+	
 	private static boolean onlyAllCarrierResults = false;
 
 	private static final Logger log = LogManager.getLogger(FreightAnalyse.class);
@@ -42,7 +44,9 @@ public class FreightAnalyse {
 		if (args.length > 1)
 			onlyAllCarrierResults = Boolean.parseBoolean(args[1]);
 		if (args.length > 2)
-			runId = args[2];
+			networkCRS = args[2];
+		if (args.length > 3)
+			runId = args[3];
 		FreightAnalyse analysis = new FreightAnalyse();
 		analysis.run();
 		log.info("### Finished ###");
@@ -50,7 +54,7 @@ public class FreightAnalyse {
 
 	}
 
-	private void run() throws UncheckedIOException, IOException {
+	private void run() throws UncheckedIOException {
 
 //			File configFile = new File(RUN_DIR + "output_config.xml");
 ////			File configFile = new File(RUN_DIR + "output_config.xml.gz");
@@ -62,7 +66,7 @@ public class FreightAnalyse {
 		Config config = ConfigUtils.createConfig();
 		config.vehicles().setVehiclesFile(RUN_DIR + runId + "output_allVehicles.xml.gz");
 		config.network().setInputFile(RUN_DIR + runId + "output_network.xml.gz");
-		config.global().setCoordinateSystem(TransformationFactory.DHDN_GK4);
+		config.global().setCoordinateSystem(networkCRS);
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 		freightConfigGroup.setCarriersFile(RUN_DIR + runId + "output_carriers.xml.gz");
 		freightConfigGroup.setCarriersVehicleTypesFile(RUN_DIR + runId + "output_carriersVehicleTypes.xml.gz");
@@ -75,7 +79,7 @@ public class FreightAnalyse {
 //		new CarrierVehicleTypeReader(vehicleTypes).readFile(vehicleTypeFile.getAbsolutePath());
 
 //		log.warn("VehicleTypes: " + vehicleTypes.getVehicleTypes().keySet().toString());
-		log.warn("VehicleTypes: " + scenario.getVehicles().getVehicleTypes().keySet().toString());
+		log.warn("VehicleTypes: " + scenario.getVehicles().getVehicleTypes().keySet());
 
 		
 //		Carriers carriers = new Carriers();
