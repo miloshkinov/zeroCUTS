@@ -43,6 +43,7 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControlerConfigGroup;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
+import org.matsim.core.config.groups.VspExperimentalConfigGroup.VspDefaultsCheckingLevel;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -59,7 +60,6 @@ import org.matsim.core.scoring.functions.CharyparNagelAgentStuckScoring;
 import org.matsim.core.scoring.functions.CharyparNagelLegScoring;
 import org.matsim.core.scoring.functions.ScoringParameters;
 import org.matsim.core.scoring.functions.ScoringParametersForPerson;
-import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
 
@@ -100,16 +100,15 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 			config.addModule(new CadytsConfigGroup());
 		String modelName = inputPath.getParent().getParent().getFileName().toString();
 		String usedTrafficType = inputPath.getFileName().toString().split("pct_")[1];
-		String sampleName = null;
+		String sampleName;
 
 		if ((inputScale * 100) % 1 == 0)
 			sampleName = String.valueOf((int) (inputScale * 100));
 		else
 			sampleName = String.valueOf((inputScale * 100));
 		config.controler().setOutputDirectory(Path.of(config.controler().getOutputDirectory()).resolve(modelName)
-				.resolve(usedTrafficType.toString() + "_" + sampleName + "pct" + "_"
-						+ java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay())
-				.toString() + "_run");
+				.resolve(usedTrafficType + "_" + sampleName + "pct" + "_"
+						+ java.time.LocalDate.now() + "_" + java.time.LocalTime.now().toSecondOfDay()) + "_run");
 		log.info("Output folder is set to: " + config.controler().getOutputDirectory());
 		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
 				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
@@ -134,7 +133,7 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 //		        bind(AnalysisMainModeIdentifier.class).to(MainModeIdentifier.class);
 				bind(AnalysisMainModeIdentifier.class).to(TransportPlanningMainModeIdentifierRE.class);
 				if (cadytsCalibration)
-					addPlanStrategyBinding("planChangerCadyts").toProvider(new javax.inject.Provider<PlanStrategy>() {
+					addPlanStrategyBinding("planChangerCadyts").toProvider(new javax.inject.Provider<>() {
 						@Inject
 						Scenario scenario;
 						@Inject
@@ -175,6 +174,7 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 					return scoringFunctionAccumulator;
 				}
 			});
+		controler.getConfig().vspExperimental().setVspDefaultsCheckingLevel(VspDefaultsCheckingLevel.abort);
 
 		controler.run();
 
@@ -194,7 +194,7 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 			}
 		});
 		String modelName = inputPath.getParent().getParent().getFileName().toString();
-		Path longDistancePopulation = null;
+		Path longDistancePopulation;
 		if ((inputScale * 100) % 1 == 0)
 			longDistancePopulation = inputPath
 					.resolve(modelName + "_longDistanceFreight_" + (int) (inputScale * 100) + "pct.xml.gz");
@@ -209,7 +209,7 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 
 		longDistanceFreightPopulation.getPersons().values()
 				.forEach(person -> VehicleUtils.insertVehicleIdsIntoAttributes(
-						scenario.getPopulation().getPersons().get(person.getId()), (new HashMap<String, Id<Vehicle>>() {
+						scenario.getPopulation().getPersons().get(person.getId()), (new HashMap<>() {
 							{
 								put("freight", Id.createVehicleId(person.getId().toString()));
 							}
@@ -243,7 +243,7 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 			for (PlanElement planElement : person.getSelectedPlan().getPlanElements()) {
 				if (planElement instanceof Activity) {
 					i++;
-					String newTypeName = ((Activity) planElement).getType().toString() + "_" + i;
+					String newTypeName = ((Activity) planElement).getType() + "_" + i;
 					((Activity) planElement).setType(newTypeName);
 					if (newTypeName.contains("service")) {
 						config.planCalcScore()
@@ -277,7 +277,6 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 					}
 					if (newTypeName.contains("freight_end")) {
 						config.planCalcScore().addActivityParams(new ActivityParams(newTypeName).setTypicalDuration(1));
-						continue;
 					}
 				}
 			}
