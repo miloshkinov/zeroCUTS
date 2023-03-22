@@ -38,7 +38,7 @@ import java.io.File;
 import java.util.Objects;
 
 /**
- * @author Ricardo
+ * @author Ricardo Ewert
  *
  */
 public class RunCreateSmallScaleCommercialTrafficTest {
@@ -47,7 +47,7 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 	public MatsimTestUtils utils = new MatsimTestUtils();
 
 	@Test
-	public void testMainRunAndResults() throws IOException {
+	public void testMainRunAndResults() {
 		String inputDataDirectory = utils.getPackageInputDirectory();
 		String output = utils.getOutputDirectory();
 		String sample = "0.1";
@@ -56,9 +56,9 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 		String landuseConfiguration = "useExistingDataDistribution";
 		String trafficType = "commercialTraffic";
 		String includeExistingModels = "true";
-		String zoneShapeFileName = "testZones.shp";
-		String buildingsShapeFileName = "testBuildings.shp";
-		String landuseShapeFileName = "testLanduse.shp";
+		String zoneShapeFileName = "shp/testZones.shp";
+		String buildingsShapeFileName = "shp/testBuildings.shp";
+		String landuseShapeFileName = "shp/testLanduse.shp";
 		String shapeCRS = "EPSG:4326";
 
 		new CreateSmallScaleCommercialTrafficDemand().execute(
@@ -78,13 +78,13 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 		Config config = ConfigUtils.createConfig();
 		Scenario scenarioWOSolution = ScenarioUtils.createScenario(config);
 		Scenario scenarioWSolution = ScenarioUtils.createScenario(config);
-		File outputFolder = new File(output).listFiles()[0];
+		File outputFolder = Objects.requireNonNull(new File(output).listFiles())[0];
 		Population population = null;
 		String carriersWOSolutionFileLocation = null;
 		String carriersWSolutionFileLocation = null;
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
 
-		for (File outputFiles : Objects.requireNonNull(outputFolder.listFiles()[0].listFiles())) {
+		for (File outputFiles : Objects.requireNonNull(Objects.requireNonNull(outputFolder.listFiles())[0].listFiles())) {
 
 			if (outputFiles.getName().contains("pct_plans.xml.gz"))
 				population = PopulationUtils.readPopulation(outputFiles.getPath());
@@ -101,8 +101,9 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 		freightConfigGroup.setCarriersFile(carriersWSolutionFileLocation);
 		FreightUtils.loadCarriersAccordingToFreightConfig(scenarioWSolution);
 
+		assert population != null;
 		for (Person person : population.getPersons().values()) {
-			Assert.assertTrue(person.getSelectedPlan() != null);
+			Assert.assertNotNull(person.getSelectedPlan());
 			Assert.assertTrue(person.getAttributes().getAsMap().containsKey("tourStartArea"));
 			Assert.assertTrue(person.getAttributes().getAsMap().containsKey("vehicles"));
 			Assert.assertTrue(person.getAttributes().getAsMap().containsKey("subpopulation"));
