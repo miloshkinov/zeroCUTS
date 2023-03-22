@@ -19,55 +19,6 @@
  * *********************************************************************** */
 package org.matsim.vsp.SmallScaleCommercialTraffic;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.network.Link;
-import org.matsim.api.core.v01.population.Activity;
-import org.matsim.api.core.v01.population.Leg;
-import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.Plan;
-import org.matsim.api.core.v01.population.PlanElement;
-import org.matsim.api.core.v01.population.Population;
-import org.matsim.api.core.v01.population.PopulationFactory;
-import org.matsim.application.options.ShpOptions;
-import org.matsim.application.options.ShpOptions.Index;
-import org.matsim.contrib.freight.carrier.Carrier;
-import org.matsim.contrib.freight.carrier.CarrierPlanXmlReader;
-import org.matsim.contrib.freight.carrier.CarrierUtils;
-import org.matsim.contrib.freight.carrier.CarrierVehicle;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
-import org.matsim.contrib.freight.carrier.Carriers;
-import org.matsim.contrib.freight.carrier.ScheduledTour;
-import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
-import org.matsim.contrib.freight.carrier.Tour.Pickup;
-import org.matsim.contrib.freight.carrier.Tour.ServiceActivity;
-import org.matsim.contrib.freight.carrier.Tour.TourElement;
-import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
-import org.matsim.contrib.freight.utils.FreightUtils;
-import org.matsim.core.gbl.MatsimRandom;
-import org.matsim.core.population.PopulationUtils;
-import org.matsim.core.utils.io.IOUtils;
-import org.matsim.vehicles.Vehicle;
-import org.matsim.vehicles.VehicleType;
-import org.matsim.vehicles.VehicleUtils;
 import com.google.common.base.Joiner;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
 import com.graphhopper.jsprit.core.problem.job.Job;
@@ -77,6 +28,37 @@ import com.graphhopper.jsprit.core.problem.solution.route.VehicleRoute;
 import com.graphhopper.jsprit.core.problem.solution.route.activity.BreakActivity;
 import com.graphhopper.jsprit.core.problem.solution.route.activity.TourActivity;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.population.*;
+import org.matsim.application.options.ShpOptions;
+import org.matsim.application.options.ShpOptions.Index;
+import org.matsim.contrib.freight.carrier.*;
+import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
+import org.matsim.contrib.freight.carrier.Tour.Pickup;
+import org.matsim.contrib.freight.carrier.Tour.ServiceActivity;
+import org.matsim.contrib.freight.carrier.Tour.TourElement;
+import org.matsim.contrib.freight.controler.FreightUtils;
+import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
+import org.matsim.core.gbl.MatsimRandom;
+import org.matsim.core.population.PopulationUtils;
+import org.matsim.core.utils.io.IOUtils;
+import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.VehicleUtils;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 /**
  * Utils for the SmallScaleFreightTraffic
@@ -99,8 +81,7 @@ public class SmallScaleCommercialTrafficUtils {
 	static Index getIndexZones(Path shapeFileZonePath, String shapeCRS) {
 
 		ShpOptions shpZones = new ShpOptions(shapeFileZonePath, shapeCRS, StandardCharsets.UTF_8);
-		Index indexZones = shpZones.createIndex(shapeCRS, "areaID");
-		return indexZones;
+		return shpZones.createIndex(shapeCRS, "areaID");
 	}
 
 	/**
@@ -112,8 +93,7 @@ public class SmallScaleCommercialTrafficUtils {
 	static Index getIndexLanduse(Path shapeFileLandusePath, String shapeCRS) {
 
 		ShpOptions shpLanduse = new ShpOptions(shapeFileLandusePath, shapeCRS, StandardCharsets.UTF_8);
-		Index indexLanduse = shpLanduse.createIndex(shapeCRS, "fclass");
-		return indexLanduse;
+		return shpLanduse.createIndex(shapeCRS, "fclass");
 	}
 
 	/**
@@ -172,23 +152,16 @@ public class SmallScaleCommercialTrafficUtils {
 
 	/**
 	 * Creates a population including the plans in preparation for the MATSim run.
-	 * 
-	 * @param controler
+	 *
+	 * @param scenario
 	 * @param usedTrafficType
-	 * @param sample
 	 * @param output
-	 * @param inputDataDirectory
+	 * @param modelName
+	 * @param sampleName
 	 */
-	/**
-	 * @param controler
-	 * @param usedTrafficType
-	 * @param sample
-	 * @param output
-	 * @param sampleName 
-	 * @param inputDataDirectory
-	 */
-	static void createPlansBasedOnCarrierPlans(Scenario scenario, String usedTrafficType, double sample, Path output,
-			String modelName, String sampleName) {
+
+	static void createPlansBasedOnCarrierPlans(Scenario scenario, String usedTrafficType, Path output,
+											   String modelName, String sampleName) {
 
 		Population population = scenario.getPopulation();
 		PopulationFactory popFactory = population.getFactory();
@@ -212,8 +185,7 @@ public class SmallScaleCommercialTrafficUtils {
 			double tourStartTime = 0;
 			for (PlanElement tourElement : tourElements) {
 
-				if (tourElement instanceof Activity) {
-					Activity activity = (Activity) tourElement;
+				if (tourElement instanceof Activity activity) {
 					activity.setCoord(
 							scenario.getNetwork().getLinks().get(activity.getLinkId()).getFromNode().getCoord());
 					if (!activity.getType().equals("start"))
@@ -237,7 +209,7 @@ public class SmallScaleCommercialTrafficUtils {
 			if (relatedCarrier.getAttributes().getAsMap().containsKey("tourStartArea"))
 				newPerson.getAttributes().putAttribute("tourStartArea",
 						relatedCarrier.getAttributes().getAttribute("tourStartArea"));
-			VehicleUtils.insertVehicleIdsIntoAttributes(newPerson, (new HashMap<String, Id<Vehicle>>() {
+			VehicleUtils.insertVehicleIdsIntoAttributes(newPerson, (new HashMap<>() {
 				{
 					put(mode, (Id.createVehicleId(person.getId().toString())));
 				}
@@ -273,12 +245,12 @@ public class SmallScaleCommercialTrafficUtils {
 			double sampleSizeExistingScenario = Double.parseDouble(record.get("sampleSize"));
 			String modelTrafficType = record.get("trafficType");
 			final Integer modelPurpose;
-			if (record.get("purpose") != "")
+			if (!Objects.equals(record.get("purpose"), ""))
 				modelPurpose = Integer.parseInt(record.get("purpose"));
 			else
 				modelPurpose = null;
 			final String vehicleType;
-			if (record.get("vehicleType") != "")
+			if (!Objects.equals(record.get("vehicleType"), ""))
 				vehicleType = record.get("vehicleType");
 			else
 				vehicleType = null;
@@ -317,7 +289,7 @@ public class SmallScaleCommercialTrafficUtils {
 							+ carrier.getSelectedPlan().getScheduledTours().size();
 			}
 			int sampledNumberOfToursExistingScenario = (int) Math.round(numberOfToursExistingScenario * sampleFactor);
-			List<Carrier> carrierToRemove = new ArrayList<Carrier>();
+			List<Carrier> carrierToRemove = new ArrayList<>();
 			int remaindTours = 0;
 			double roundingError = 0.;
 
@@ -335,7 +307,7 @@ public class SmallScaleCommercialTrafficUtils {
 					int numberOfRemainingTours = (int) Math.round(numberOfOriginalTours * sampleFactor);
 					roundingError = roundingError + numberOfRemainingTours - (numberOfOriginalTours * sampleFactor);
 					int numberOfToursToRemove = numberOfOriginalTours - numberOfRemainingTours;
-					List<ScheduledTour> toursToRemove = new ArrayList<ScheduledTour>();
+					List<ScheduledTour> toursToRemove = new ArrayList<>();
 
 					if (roundingError <= -1 && numberOfToursToRemove > 0) {
 						numberOfToursToRemove = numberOfToursToRemove - 1;
@@ -377,8 +349,7 @@ public class SmallScaleCommercialTrafficUtils {
 					if (carrier.getServices().size() != 0) {
 						for (ScheduledTour removedTour : toursToRemove) {
 							for (TourElement tourElement : removedTour.getTour().getTourElements()) {
-								if (tourElement instanceof ServiceActivity) {
-									ServiceActivity service = (ServiceActivity) tourElement;
+								if (tourElement instanceof ServiceActivity service) {
 									carrier.getServices().remove(service.getService().getId());
 								}
 							}
@@ -386,8 +357,7 @@ public class SmallScaleCommercialTrafficUtils {
 					} else if (carrier.getShipments().size() != 0) {
 						for (ScheduledTour removedTour : toursToRemove) {
 							for (TourElement tourElement : removedTour.getTour().getTourElements()) {
-								if (tourElement instanceof Pickup) {
-									Pickup pickup = (Pickup) tourElement;
+								if (tourElement instanceof Pickup pickup) {
 									carrier.getShipments().remove(pickup.getShipment().getId());
 								}
 							}
@@ -407,7 +377,7 @@ public class SmallScaleCommercialTrafficUtils {
 									tour.getVehicle());
 						}
 					}
-					List<VehicleType> vehcileTypesToRemove = new ArrayList<VehicleType>();
+					List<VehicleType> vehcileTypesToRemove = new ArrayList<>();
 					for (VehicleType existingVehicleType : carrier.getCarrierCapabilities().getVehicleTypes()) {
 						boolean vehicleTypeNeeded = false;
 						for (CarrierVehicle vehicle : carrier.getCarrierCapabilities().getCarrierVehicles().values()) {
@@ -417,7 +387,7 @@ public class SmallScaleCommercialTrafficUtils {
 										existingVehicleType);
 							}
 						}
-						if (vehicleTypeNeeded == false)
+						if (!vehicleTypeNeeded)
 							vehcileTypesToRemove.add(existingVehicleType);
 					}
 					carrier.getCarrierCapabilities().getVehicleTypes().removeAll(vehcileTypesToRemove);
@@ -464,14 +434,14 @@ public class SmallScaleCommercialTrafficUtils {
 				if (carrier.getSelectedPlan() != null) {
 					newCarrier.setSelectedPlan(carrier.getSelectedPlan());
 
-					List<String> startAreas = new ArrayList<String>();
+					List<String> startAreas = new ArrayList<>();
 					for (ScheduledTour tour : newCarrier.getSelectedPlan().getScheduledTours()) {
 						String tourStartZone = findZoneOfLink(tour.getTour().getStartLinkId(), regionLinksMap);
 						if (!startAreas.contains(tourStartZone))
 							startAreas.add(tourStartZone);
 					}
 					newCarrier.getAttributes().putAttribute("tourStartArea",
-							startAreas.stream().collect(Collectors.joining(";")));
+							String.join(";", startAreas));
 					
 					CarrierUtils.setJspritIterations(newCarrier, 0);
 					// recalculate score for selectedPlan
@@ -511,7 +481,7 @@ public class SmallScaleCommercialTrafficUtils {
 	 */
 	private static SolutionCostCalculator getObjectiveFunction(final VehicleRoutingProblem vrp, final double maxCosts) {
 
-		SolutionCostCalculator solutionCostCalculator = new SolutionCostCalculator() {
+		return new SolutionCostCalculator() {
 			@Override
 			public double getCosts(VehicleRoutingProblemSolution solution) {
 				double costs = 0.;
@@ -547,6 +517,5 @@ public class SmallScaleCommercialTrafficUtils {
 				return costs;
 			}
 		};
-		return solutionCostCalculator;
 	}
 }

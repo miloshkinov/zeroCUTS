@@ -31,7 +31,6 @@ import com.graphhopper.jsprit.core.algorithm.listener.VehicleRoutingAlgorithmLis
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.util.Solutions;
-import com.google.inject.Provider;
 import com.graphhopper.jsprit.analysis.toolbox.StopWatch;
 
 import org.apache.logging.log4j.Level;
@@ -42,8 +41,8 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
+import org.matsim.contrib.freight.carrier.CarrierPlanWriter;
 import org.matsim.contrib.freight.carrier.CarrierPlanXmlReader;
-import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
 import org.matsim.contrib.freight.carrier.CarrierService;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypeWriter;
@@ -55,12 +54,11 @@ import org.matsim.contrib.freight.carrier.Tour.TourElement;
 import org.matsim.contrib.freight.controler.CarrierModule;
 import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
 import org.matsim.contrib.freight.controler.CarrierStrategyManager;
-import org.matsim.contrib.freight.controler.CarrierStrategyManagerImpl;
+import org.matsim.contrib.freight.controler.FreightUtils;
 import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
 import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts;
 import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts.Builder;
 import org.matsim.contrib.freight.jsprit.NetworkRouter;
-import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.consistency.VspConfigConsistencyCheckerImpl;
@@ -76,7 +74,6 @@ import org.matsim.core.controler.ControlerUtils;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.controler.OutputDirectoryLogging;
-import org.matsim.core.replanning.GenericStrategyManager;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.SumScoringFunction;
@@ -85,11 +82,8 @@ import org.osgeo.proj4j.UnsupportedParameterException;
 
 /**
  * This is a short an easy version to run MATSim freight scenarios .
- * 
  * Optional it is possible to run MATSim after tour planning.
- * 
  * @author kturner
- * 
  */
 public class RunFreight {
 
@@ -138,7 +132,7 @@ public class RunFreight {
 		Carriers carriers = jspritRun(config, scenario.getNetwork());
 
 		if (runMatsim){
-			matsimRun(scenario, carriers);	//final MATSim configurations and start of the MATSim-Run
+			matsimRun(scenario);	//final MATSim configurations and start of the MATSim-Run
 		}
 		writeAdditionalRunOutput(config, carriers);	//write some final Output
 
@@ -199,24 +193,25 @@ public class RunFreight {
 		return config;
 	}  //End createConfig
 
-	private static Carriers jspritRun(Config config, Network network) throws InvalidAttributeValueException {
+	private static Carriers jspritRun(Config config, Network network) {
 		CarrierVehicleTypes vehicleTypes = createVehicleTypes();
-		vehicleTypes = modifyVehicleTypes(vehicleTypes);
+		modifyVehicleTypes(vehicleTypes);
 
 		Carriers carriers = createCarriers(vehicleTypes);
-		generateCarrierPlans(network, carriers, vehicleTypes, config); // Hier erfolgt Lösung des VRPs
+		generateCarrierPlans(network, carriers, vehicleTypes); // Hier erfolgt Lösung des VRPs
 
 		checkServiceAssignment(carriers);
 
 		//### Output nach Jsprit Iteration
-		new CarrierPlanXmlWriterV2(carriers).write( config.controler().getOutputDirectory() + "/jsprit_plannedCarriers.xml") ; //Muss in Temp, da OutputDir leer sein muss // setOverwriteFiles gibt es nicht mehr; kt 05.11.2014
+		
+		new CarrierPlanWriter(carriers).write( config.controler().getOutputDirectory() + "/jsprit_plannedCarriers.xml") ; //Muss in Temp, da OutputDir leer sein muss // setOverwriteFiles gibt es nicht mehr; kt 05.11.2014
 
 		new WriteCarrierScoreInfos(carriers, new File(config.controler().getOutputDirectory() +  "/#JspritCarrierScoreInformation.txt"));
 
 		return carriers;
 	}
 
-	private static CarrierVehicleTypes modifyVehicleTypes(CarrierVehicleTypes vehicleTypes) {
+	private static void modifyVehicleTypes(CarrierVehicleTypes vehicleTypes) {
 		for (VehicleType vt : vehicleTypes.getVehicleTypes().values()) {
 			if (costsModififier != null) {
 				switch (costsModififier) {
@@ -248,7 +243,6 @@ public class RunFreight {
 			}
 
 		}
-		return vehicleTypes;
 	}
 
 	private static Carriers createCarriers(CarrierVehicleTypes vehicleTypes) {
@@ -269,9 +263,8 @@ public class RunFreight {
 	 * @param network
 	 * @param carriers
 	 * @param vehicleTypes
-	 * @param config
 	 */
-	private static void generateCarrierPlans(Network network, Carriers carriers, CarrierVehicleTypes vehicleTypes, Config config) {
+	private static void generateCarrierPlans(Network network, Carriers carriers, CarrierVehicleTypes vehicleTypes) {
 		Builder netBuilder = NetworkBasedTransportCosts.Builder.newInstance( network, vehicleTypes.getVehicleTypes().values() );
 
 		netBuilder.setTimeSliceWidth(1800) ; // !!!!, otherwise it will not do anything.
@@ -320,9 +313,9 @@ public class RunFreight {
 	//TODO: Funktionaltität in contrib vorsehen -> FreightUtils? KMT feb'19
 	private static void checkServiceAssignment(Carriers carriers) {
 		for (Carrier c :carriers.getCarriers().values()){
-			ArrayList<CarrierService> assignedServices = new ArrayList<CarrierService>();
-			ArrayList<CarrierService> multiassignedServices = new ArrayList<CarrierService>();
-			ArrayList<CarrierService> unassignedServices = new ArrayList<CarrierService>();
+			ArrayList<CarrierService> assignedServices = new ArrayList<>();
+			ArrayList<CarrierService> multiassignedServices = new ArrayList<>();
+			ArrayList<CarrierService> unassignedServices = new ArrayList<>();
 
 			log.info("### Check service assignements of Carrier: " +c.getId());
 			//Erfasse alle einer Tour zugehörigen (-> stattfindenden) Services 
@@ -354,7 +347,7 @@ public class RunFreight {
 			//Schreibe die mehrfach eingeplanten Services in Datei
 			if (!multiassignedServices.isEmpty()){
 				try {
-					FileWriter writer = new FileWriter(new File(config.controler().getOutputDirectory() + "#MultiAssignedServices.txt"), true);
+					FileWriter writer = new FileWriter(config.controler().getOutputDirectory() + "#MultiAssignedServices.txt", true);
 					writer.write("#### Multi-assigned Services of Carrier: " + c.getId().toString() + System.getProperty("line.separator"));
 					for (CarrierService s : multiassignedServices){
 						writer.write(s.getId().toString() + System.getProperty("line.separator"));
@@ -372,7 +365,7 @@ public class RunFreight {
 			//Schreibe die nicht eingeplanten Services in Datei
 			if (!unassignedServices.isEmpty()){
 				try {
-					FileWriter writer = new FileWriter(new File(config.controler().getOutputDirectory() + "#UnassignedServices.txt"), true);
+					FileWriter writer = new FileWriter(config.controler().getOutputDirectory() + "#UnassignedServices.txt", true);
 					writer.write("#### Unassigned Services of Carrier: " + c.getId().toString() + System.getProperty("line.separator"));
 					for (CarrierService s : unassignedServices){
 						writer.write(s.getId().toString() + System.getProperty("line.separator"));
@@ -395,9 +388,8 @@ public class RunFreight {
 	 * Run the MATSim simulation
 	 * 
 	 * @param scenario
-	 * @param carriers
 	 */
-	private static void matsimRun(Scenario scenario, Carriers carriers) {
+	private static void matsimRun(Scenario scenario) {
 		final Controler controler = new Controler( scenario ) ;
 
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2(scenario);
@@ -423,8 +415,7 @@ public class RunFreight {
 	//Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
 	//Da keine Strategy notwendig, hier zunächst eine "leere" Factory
 	private static CarrierStrategyManager createMyStrategymanager() {
-		final CarrierStrategyManager strategyManager = new CarrierStrategyManagerImpl();
-		return strategyManager;
+		return FreightUtils.createDefaultCarrierStrategyManager();
 	}
 
 
@@ -466,9 +457,9 @@ public class RunFreight {
 		// ### some final output: ###
 		if (runMatsim){		//makes only sense, when MATSimrRun was performed KT 06.04.15
 			new WriteCarrierScoreInfos(carriers, new File(OUTPUT_DIR + "#MatsimCarrierScoreInformation.txt"));
-		}		
-		new CarrierPlanXmlWriterV2(carriers).write( config.controler().getOutputDirectory() + "/output_carriers.xml") ;
-		new CarrierPlanXmlWriterV2(carriers).write( config.controler().getOutputDirectory() + "/output_carriers.xml.gz") ;
+		}
+		new CarrierPlanWriter(carriers).write(config.controler().getOutputDirectory() + "/output_carriers.xml");
+		new CarrierPlanWriter(carriers).write(config.controler().getOutputDirectory() + "/output_carriers.xml.gz");
 		new CarrierVehicleTypeWriter(CarrierVehicleTypes.getVehicleTypes(carriers)).write(config.controler().getOutputDirectory() + "/output_vehicleTypes.xml");
 		new CarrierVehicleTypeWriter(CarrierVehicleTypes.getVehicleTypes(carriers)).write(config.controler().getOutputDirectory() + "/output_vehicleTypes.xml.gz");
 	}

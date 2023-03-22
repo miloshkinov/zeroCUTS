@@ -18,29 +18,16 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.contrib.freight.carrier.Carrier;
-import org.matsim.contrib.freight.carrier.CarrierCapabilities;
-import org.matsim.contrib.freight.carrier.CarrierPlan;
-import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
-import org.matsim.contrib.freight.carrier.CarrierService;
-import org.matsim.contrib.freight.carrier.CarrierUtils;
-import org.matsim.contrib.freight.carrier.CarrierVehicle;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
-import org.matsim.contrib.freight.carrier.Carriers;
-import org.matsim.contrib.freight.carrier.ScheduledTour;
-import org.matsim.contrib.freight.carrier.TimeWindow;
-import org.matsim.contrib.freight.carrier.Tour;
+import org.matsim.contrib.freight.carrier.*;
 import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
 import org.matsim.contrib.freight.controler.CarrierModule;
 import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
 import org.matsim.contrib.freight.controler.CarrierStrategyManager;
-import org.matsim.contrib.freight.controler.CarrierStrategyManagerImpl;
+import org.matsim.contrib.freight.controler.FreightUtils;
 import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
 import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts;
 import org.matsim.contrib.freight.jsprit.NetworkRouter;
 import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts.Builder;
-import org.matsim.contrib.freight.usecases.chessboard.CarrierScoringFunctionFactoryImpl;
-import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControlerConfigGroup.CompressionType;
@@ -50,7 +37,6 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
-import org.matsim.core.replanning.GenericStrategyManager;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
 
@@ -85,7 +71,7 @@ public class RunDistanceConstraint {
 		Config config = ConfigUtils.createConfig();
 		config.controler().setOutputDirectory("output/original_Chessboard/EWGT-DistanceConstraint");
 		config.network().setInputFile(original_Chessboard);
-		config = prepareConfig(config, 0);
+		prepareConfig(config);
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 
@@ -118,7 +104,7 @@ public class RunDistanceConstraint {
 		vehicleTypes.getVehicleTypes().put(newVT2.getId(), newVT2);
 		boolean threeServices = false;
 		createServices(carrierV1, threeServices, carriers);
-		createCarriers(carriers, fleetSize, carrierV1, scenario, vehicleTypes);
+		createCarriers(fleetSize, carrierV1, vehicleTypes);
 
 //Option 2: Tour is not possible with the vehicle with the small battery
 
@@ -142,9 +128,8 @@ public class RunDistanceConstraint {
 		vehicleTypes.getVehicleTypes().put(newVT3.getId(), newVT3);
 		vehicleTypes.getVehicleTypes().put(newVT4.getId(), newVT4);
 
-		threeServices = false;
 		createServices(carrierV2, threeServices, carriers);
-		createCarriers(carriers, fleetSize, carrierV2, scenario, vehicleTypes);
+		createCarriers(fleetSize, carrierV2, vehicleTypes);
 
 //Option 3: costs for using one long range vehicle are higher than the costs of using two short range truck	
 
@@ -168,9 +153,8 @@ public class RunDistanceConstraint {
 		vehicleTypes.getVehicleTypes().put(newVT5.getId(), newVT5);
 		vehicleTypes.getVehicleTypes().put(newVT6.getId(), newVT6);
 
-		threeServices = false;
 		createServices(carrierV3, threeServices, carriers);
-		createCarriers(carriers, fleetSize, carrierV3, scenario, vehicleTypes);
+		createCarriers(fleetSize, carrierV3, vehicleTypes);
 
 //Option 4: An additional shipment outside the range of both BEVtypes
 
@@ -203,7 +187,7 @@ public class RunDistanceConstraint {
 
 		threeServices = true;
 		createServices(carrierV4, threeServices, carriers);
-		createCarriers(carriers, fleetSize, carrierV4, scenario, vehicleTypes);
+		createCarriers(fleetSize, carrierV4, vehicleTypes);
 
 		int jspritIterations = 100;
 		solveJspritAndMATSim(scenario, vehicleTypes, carriers, jspritIterations);
@@ -213,20 +197,19 @@ public class RunDistanceConstraint {
 	/**
 	 * Deletes the existing output file and sets the number of the last MATSim
 	 * iteration.
-	 * 
+	 *
 	 * @param config
 	 */
-	static Config prepareConfig(Config config, int lastMATSimIteration) {
+	static void prepareConfig(Config config) {
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
 				config.controler().getOverwriteFileSetting(), CompressionType.gzip);
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 
-		config.controler().setLastIteration(lastMATSimIteration);
+		config.controler().setLastIteration(0);
 		config.global().setRandomSeed(4177);
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 
-		return config;
 	}
 
 	private static void createServices(Carrier carrier, boolean threeServices, Carriers carriers) {
@@ -245,7 +228,7 @@ public class RunDistanceConstraint {
 		CarrierUtils.addService(carrier, service2);
 
 // Service 3
-		if (threeServices == true) {
+		if (threeServices) {
 			CarrierService service3 = CarrierService.Builder
 					.newInstance(Id.create("Service3", CarrierService.class), Id.createLinkId("j(9,2)"))
 					.setServiceDuration(20).setServiceStartTimeWindow(TimeWindow.newInstance(8 * 3600, 10 * 3600))
@@ -261,11 +244,11 @@ public class RunDistanceConstraint {
 	 * 
 	 * @param
 	 */
-	private static void createCarriers(Carriers carriers, FleetSize fleetSize, Carrier singleCarrier, Scenario scenario,
-			CarrierVehicleTypes vehicleTypes) {
+	private static void createCarriers(FleetSize fleetSize, Carrier singleCarrier,
+									   CarrierVehicleTypes vehicleTypes) {
 		double earliestStartingTime = 8 * 3600;
 		double latestFinishingTime = 10 * 3600;
-		List<CarrierVehicle> vehicles = new ArrayList<CarrierVehicle>();
+		List<CarrierVehicle> vehicles = new ArrayList<>();
 		for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
 			if (singleCarrier.getId().toString().equals(singleVehicleType.getDescription()))
 				vehicles.add(createGarbageTruck(singleVehicleType.getId().toString(), earliestStartingTime,
@@ -274,7 +257,7 @@ public class RunDistanceConstraint {
 
 		// define Carriers
 
-		defineCarriers(carriers, fleetSize, singleCarrier, vehicles, vehicleTypes);
+		defineCarriers(fleetSize, singleCarrier, vehicles, vehicleTypes);
 	}
 
 	/**
@@ -298,8 +281,8 @@ public class RunDistanceConstraint {
 	 * @param
 	 * 
 	 */
-	private static void defineCarriers(Carriers carriers, FleetSize fleetSize, Carrier singleCarrier,
-			List<CarrierVehicle> vehicles, CarrierVehicleTypes vehicleTypes) {
+	private static void defineCarriers(FleetSize fleetSize, Carrier singleCarrier,
+									   List<CarrierVehicle> vehicles, CarrierVehicleTypes vehicleTypes) {
 
 		singleCarrier.setCarrierCapabilities(CarrierCapabilities.Builder.newInstance().setFleetSize(fleetSize).build());
 		for (CarrierVehicle carrierVehicle : vehicles) {
@@ -313,7 +296,7 @@ public class RunDistanceConstraint {
 		solveWithJsprit(scenario, carriers, jspritIterations, vehicleTypes);
 		final Controler controler = new Controler(scenario);
 
-		scoringAndManagerFactory(scenario, carriers, controler);
+		scoringAndManagerFactory(scenario, controler);
 		controler.run();
 	}
 
@@ -375,7 +358,7 @@ public class RunDistanceConstraint {
 			singleCarrier.setSelectedPlan(carrierPlanServices);
 
 		}
-		new CarrierPlanXmlWriterV2(carriers)
+		new CarrierPlanWriter(carriers)
 				.write(scenario.getConfig().controler().getOutputDirectory() + "/jsprit_CarrierPlans.xml");
 
 	}
@@ -383,8 +366,8 @@ public class RunDistanceConstraint {
 	/**
 	 * @param
 	 */
-	static void scoringAndManagerFactory(Scenario scenario, Carriers carriers, final Controler controler) {
-		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2(scenario);
+	static void scoringAndManagerFactory(Scenario scenario, final Controler controler) {
+		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2();
 		CarrierStrategyManager planStrategyManagerFactory = createMyStrategyManager();
 
 		FreightUtils.addOrGetCarriers(scenario);
@@ -400,10 +383,9 @@ public class RunDistanceConstraint {
 	}
 
 	/**
-	 * @param scenario
 	 * @return
 	 */
-	private static CarrierScoringFunctionFactory createMyScoringFunction2(final Scenario scenario) {
+	private static CarrierScoringFunctionFactory createMyScoringFunction2() {
 
 		return new CarrierScoringFunctionFactory() {
 			
@@ -419,8 +401,7 @@ public class RunDistanceConstraint {
 	 * @return
 	 */
 	private static CarrierStrategyManager createMyStrategyManager() {
-		final CarrierStrategyManager strategyManager = new CarrierStrategyManagerImpl();
-		return strategyManager;
+		return FreightUtils.createDefaultCarrierStrategyManager();
 	}
 
 	/**
@@ -484,8 +465,7 @@ public class RunDistanceConstraint {
 						numCollections++;
 
 					}
-					if (element instanceof Tour.Leg) {
-						Tour.Leg legElement = (Tour.Leg) element;
+					if (element instanceof Tour.Leg legElement) {
 						if (legElement.getRoute().getDistance() != 0)
 							distanceTour = distanceTour
 									+ RouteUtils.calcDistance((NetworkRoute) legElement.getRoute(), 0, 0, network);
@@ -495,6 +475,7 @@ public class RunDistanceConstraint {
 						scheduledTour.getVehicle().getId().toString() + "-Tour " + tourNumberCarrier,
 						Person.class);
 				personId2tourDistance.put(personId, distanceTour);
+				assert vt != null;
 				if (vt.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electricity")) {
 					personId2tourConsumptionkWh.put(personId, (distanceTour / 1000) * (double) vt.getEngineInformation()
 							.getAttributes().getAttribute("engeryConsumptionPerKm"));
@@ -526,8 +507,8 @@ public class RunDistanceConstraint {
 							+ singleVehicleType.getCostInformation().getFixedCosts() + " €");
 					if (singleVehicleType.getEngineInformation().getAttributes()
 							.getAttribute("fuelType").equals("electricity")) {
-						double electricityConsumptionPer100km = 0;
-						double electricityCapacityinkWh = 0;
+						double electricityConsumptionPer100km;
+						double electricityCapacityinkWh;
 						electricityConsumptionPer100km = (double) singleVehicleType.getEngineInformation()
 								.getAttributes().getAttribute("engeryConsumptionPerKm");
 						electricityCapacityinkWh = (double) singleVehicleType.getEngineInformation().getAttributes()
@@ -549,7 +530,7 @@ public class RunDistanceConstraint {
 				int consumption = 0;
 				double distanceRange = 0;
 				double electricityCapacityinkWh = 0;
-				double electricityConsumptionPerkm = 0;
+				double electricityConsumptionPerkm;
 
 				for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
 
@@ -584,8 +565,8 @@ public class RunDistanceConstraint {
 		writer.close();
 		log.info("Output geschrieben");
 		log.info("### Done.");
-		if (toursWithOverconsumption.isEmpty() == false)
-			throw new Exception("The tour(s) " + toursWithOverconsumption.toString()
+		if (!toursWithOverconsumption.isEmpty())
+			throw new Exception("The tour(s) " + toursWithOverconsumption
 					+ " have a higher consumption then their capacity");
 
 	}

@@ -19,10 +19,6 @@
  * *********************************************************************** */
 package org.matsim.vsp.SmallScaleCommercialTraffic;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Objects;
-
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,12 +27,15 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.Carrier;
-import org.matsim.contrib.freight.utils.FreightUtils;
+import org.matsim.contrib.freight.controler.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.testcases.MatsimTestUtils;
+
+import java.io.File;
+import java.util.Objects;
 
 /**
  * @author Ricardo

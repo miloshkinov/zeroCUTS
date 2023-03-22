@@ -23,14 +23,12 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.*;
 import org.matsim.contrib.freight.controler.CarrierModule;
 import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
 import org.matsim.contrib.freight.controler.CarrierStrategyManager;
-import org.matsim.contrib.freight.controler.CarrierStrategyManagerImpl;
-import org.matsim.contrib.freight.utils.FreightUtils;
+import org.matsim.contrib.freight.controler.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.consistency.VspConfigConsistencyCheckerImpl;
@@ -40,13 +38,8 @@ import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.config.groups.StrategyConfigGroup.StrategySettings;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup.VspDefaultsCheckingLevel;
-import org.matsim.core.controler.AbstractModule;
-import org.matsim.core.controler.Controler;
-import org.matsim.core.controler.ControlerUtils;
-import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.controler.*;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
-import org.matsim.core.controler.OutputDirectoryLogging;
-import org.matsim.core.replanning.GenericStrategyManager;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.SumScoringFunction;
@@ -61,11 +54,8 @@ import java.time.LocalDateTime;
 
 /**
  * This is a short an easy version to run MATSim freight scenarios .
- * 
  * Optional it is possible to run MATSim after tour planning.
- * 
  * @author kturner
- * 
  */
 public class RunFreightOnlyMatsim {
 
@@ -113,10 +103,10 @@ public class RunFreightOnlyMatsim {
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 
 		//Building the Carriers with jsprit, incl jspritOutput KT 03.12.2014
-		Carriers carriers = jspritRun(config, scenario.getNetwork());
+		jspritRun();
 
 		if (runMatsim){
-			matsimRun(scenario, carriers);	//final MATSim configurations and start of the MATSim-Run
+			matsimRun(scenario);	//final MATSim configurations and start of the MATSim-Run
 		}
 
 		writeRunInfo();	
@@ -173,15 +163,14 @@ public class RunFreightOnlyMatsim {
 		return config;
 	}  //End createConfig
 
-	private static Carriers jspritRun(Config config, Network network) throws InvalidAttributeValueException {
+	private static void jspritRun() {
 		CarrierVehicleTypes vehicleTypes = createVehicleTypes();
-		vehicleTypes = modifyVehicleTypes(vehicleTypes);
+		modifyVehicleTypes(vehicleTypes);
 
-		Carriers carriers = createCarriers(vehicleTypes);
-		return carriers;
+		createCarriers(vehicleTypes);
 	}
 
-	private static CarrierVehicleTypes modifyVehicleTypes(CarrierVehicleTypes vehicleTypes) {
+	private static void modifyVehicleTypes(CarrierVehicleTypes vehicleTypes) {
 		for (VehicleType vt : vehicleTypes.getVehicleTypes().values()) {
 			if (costsModififier != null) {
 				switch (costsModififier) {
@@ -207,13 +196,12 @@ public class RunFreightOnlyMatsim {
 					}
 				default:
 					log.error("Unspecified modification for carrierVehicleTypeCosts selected", new UnsupportedParameterException());
-				} 
+				}
 			} else {
 				log.info("No modification for carrierVehicleTypeCosts selected" );
 			}
 
 		}
-		return vehicleTypes;
 	}
 
 	private static Carriers createCarriers(CarrierVehicleTypes vehicleTypes) {
@@ -233,9 +221,8 @@ public class RunFreightOnlyMatsim {
 	 * Run the MATSim simulation
 	 * 
 	 * @param scenario
-	 * @param carriers
 	 */
-	private static void matsimRun(Scenario scenario, Carriers carriers) {
+	private static void matsimRun(Scenario scenario) {
 		final Controler controler = new Controler( scenario ) ;
 
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2(scenario);
@@ -261,8 +248,7 @@ public class RunFreightOnlyMatsim {
 	//Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
 	//Da keine Strategy notwendig, hier zunächst eine "leere" Factory
 	private static CarrierStrategyManager createMyStrategymanager() {
-		final CarrierStrategyManager strategyManager = new CarrierStrategyManagerImpl();
-		return strategyManager;
+		return FreightUtils.createDefaultCarrierStrategyManager();
 	}
 
 
