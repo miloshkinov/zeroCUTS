@@ -22,8 +22,6 @@ package org.matsim.vsp.SmallScaleCommercialTraffic;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.concurrent.Callable;
-
 import javax.inject.Inject;
 
 import org.apache.logging.log4j.LogManager;
@@ -35,6 +33,7 @@ import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Population;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.contrib.cadyts.car.CadytsCarModule;
 import org.matsim.contrib.cadyts.car.CadytsContext;
 import org.matsim.contrib.cadyts.general.CadytsConfigGroup;
@@ -73,7 +72,7 @@ import picocli.CommandLine;
  */
 @CommandLine.Command(name = "generate-business-passenger-traffic", description = "Generate business passenger traffic model", showDefaultValues = true)
 
-public class RunMATSimCommercialTraffic implements Callable<Integer> {
+public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 
 	private static final Logger log = LogManager.getLogger(RunMATSimCommercialTraffic.class);
 
