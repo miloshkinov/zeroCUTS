@@ -188,7 +188,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 
 		String modelName = inputDataDirectory.getFileName().toString();
 		boolean includeExistingModels = Boolean.parseBoolean(includeExistingModels_Input);
-		String sampleName = null;
+		String sampleName;
 
 		if ((sample * 100) % 1 == 0)
 			sampleName = String.valueOf((int) (sample * 100));
@@ -199,85 +199,81 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		Path output = Path.of(config.controler().getOutputDirectory());
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
-		String carriersFileLocation = null;
-		FreightConfigGroup freightConfigGroup = null;
+		String carriersFileLocation;
+		FreightConfigGroup freightConfigGroup;
 		switch (usedCreationOption) {
-
-		case useExistingCarrierFileWithSolution:
-			if (includeExistingModels)
-				throw new Exception(
-						"You set that existing models should included to the new model. This is only possible for a creation of the new carrier file and not by using an existing.");
-			carriersFileLocation = "scenarios/" + sampleName + "pct_"+usedTrafficType+"/output_CarrierDemandWithPlans.xml";
-			freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
-			freightConfigGroup.setCarriersFile(carriersFileLocation);
-			log.info("Load carriers from: " + carriersFileLocation);
-			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
-			break;
-		case useExistingCarrierFileWithoutSolution:
-			if (includeExistingModels)
-				throw new Exception(
-						"You set that existing models should included to the new model. This is only possible for a creation of the new carrier file and not by using an existing.");
-			carriersFileLocation = "scenarios/"+ sampleName + "pct_"+usedTrafficType+"/output_CarrierDemand.xml";
-			freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
-			freightConfigGroup.setCarriersFile(carriersFileLocation);
-			log.info("Load carriers from: " + carriersFileLocation);
-			FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
-			solveSeperatedVRPs(scenario, null);
-			break;
-		default:
-			shapeFileZonePath = inputDataDirectory.resolve(zoneShapeFilePath);
-
-			shapeFileLandusePath = inputDataDirectory.resolve(landuseShapeFilePath);
-
-			shapeFileBuildingsPath = inputDataDirectory.resolve(buildingsShapeFilePath);
-
-			if (!Files.exists(shapeFileLandusePath)) {
-				throw new Exception("Required landuse shape file not found:" + shapeFileLandusePath.toString());
+//TODO use ApplicationUtils.globFile for finding files
+			case useExistingCarrierFileWithSolution -> {
+				if (includeExistingModels)
+					throw new Exception(
+							"You set that existing models should included to the new model. This is only possible for a creation of the new carrier file and not by using an existing.");
+				carriersFileLocation = "scenarios/" + sampleName + "pct_" + usedTrafficType + "/output_CarrierDemandWithPlans.xml";
+				freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
+				freightConfigGroup.setCarriersFile(carriersFileLocation);
+				log.info("Load carriers from: " + carriersFileLocation);
+				FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
 			}
-			if (!Files.exists(shapeFileBuildingsPath)) {
-				throw new Exception(
-						"Required OSM buildings shape file {} not found" + shapeFileBuildingsPath.toString());
+			case useExistingCarrierFileWithoutSolution -> {
+				if (includeExistingModels)
+					throw new Exception(
+							"You set that existing models should included to the new model. This is only possible for a creation of the new carrier file and not by using an existing.");
+				carriersFileLocation = "scenarios/" + sampleName + "pct_" + usedTrafficType + "/output_CarrierDemand.xml";
+				freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
+				freightConfigGroup.setCarriersFile(carriersFileLocation);
+				log.info("Load carriers from: " + carriersFileLocation);
+				FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
+				solveSeperatedVRPs(scenario, null);
 			}
-			if (!Files.exists(shapeFileZonePath)) {
-				throw new Exception("Required distrcits shape file {} not found" + shapeFileZonePath.toString());
+			default -> {
+				shapeFileZonePath = inputDataDirectory.resolve(zoneShapeFilePath);
+				shapeFileLandusePath = inputDataDirectory.resolve(landuseShapeFilePath);
+				shapeFileBuildingsPath = inputDataDirectory.resolve(buildingsShapeFilePath);
+				if (!Files.exists(shapeFileLandusePath)) {
+					throw new Exception("Required landuse shape file not found:" + shapeFileLandusePath.toString());
+				}
+				if (!Files.exists(shapeFileBuildingsPath)) {
+					throw new Exception(
+							"Required OSM buildings shape file {} not found" + shapeFileBuildingsPath.toString());
+				}
+				if (!Files.exists(shapeFileZonePath)) {
+					throw new Exception("Required distrcits shape file {} not found" + shapeFileZonePath.toString());
+				}
+				HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
+						.createInputDataDistribution(output, landuseCategoriesAndDataConnection, inputDataDirectory,
+								usedLanduseConfiguration.toString(), shapeFileLandusePath, shapeFileZonePath,
+								shapeFileBuildingsPath, shapeCRS, buildingsPerZone);
+				ShpOptions shpZones = new ShpOptions(shapeFileZonePath, shapeCRS, StandardCharsets.UTF_8);
+				Map<String, HashMap<Id<Link>, Link>> regionLinksMap = filterLinksForZones(scenario, shpZones,
+						SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath, shapeCRS));
+				switch (usedTrafficType) {
+					case businessTraffic, freightTraffic ->
+							createCarriersAndDemand(config, output, scenario, shpZones, resultingDataPerZone, regionLinksMap, usedTrafficType.toString(),
+									inputDataDirectory, includeExistingModels);
+					case commercialTraffic -> {
+						createCarriersAndDemand(config, output, scenario, shpZones, resultingDataPerZone, regionLinksMap, "businessTraffic",
+								inputDataDirectory, includeExistingModels);
+						includeExistingModels = false; // because already included in the step before
+						createCarriersAndDemand(config, output, scenario, shpZones, resultingDataPerZone, regionLinksMap, "freightTraffic",
+								inputDataDirectory, includeExistingModels);
+					}
+					default -> throw new RuntimeException("No traffic type selected.");
+				}
+				if (config.controler().getRunId() == null)
+					new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
+							.write(scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemand.xml");
+				else
+					new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
+							.write(scenario.getConfig().controler().getOutputDirectory() + "/"
+									+ scenario.getConfig().controler().getRunId() + ".output_CarrierDemand.xml");
+				solveSeperatedVRPs(scenario, regionLinksMap);
 			}
-
-			HashMap<String, Object2DoubleMap<String>> resultingDataPerZone = LanduseBuildingAnalysis
-					.createInputDataDistribution(output, landuseCategoriesAndDataConnection, inputDataDirectory,
-							usedLanduseConfiguration.toString(), shapeFileLandusePath, shapeFileZonePath,
-							shapeFileBuildingsPath, shapeCRS, buildingsPerZone);
-
-			ShpOptions shpZones = new ShpOptions(shapeFileZonePath, shapeCRS, StandardCharsets.UTF_8);
-			Map<String, HashMap<Id<Link>, Link>> regionLinksMap = filterLinksForZones(scenario, shpZones,
-					SmallScaleCommercialTrafficUtils.getIndexZones(shapeFileZonePath, shapeCRS));
-			
-			switch (usedTrafficType) {
-			case businessTraffic:
-				createCarriersAndDemand(config, output, scenario, shpZones, resultingDataPerZone, regionLinksMap, usedTrafficType.toString(),
-						inputDataDirectory, includeExistingModels);
-				break;
-			case freightTraffic:
-				createCarriersAndDemand(config, output, scenario, shpZones, resultingDataPerZone, regionLinksMap, usedTrafficType.toString(),
-						inputDataDirectory, includeExistingModels);
-				break;
-			case commercialTraffic:
-				createCarriersAndDemand(config, output, scenario, shpZones, resultingDataPerZone, regionLinksMap, "businessTraffic",
-						inputDataDirectory, includeExistingModels);
-				includeExistingModels = false; // because already included in the step before
-				createCarriersAndDemand(config, output, scenario, shpZones, resultingDataPerZone, regionLinksMap, "freightTraffic",
-						inputDataDirectory, includeExistingModels);
-				break;
-			default:
-				throw new RuntimeException("No traffic type selected.");
-			}
-			new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
-					.write(scenario.getConfig().controler().getOutputDirectory() + "/"+scenario.getConfig().controler().getRunId() + ".output_CarrierDemand.xml");
-
-			solveSeperatedVRPs(scenario, regionLinksMap);
-			break;
 		}
-		new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
-				.write(scenario.getConfig().controler().getOutputDirectory() + "/"+scenario.getConfig().controler().getRunId() + ".output_CarrierDemandWithPlans.xml");
+		if (config.controler().getRunId() == null)
+			new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario)).write(
+					scenario.getConfig().controler().getOutputDirectory() + "/output_CarrierDemandWithPlans.xml");
+		else
+			new CarrierPlanWriter(FreightUtils.addOrGetCarriers(scenario))
+					.write(scenario.getConfig().controler().getOutputDirectory() + "/"+scenario.getConfig().controler().getRunId() + ".output_CarrierDemandWithPlans.xml");
 		Controler controler = prepareControler(scenario);
 		controler.run();
 		SmallScaleCommercialTrafficUtils.createPlansBasedOnCarrierPlans(controler.getScenario(),
@@ -340,9 +336,6 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 						int numberOfServicesPerNewCarrier = Math
 								.round(carrier.getServices().size() / numberOfNewCarrier);
 
-						int maxValue = carrier.getServices().size();
-						if (carrier.getCarrierCapabilities().getCarrierVehicles().size() > maxValue)
-							maxValue = carrier.getCarrierCapabilities().getCarrierVehicles().size();
 						int j = 0;
 						while (j < numberOfNewCarrier) {
 
@@ -485,7 +478,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 
 		config.controler().setOutputDirectory(Path.of(config.controler().getOutputDirectory()).resolve(modelName)
 				.resolve(usedTrafficType.toString() + "_" + sampleName + "pct" + "_"
-						+ java.time.LocalDate.now().toString() + "_" + java.time.LocalTime.now().toSecondOfDay() + "_" + resistanceFactor)
+						+ java.time.LocalDate.now() + "_" + java.time.LocalTime.now().toSecondOfDay() + "_" + resistanceFactor)
 				.toString());
 		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
 				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
@@ -722,7 +715,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 						log.info("Create services for carrier: " + carrierName);
 						for (String stopZone : odMatrix.getListOfZones()) {
 							int demand = 0;
-							int trafficVolumeForOD = (int) Math.round(odMatrix.getTripDistributionValue(startZone,
+							int trafficVolumeForOD = Math.round(odMatrix.getTripDistributionValue(startZone,
 									stopZone, modeORvehType, purpose, trafficType));
 							int numberOfJobs = (int) Math.ceil(trafficVolumeForOD / occupancyRate);
 							if (numberOfJobs == 0)
@@ -732,7 +725,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 								selectedStopCategory = stopCategory.get(rnd.nextInt(stopCategory.size()));
 							String[] serviceArea = new String[] { stopZone };
 							TimeWindow serviceTimeWindow = TimeWindow.newInstance(6 * 3600, 20 * 3600);
-							createServices(scenario, purpose, vehicleDepots, selectedStopCategory, carrierName, demand,
+							createServices(scenario, vehicleDepots, selectedStopCategory, carrierName,
 									numberOfJobs, serviceArea, serviceTimePerStop, serviceTimeWindow, regionLinksMap);
 						}
 					}
@@ -747,21 +740,19 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 	 * Creates the services for one carrier.
 	 * 
 	 * @param scenario
-	 * @param purpose
 	 * @param noPossibleLinks
 	 * @param selectedStopCategory
 	 * @param carrierName
-	 * @param demand
 	 * @param numberOfJobs
 	 * @param serviceArea
 	 * @param serviceTimePerStop
 	 * @param serviceTimeWindow
 	 * @param regionLinksMap
 	 */
-	private void createServices(Scenario scenario, Integer purpose, ArrayList<String> noPossibleLinks,
-			String selectedStopCategory, String carrierName, int demand, int numberOfJobs, String[] serviceArea,
-			Integer serviceTimePerStop, TimeWindow serviceTimeWindow,
-			Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
+	private void createServices(Scenario scenario, ArrayList<String> noPossibleLinks,
+								String selectedStopCategory, String carrierName, int numberOfJobs, String[] serviceArea,
+								Integer serviceTimePerStop, TimeWindow serviceTimeWindow,
+								Map<String, HashMap<Id<Link>, Link>> regionLinksMap) {
 
 		String stopZone = serviceArea[0];
 
@@ -803,7 +794,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		Carriers carriers = FreightUtils.addOrGetCarriers(scenario);
 		CarrierVehicleTypes carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
 
-		CarrierCapabilities carrierCapabilities = null;
+		CarrierCapabilities carrierCapabilities;
 
 		Carrier thisCarrier = CarrierUtils.createCarrier(Id.create(carrierName, Carrier.class));
 		if (trafficType.equals("businessTraffic") && purpose == 3)
@@ -915,7 +906,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 		List<Link> links;
 		log.info("Filtering and assign links to zones. This take some time...");
 		
-		String networkPath = null;
+		String networkPath;
 		if (scenario.getConfig().network().getInputFile().startsWith( "https:" ))
 			networkPath = scenario.getConfig().network().getInputFile();
 		else
@@ -1156,9 +1147,7 @@ public class CreateSmallScaleCommercialTrafficDemand implements MATSimAppCommand
 				Id<Vehicle> vehicleId = nRoute.getVehicleId();
 				CarrierVehicle vehicle = CarrierUtils.getCarrierVehicle(carrier, vehicleId);
 				Gbl.assertNotNull(vehicle);
-				if (!employedVehicles.contains(vehicle)) {
-					employedVehicles.add(vehicle);
-				}
+				employedVehicles.add(vehicle);
 				double distance = 0.0;
 				if (leg.getRoute() instanceof NetworkRoute) {
 					Link startLink = network.getLinks().get(leg.getRoute().getStartLinkId());
