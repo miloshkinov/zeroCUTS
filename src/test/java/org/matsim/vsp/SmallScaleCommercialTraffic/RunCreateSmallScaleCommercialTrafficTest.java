@@ -88,11 +88,11 @@ public class RunCreateSmallScaleCommercialTrafficTest {
 
 			if (outputFiles.getName().contains("pct_plans.xml.gz"))
 				population = PopulationUtils.readPopulation(outputFiles.getPath());
-			if (outputFiles.getName().equals("output_CarrierDemand.xml"))
+			if (outputFiles.getName().contains("output_CarrierDemand.xml"))
 				carriersWOSolutionFileLocation = outputFiles.getPath();
-			if (outputFiles.getName().equals("output_CarrierDemandWithPlans.xml"))
+			if (outputFiles.getName().contains("output_CarrierDemandWithPlans.xml"))
 				carriersWSolutionFileLocation = outputFiles.getPath();
-			if (outputFiles.getName().equals("output_carriersVehicleTypes.xml.gz"))
+			if (outputFiles.getName().contains("output_carriersVehicleTypes.xml.gz"))
 				freightConfigGroup.setCarriersVehicleTypesFile(outputFiles.getPath());
 		}
 
