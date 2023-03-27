@@ -354,7 +354,7 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 		for(Id<Person> personId: personId2tripNumber2tripDistance.keySet()){
 			for(int i : personId2tripNumber2tripDistance.get(personId).keySet()){
 //				if(personId.toString().contains("_"+vehTypeId.toString()+"_")){
-				if (this.vehicles.getVehicles().get(personId).getType().getId().equals(vehTypeId)) {
+				if (this.vehicles.getVehicles().get(Id.createVehicleId(personId.toString())).getType().getId().equals(vehTypeId)) {
 //					if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
 //						if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
 							double distance = personId2tripNumber2tripDistance.get(personId).get(i);
@@ -379,7 +379,7 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 		for(Id<Person> personId : personId2tripNumber2travelTime.keySet()){
 			for(int i : personId2tripNumber2travelTime.get(personId).keySet()){
 //				if(personId.toString().contains("_"+vehTypeId.toString()+"_")){
-				if (this.vehicles.getVehicles().get(personId).getType().getId().equals(vehTypeId)) {
+				if (this.vehicles.getVehicles().get(Id.createVehicleId(personId.toString())).getType().getId().equals(vehTypeId)) {
 //					if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
 //						if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
 							double travelTime = personId2tripNumber2travelTime.get(personId).get(i);
@@ -401,7 +401,7 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 		Map<Id<VehicleType>,Integer> vehTypeId2VehicleNumber = new HashMap<>();
 		for(Id<Person> personId : personId2tripNumber2travelTime.keySet()){
 //			if(personId.toString().contains("_"+vehTypeId.toString()+"_")){
-			if (this.vehicles.getVehicles().get(personId).getType().getId().equals(vehTypeId)) {
+			if (this.vehicles.getVehicles().get(Id.createVehicleId(personId.toString())).getType().getId().equals(vehTypeId)) {
 //				if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
 //					if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
 						if (vehTypeId2VehicleNumber.containsKey(vehTypeId)){
@@ -421,7 +421,7 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 		Map<Id<VehicleType>,Double> vehTypeId2VehicleActivityDurations = new HashMap<>();
 		for(Id<Person> personId : personId2ActivityDurations.keySet()){
 //			if (personId.toString().contains("_" + vehTypeId.toString() + "_")) {
-			if (this.vehicles.getVehicles().get(personId).getType().getId().equals(vehTypeId)) {
+			if (this.vehicles.getVehicles().get(Id.createVehicleId(personId.toString())).getType().getId().equals(vehTypeId)) {
 
 //				if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
 //					if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
@@ -443,7 +443,7 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 		Map<Id<VehicleType>,Double> vehTypeId2StartToEndDuration = new HashMap<>();
 		for(Id<Person> personId : personId2DurationFromStartToEnd.keySet()){
 //			if (personId.toString().contains("_" + vehTypeId.toString() + "_")) {
-			if (this.vehicles.getVehicles().get(personId).getType().getId().equals(vehTypeId)) {
+			if (this.vehicles.getVehicles().get(Id.createVehicleId(personId.toString())).getType().getId().equals(vehTypeId)) {
 //				if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
 //					if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
 						double activityDuration = personId2DurationFromStartToEnd.get(personId);
