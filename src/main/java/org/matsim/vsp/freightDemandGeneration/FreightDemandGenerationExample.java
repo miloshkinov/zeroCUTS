@@ -41,6 +41,7 @@ public class FreightDemandGenerationExample {
 		String network = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz";
 		Path population = Path.of("../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-1pct/input/berlin-v5.5-1pct.plans.xml.gz");
 		Path shapeFilePath = Path.of("../public-svn/matsim/scenarios/countries/de/freight-demand-generation/input_example/shp/Berlin_Ortsteile.shp");
+		String shapeCategory = "Ortsteil";
 		new FreightDemandGeneration().execute(
 				"--output", output.toString(),
 				"--carrierOption", "createCarriersFromCSV",
@@ -57,6 +58,7 @@ public class FreightDemandGenerationExample {
 				"--network", network,
 				"--networkCRS", "EPSG:31468",
 				"--networkChangeEvents", "",
+				"--shapeCategory", shapeCategory,
 				"--inputCarrierCSV", carrierCSVLocation.toString(),
 				"--inputDemandCSV", demandCSVLocation.toString(),
 				"--populationSample", "0.5",
