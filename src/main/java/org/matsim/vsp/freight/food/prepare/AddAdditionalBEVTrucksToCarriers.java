@@ -20,7 +20,8 @@
 
 package org.matsim.vsp.freight.food.prepare;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.contrib.freight.carrier.*;
@@ -33,7 +34,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class AddAdditionalBEVTrucksToCarriers {
-	private static final Logger log = Logger.getLogger(AddAdditionalBEVTrucksToCarriers.class);
+	private static final Logger log = LogManager.getLogger(AddAdditionalBEVTrucksToCarriers.class);
 
 	private static final String INPUT_Carrier_File = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/I-Base_carrierLEH_v2_withFleet_Shipment_OneTW_PickupTime.xml";
 	private static final String OUTPUT_Carrier_File = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/I-Base_carrierLEH_v2_withFleet_Shipment_OneTW_PickupTime_ICEVandBEV.xml" ;

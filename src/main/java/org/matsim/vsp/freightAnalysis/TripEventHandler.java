@@ -1,6 +1,7 @@
 package org.matsim.vsp.freightAnalysis;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
@@ -14,6 +15,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
 import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.Vehicles;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,13 +25,18 @@ import java.util.Map;
 
 class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHandler, LinkEnterEventHandler, PersonArrivalEventHandler {
 
-	private final static Logger log = Logger.getLogger(TripEventHandler.class);
+	private final static Logger log = LogManager.getLogger(TripEventHandler.class);
 
 	private Network network;
 	private CarrierVehicleTypes vehicleTypes;
+	private Vehicles vehicles;
 
 	CarrierVehicleTypes getVehicleTypes() {
 		return vehicleTypes;
+	}
+	
+	Vehicles getVehicles() {
+		return vehicles;
 	}
 
 
@@ -45,9 +52,15 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 	private Map<Id<Person>,Integer> personId2NumberServices = new HashMap<>();	// Counts the services of a tour
 	private Map<Id<Person>,Integer> personId2NumberShipments = new HashMap<>();	// Counts the shipments of a tour
 
-	public TripEventHandler(Network network, CarrierVehicleTypes vehicleTypes) {
+//	public TripEventHandler(Network network, CarrierVehicleTypes vehicleTypes) {
+//		this.network = network;
+//		this.vehicleTypes = vehicleTypes;
+//	}
+
+
+	public TripEventHandler(Network network, Vehicles vehicles) {
 		this.network = network;
-		this.vehicleTypes = vehicleTypes;
+		this.vehicles = vehicles;
 	}
 
 
@@ -340,9 +353,10 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 		Map<Id<VehicleType>,Double> vehTypeId2TourDistances = new HashMap<>();
 		for(Id<Person> personId: personId2tripNumber2tripDistance.keySet()){
 			for(int i : personId2tripNumber2tripDistance.get(personId).keySet()){
-				if(personId.toString().contains("_"+vehTypeId.toString()+"_")){
-					if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
-						if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
+//				if(personId.toString().contains("_"+vehTypeId.toString()+"_")){
+				if (this.vehicles.getVehicles().get(Id.createVehicleId(personId.toString())).getType().getId().equals(vehTypeId)) {
+//					if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
+//						if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
 							double distance = personId2tripNumber2tripDistance.get(personId).get(i);
 							if (vehTypeId2TourDistances.containsKey(vehTypeId)){
 								vehTypeId2TourDistances.put(vehTypeId, vehTypeId2TourDistances.get(vehTypeId) + distance);
@@ -352,8 +366,8 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 								log.debug("Distance für Person " + personId.toString() + " ; " + "_" +vehTypeId.toString() + "_" + "added: " + distance);
 							}
 						}
-					}
-				}
+//					}
+//				}
 			}
 		}
 		return vehTypeId2TourDistances;
@@ -364,9 +378,10 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 		Map<Id<VehicleType>,Double> vehTypeId2TravelTimes = new HashMap<>();
 		for(Id<Person> personId : personId2tripNumber2travelTime.keySet()){
 			for(int i : personId2tripNumber2travelTime.get(personId).keySet()){
-				if(personId.toString().contains("_"+vehTypeId.toString()+"_")){
-					if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
-						if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
+//				if(personId.toString().contains("_"+vehTypeId.toString()+"_")){
+				if (this.vehicles.getVehicles().get(Id.createVehicleId(personId.toString())).getType().getId().equals(vehTypeId)) {
+//					if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
+//						if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
 							double travelTime = personId2tripNumber2travelTime.get(personId).get(i);
 							if (vehTypeId2TravelTimes.containsKey(vehTypeId)){
 								vehTypeId2TravelTimes.put(vehTypeId, vehTypeId2TravelTimes.get(vehTypeId) + travelTime);
@@ -374,8 +389,8 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 								vehTypeId2TravelTimes.put(vehTypeId, travelTime);
 							}
 						}
-					}
-				}
+//					}
+//				}
 			}
 		}
 		return vehTypeId2TravelTimes;
@@ -385,16 +400,17 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 	/*package-private*/  Map<Id<VehicleType>, Integer> getVehTypId2VehicleNumber(Id<VehicleType> vehTypeId) {
 		Map<Id<VehicleType>,Integer> vehTypeId2VehicleNumber = new HashMap<>();
 		for(Id<Person> personId : personId2tripNumber2travelTime.keySet()){
-			if(personId.toString().contains("_"+vehTypeId.toString()+"_")){
-				if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
-					if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
+//			if(personId.toString().contains("_"+vehTypeId.toString()+"_")){
+			if (this.vehicles.getVehicles().get(Id.createVehicleId(personId.toString())).getType().getId().equals(vehTypeId)) {
+//				if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
+//					if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
 						if (vehTypeId2VehicleNumber.containsKey(vehTypeId)){
 							vehTypeId2VehicleNumber.put(vehTypeId, vehTypeId2VehicleNumber.get(vehTypeId) +1);
 						} else {
 							vehTypeId2VehicleNumber.put(vehTypeId, 1);
 						}
-					}
-				}
+//					}
+//				}
 			}
 		}
 		return vehTypeId2VehicleNumber;
@@ -404,17 +420,19 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 	/*package-private*/ Map<Id<VehicleType>, Double> getVehTypId2ActivityDurations(Id<VehicleType> vehTypeId) {
 		Map<Id<VehicleType>,Double> vehTypeId2VehicleActivityDurations = new HashMap<>();
 		for(Id<Person> personId : personId2ActivityDurations.keySet()){
-			if (personId.toString().contains("_" + vehTypeId.toString() + "_")) {
-				if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
-					if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
+//			if (personId.toString().contains("_" + vehTypeId.toString() + "_")) {
+			if (this.vehicles.getVehicles().get(Id.createVehicleId(personId.toString())).getType().getId().equals(vehTypeId)) {
+
+//				if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
+//					if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
 						double activityDuration = personId2ActivityDurations.get(personId);
 						if (vehTypeId2VehicleActivityDurations.containsKey(vehTypeId)) {
 							vehTypeId2VehicleActivityDurations.put(vehTypeId, vehTypeId2VehicleActivityDurations.get(vehTypeId) + activityDuration);
 						} else {
 							vehTypeId2VehicleActivityDurations.put(vehTypeId, activityDuration);
 						}
-					}
-				}
+//					}
+//				}
 
 			}
 		}
@@ -424,17 +442,18 @@ class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHa
 	/*package-private*/ Map<Id<VehicleType>, Double> getVehTypId2DurationsStartToEnd(Id<VehicleType> vehTypeId) {
 		Map<Id<VehicleType>,Double> vehTypeId2StartToEndDuration = new HashMap<>();
 		for(Id<Person> personId : personId2DurationFromStartToEnd.keySet()){
-			if (personId.toString().contains("_" + vehTypeId.toString() + "_")) {
-				if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
-					if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
+//			if (personId.toString().contains("_" + vehTypeId.toString() + "_")) {
+			if (this.vehicles.getVehicles().get(Id.createVehicleId(personId.toString())).getType().getId().equals(vehTypeId)) {
+//				if (vehTypeId.toString().contains("frozen") == personId.toString().contains("frozen")) { //keine doppelte Erfassung der "frozen" bei den nicht-"frozen"...
+//					if (vehTypeId.toString().contains("electro") == personId.toString().contains("electro")) {//keine doppelte Erfassung der "electro" bei den nicht-"electro"...
 						double activityDuration = personId2DurationFromStartToEnd.get(personId);
 						if (vehTypeId2StartToEndDuration.containsKey(vehTypeId)) {
 							vehTypeId2StartToEndDuration.put(vehTypeId, vehTypeId2StartToEndDuration.get(vehTypeId) + activityDuration);
 						} else {
 							vehTypeId2StartToEndDuration.put(vehTypeId, activityDuration);
 						}
-					}
-				}
+//					}
+//				}
 
 			}
 		}

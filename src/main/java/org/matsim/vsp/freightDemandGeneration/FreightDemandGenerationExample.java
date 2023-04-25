@@ -1,3 +1,22 @@
+/* *********************************************************************** *
+ * project: org.matsim.*
+ * Controler.java
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ * copyright       : (C) 2007 by the members listed in the COPYING,        *
+ *                   LICENSE and WARRANTY file.                            *
+ * email           : info at matsim dot org                                *
+ *                                                                         *
+ * *********************************************************************** *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *   See also COPYING, LICENSE and WARRANTY file                           *
+ *                                                                         *
+ * *********************************************************************** */
 package org.matsim.vsp.freightDemandGeneration;
 
 import java.io.File;
@@ -22,6 +41,7 @@ public class FreightDemandGenerationExample {
 		String network = "../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz";
 		Path population = Path.of("../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-1pct/input/berlin-v5.5-1pct.plans.xml.gz");
 		Path shapeFilePath = Path.of("../public-svn/matsim/scenarios/countries/de/freight-demand-generation/input_example/shp/Berlin_Ortsteile.shp");
+		String shapeCategory = "Ortsteil";
 		new FreightDemandGeneration().execute(
 				"--output", output.toString(),
 				"--carrierOption", "createCarriersFromCSV",
@@ -38,6 +58,7 @@ public class FreightDemandGenerationExample {
 				"--network", network,
 				"--networkCRS", "EPSG:31468",
 				"--networkChangeEvents", "",
+				"--shapeCategory", shapeCategory,
 				"--inputCarrierCSV", carrierCSVLocation.toString(),
 				"--inputDemandCSV", demandCSVLocation.toString(),
 				"--populationSample", "0.5",
@@ -51,7 +72,7 @@ public class FreightDemandGenerationExample {
 		}
 		Collections.sort(fileData);
 		File lastFile = fileData.get(fileData.size()-1);
-		String[] argsAnalysis = { lastFile.toString()};
+		String[] argsAnalysis = { lastFile.toString(), "true"};
 		FreightAnalyse.main(argsAnalysis);
 	}}
 

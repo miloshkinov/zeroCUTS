@@ -18,7 +18,8 @@
 
 package org.matsim.trajectories;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
@@ -42,7 +43,7 @@ import java.util.TreeMap;
  */
 class EventHandlerTrajAgents implements BasicEventHandler {
 
-	static Logger log = Logger.getLogger(EventHandlerTrajAgents.class);
+	static Logger log = LogManager.getLogger(EventHandlerTrajAgents.class);
 	
 	private TreeMap<Id<Vehicle>, Double > vehicles2trajectorities= new TreeMap<>();
 

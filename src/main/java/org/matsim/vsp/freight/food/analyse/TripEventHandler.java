@@ -1,6 +1,7 @@
 package org.matsim.vsp.freight.food.analyse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
@@ -23,7 +24,7 @@ import java.util.Map;
 
 class TripEventHandler  implements ActivityStartEventHandler, ActivityEndEventHandler, LinkEnterEventHandler, PersonArrivalEventHandler {
 
-	private final static Logger log = Logger.getLogger(TripEventHandler.class);
+	private final static Logger log = LogManager.getLogger(TripEventHandler.class);
 
 	private Network network;
 	private CarrierVehicleTypes vehicleTypes;

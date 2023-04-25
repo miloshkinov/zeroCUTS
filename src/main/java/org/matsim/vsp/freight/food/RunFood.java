@@ -22,29 +22,28 @@ package org.matsim.vsp.freight.food;
 
 import com.graphhopper.jsprit.analysis.toolbox.StopWatch;
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
-import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
 import com.graphhopper.jsprit.core.algorithm.listener.VehicleRoutingAlgorithmListeners;
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.util.Solutions;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contrib.freight.Freight;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
 import org.matsim.contrib.freight.carrier.Carriers;
 import org.matsim.contrib.freight.controler.CarrierModule;
+import org.matsim.contrib.freight.controler.FreightUtils;
 import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
 import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts;
 import org.matsim.contrib.freight.jsprit.NetworkRouter;
-import org.matsim.contrib.freight.utils.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlansConfigGroup;
-import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
@@ -56,7 +55,7 @@ import java.util.stream.Collectors;
 
 class RunFood {
 
-    static final Logger log = Logger.getLogger(RunFood.class);
+    static final Logger log = LogManager.getLogger(RunFood.class);
 
     private static int nuOfJspritIteration;
 
@@ -91,12 +90,12 @@ class RunFood {
     private static Config prepareConfig(String[] args) {
         String carriersFileLocation = args[0];
         String vehicleTypesFileLocation = args[1];
-        String algorithmFileLocation = args[2]; //TODO: Read in Algorithm -> Put into freightConfigGroup?
+//        String algorithmFileLocation = args[2]; //TODO: Read in Algorithm -> Put into freightConfigGroup?
         nuOfJspritIteration = Integer.parseInt(args[3]);
         String networkChangeEventsFileLocation = args[4];
         String outputLocation = args[5];
 
-        Boolean useDistanceConstraint = false;
+        boolean useDistanceConstraint = false;
         try {
             useDistanceConstraint = Boolean.parseBoolean(args[6]);
         } catch (Exception e) {
@@ -113,7 +112,7 @@ class RunFood {
 
         config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
 
-        if (networkChangeEventsFileLocation != ""){
+        if (!Objects.equals(networkChangeEventsFileLocation, "")){
         log.info("Setting networkChangeEventsInput file: " + networkChangeEventsFileLocation);
             config.network().setTimeVariantNetwork(true);
             config.network().setChangeEventsInputFile(networkChangeEventsFileLocation);
@@ -147,16 +146,7 @@ class RunFood {
     private static Controler prepareControler(Scenario scenario) {
         Controler controler = new Controler(scenario);
 
-        Freight.configure(controler);
-
-        controler.addOverridingModule(new AbstractModule() {
-            @Override
-            public void install() {
-                install(new CarrierModule());
-//                bind(CarrierPlanStrategyManagerFactory.class).toInstance( null );
-//                bind(CarrierScoringFunctionFactory.class).toInstance(null );
-            }
-        });
+        controler.addOverridingModule(new CarrierModule());
 
         return controler;
     }

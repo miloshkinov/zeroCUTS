@@ -21,7 +21,8 @@
  */
 package org.matsim.vsp.freight;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,7 +48,7 @@ public class TestRunFreight {
 		try {
 			RunFreight.main(null);
 		} catch ( Exception ee ) {
-			Logger.getLogger(this.getClass()).fatal("there was an exception: \n" + ee ) ;
+			LogManager.getLogger(this.getClass()).fatal("there was an exception: \n" + ee ) ;
 			// if one catches an exception, then one needs to explicitly fail the test:
 			Assert.fail();
 		}

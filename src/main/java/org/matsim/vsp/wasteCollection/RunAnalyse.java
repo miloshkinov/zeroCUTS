@@ -17,7 +17,8 @@
  *                                                                         *
  * *********************************************************************** */
 package org.matsim.vsp.wasteCollection;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
@@ -25,18 +26,17 @@ import org.matsim.contrib.freight.carrier.*;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
+import org.matsim.core.utils.io.IOUtils;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class RunAnalyse {
-	static final Logger log = Logger.getLogger(RunAnalyse.class);
+	static final Logger log = LogManager.getLogger(RunAnalyse.class);
 	
-	private static final String workingDir = "T:/Shared/";
+	private static final String workingDir = "C:/Users/Ricardo/tubCloud/Shared/";
 
 	private static final String dir_moLargeBinsDiesel100it = workingDir+ "vsp_zerocuts/scenarios/Muellentsorgung/Montag_withTraffic/diesel_Mo_largeBin_100it/";
 	private static final String dir_moSmallBinsDiesel100it = workingDir+ "vsp_zerocuts/scenarios/Muellentsorgung/Montag_withTraffic/diesel_Mo_smallBin_100it/";
@@ -56,12 +56,16 @@ public class RunAnalyse {
 
 		log.info("Starting");
 
-		scenarioAuswahl scenarioWahl = scenarioAuswahl.weSmallBinsElektro100it;
+		scenarioAuswahl scenarioWahl = scenarioAuswahl.weLargeBinsDiesel100it;
 		String inputDir;
 		Map<Id<Person>, Double> personId2tourDistanceKm = new HashMap<>();
 		Map<Id<Person>, Integer> personId2tourNumCollections = new HashMap<>();
 		Map<Id<Person>, Double> personId2tourWasteCollectedTons = new HashMap<>();
 		Map<Id<Person>, Integer> personId2tourDurations = new HashMap<>();
+		Map<Id<Person>, Integer> personId2tourStartTime = new HashMap<>();
+		Map<Id<Person>, Integer> personId2tourEndTime = new HashMap<>();
+		Map<Id<Person>, String> personId2tourDepot = new HashMap<>();
+		Map<Id<Person>, Double> personId2tourConsumption = new HashMap<>();
 
 		switch (scenarioWahl) {
 		case moLargeBinsDiesel100it:
@@ -95,7 +99,9 @@ public class RunAnalyse {
 		log.info("Running analysis for " + scenarioWahl + " : " + inputDir);
 
 		Carriers carriers = new Carriers();
-		new CarrierPlanXmlReader(carriers, null) //re: perhaps add vehicleTypes here
+		CarrierVehicleTypes carrierVehicleTypes = new CarrierVehicleTypes();
+		new CarrierVehicleTypeReader(carrierVehicleTypes).readFile(inputDir + "output_vehicleTypes.xml");
+		new CarrierPlanXmlReader(carriers, carrierVehicleTypes) //re: perhaps add vehicleTypes here
 				.readFile(new File(inputDir + "output_CarrierPlans.xml").getCanonicalPath());
 
 		Network network = NetworkUtils.readNetwork(inputDir + "output_network.xml.gz");
@@ -145,51 +151,56 @@ public class RunAnalyse {
 				}
 
 				Id<Person> personId = Id.create(
-						carrier.getId().toString() + scheduledTour.getVehicle().getId().toString() + tourNumber,
+						carrier.getId().toString() + scheduledTour.getVehicle().getId().toString() + "_" + tourNumber,
 						Person.class);
 				personId2tourDistanceKm.put(personId, distanceTourKM);
 				personId2tourNumCollections.put(personId, numCollections);
 				personId2tourWasteCollectedTons.put(personId, wasteCollectedTons);
 				personId2tourDurations.put(personId, endTime - startTime);
-
+				personId2tourStartTime.put(personId, startTime);
+				personId2tourEndTime.put(personId, endTime);
+				if (scheduledTour.getTour().getStartLinkId().toString().equals("42882"))
+					personId2tourDepot.put(personId, "Nordring");
+				if (scheduledTour.getTour().getStartLinkId().toString().equals("71781"))
+					personId2tourDepot.put(personId, "Gradestraße");
+				if (scheduledTour.getTour().getStartLinkId().toString().equals("116212"))
+					personId2tourDepot.put(personId, "Malmoeerstrasse");
+				if (scheduledTour.getTour().getStartLinkId().toString().equals("27766"))
+					personId2tourDepot.put(personId, "Forckenbeckstrasse");
+				double consumption = distanceTourKM*100/100 + 1.4*wasteCollectedTons;
+				personId2tourConsumption.put(personId, consumption);
 				tourNumber++;
 			}
 		}
-
 		writeOutput(inputDir, personId2tourDistanceKm, personId2tourNumCollections, personId2tourWasteCollectedTons,
-				personId2tourDurations);
-
+				personId2tourDurations, personId2tourStartTime, personId2tourEndTime, personId2tourDepot, personId2tourConsumption);
 		log.info("### Done.");
-
 	}
 
 	static void writeOutput(String directory, Map<Id<Person>, Double> personId2tourDistanceKm,
 			Map<Id<Person>, Integer> personId2tourNumCollections,
-			Map<Id<Person>, Double> personId2tourWasteCollectedTons, Map<Id<Person>, Integer> personId2tourDurations) {
-		BufferedWriter writer;
-		File file;
-		file = new File(directory + "/03_TourStatistics.txt");
+			Map<Id<Person>, Double> personId2tourWasteCollectedTons, Map<Id<Person>, Integer> personId2tourDurations, Map<Id<Person>, Integer> personId2tourStartTime, Map<Id<Person>, Integer> personId2tourEndTime, Map<Id<Person>, String> personId2tourDepot, Map<Id<Person>, Double> personId2tourConsumption) {
+		String outputFolder = directory + "/03_TourStatistics_new.csv";
+		BufferedWriter writer = IOUtils.getBufferedWriter(outputFolder);
 		try {
-			writer = new BufferedWriter(new FileWriter(file, true));
-			String now = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new Date());
-			writer.write("Tourenstatisitik erstellt am: " + now + "\n\n");
-
 			// Headline
 			writer.write(
-					"TourID\t\t\t\t\t\t\t\t\t\tduration hh:mm:ss\t\tdistance (km)\t\t#ofDeliveries\t\tdelivered Volume (m3)\n\n");
+					"TourID\tduration hh:mm:ss\tstartTime\tendTime\tdistance (km)\t#ofDeliveries\tdelivered Volume (m3)\tconsumption (kWH)\tdepot\n");
 
 			for (Id<Person> id : personId2tourDistanceKm.keySet()) {
 				Double tourDistance = personId2tourDistanceKm.get(id);
 				Integer tourNumCollections = personId2tourNumCollections.get(id);
 				Double tourWasteCollected = personId2tourWasteCollectedTons.get(id);
+				int tourStartTime = personId2tourStartTime.get(id);
+				int tourEndTime = personId2tourEndTime.get(id);
 				int duration = personId2tourDurations.get(id);
+				String depot = personId2tourDepot.get(id);
+				Double consumption = personId2tourConsumption.get(id);
 
-				writer.write(id + "\t\t" + timeTransmission(duration) + "\t\t\t\t\t" + tourDistance + "\t\t\t\t"
-						+ tourNumCollections + "\t\t\t\t\t" + tourWasteCollected);
+				writer.write(id + "\t" + timeTransmission(duration) + "\t" + timeTransmission(tourStartTime) + "\t" + timeTransmission(tourEndTime) + "\t"+ tourDistance + "\t"
+						+ tourNumCollections + "\t" + tourWasteCollected + "\t" + consumption + "\t" + depot);
 				writer.newLine();
-
 			}
-
 			writer.flush();
 			writer.close();
 		} catch (IOException e) {

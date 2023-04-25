@@ -3,7 +3,8 @@ package org.matsim.vsp.freight;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.Event;
@@ -90,7 +91,7 @@ public class CarrierScoringFunctionFactoryImpl_KT implements CarrierScoringFunct
 
     static class LegScoring implements SumScoringFunction.LegScoring {
     	
-    	private static Logger log = Logger.getLogger(LegScoring.class);
+    	private static Logger log = LogManager.getLogger(LegScoring.class);
     	
     	private double score = 0. ;
     	private Carrier carrier;
@@ -174,7 +175,7 @@ public class CarrierScoringFunctionFactoryImpl_KT implements CarrierScoringFunct
      */
     static class ActivityScoring implements SumScoringFunction.ActivityScoring {
 
-    	private static Logger log = Logger.getLogger(ActivityScoring.class);
+    	private static Logger log = LogManager.getLogger(ActivityScoring.class);
     	
 		private double score = 0. ;
 		private final double margUtlOfTime_s = 0.008 ;  //Wert aus Schröder/Liedtke 2014
@@ -247,7 +248,7 @@ public class CarrierScoringFunctionFactoryImpl_KT implements CarrierScoringFunct
      */
     static class ActivityScoringWithCorrection implements SumScoringFunction.ActivityScoring {
 
-    	private static Logger log = Logger.getLogger(ActivityScoring.class);
+    	private static Logger log = LogManager.getLogger(ActivityScoring.class);
     	
 
 		private double score = 0. ;
