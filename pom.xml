@@ -11,7 +11,7 @@
 	<description>zeroCUTS project</description>
 
 	<properties>
-		<matsim.version>16.0-PR2538</matsim.version>
+		<matsim.version>16.0-PR2541</matsim.version>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

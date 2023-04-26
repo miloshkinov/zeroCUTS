@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.freight.FreightConfigGroup;
+import org.matsim.contrib.freight.analysis.RunFreightAnalysisEventbased;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
@@ -85,9 +86,14 @@ class RunFood {
         runJsprit(controler);
 
         controler.run();
+
+		final String outputPath = controler.getControlerIO().getOutputPath();
+		RunFreightAnalysisEventbased freightAnalysis = new RunFreightAnalysisEventbased(outputPath, outputPath +"/Analysis/");
+		freightAnalysis.runAnalysis();
     }
 
-    private static Config prepareConfig(String[] args) {
+
+	private static Config prepareConfig(String[] args) {
         String carriersFileLocation = args[0];
         String vehicleTypesFileLocation = args[1];
 //        String algorithmFileLocation = args[2]; //TODO: Read in Algorithm -> Put into freightConfigGroup?
