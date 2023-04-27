@@ -31,6 +31,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.events.Event;
+import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Leg;
 import org.matsim.contrib.freight.FreightConfigGroup;
 import org.matsim.contrib.freight.analysis.CarrierPlanAnalysis;
 import org.matsim.contrib.freight.analysis.RunFreightAnalysisEventbased;
@@ -39,6 +42,7 @@ import org.matsim.contrib.freight.carrier.CarrierPlan;
 import org.matsim.contrib.freight.carrier.CarrierUtils;
 import org.matsim.contrib.freight.carrier.Carriers;
 import org.matsim.contrib.freight.controler.CarrierModule;
+import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
 import org.matsim.contrib.freight.controler.FreightUtils;
 import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
 import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts;
@@ -46,9 +50,11 @@ import org.matsim.contrib.freight.jsprit.NetworkRouter;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlansConfigGroup;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.scoring.ScoringFunction;
 
 import java.io.IOException;
 import java.util.*;
@@ -159,6 +165,12 @@ class RunFood {
 
         controler.addOverridingModule(new CarrierModule());
 
+		controler.addOverridingModule(new AbstractModule() {
+			@Override public void install() {
+				bind(CarrierScoringFunctionFactory.class).toInstance(new CarrierScoringFunctionFactory_KeepScore());
+			}
+		});
+
         return controler;
     }
 
@@ -233,4 +245,31 @@ class RunFood {
             carrier.setSelectedPlan(newPlan) ;
         })).get();
     }
+
+
+	private static class CarrierScoringFunctionFactory_KeepScore implements CarrierScoringFunctionFactory {
+		@Override public ScoringFunction createScoringFunction(Carrier carrier ){
+			return new ScoringFunction(){
+				@Override public void handleActivity( Activity activity ){
+				}
+				@Override public void handleLeg( Leg leg ){
+				}
+				@Override public void agentStuck( double time ){
+				}
+				@Override public void addMoney( double amount ){
+				}
+				@Override public void addScore( double amount ){
+				}
+				@Override public void finish(){
+				}
+				@Override public double getScore(){
+					return carrier.getSelectedPlan().getScore(); //2nd Quickfix: Keep the current score -> which ist normally the score from jsprit. -> Better safe JspritScore as own value.
+//					return Double.MIN_VALUE; // 1st Quickfix, to have a "double" value for xsd (instead of neg.-Infinity).
+//					return Double.NEGATIVE_INFINITY; // Default from KN -> causes errors with reading in carrierFile because Java writes "Infinity", while XSD needs "INF"
+				}
+				@Override public void handleEvent( Event event ){
+				}
+			};
+		}
+	}
 }
