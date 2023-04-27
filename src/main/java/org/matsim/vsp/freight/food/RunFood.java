@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.freight.FreightConfigGroup;
+import org.matsim.contrib.freight.analysis.CarrierPlanAnalysis;
 import org.matsim.contrib.freight.analysis.RunFreightAnalysisEventbased;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
@@ -68,14 +69,14 @@ class RunFood {
         }
 
         if ( args.length==0 ) {
-            String inputPath = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/input/";
+            String inputPath = "../shared-svn/projects/freight/studies/Food_LCA-based/input/";
             args = new String[] {
-                inputPath+"TwoCarrier_Shipment_OneTW_PickupTime_ICEVandBEV.xml",
-                inputPath + "vehicleTypesBVWP100_DC_Tax300.xml",
+                inputPath+"TwoCarrier_small_Shipment_OneTW_PickupTime_ICEVandBEV.xml",
+                inputPath + "vehicleTypes_LCA_noTax.xml",
                 inputPath + "mdvrp_algorithmConfig_2.xml",
                 "1",                                                    //only for demonstration.
                 inputPath + "networkChangeEvents.xml.gz",
-                "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/Demo1ItDC",
+                "../shared-svn/projects/freight/studies/Food_LCA-based/output/Demo1It_small",
                 "true"
             };
         }
@@ -91,6 +92,9 @@ class RunFood {
 		final String outputPath = controler.getControlerIO().getOutputPath();
 		RunFreightAnalysisEventbased freightAnalysis = new RunFreightAnalysisEventbased(outputPath +"/", outputPath +"/Analysis/");
 		freightAnalysis.runAnalysis();
+
+		CarrierPlanAnalysis carrierPlanAnalysis = new CarrierPlanAnalysis(FreightUtils.getCarriers(controler.getScenario()));
+		carrierPlanAnalysis.runAnalysis(outputPath +"/Analysis/");
     }
 
 
