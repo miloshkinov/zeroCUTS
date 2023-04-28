@@ -26,7 +26,6 @@ import com.graphhopper.jsprit.core.algorithm.listener.VehicleRoutingAlgorithmLis
 import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
 import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
 import com.graphhopper.jsprit.core.util.Solutions;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -35,7 +34,6 @@ import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.contrib.freight.FreightConfigGroup;
-import org.matsim.contrib.freight.analysis.CarrierPlanAnalysis;
 import org.matsim.contrib.freight.analysis.RunFreightAnalysisEventbased;
 import org.matsim.contrib.freight.carrier.Carrier;
 import org.matsim.contrib.freight.carrier.CarrierPlan;
@@ -98,9 +96,6 @@ class RunFood {
 		final String outputPath = controler.getControlerIO().getOutputPath();
 		RunFreightAnalysisEventbased freightAnalysis = new RunFreightAnalysisEventbased(outputPath +"/", outputPath +"/Analysis/");
 		freightAnalysis.runAnalysis();
-
-		CarrierPlanAnalysis carrierPlanAnalysis = new CarrierPlanAnalysis(FreightUtils.getCarriers(controler.getScenario()));
-		carrierPlanAnalysis.runAnalysis(outputPath +"/Analysis/");
     }
 
 
