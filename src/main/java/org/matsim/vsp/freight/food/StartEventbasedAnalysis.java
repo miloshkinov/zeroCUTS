@@ -10,8 +10,8 @@ import java.io.IOException;
 public class StartEventbasedAnalysis {
 
 	public static void main(String[] args) throws IOException {
-		final String outputPath = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/Food_LCA-based/output/00_LCA_ICEV-BEV_10it_noTax_2Carrier";
-		RunFreightAnalysisEventbased freightAnalysis = new RunFreightAnalysisEventbased(outputPath +"/", outputPath +"/Analysis/");
+		final String outputPath = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/Food_LCA-based/output/31_BVWP100_ICEV-BEV_10000it_noTax";
+		RunFreightAnalysisEventbased freightAnalysis = new RunFreightAnalysisEventbased(outputPath +"/", outputPath +"/Analysis2/");
 		freightAnalysis.runAnalysis();
 	}
 }
