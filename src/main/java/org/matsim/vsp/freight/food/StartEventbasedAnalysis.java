@@ -1,7 +1,10 @@
 package org.matsim.vsp.freight.food;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.contrib.freight.analysis.RunFreightAnalysisEventbased;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -9,9 +12,25 @@ import java.io.IOException;
  */
 public class StartEventbasedAnalysis {
 
+	static final Logger log = LogManager.getLogger(StartEventbasedAnalysis.class);
+
 	public static void main(String[] args) throws IOException {
-		final String outputPath = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/Food_LCA-based/output/31_BVWP100_ICEV-BEV_10000it_noTax";
-		RunFreightAnalysisEventbased freightAnalysis = new RunFreightAnalysisEventbased(outputPath +"/", outputPath +"/Analysis2/");
+		String simOutputPath;
+
+		if ( args.length==0 ) {
+			simOutputPath = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/Food_LCA-based/output/01_LCA_ICEV_10000it_noTax";
+		} else {
+			for (String arg : args) {
+				log.info( arg );
+			}
+			simOutputPath = args[0];
+		}
+
+		if (!simOutputPath.endsWith(File.separator)) {
+			simOutputPath = simOutputPath + File.separator;
+		}
+		log.info("Running analysis for: " + simOutputPath);
+		RunFreightAnalysisEventbased freightAnalysis = new RunFreightAnalysisEventbased(simOutputPath, simOutputPath +"Analysis"+File.separator);
 		freightAnalysis.runAnalysis();
 	}
 }
