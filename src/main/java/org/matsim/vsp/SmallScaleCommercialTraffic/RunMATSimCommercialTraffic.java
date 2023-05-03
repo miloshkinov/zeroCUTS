@@ -174,6 +174,7 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 					return scoringFunctionAccumulator;
 				}
 			});
+
 		controler.getConfig().vspExperimental().setVspDefaultsCheckingLevel(VspDefaultsCheckingLevel.abort);
 
 		controler.run();
