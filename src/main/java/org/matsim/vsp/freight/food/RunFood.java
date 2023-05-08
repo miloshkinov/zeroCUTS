@@ -67,24 +67,24 @@ class RunFood {
 
 	private static int nuOfJspritIteration;
 
-	public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
+    public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
 
 		for (String arg : args) {
 			log.info( arg );
 		}
 
-		if ( args.length==0 ) {
-			String inputPath = "../shared-svn/projects/freight/studies/Food_LCA-based/input/";
-			args = new String[] {
-					inputPath+"TwoCarrier_small_Shipment_OneTW_PickupTime_ICEVandBEV.xml",
-					inputPath + "vehicleTypes_LCA_noTax.xml",
-					inputPath + "mdvrp_algorithmConfig_2.xml",
-					"1",                                                    //only for demonstration.
-					inputPath + "networkChangeEvents.xml.gz",
-					"../shared-svn/projects/freight/studies/Food_LCA-based/output/Demo1It_small",
-					"true"
-			};
-		}
+        if ( args.length==0 ) {
+            String inputPath = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/input/";
+            args = new String[] {
+                inputPath+"TwoCarrier_Shipment_OneTW_PickupTime_ICEVandBEV.xml",
+                inputPath + "vehicleTypesBVWP100_DC_Tax300.xml",
+                "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz",
+                "1",                                                    //only for demonstration.
+                inputPath + "networkChangeEvents.xml.gz",
+                "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/Demo1ItDC",
+                "true"
+            };
+        }
 
 		Config config = prepareConfig( args ) ;
 		Scenario scenario = prepareScenario( config ) ;
@@ -103,12 +103,12 @@ class RunFood {
 
 
 	private static Config prepareConfig(String[] args) {
-		String carriersFileLocation = args[0];
-		String vehicleTypesFileLocation = args[1];
-//        String algorithmFileLocation = args[2]; //TODO: Read in Algorithm -> Put into freightConfigGroup?
-		nuOfJspritIteration = Integer.parseInt(args[3]);
-		String networkChangeEventsFileLocation = args[4];
-		String outputLocation = args[5];
+        String carriersFileLocation = args[0];
+        String vehicleTypesFileLocation = args[1];
+        String networkFileLocation = args[2];
+        nuOfJspritIteration = Integer.parseInt(args[3]);
+        String networkChangeEventsFileLocation = args[4];
+        String outputLocation = args[5];
 
 		boolean useDistanceConstraint = false;
 		try {
@@ -125,7 +125,7 @@ class RunFood {
 		config.controler().setLastIteration(0);
 		config.controler().setOutputDirectory(outputLocation);
 
-		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
+        config.network().setInputFile(networkFileLocation);
 
 		if (!Objects.equals(networkChangeEventsFileLocation, "")){
 			log.info("Setting networkChangeEventsInput file: " + networkChangeEventsFileLocation);
