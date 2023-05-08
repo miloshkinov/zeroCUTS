@@ -81,7 +81,7 @@ class RunFood {
                 "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz",
                 "1",                                                    //only for demonstration.
                 inputPath + "networkChangeEvents.xml.gz",
-                "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/Demo1ItDC",
+                "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/Demo1ItDC/",
                 "true"
             };
         }
