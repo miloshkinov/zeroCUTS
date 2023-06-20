@@ -87,7 +87,8 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 	
 	@CommandLine.Option(names = "--cadytsCalibration", description = "If cadyts calibartion should be used.", required = true, defaultValue = "false")
 	private boolean cadytsCalibration;
-
+	@CommandLine.Option(names = "--weight", description = "Strategy weight for calibration config.", defaultValue = "1")
+	private double weight;
 	public static void main(String[] args) {
 		System.exit(new CommandLine(new RunMATSimCommercialTraffic()).execute(args));
 	}
@@ -126,27 +127,27 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 		Controler controler = prepareControler(scenario);
 		if (cadytsCalibration)
 			controler.addOverridingModule(new CadytsCarModule());
-		controler.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
-//		        bind(MainModeIdentifier.class).to(MainModeIdentifierImpl.class);
-//		        bind(AnalysisMainModeIdentifier.class).to(MainModeIdentifier.class);
-				bind(AnalysisMainModeIdentifier.class).to(TransportPlanningMainModeIdentifierRE.class);
-				if (cadytsCalibration)
-					addPlanStrategyBinding("planChangerCadyts").toProvider(new javax.inject.Provider<>() {
-						@Inject
-						Scenario scenario;
-						@Inject
-						CadytsContext cadytsContext;
-
-						@Override
-						public PlanStrategy get() {
-							return new PlanStrategyImpl.Builder((new CadytsPlanChanger(scenario, cadytsContext)))
-									.build();
-						}
-					});
-			}
-		});
+//		controler.addOverridingModule(new AbstractModule() {
+//			@Override
+//			public void install() {
+////		        bind(MainModeIdentifier.class).to(MainModeIdentifierImpl.class);
+////		        bind(AnalysisMainModeIdentifier.class).to(MainModeIdentifier.class);
+//				bind(AnalysisMainModeIdentifier.class).to(TransportPlanningMainModeIdentifierRE.class);
+//				if (cadytsCalibration)
+//					addPlanStrategyBinding("planChangerCadyts").toProvider(new javax.inject.Provider<>() {
+//						@Inject
+//						Scenario scenario;
+//						@Inject
+//						CadytsContext cadytsContext;
+//
+//						@Override
+//						public PlanStrategy get() {
+//							return new PlanStrategyImpl.Builder((new CadytsPlanChanger(scenario, cadytsContext)))
+//									.build();
+//						}
+//					});
+//			}
+//		});
 		// include cadyts into the plan scoring (this will add the cadyts corrections to
 		// the scores)
 		if (cadytsCalibration)
@@ -159,19 +160,17 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 
 				@Override
 				public ScoringFunction createNewScoringFunction(Person person) {
+					SumScoringFunction sumScoringFunction = new SumScoringFunction();
+
+					Config config = controler.getConfig();
+
 					final ScoringParameters params = parameters.getScoringParameters(person);
 
-					SumScoringFunction scoringFunctionAccumulator = new SumScoringFunction();
-					scoringFunctionAccumulator.addScoringFunction(new CharyparNagelLegScoring(params,
-							controler.getScenario().getNetwork(), config.transit().getTransitModes()));
-					scoringFunctionAccumulator.addScoringFunction(new CharyparNagelActivityScoring(params));
-					scoringFunctionAccumulator.addScoringFunction(new CharyparNagelAgentStuckScoring(params));
-					final CadytsScoring<Link> scoringFunction = new CadytsScoring<>(person.getSelectedPlan(), config,
-							cadytsContext);
-					scoringFunction.setWeightOfCadytsCorrection(30. * config.planCalcScore().getBrainExpBeta());
-					scoringFunctionAccumulator.addScoringFunction(scoringFunction);
+					final CadytsScoring<Link> scoringFunction = new CadytsScoring<>(person.getSelectedPlan(), config, cadytsContext);
+					scoringFunction.setWeightOfCadytsCorrection(weight * config.planCalcScore().getBrainExpBeta());
+					sumScoringFunction.addScoringFunction(scoringFunction);
 
-					return scoringFunctionAccumulator;
+					return sumScoringFunction;
 				}
 			});
 
