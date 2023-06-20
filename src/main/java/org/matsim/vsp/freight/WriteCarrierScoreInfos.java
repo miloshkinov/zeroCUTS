@@ -56,8 +56,8 @@ class WriteCarrierScoreInfos {
 			if (carrier.getSelectedPlan() == null) {
 				return;
 			}
-			scoresOfCarrier.put(carrier.getId(), carrier.getSelectedPlan().getScore());
-			totalScore = totalScore + carrier.getSelectedPlan().getScore();
+			scoresOfCarrier.put(carrier.getId(), carrier.getSelectedPlan().getJspritScore());
+			totalScore = totalScore + carrier.getSelectedPlan().getJspritScore();
 			}
 
 		}
