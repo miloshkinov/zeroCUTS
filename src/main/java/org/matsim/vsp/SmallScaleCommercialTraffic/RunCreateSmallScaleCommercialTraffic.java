@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class RunCreateSmallScaleCommercialTraffic {
     private enum Model {
-        berlin, berlin_sample, leipzig, vulkaneifel, rvr, test
+        berlin, berlin_sample, matsim_berlin, leipzig, vulkaneifel, rvr, test
     }
     private enum CreationOption {
         useExistingCarrierFileWithSolution, createNewCarrierFile, useExistingCarrierFileWithoutSolution
@@ -36,31 +36,44 @@ public class RunCreateSmallScaleCommercialTraffic {
         String buildingsShapeFileName = null;
         String landuseShapeFileName;
         String shapeCRS;
+
+        String nameOutputPopulation = "testPopulation.xml.gz";
+        String pathOutput = "output/testOutput/";
         switch (selectedModel){
 
             case berlin, berlin_sample -> {
                 inputDataDirectory ="../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/berlin/";
-                zoneShapeFileName = "shp/berlinBrandenburg_Zones_VKZ_4326.shp";
+                zoneShapeFileName = inputDataDirectory + "/shp/berlinBrandenburg_Zones_VKZ_4326.shp";
                 switch (selectedModel){
-                    case berlin -> buildingsShapeFileName = "shp/buildings_BerlinBrandenburg_4326";
-                    case berlin_sample -> buildingsShapeFileName = "shp/buildings_sample_BerlinBrandenburg_4326.shp";
+                    case berlin -> buildingsShapeFileName = inputDataDirectory + "/shp/buildings_BerlinBrandenburg_4326";
+                    case berlin_sample -> buildingsShapeFileName = inputDataDirectory + "/shp/buildings_sample_BerlinBrandenburg_4326.shp";
                 }
-                landuseShapeFileName = "shp/berlinBrandenburg_landuse_4326.shp";
+                landuseShapeFileName = inputDataDirectory + "/shp/berlinBrandenburg_landuse_4326.shp";
+                shapeCRS = "EPSG:4326";
+            }
+            case matsim_berlin -> {
+                inputDataDirectory ="../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/berlin/";
+                zoneShapeFileName = inputDataDirectory + "/shp/berlinBrandenburg_Zones_VKZ_4326.shp";
+                switch (selectedModel){
+                    case berlin -> buildingsShapeFileName = inputDataDirectory + "/shp/buildings_BerlinBrandenburg_4326";
+                    case berlin_sample -> buildingsShapeFileName = inputDataDirectory + "/shp/buildings_sample_BerlinBrandenburg_4326.shp";
+                }
+                landuseShapeFileName = inputDataDirectory + "/shp/berlinBrandenburg_landuse_4326.shp";
                 shapeCRS = "EPSG:4326";
             }
             case leipzig -> {
                 inputDataDirectory = "../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/leipzig/";
-                zoneShapeFileName = "shp/leipzig_zones_25832.shp";
-                buildingsShapeFileName = "shp/leipzig_buildings_25832.shp";
-                landuseShapeFileName = "shp/leipzig_landuse_25832.shp";
+                zoneShapeFileName = inputDataDirectory + "/shp/leipzig_zones_25832.shp";
+                buildingsShapeFileName = inputDataDirectory + "/shp/leipzig_buildings_25832.shp";
+                landuseShapeFileName = inputDataDirectory + "/shp/leipzig_landuse_25832.shp";
                 shapeCRS = "EPSG:25832";
             }
             case vulkaneifel -> {
                 inputDataDirectory ="../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/vulkaneifel/";
-                zoneShapeFileName = "";
-                buildingsShapeFileName = "";
-                landuseShapeFileName = "";
-                shapeCRS = "";
+                zoneShapeFileName = inputDataDirectory + "/shp/zones_vulkaneifel_commercialTraffic_25832.shp";
+                buildingsShapeFileName = inputDataDirectory + "/shp/buildings_vulkaneifel_25832.shp";
+                landuseShapeFileName = inputDataDirectory + "/shp/landuse_vulkaneifel_25832.shp";
+                shapeCRS = "EPSG:25832";
             }
             case rvr -> {
                 inputDataDirectory ="../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/rvr/";
@@ -72,9 +85,9 @@ public class RunCreateSmallScaleCommercialTraffic {
             case test -> {
                 sampleSize = "0.5";
                 inputDataDirectory = "test/input/org/matsim/vsp/SmallScaleCommercialTraffic/";
-                zoneShapeFileName = "shp/testZones.shp";
-                buildingsShapeFileName = "shp/testBuildings.shp";
-                landuseShapeFileName = "shp/testLanduse.shp";
+                zoneShapeFileName = inputDataDirectory + "/shp/testZones.shp";
+                buildingsShapeFileName = inputDataDirectory + "/shp/testBuildings.shp";
+                landuseShapeFileName = inputDataDirectory + "/shp/testLanduse.shp";
                 shapeCRS = "EPSG:4326";
             }
             default -> throw new IllegalStateException("Unexpected value: " + selectedModel);
