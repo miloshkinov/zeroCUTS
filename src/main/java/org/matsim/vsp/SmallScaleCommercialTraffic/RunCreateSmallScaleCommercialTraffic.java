@@ -45,7 +45,7 @@ public class RunCreateSmallScaleCommercialTraffic {
                 inputDataDirectory ="../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/berlin/";
                 zoneShapeFileName = inputDataDirectory + "/shp/berlinBrandenburg_Zones_VKZ_4326.shp";
                 switch (selectedModel){
-                    case berlin -> buildingsShapeFileName = inputDataDirectory + "/shp/buildings_BerlinBrandenburg_4326";
+                    case berlin -> buildingsShapeFileName = inputDataDirectory + "/shp/buildings_BerlinBrandenburg_4326.shp";
                     case berlin_sample -> buildingsShapeFileName = inputDataDirectory + "/shp/buildings_sample_BerlinBrandenburg_4326.shp";
                 }
                 landuseShapeFileName = inputDataDirectory + "/shp/berlinBrandenburg_landuse_4326.shp";
@@ -55,7 +55,7 @@ public class RunCreateSmallScaleCommercialTraffic {
                 inputDataDirectory ="../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/berlin/";
                 zoneShapeFileName = inputDataDirectory + "/shp/berlinBrandenburg_Zones_VKZ_4326.shp";
                 switch (selectedModel){
-                    case berlin -> buildingsShapeFileName = inputDataDirectory + "/shp/buildings_BerlinBrandenburg_4326";
+                    case berlin -> buildingsShapeFileName = inputDataDirectory + "/shp/buildings_BerlinBrandenburg_4326.shp";
                     case berlin_sample -> buildingsShapeFileName = inputDataDirectory + "/shp/buildings_sample_BerlinBrandenburg_4326.shp";
                 }
                 landuseShapeFileName = inputDataDirectory + "/shp/berlinBrandenburg_landuse_4326.shp";
