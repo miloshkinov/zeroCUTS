@@ -78,7 +78,8 @@ public class CreateNetworkChangeEventsFile {
                     NetworkChangeEvent nce = new NetworkChangeEvent(time);
                     nce.addLink(l);
                     double newFreespeed = length / newTravelTime;
-                    if (newFreespeed < MINIMUMFREESPEED) newFreespeed = MINIMUMFREESPEED;
+                    if (newFreespeed < MINIMUMFREESPEED && l.getFreespeed() > MINIMUMFREESPEED)
+                        newFreespeed = MINIMUMFREESPEED;
                     ChangeValue freespeedChange = new ChangeValue(ChangeType.ABSOLUTE_IN_SI_UNITS, newFreespeed);
                     nce.setFreespeedChange(freespeedChange);
 
