@@ -1,6 +1,6 @@
 package org.matsim.vsp.SmallScaleCommercialTraffic;
 
-import org.matsim.smallScaleCommercialTrafficGeneration.CreateSmallScaleCommercialTrafficDemand;
+import org.matsim.smallScaleCommercialTrafficGeneration.GenerateSmallScaleCommercialTrafficDemand;
 
 import java.io.IOException;
 
@@ -17,14 +17,14 @@ public class RunCreateSmallScaleCommercialTraffic {
     }
 
     private enum TrafficType {
-        businessTraffic, freightTraffic, commercialTraffic
+        commercialPersonTraffic, goodsTraffic, completeSmallScaleCommercialTraffic
     }
     public static void main(String[] args) throws IOException {
 
         Model selectedModel = Model.test;
         String selectedCreationOption = String.valueOf(CreationOption.createNewCarrierFile);
         String selectedLanduseConfiguration = String.valueOf(LanduseConfiguration.useOSMBuildingsAndLanduse);
-        String selectedTrafficType = String.valueOf(TrafficType.freightTraffic);
+        String selectedTrafficType = String.valueOf(TrafficType.completeSmallScaleCommercialTraffic);
 
         String sampleSize = "0.001";
         String jspritIterations = "1";
@@ -36,6 +36,7 @@ public class RunCreateSmallScaleCommercialTraffic {
         String buildingsShapeFileName = null;
         String landuseShapeFileName;
         String shapeCRS;
+        String numberOfPlanVariantsPerAgent = "3";
 
         String nameOutputPopulation = "testPopulation.xml.gz";
         String pathOutput = "output/testOutput/";
@@ -74,6 +75,7 @@ public class RunCreateSmallScaleCommercialTraffic {
                 buildingsShapeFileName = inputDataDirectory + "/shp/buildings_vulkaneifel_25832.shp";
                 landuseShapeFileName = inputDataDirectory + "/shp/landuse_vulkaneifel_25832.shp";
                 shapeCRS = "EPSG:25832";
+                pathOutput = "";
             }
             case rvr -> {
                 inputDataDirectory ="../public-svn/matsim/scenarios/countries/de/berlin/projects/zerocuts/small-scale-commercial-traffic/input/rvr/";
@@ -89,18 +91,19 @@ public class RunCreateSmallScaleCommercialTraffic {
                 buildingsShapeFileName = inputDataDirectory + "/shp/testBuildings.shp";
                 landuseShapeFileName = inputDataDirectory + "/shp/testLanduse.shp";
                 shapeCRS = "EPSG:4326";
+                pathOutput = "output/testOutput/";
             }
             default -> throw new IllegalStateException("Unexpected value: " + selectedModel);
         }
 
         if (includeExistingModels) {
-            new CreateSmallScaleCommercialTrafficDemand().execute(
+            new GenerateSmallScaleCommercialTrafficDemand().execute(
                     inputDataDirectory,
                     "--sample", sampleSize,
                     "--jspritIterations", jspritIterations,
                     "--creationOption", selectedCreationOption,
                     "--landuseConfiguration", selectedLanduseConfiguration,
-                    "--trafficType", selectedTrafficType,
+                    "--smallScaleCommercialTrafficType", selectedTrafficType,
                     "--includeExistingModels",
                     "--zoneShapeFileName", zoneShapeFileName,
                     "--buildingsShapeFileName", buildingsShapeFileName,
@@ -110,18 +113,20 @@ public class RunCreateSmallScaleCommercialTraffic {
             );
         }
         else {
-            new CreateSmallScaleCommercialTrafficDemand().execute(
+            new GenerateSmallScaleCommercialTrafficDemand().execute(
                     inputDataDirectory,
                     "--sample", sampleSize,
                     "--jspritIterations", jspritIterations,
                     "--creationOption", selectedCreationOption,
                     "--landuseConfiguration", selectedLanduseConfiguration,
-                    "--trafficType", selectedTrafficType,
+                    "--smallScaleCommercialTrafficType", selectedTrafficType,
                     "--zoneShapeFileName", zoneShapeFileName,
                     "--buildingsShapeFileName", buildingsShapeFileName,
                     "--landuseShapeFileName", landuseShapeFileName,
                     "--shapeCRS", shapeCRS,
-                    "--resistanceFactor", resistanceFactor
+                    "--resistanceFactor", resistanceFactor,
+                    "--pathOutput", pathOutput,
+                    "--numberOfPlanVariantsPerAgent", numberOfPlanVariantsPerAgent
             );
         }
 //        List<File> fileData = new ArrayList<>();
