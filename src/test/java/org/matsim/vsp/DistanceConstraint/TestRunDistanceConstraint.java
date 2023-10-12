@@ -17,19 +17,19 @@ import org.junit.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.contrib.freight.carrier.*;
-import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
-import org.matsim.contrib.freight.controler.CarrierModule;
-import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
-import org.matsim.contrib.freight.controler.CarrierStrategyManager;
-import org.matsim.contrib.freight.controler.FreightUtils;
-import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
-import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts;
-import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts.Builder;
-import org.matsim.contrib.freight.jsprit.NetworkRouter;
+import org.matsim.freight.carriers.carrier.*;
+import org.matsim.freight.carriers.carrier.CarrierCapabilities.FleetSize;
+import org.matsim.freight.carriers.controler.CarrierModule;
+import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
+import org.matsim.freight.carriers.controler.CarrierStrategyManager;
+import org.matsim.freight.carriers.controler.FreightUtils;
+import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
+import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
+import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts.Builder;
+import org.matsim.freight.carriers.jsprit.NetworkRouter;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.ControlerConfigGroup.CompressionType;
+import org.matsim.core.config.groups.ControllerConfigGroup.CompressionType;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
@@ -68,7 +68,7 @@ public class TestRunDistanceConstraint {
 	public final void CarrierSmallBatteryTest_Version1() {
 
 		Config config = ConfigUtils.createConfig();
-		config.controler().setOutputDirectory("output/original_Chessboard/Test/Version1");
+		config.controller().setOutputDirectory("output/original_Chessboard/Test/Version1");
 		config.network().setInputFile(original_Chessboard);
 		prepareConfig(config);
 
@@ -145,7 +145,7 @@ public class TestRunDistanceConstraint {
 	@Test
 	public final void CarrierLargeBatteryTest_Version2() {
 		Config config = ConfigUtils.createConfig();
-		config.controler().setOutputDirectory("output/original_Chessboard/Test/Version2");
+		config.controller().setOutputDirectory("output/original_Chessboard/Test/Version2");
 		config.network().setInputFile(original_Chessboard);
 		prepareConfig(config);
 
@@ -225,7 +225,7 @@ public class TestRunDistanceConstraint {
 	@Test
 	public final void Carrier2SmallBatteryTest_Version3() {
 		Config config = ConfigUtils.createConfig();
-		config.controler().setOutputDirectory("output/original_Chessboard/Test/Version3");
+		config.controller().setOutputDirectory("output/original_Chessboard/Test/Version3");
 		config.network().setInputFile(original_Chessboard);
 		prepareConfig(config);
 
@@ -309,7 +309,7 @@ public class TestRunDistanceConstraint {
 	@Test
 	public final void CarrierWithAddiotionalDieselVehicleTest_Version4() {
 		Config config = ConfigUtils.createConfig();
-		config.controler().setOutputDirectory("output/original_Chessboard/Test/Version4");
+		config.controller().setOutputDirectory("output/original_Chessboard/Test/Version4");
 		config.network().setInputFile(original_Chessboard);
 		prepareConfig(config);
 
@@ -400,14 +400,14 @@ public class TestRunDistanceConstraint {
 	 * @param config
 	 */
 	static void prepareConfig(Config config) {
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
-		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
-				config.controler().getOverwriteFileSetting(), CompressionType.gzip);
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
+		config.controller().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
+		new OutputDirectoryHierarchy(config.controller().getOutputDirectory(), config.controller().getRunId(),
+				config.controller().getOverwriteFileSetting(), CompressionType.gzip);
+		config.controller().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 
-		config.controler().setLastIteration(0);
+		config.controller().setLastIteration(0);
 		config.global().setRandomSeed(4177);
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
+		config.controller().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 
 	}
 
@@ -562,7 +562,7 @@ public class TestRunDistanceConstraint {
 
 		}
 		new CarrierPlanWriter(carriers)
-				.write(scenario.getConfig().controler().getOutputDirectory() + "/jsprit_CarrierPlans.xml");
+				.write(scenario.getConfig().controller().getOutputDirectory() + "/jsprit_CarrierPlans.xml");
 
 	}
 

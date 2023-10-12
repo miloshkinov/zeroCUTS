@@ -38,35 +38,35 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.contrib.freight.FreightConfigGroup;
-import org.matsim.contrib.freight.carrier.Carrier;
-import org.matsim.contrib.freight.carrier.CarrierPlan;
-import org.matsim.contrib.freight.carrier.CarrierPlanWriter;
-import org.matsim.contrib.freight.carrier.CarrierPlanXmlReader;
-import org.matsim.contrib.freight.carrier.CarrierService;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypeWriter;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
-import org.matsim.contrib.freight.carrier.Carriers;
-import org.matsim.contrib.freight.carrier.ScheduledTour;
-import org.matsim.contrib.freight.carrier.Tour.ServiceActivity;
-import org.matsim.contrib.freight.carrier.Tour.TourElement;
-import org.matsim.contrib.freight.controler.CarrierModule;
-import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
-import org.matsim.contrib.freight.controler.CarrierStrategyManager;
-import org.matsim.contrib.freight.controler.FreightUtils;
-import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
-import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts;
-import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts.Builder;
-import org.matsim.contrib.freight.jsprit.NetworkRouter;
+import org.matsim.freight.carriers.FreightConfigGroup;
+import org.matsim.freight.carriers.carrier.Carrier;
+import org.matsim.freight.carriers.carrier.CarrierPlan;
+import org.matsim.freight.carriers.carrier.CarrierPlanWriter;
+import org.matsim.freight.carriers.carrier.CarrierPlanXmlReader;
+import org.matsim.freight.carriers.carrier.CarrierService;
+import org.matsim.freight.carriers.carrier.CarrierVehicleTypeReader;
+import org.matsim.freight.carriers.carrier.CarrierVehicleTypeWriter;
+import org.matsim.freight.carriers.carrier.CarrierVehicleTypes;
+import org.matsim.freight.carriers.carrier.Carriers;
+import org.matsim.freight.carriers.carrier.ScheduledTour;
+import org.matsim.freight.carriers.carrier.Tour.ServiceActivity;
+import org.matsim.freight.carriers.carrier.Tour.TourElement;
+import org.matsim.freight.carriers.controler.CarrierModule;
+import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
+import org.matsim.freight.carriers.controler.CarrierStrategyManager;
+import org.matsim.freight.carriers.controler.FreightUtils;
+import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
+import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
+import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts.Builder;
+import org.matsim.freight.carriers.jsprit.NetworkRouter;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.consistency.VspConfigConsistencyCheckerImpl;
-import org.matsim.core.config.groups.ControlerConfigGroup.CompressionType;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
+import org.matsim.core.config.groups.ControllerConfigGroup.CompressionType;
+import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
-import org.matsim.core.config.groups.StrategyConfigGroup.StrategySettings;
+import org.matsim.core.config.groups.ReplanningConfigGroup.StrategySettings;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup.VspDefaultsCheckingLevel;
 import org.matsim.core.controler.AbstractModule;
@@ -149,19 +149,19 @@ public class RunFreight {
 		Config config = ConfigUtils.createConfig() ;
 
 		if ((args == null) || (args.length == 0)) {
-			config.controler().setOutputDirectory(OUTPUT_DIR);
+			config.controller().setOutputDirectory(OUTPUT_DIR);
 		} else {
 			System.out.println( "args[0]:" + args[0] );
-			config.controler().setOutputDirectory( args[0]+"/" );
+			config.controller().setOutputDirectory( args[0]+"/" );
 		}
 
 		// (the directory structure is needed for jsprit output, which is before the
 		// controler starts. Maybe there is a better alternative ...)
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
-		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(), config.controler().getOverwriteFileSetting(), CompressionType.gzip);
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
+		config.controller().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
+		new OutputDirectoryHierarchy(config.controller().getOutputDirectory(), config.controller().getRunId(), config.controller().getOverwriteFileSetting(), CompressionType.gzip);
+		config.controller().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 		
-		config.controler().setLastIteration(LAST_MATSIM_ITERATION);	
+		config.controller().setLastIteration(LAST_MATSIM_ITERATION);	
 		config.network().setInputFile(NETFILE);
 
 		//Damit nicht alle um Mitternacht losfahren
@@ -169,23 +169,23 @@ public class RunFreight {
 
 		//Some config stuff to comply to vsp-defaults even there is currently only 1 MATSim iteration and 
 		//therefore no need for e.g. a strategy! KMT jan/18
-		config.planCalcScore().setFractionOfIterationsToStartScoreMSA(0.8);
+		config.scoring().setFractionOfIterationsToStartScoreMSA(0.8);
 		config.plans().setRemovingUnneccessaryPlanAttributes(true);
-		config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
+		config.routing().setAccessEgressType(RoutingConfigGroup.AccessEgressType.accessEgressModeToLink);
 		//		config.qsim().setUsePersonIdForMissingVehicleId(false);		//TODO: Doesn't work here yet: "java.lang.IllegalStateException: NetworkRoute without a specified vehicle id." KMT jan/18
 		config.qsim().setUsingTravelTimeCheckInTeleportation(true);
 		config.qsim().setTrafficDynamics(TrafficDynamics.kinematicWaves);
-		config.strategy().setFractionOfIterationsToDisableInnovation(0.8);
+		config.replanning().setFractionOfIterationsToDisableInnovation(0.8);
 
 		StrategySettings stratSettings1 = new StrategySettings();
 		stratSettings1.setStrategyName("ChangeExpBeta");
 		stratSettings1.setWeight(0.1);
-		config.strategy().addStrategySettings(stratSettings1);
+		config.replanning().addStrategySettings(stratSettings1);
 
 		StrategySettings stratSettings2 = new StrategySettings();
 		stratSettings2.setStrategyName("BestScore");
 		stratSettings2.setWeight(0.9);
-		config.strategy().addStrategySettings(stratSettings2);
+		config.replanning().addStrategySettings(stratSettings2);
 
 		config.vspExperimental().setVspDefaultsCheckingLevel(VspDefaultsCheckingLevel.warn);
 		config.addConfigConsistencyChecker(new VspConfigConsistencyCheckerImpl());
@@ -205,9 +205,9 @@ public class RunFreight {
 
 		//### Output nach Jsprit Iteration
 		
-		new CarrierPlanWriter(carriers).write( config.controler().getOutputDirectory() + "/jsprit_plannedCarriers.xml") ; //Muss in Temp, da OutputDir leer sein muss // setOverwriteFiles gibt es nicht mehr; kt 05.11.2014
+		new CarrierPlanWriter(carriers).write( config.controller().getOutputDirectory() + "/jsprit_plannedCarriers.xml") ; //Muss in Temp, da OutputDir leer sein muss // setOverwriteFiles gibt es nicht mehr; kt 05.11.2014
 
-		new WriteCarrierScoreInfos(carriers, new File(config.controler().getOutputDirectory() +  "/#JspritCarrierScoreInformation.txt"));
+		new WriteCarrierScoreInfos(carriers, new File(config.controller().getOutputDirectory() +  "/#JspritCarrierScoreInformation.txt"));
 
 		return carriers;
 	}
@@ -297,7 +297,7 @@ public class RunFreight {
 
 			//Plot der Jsprit-Lösung
 			//			Plotter plotter = new Plotter(vrp,solution);
-			//			plotter.plot(config.controler().getOutputDirectory() + "/jsprit_solution_" + carrier.getId().toString() +".png", carrier.getId().toString());
+			//			plotter.plot(config.controller().getOutputDirectory() + "/jsprit_solution_" + carrier.getId().toString() +".png", carrier.getId().toString());
 
 			//Ausgabe der Ergebnisse auf der Console
 			//SolutionPrinter.print(vrp,solution,Print.VERBOSE);
@@ -348,7 +348,7 @@ public class RunFreight {
 			//Schreibe die mehrfach eingeplanten Services in Datei
 			if (!multiassignedServices.isEmpty()){
 				try {
-					FileWriter writer = new FileWriter(config.controler().getOutputDirectory() + "#MultiAssignedServices.txt", true);
+					FileWriter writer = new FileWriter(config.controller().getOutputDirectory() + "#MultiAssignedServices.txt", true);
 					writer.write("#### Multi-assigned Services of Carrier: " + c.getId().toString() + System.getProperty("line.separator"));
 					for (CarrierService s : multiassignedServices){
 						writer.write(s.getId().toString() + System.getProperty("line.separator"));
@@ -366,7 +366,7 @@ public class RunFreight {
 			//Schreibe die nicht eingeplanten Services in Datei
 			if (!unassignedServices.isEmpty()){
 				try {
-					FileWriter writer = new FileWriter(config.controler().getOutputDirectory() + "#UnassignedServices.txt", true);
+					FileWriter writer = new FileWriter(config.controller().getOutputDirectory() + "#UnassignedServices.txt", true);
 					writer.write("#### Unassigned Services of Carrier: " + c.getId().toString() + System.getProperty("line.separator"));
 					for (CarrierService s : unassignedServices){
 						writer.write(s.getId().toString() + System.getProperty("line.separator"));
@@ -432,7 +432,7 @@ public class RunFreight {
 	 */
 	private static CarrierScoringFunctionFactoryImpl_KT createMyScoringFunction2 (final Scenario scenario) {
 
-		return new CarrierScoringFunctionFactoryImpl_KT(scenario, scenario.getConfig().controler().getOutputDirectory()) {
+		return new CarrierScoringFunctionFactoryImpl_KT(scenario, scenario.getConfig().controller().getOutputDirectory()) {
 
 			public ScoringFunction createScoringFunction(final Carrier carrier){
 				SumScoringFunction sumSf = new SumScoringFunction() ;
@@ -462,10 +462,10 @@ public class RunFreight {
 		if (runMatsim){		//makes only sense, when MATSimrRun was performed KT 06.04.15
 			new WriteCarrierScoreInfos(carriers, new File(OUTPUT_DIR + "#MatsimCarrierScoreInformation.txt"));
 		}
-		new CarrierPlanWriter(carriers).write(config.controler().getOutputDirectory() + "/output_carriers.xml");
-		new CarrierPlanWriter(carriers).write(config.controler().getOutputDirectory() + "/output_carriers.xml.gz");
-		new CarrierVehicleTypeWriter(CarrierVehicleTypes.getVehicleTypes(carriers)).write(config.controler().getOutputDirectory() + "/output_vehicleTypes.xml");
-		new CarrierVehicleTypeWriter(CarrierVehicleTypes.getVehicleTypes(carriers)).write(config.controler().getOutputDirectory() + "/output_vehicleTypes.xml.gz");
+		new CarrierPlanWriter(carriers).write(config.controller().getOutputDirectory() + "/output_carriers.xml");
+		new CarrierPlanWriter(carriers).write(config.controller().getOutputDirectory() + "/output_carriers.xml.gz");
+		new CarrierVehicleTypeWriter(CarrierVehicleTypes.getVehicleTypes(carriers)).write(config.controller().getOutputDirectory() + "/output_vehicleTypes.xml");
+		new CarrierVehicleTypeWriter(CarrierVehicleTypes.getVehicleTypes(carriers)).write(config.controller().getOutputDirectory() + "/output_vehicleTypes.xml.gz");
 	}
 
 	/**

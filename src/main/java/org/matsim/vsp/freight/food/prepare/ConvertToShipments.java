@@ -20,10 +20,10 @@ package org.matsim.vsp.freight.food.prepare;
 
 
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contrib.freight.FreightConfigGroup;
-import org.matsim.contrib.freight.carrier.CarrierPlanWriter;
-import org.matsim.contrib.freight.carrier.Carriers;
-import org.matsim.contrib.freight.controler.FreightUtils;
+import org.matsim.freight.carriers.FreightConfigGroup;
+import org.matsim.freight.carriers.carrier.CarrierPlanWriter;
+import org.matsim.freight.carriers.carrier.Carriers;
+import org.matsim.freight.carriers.controler.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
@@ -47,9 +47,9 @@ public class ConvertToShipments {
 		config.plans().setInputFile( null ); // remove passenger input
 
 		//more general settings
-		config.controler().setOutputDirectory("./output/freight" );
+		config.controller().setOutputDirectory("./output/freight" );
 
-		config.controler().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
+		config.controller().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
 
 		//freight settings
 		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;

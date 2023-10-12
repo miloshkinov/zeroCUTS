@@ -37,7 +37,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.ControlerConfigGroup.CompressionType;
+import org.matsim.core.config.groups.ControllerConfigGroup.CompressionType;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.network.NetworkUtils;
@@ -76,25 +76,25 @@ public class ExtractLinksInShape {
 		String inputFileNetwork = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.2-1pct/"
 				   + "output-berlin-v5.2-1pct/berlin-v5.2-1pct.output_network.xml.gz" ;
  		final Config config = ConfigUtils.createConfig();
- 		config.controler().setOutputDirectory("output/shape/");
+ 		config.controller().setOutputDirectory("output/shape/");
  		// (the directory structure is needed for output, which is before the controler starts.  Maybe there is a better alternative ...)
- 		config.controler().setOverwriteFileSetting( OverwriteFileSetting.deleteDirectoryIfExists );
-		new OutputDirectoryHierarchy( config.controler().getOutputDirectory(), config.controler().getOverwriteFileSetting(), CompressionType.gzip ) ;
-		config.controler().setOverwriteFileSetting( OverwriteFileSetting.overwriteExistingFiles );
+ 		config.controller().setOverwriteFileSetting( OverwriteFileSetting.deleteDirectoryIfExists );
+		new OutputDirectoryHierarchy( config.controller().getOutputDirectory(), config.controller().getOverwriteFileSetting(), CompressionType.gzip ) ;
+		config.controller().setOverwriteFileSetting( OverwriteFileSetting.overwriteExistingFiles );
 		
 		config.network().setInputFile( inputFileNetwork );
 		config.global().setCoordinateSystem( "GK4" ); 
 		Scenario scenario = ScenarioUtils.loadScenario( config ) ;
 		Network network = scenario.getNetwork() ;
 
-		convertNet2Shape(network, config.controler().getOutputDirectory()); //Step 1: Netzwerk zusammenbringen
+		convertNet2Shape(network, config.controller().getOutputDirectory()); //Step 1: Netzwerk zusammenbringen
 
 		Collection<SimpleFeature>  zoneFeatures = new ShapeFileReader().readFileAndInitialize(ZONESHAPEFILE);
-		Collection<SimpleFeature>  linkFeatures = new ShapeFileReader().readFileAndInitialize(config.controler().getOutputDirectory() + NETWORKSHAPEFILE_LINKS);
-		Collection<SimpleFeature>  nodeFeatures = new ShapeFileReader().readFileAndInitialize(config.controler().getOutputDirectory() + NETWORKSHAPEFILE_NODES);
+		Collection<SimpleFeature>  linkFeatures = new ShapeFileReader().readFileAndInitialize(config.controller().getOutputDirectory() + NETWORKSHAPEFILE_LINKS);
+		Collection<SimpleFeature>  nodeFeatures = new ShapeFileReader().readFileAndInitialize(config.controller().getOutputDirectory() + NETWORKSHAPEFILE_NODES);
 
 		ArrayList<String> nodesInZone = calcNodesInZone(zoneFeatures, nodeFeatures);
-		extractLinksInArea(linkFeatures, nodesInZone, zoneFeatures , config.controler().getOutputDirectory());
+		extractLinksInArea(linkFeatures, nodesInZone, zoneFeatures , config.controller().getOutputDirectory());
 
 		System.out.println("### ENDE ###");
 	}

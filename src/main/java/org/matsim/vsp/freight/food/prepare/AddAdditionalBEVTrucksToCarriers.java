@@ -24,8 +24,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.matsim.api.core.v01.Id;
-import org.matsim.contrib.freight.carrier.*;
 import org.matsim.core.gbl.Gbl;
+import org.matsim.freight.carriers.carrier.*;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;

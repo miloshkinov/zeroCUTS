@@ -2,9 +2,9 @@ package org.matsim.vsp.freightAnalysis;
 
 import java.io.IOException;
 
-import org.matsim.contrib.freight.analysis.RunFreightAnalysisEventbased;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.core.utils.io.UncheckedIOException;
+import org.matsim.freight.carriers.analysis.analysis.RunFreightAnalysisEventBased;
 
 public class RunAnalyse {
 
@@ -21,7 +21,7 @@ public class RunAnalyse {
 		FreightAnalysisVersion slectedFreightAnalysisVersion = FreightAnalysisVersion.eventBased;
 		switch (slectedFreightAnalysisVersion) {
 			case eventBased -> {
-				RunFreightAnalysisEventbased freightAnalysis = new RunFreightAnalysisEventbased(runDir + "/",
+				RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(runDir + "/",
 						runDir + "/EventBasedAnalysis/", "EPSG:25832");
 				freightAnalysis.runAnalysis();
 			}
