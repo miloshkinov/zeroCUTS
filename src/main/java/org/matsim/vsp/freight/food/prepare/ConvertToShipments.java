@@ -20,7 +20,7 @@ package org.matsim.vsp.freight.food.prepare;
 
 
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.freight.carriers.FreightConfigGroup;
+import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.carrier.CarrierPlanWriter;
 import org.matsim.freight.carriers.carrier.CarrierUtils;
 import org.matsim.freight.carriers.carrier.Carriers;
@@ -52,9 +52,9 @@ public class ConvertToShipments {
 		config.controller().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
 
 		//freight settings
-		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;
-		freightConfigGroup.setCarriersFile( "");
-		freightConfigGroup.setCarriersVehicleTypesFile( "vehicleTypes.xml");
+		FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule( config, FreightCarriersConfigGroup.class ) ;
+		freightCarriersConfigGroup.setCarriersFile( "");
+		freightCarriersConfigGroup.setCarriersVehicleTypesFile( "vehicleTypes.xml");
 
 		// load scenario (this is not loading the freight material):
 		Scenario scenario = ScenarioUtils.loadScenario( config );

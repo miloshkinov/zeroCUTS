@@ -3,7 +3,7 @@ package org.matsim.vsp.freightAnalysis;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.freight.carriers.FreightConfigGroup;
+import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.carrier.Carrier;
 import org.matsim.freight.carriers.carrier.CarrierUtils;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -67,9 +67,9 @@ public class FreightAnalyse {
 		config.vehicles().setVehiclesFile(RUN_DIR + runId + "output_allVehicles.xml.gz");
 		config.network().setInputFile(RUN_DIR + runId + "output_network.xml.gz");
 		config.global().setCoordinateSystem(networkCRS);
-		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
-		freightConfigGroup.setCarriersFile(RUN_DIR + runId + "output_carriers.xml.gz");
-		freightConfigGroup.setCarriersVehicleTypesFile(RUN_DIR + runId + "output_carriersVehicleTypes.xml.gz");
+		FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);
+		freightCarriersConfigGroup.setCarriersFile(RUN_DIR + runId + "output_carriers.xml.gz");
+		freightCarriersConfigGroup.setCarriersVehicleTypesFile(RUN_DIR + runId + "output_carriersVehicleTypes.xml.gz");
 		
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		CarrierUtils.loadCarriersAccordingToFreightConfig(scenario);

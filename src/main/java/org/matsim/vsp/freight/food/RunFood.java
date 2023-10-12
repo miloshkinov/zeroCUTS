@@ -33,7 +33,7 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
-import org.matsim.freight.carriers.FreightConfigGroup;
+import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.analysis.analysis.RunFreightAnalysisEventBased;
 import org.matsim.freight.carriers.carrier.Carrier;
 import org.matsim.freight.carriers.carrier.CarrierPlan;
@@ -104,7 +104,7 @@ class RunFood {
 	private static Config prepareConfig(String[] args) {
 		String carriersFileLocation = args[0];
 		String vehicleTypesFileLocation = args[1];
-//        String algorithmFileLocation = args[2]; //TODO: Read in Algorithm -> Put into freightConfigGroup?
+//        String algorithmFileLocation = args[2]; //TODO: Read in Algorithm -> Put into freightCarriersConfigGroup?
 		nuOfJspritIteration = Integer.parseInt(args[3]);
 		String networkChangeEventsFileLocation = args[4];
 		String outputLocation = args[5];
@@ -137,14 +137,14 @@ class RunFood {
 
 		config.plans().setActivityDurationInterpretation(PlansConfigGroup.ActivityDurationInterpretation.tryEndTimeThenDuration );
 		//freight configstuff
-		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
-		freightConfigGroup.setCarriersFile(carriersFileLocation);
-		freightConfigGroup.setCarriersVehicleTypesFile(vehicleTypesFileLocation);
-		freightConfigGroup.setTravelTimeSliceWidth(1800);
-		freightConfigGroup.setTimeWindowHandling(FreightConfigGroup.TimeWindowHandling.enforceBeginnings);
+		FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);
+		freightCarriersConfigGroup.setCarriersFile(carriersFileLocation);
+		freightCarriersConfigGroup.setCarriersVehicleTypesFile(vehicleTypesFileLocation);
+		freightCarriersConfigGroup.setTravelTimeSliceWidth(1800);
+		freightCarriersConfigGroup.setTimeWindowHandling(FreightCarriersConfigGroup.TimeWindowHandling.enforceBeginnings);
 
 		if(useDistanceConstraint) {
-			freightConfigGroup.setUseDistanceConstraintForTourPlanning(FreightConfigGroup.UseDistanceConstraintForTourPlanning.basedOnEnergyConsumption);
+			freightCarriersConfigGroup.setUseDistanceConstraintForTourPlanning(FreightCarriersConfigGroup.UseDistanceConstraintForTourPlanning.basedOnEnergyConsumption);
 		}
 
 		return config;
@@ -223,8 +223,8 @@ class RunFood {
 
 			log.warn("Ignore the algorithms file for jsprit and use an algorithm out of the box.");
 			Scenario scenario = controler.getScenario();
-			FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(controler.getConfig(), FreightConfigGroup.class);
-			VehicleRoutingAlgorithm vra = MatsimJspritFactory.loadOrCreateVehicleRoutingAlgorithm(scenario, freightConfigGroup, netBasedCosts, vrp);
+			FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(controler.getConfig(), FreightCarriersConfigGroup.class);
+			VehicleRoutingAlgorithm vra = MatsimJspritFactory.loadOrCreateVehicleRoutingAlgorithm(scenario, freightCarriersConfigGroup, netBasedCosts, vrp);
 			vra.getAlgorithmListeners().addListener(new StopWatch(), VehicleRoutingAlgorithmListeners.Priority.HIGH);
 			vra.setMaxIterations(CarrierUtils.getJspritIterations(carrier));
 			VehicleRoutingProblemSolution solution = Solutions.bestOf(vra.searchSolutions());
