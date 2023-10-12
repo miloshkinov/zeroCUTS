@@ -28,7 +28,6 @@ import org.matsim.freight.carriers.carrier.*;
 import org.matsim.freight.carriers.controler.CarrierModule;
 import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
 import org.matsim.freight.carriers.controler.CarrierStrategyManager;
-import org.matsim.freight.carriers.controler.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.consistency.VspConfigConsistencyCheckerImpl;
@@ -43,6 +42,7 @@ import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.SumScoringFunction;
+import org.matsim.freight.carriers.controler.CarrierControlerUtils;
 import org.matsim.vehicles.VehicleType;
 import org.osgeo.proj4j.UnsupportedParameterException;
 
@@ -231,7 +231,7 @@ public class RunFreightOnlyMatsim {
 		FreightConfigGroup freightConfig = ConfigUtils.addOrGetModule( scenario.getConfig(), FreightConfigGroup.class );
 		freightConfig.setTimeWindowHandling(FreightConfigGroup.TimeWindowHandling.enforceBeginnings);
 
-		FreightUtils.addOrGetCarriers(scenario);
+		CarrierUtils.addOrGetCarriers(scenario);
 		CarrierModule listener = new CarrierModule();
 		controler.addOverridingModule( new AbstractModule(){
 			@Override
@@ -248,7 +248,7 @@ public class RunFreightOnlyMatsim {
 	//Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
 	//Da keine Strategy notwendig, hier zunächst eine "leere" Factory
 	private static CarrierStrategyManager createMyStrategymanager() {
-		return FreightUtils.createDefaultCarrierStrategyManager();
+		return CarrierControlerUtils.createDefaultCarrierStrategyManager();
 	}
 
 

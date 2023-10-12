@@ -41,7 +41,6 @@ import org.matsim.freight.carriers.carrier.CarrierUtils;
 import org.matsim.freight.carriers.carrier.Carriers;
 import org.matsim.freight.carriers.controler.CarrierModule;
 import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
-import org.matsim.freight.carriers.controler.FreightUtils;
 import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
 import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
 import org.matsim.freight.carriers.jsprit.NetworkRouter;
@@ -154,7 +153,7 @@ class RunFood {
 	private static Scenario prepareScenario(Config config) {
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 
-		FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
+		CarrierUtils.loadCarriersAccordingToFreightConfig(scenario);
 
 		return scenario;
 	}
@@ -174,10 +173,10 @@ class RunFood {
 
 	private static void runJsprit(Controler controler) throws ExecutionException, InterruptedException {
 		NetworkBasedTransportCosts.Builder netBuilder = NetworkBasedTransportCosts.Builder.newInstance(
-				controler.getScenario().getNetwork(), FreightUtils.getCarrierVehicleTypes(controler.getScenario()).getVehicleTypes().values() );
+				controler.getScenario().getNetwork(), CarrierUtils.getCarrierVehicleTypes(controler.getScenario()).getVehicleTypes().values() );
 		final NetworkBasedTransportCosts netBasedCosts = netBuilder.build() ;
 
-		Carriers carriers = FreightUtils.getCarriers(controler.getScenario());
+		Carriers carriers = CarrierUtils.getCarriers(controler.getScenario());
 
 		HashMap<Id<Carrier>, Integer> carrierActivityCounterMap = new HashMap<>();
 

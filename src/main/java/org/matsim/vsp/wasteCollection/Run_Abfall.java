@@ -8,12 +8,8 @@ import org.apache.logging.log4j.LogManager;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.freight.carriers.carrier.Carrier;
+import org.matsim.freight.carriers.carrier.*;
 import org.matsim.freight.carriers.carrier.CarrierCapabilities.FleetSize;
-import org.matsim.freight.carriers.carrier.CarrierPlanWriter;
-import org.matsim.freight.carriers.carrier.CarrierVehicleTypes;
-import org.matsim.freight.carriers.carrier.Carriers;
-import org.matsim.freight.carriers.controler.FreightUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
@@ -147,10 +143,10 @@ public class Run_Abfall {
 		}
 		AbfallUtils.prepareConfig(config, 0, vehicleTypesFileLocation, carriersFileLocation);
 		Scenario scenario = ScenarioUtils.loadScenario(config);
-		FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
+		CarrierUtils.loadCarriersAccordingToFreightConfig(scenario);
 
 		// creates carrier
-		Carriers carriers = FreightUtils.addOrGetCarriers(scenario);
+		Carriers carriers = CarrierUtils.addOrGetCarriers(scenario);
 		HashMap<String, Carrier> carrierMap = AbfallUtils.createCarrier(carriers);
 
 		Map<Id<Link>, ? extends Link> allLinks = scenario.getNetwork().getLinks();
@@ -163,7 +159,7 @@ public class Run_Abfall {
 		switch (scenarioWahl) {
 			case chessboardTotalGarbageToCollect -> {
 				int kgGarbageToCollect = 12 * 1000;
-				CarrierVehicleTypes carrierVehicleTypes = FreightUtils.getCarrierVehicleTypes(scenario);
+				CarrierVehicleTypes carrierVehicleTypes = CarrierUtils.getCarrierVehicleTypes(scenario);
 				AbfallChessboardUtils.createShipmentsForChessboardI(carrierMap, kgGarbageToCollect, allLinks,
 						volumeDustbinInLiters, secondsServiceTimePerDustbin, scenario, carriers);
 				FleetSize fleetSize = FleetSize.INFINITE;
@@ -171,7 +167,7 @@ public class Run_Abfall {
 			}
 			case chessboardGarbagePerMeterToCollect -> {
 				double kgGarbagePerMeterToCollect = 0.2;
-				CarrierVehicleTypes carrierVehicleTypes2 = FreightUtils.getCarrierVehicleTypes(scenario);
+				CarrierVehicleTypes carrierVehicleTypes2 = CarrierUtils.getCarrierVehicleTypes(scenario);
 				AbfallChessboardUtils.createShipmentsForChessboardII(carrierMap, kgGarbagePerMeterToCollect, allLinks,
 						volumeDustbinInLiters, secondsServiceTimePerDustbin, scenario, carriers);
 				FleetSize fleetSize2 = FleetSize.INFINITE;

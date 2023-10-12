@@ -39,22 +39,13 @@ import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.freight.carriers.FreightConfigGroup;
-import org.matsim.freight.carriers.carrier.Carrier;
-import org.matsim.freight.carriers.carrier.CarrierPlan;
-import org.matsim.freight.carriers.carrier.CarrierPlanWriter;
-import org.matsim.freight.carriers.carrier.CarrierPlanXmlReader;
-import org.matsim.freight.carriers.carrier.CarrierService;
-import org.matsim.freight.carriers.carrier.CarrierVehicleTypeReader;
-import org.matsim.freight.carriers.carrier.CarrierVehicleTypeWriter;
-import org.matsim.freight.carriers.carrier.CarrierVehicleTypes;
-import org.matsim.freight.carriers.carrier.Carriers;
-import org.matsim.freight.carriers.carrier.ScheduledTour;
+import org.matsim.freight.carriers.carrier.*;
 import org.matsim.freight.carriers.carrier.Tour.ServiceActivity;
 import org.matsim.freight.carriers.carrier.Tour.TourElement;
+import org.matsim.freight.carriers.controler.CarrierControlerUtils;
 import org.matsim.freight.carriers.controler.CarrierModule;
 import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
 import org.matsim.freight.carriers.controler.CarrierStrategyManager;
-import org.matsim.freight.carriers.controler.FreightUtils;
 import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
 import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
 import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts.Builder;
@@ -311,7 +302,7 @@ public class RunFreight {
 	 * @param carriers
 	 */
 	//TODO: Auch für Shipments auslegen und umbennnen. KMT feb'19
-	//TODO: Funktionaltität in contrib vorsehen -> FreightUtils? KMT feb'19
+	//TODO: Funktionaltität in contrib vorsehen -> CarrierControlerUtils? KMT feb'19
 	private static void checkServiceAssignment(Carriers carriers) {
 		for (Carrier c :carriers.getCarriers().values()){
 			ArrayList<CarrierService> assignedServices = new ArrayList<>();
@@ -399,7 +390,7 @@ public class RunFreight {
 		FreightConfigGroup freightConfig = ConfigUtils.addOrGetModule( scenario.getConfig(), FreightConfigGroup.class );
 		freightConfig.setTimeWindowHandling(FreightConfigGroup.TimeWindowHandling.enforceBeginnings);
 
-		FreightUtils.addOrGetCarriers(scenario);
+		CarrierUtils.addOrGetCarriers(scenario);
 		CarrierModule listener = new CarrierModule();
 		controler.addOverridingModule( new AbstractModule(){
 			@Override
@@ -419,7 +410,7 @@ public class RunFreight {
 	//Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
 	//Da keine Strategy notwendig, hier zunächst eine "leere" Factory
 	private static CarrierStrategyManager createMyStrategymanager() {
-		return FreightUtils.createDefaultCarrierStrategyManager();
+		return CarrierControlerUtils.createDefaultCarrierStrategyManager();
 	}
 
 

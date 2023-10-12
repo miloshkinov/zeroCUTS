@@ -20,10 +20,10 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.freight.carriers.carrier.*;
 import org.matsim.freight.carriers.carrier.CarrierCapabilities.FleetSize;
+import org.matsim.freight.carriers.controler.CarrierControlerUtils;
 import org.matsim.freight.carriers.controler.CarrierModule;
 import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
 import org.matsim.freight.carriers.controler.CarrierStrategyManager;
-import org.matsim.freight.carriers.controler.FreightUtils;
 import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
 import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
 import org.matsim.freight.carriers.jsprit.NetworkRouter;
@@ -374,7 +374,7 @@ public class RunDistanceConstraint {
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2();
 		CarrierStrategyManager planStrategyManagerFactory = createMyStrategyManager();
 
-		FreightUtils.addOrGetCarriers(scenario);
+		CarrierUtils.addOrGetCarriers(scenario);
 		CarrierModule listener = new CarrierModule();
 		controler.addOverridingModule( new AbstractModule(){
 			@Override
@@ -405,7 +405,7 @@ public class RunDistanceConstraint {
 	 * @return
 	 */
 	private static CarrierStrategyManager createMyStrategyManager() {
-		return FreightUtils.createDefaultCarrierStrategyManager();
+		return CarrierControlerUtils.createDefaultCarrierStrategyManager();
 	}
 
 	/**

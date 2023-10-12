@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.freight.carriers.FreightConfigGroup;
 import org.matsim.freight.carriers.carrier.Carrier;
-import org.matsim.freight.carriers.controler.FreightUtils;
+import org.matsim.freight.carriers.carrier.CarrierUtils;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -72,7 +72,7 @@ public class FreightAnalyse {
 		freightConfigGroup.setCarriersVehicleTypesFile(RUN_DIR + runId + "output_carriersVehicleTypes.xml.gz");
 		
 		Scenario scenario = ScenarioUtils.loadScenario(config);
-		FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
+		CarrierUtils.loadCarriersAccordingToFreightConfig(scenario);
 //		Network network = NetworkUtils.readNetwork(networkFile.getAbsolutePath());
 
 //		CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes();
@@ -98,7 +98,7 @@ public class FreightAnalyse {
 
 		TripWriter tripWriter = new TripWriter(tripHandler, OUTPUT_DIR);
 		if (!onlyAllCarrierResults) {
-			for (Carrier carrier : FreightUtils.addOrGetCarriers(scenario).getCarriers().values()) {
+			for (Carrier carrier : CarrierUtils.addOrGetCarriers(scenario).getCarriers().values()) {
 				// tripWriter.writeDetailedResultsSingleCarrier(carrier.getId().toString());
 				tripWriter.writeTourResultsSingleCarrier(carrier.getId().toString());
 			}
@@ -107,7 +107,7 @@ public class FreightAnalyse {
 		}
 		tripWriter.writeResultsPerVehicleTypes();
 		tripWriter.writeTourResultsAllCarrier();
-		tripWriter.writeResultsAllCarrier(FreightUtils.addOrGetCarriers(scenario));
+		tripWriter.writeResultsAllCarrier(CarrierUtils.addOrGetCarriers(scenario));
 
 		log.info("### Analysis DONE");
 
