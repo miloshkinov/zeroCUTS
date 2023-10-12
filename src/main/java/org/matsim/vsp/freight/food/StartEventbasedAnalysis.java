@@ -2,7 +2,7 @@ package org.matsim.vsp.freight.food;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.matsim.freight.carriers.analysis.analysis.RunFreightAnalysisEventBased;
+import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
 
 
 import java.io.File;

@@ -34,7 +34,7 @@ import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.freight.carriers.FreightCarriersConfigGroup;
-import org.matsim.freight.carriers.analysis.analysis.RunFreightAnalysisEventBased;
+import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
 import org.matsim.freight.carriers.Carrier;
 import org.matsim.freight.carriers.CarrierPlan;
 import org.matsim.freight.carriers.CarriersUtils;

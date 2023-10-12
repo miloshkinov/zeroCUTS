@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.core.utils.io.UncheckedIOException;
-import org.matsim.freight.carriers.analysis.analysis.RunFreightAnalysisEventBased;
+import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
 
 public class RunAnalyse {
 

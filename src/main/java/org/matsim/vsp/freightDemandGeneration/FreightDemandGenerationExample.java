@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.matsim.core.utils.io.UncheckedIOException;
-import org.matsim.freight.carriers.analysis.analysis.RunFreightAnalysisEventBased;
+import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
 import org.matsim.freightDemandGeneration.FreightDemandGeneration;
 import org.matsim.vsp.freightAnalysis.FreightAnalyse;
 
