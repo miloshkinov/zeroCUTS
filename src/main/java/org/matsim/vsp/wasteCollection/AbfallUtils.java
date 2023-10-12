@@ -23,20 +23,20 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.freight.carriers.FreightCarriersConfigGroup;
-import org.matsim.freight.carriers.carrier.Carrier;
-import org.matsim.freight.carriers.carrier.CarrierPlan;
-import org.matsim.freight.carriers.carrier.CarrierPlanXmlWriterV2;
-import org.matsim.freight.carriers.carrier.CarrierShipment;
-import org.matsim.freight.carriers.carrier.CarrierUtils;
-import org.matsim.freight.carriers.carrier.CarrierVehicleTypes;
-import org.matsim.freight.carriers.carrier.Carriers;
-import org.matsim.freight.carriers.carrier.ScheduledTour;
-import org.matsim.freight.carriers.carrier.TimeWindow;
-import org.matsim.freight.carriers.carrier.Tour;
-import org.matsim.freight.carriers.carrier.Tour.Delivery;
-import org.matsim.freight.carriers.carrier.Tour.Leg;
-import org.matsim.freight.carriers.carrier.Tour.Pickup;
-import org.matsim.freight.carriers.carrier.Tour.TourElement;
+import org.matsim.freight.carriers.Carrier;
+import org.matsim.freight.carriers.CarrierPlan;
+import org.matsim.freight.carriers.CarrierPlanXmlWriterV2;
+import org.matsim.freight.carriers.CarrierShipment;
+import org.matsim.freight.carriers.CarriersUtils;
+import org.matsim.freight.carriers.CarrierVehicleTypes;
+import org.matsim.freight.carriers.Carriers;
+import org.matsim.freight.carriers.ScheduledTour;
+import org.matsim.freight.carriers.TimeWindow;
+import org.matsim.freight.carriers.Tour;
+import org.matsim.freight.carriers.Tour.Delivery;
+import org.matsim.freight.carriers.Tour.Leg;
+import org.matsim.freight.carriers.Tour.Pickup;
+import org.matsim.freight.carriers.Tour.TourElement;
 import org.matsim.freight.carriers.controler.CarrierModule;
 import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
 import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
@@ -467,7 +467,7 @@ class AbfallUtils {
 	}
 
 	private static Carrier createSingleCarrier(String depot, HashMap<String, Carrier> carrierMap, String district) {
-		Carrier newCarrier = CarrierUtils.createCarrier(Id.create("Carrier " + district, Carrier.class));
+		Carrier newCarrier = CarriersUtils.createCarrier(Id.create("Carrier " + district, Carrier.class));
 		for (Carrier originalCarrier : carrierMap.values()) {
 			if (originalCarrier.getId().toString().contains(depot)) {
 				newCarrier.getCarrierCapabilities()

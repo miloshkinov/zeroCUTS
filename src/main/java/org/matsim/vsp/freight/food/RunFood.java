@@ -35,10 +35,10 @@ import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.analysis.analysis.RunFreightAnalysisEventBased;
-import org.matsim.freight.carriers.carrier.Carrier;
-import org.matsim.freight.carriers.carrier.CarrierPlan;
-import org.matsim.freight.carriers.carrier.CarrierUtils;
-import org.matsim.freight.carriers.carrier.Carriers;
+import org.matsim.freight.carriers.Carrier;
+import org.matsim.freight.carriers.CarrierPlan;
+import org.matsim.freight.carriers.CarriersUtils;
+import org.matsim.freight.carriers.Carriers;
 import org.matsim.freight.carriers.controler.CarrierModule;
 import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
 import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
@@ -153,7 +153,7 @@ class RunFood {
 	private static Scenario prepareScenario(Config config) {
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 
-		CarrierUtils.loadCarriersAccordingToFreightConfig(scenario);
+		CarriersUtils.loadCarriersAccordingToFreightConfig(scenario);
 
 		return scenario;
 	}
@@ -173,10 +173,10 @@ class RunFood {
 
 	private static void runJsprit(Controler controler) throws ExecutionException, InterruptedException {
 		NetworkBasedTransportCosts.Builder netBuilder = NetworkBasedTransportCosts.Builder.newInstance(
-				controler.getScenario().getNetwork(), CarrierUtils.getCarrierVehicleTypes(controler.getScenario()).getVehicleTypes().values() );
+				controler.getScenario().getNetwork(), CarriersUtils.getCarrierVehicleTypes(controler.getScenario()).getVehicleTypes().values() );
 		final NetworkBasedTransportCosts netBasedCosts = netBuilder.build() ;
 
-		Carriers carriers = CarrierUtils.getCarriers(controler.getScenario());
+		Carriers carriers = CarriersUtils.getCarriers(controler.getScenario());
 
 		HashMap<Id<Carrier>, Integer> carrierActivityCounterMap = new HashMap<>();
 
@@ -202,19 +202,19 @@ class RunFood {
 //       for (Carrier carrier : carriers.getCarriers().values()){
 			//Carrier carrier = carriers.getCarriers().get(Id.create("kaiser_VERBRAUCHERMARKT_FRISCHE", Carrier.class)); //only for tests
 
-			//currently with try/catch, because CarrierUtils.getJspritIterations will throw an exception if value is not present. Will fix it on MATSim.
-			//TODO maybe a future CarrierUtils functionality: Overwrite/set all nuOfJspritIterations. maybe depending on enum (overwriteAll, setNotExisiting, none) ?, KMT Nov2019
+			//currently with try/catch, because CarriersUtils.getJspritIterations will throw an exception if value is not present. Will fix it on MATSim.
+			//TODO maybe a future CarriersUtils functionality: Overwrite/set all nuOfJspritIterations. maybe depending on enum (overwriteAll, setNotExisiting, none) ?, KMT Nov2019
 			try {
-				if(CarrierUtils.getJspritIterations(carrier) <= 0){
+				if(CarriersUtils.getJspritIterations(carrier) <= 0){
 					log.warn("Received negative number of jsprit iterations. This is invalid -> Setting number of jsprit iterations for carrier: " + carrier.getId() + " to " + nuOfJspritIteration);
-					CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
+					CarriersUtils.setJspritIterations(carrier, nuOfJspritIteration);
 				} else {
-					log.warn("Overwriting the number of jsprit iterations for carrier: " + carrier.getId() + ". Value was before " +CarrierUtils.getJspritIterations(carrier) + "and is now " + nuOfJspritIteration);
-					CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
+					log.warn("Overwriting the number of jsprit iterations for carrier: " + carrier.getId() + ". Value was before " + CarriersUtils.getJspritIterations(carrier) + "and is now " + nuOfJspritIteration);
+					CarriersUtils.setJspritIterations(carrier, nuOfJspritIteration);
 				}
 			} catch (Exception e) {
 				log.warn("Setting (missing) number of jsprit iterations for carrier: " + carrier.getId() + " to " + nuOfJspritIteration);
-				CarrierUtils.setJspritIterations(carrier, nuOfJspritIteration);
+				CarriersUtils.setJspritIterations(carrier, nuOfJspritIteration);
 			}
 
 			VehicleRoutingProblem vrp = MatsimJspritFactory.createRoutingProblemBuilder(carrier, controler.getScenario().getNetwork())
@@ -226,7 +226,7 @@ class RunFood {
 			FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(controler.getConfig(), FreightCarriersConfigGroup.class);
 			VehicleRoutingAlgorithm vra = MatsimJspritFactory.loadOrCreateVehicleRoutingAlgorithm(scenario, freightCarriersConfigGroup, netBasedCosts, vrp);
 			vra.getAlgorithmListeners().addListener(new StopWatch(), VehicleRoutingAlgorithmListeners.Priority.HIGH);
-			vra.setMaxIterations(CarrierUtils.getJspritIterations(carrier));
+			vra.setMaxIterations(CarriersUtils.getJspritIterations(carrier));
 			VehicleRoutingProblemSolution solution = Solutions.bestOf(vra.searchSolutions());
 
 			log.info("tour planning for carrier " + carrier.getId() + " took "

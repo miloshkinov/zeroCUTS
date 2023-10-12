@@ -17,8 +17,8 @@ import org.junit.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.freight.carriers.carrier.*;
-import org.matsim.freight.carriers.carrier.CarrierCapabilities.FleetSize;
+import org.matsim.freight.carriers.*;
+import org.matsim.freight.carriers.CarrierCapabilities.FleetSize;
 import org.matsim.freight.carriers.controler.CarrierModule;
 import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
 import org.matsim.freight.carriers.controler.CarrierStrategyManager;
@@ -80,7 +80,7 @@ public class TestRunDistanceConstraint {
 
 		FleetSize fleetSize = FleetSize.INFINITE;
 
-		Carrier carrierV1 = CarrierUtils.createCarrier(Id.create("Carrier_Version1", Carrier.class));
+		Carrier carrierV1 = CarriersUtils.createCarrier(Id.create("Carrier_Version1", Carrier.class));
 		VehicleType newVT1 = VehicleUtils.createVehicleType(Id.create("LargeBattery_V1", VehicleType.class));
 		newVT1.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(100.);
 		newVT1.getEngineInformation().getAttributes().putAttribute("fuelType", "electricity");
@@ -157,7 +157,7 @@ public class TestRunDistanceConstraint {
 
 		FleetSize fleetSize = FleetSize.INFINITE;
 
-		Carrier carrierV2 = CarrierUtils.createCarrier(Id.create("Carrier_Version2", Carrier.class));
+		Carrier carrierV2 = CarriersUtils.createCarrier(Id.create("Carrier_Version2", Carrier.class));
 
 		VehicleType newVT3 = VehicleUtils.createVehicleType(Id.create("LargeBattery_V2", VehicleType.class));
 		newVT3.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(100.);
@@ -236,7 +236,7 @@ public class TestRunDistanceConstraint {
 		CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes();
 
 		FleetSize fleetSize = FleetSize.INFINITE;
-		Carrier carrierV3 = CarrierUtils.createCarrier(Id.create("Carrier_Version3", Carrier.class));
+		Carrier carrierV3 = CarriersUtils.createCarrier(Id.create("Carrier_Version3", Carrier.class));
 
 		VehicleType newVT5 = VehicleUtils.createVehicleType(Id.create("LargeBattery_V3", VehicleType.class));
 		newVT5.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(100.);
@@ -320,7 +320,7 @@ public class TestRunDistanceConstraint {
 		CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes();
 
 		FleetSize fleetSize = FleetSize.INFINITE;
-		Carrier carrierV4 = CarrierUtils.createCarrier(Id.create("Carrier_Version4", Carrier.class));
+		Carrier carrierV4 = CarriersUtils.createCarrier(Id.create("Carrier_Version4", Carrier.class));
 
 		VehicleType newVT7 = VehicleUtils.createVehicleType(Id.create("LargeBattery_V4", VehicleType.class));
 		newVT7.getCostInformation().setCostsPerMeter(0.00055).setCostsPerSecond(0.008).setFixedCost(100.);
@@ -417,14 +417,14 @@ public class TestRunDistanceConstraint {
 				.newInstance(Id.create("Service1", CarrierService.class), Id.createLinkId("j(3,8)"))
 				.setServiceDuration(20).setServiceStartTimeWindow(TimeWindow.newInstance(8 * 3600, 10 * 3600))
 				.setCapacityDemand(40).build();
-		CarrierUtils.addService(carrier, service1);
+		CarriersUtils.addService(carrier, service1);
 
 // Service 2
 		CarrierService service2 = CarrierService.Builder
 				.newInstance(Id.create("Service2", CarrierService.class), Id.createLinkId("j(0,3)R"))
 				.setServiceDuration(20).setServiceStartTimeWindow(TimeWindow.newInstance(8 * 3600, 10 * 3600))
 				.setCapacityDemand(40).build();
-		CarrierUtils.addService(carrier, service2);
+		CarriersUtils.addService(carrier, service2);
 
 // Service 3
 		if (threeServices) {
@@ -432,7 +432,7 @@ public class TestRunDistanceConstraint {
 					.newInstance(Id.create("Service3", CarrierService.class), Id.createLinkId("j(9,2)"))
 					.setServiceDuration(20).setServiceStartTimeWindow(TimeWindow.newInstance(8 * 3600, 10 * 3600))
 					.setCapacityDemand(40).build();
-			CarrierUtils.addService(carrier, service3);
+			CarriersUtils.addService(carrier, service3);
 		}
 		carriers.addCarrier(carrier);
 	}
@@ -485,7 +485,7 @@ public class TestRunDistanceConstraint {
 
 		singleCarrier.setCarrierCapabilities(CarrierCapabilities.Builder.newInstance().setFleetSize(fleetSize).build());
 		for (CarrierVehicle carrierVehicle : vehicles) {
-			CarrierUtils.addCarrierVehicle(singleCarrier, carrierVehicle);
+			CarriersUtils.addCarrierVehicle(singleCarrier, carrierVehicle);
 		}
 		singleCarrier.getCarrierCapabilities().getVehicleTypes().addAll(vehicleTypes.getVehicleTypes().values());
 
@@ -573,7 +573,7 @@ public class TestRunDistanceConstraint {
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2();
 		CarrierStrategyManager planStrategyManagerFactory = createMyStrategymanager();
 
-		CarrierUtils.addOrGetCarriers(scenario);
+		CarriersUtils.addOrGetCarriers(scenario);
 		CarrierModule listener = new CarrierModule();
 		controler.addOverridingModule( new AbstractModule(){
 			@Override

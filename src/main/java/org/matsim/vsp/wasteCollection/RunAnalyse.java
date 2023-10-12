@@ -26,7 +26,7 @@ import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.freight.carriers.carrier.*;
+import org.matsim.freight.carriers.*;
 
 import java.io.BufferedWriter;
 import java.io.File;

@@ -9,7 +9,7 @@ import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.utils.io.UncheckedIOException;
-import org.matsim.freight.carriers.carrier.*;
+import org.matsim.freight.carriers.*;
 
 import java.io.File;
 import java.io.IOException;

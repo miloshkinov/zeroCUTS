@@ -38,10 +38,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.freight.carriers.FreightCarriersConfigGroup;
-import org.matsim.freight.carriers.carrier.*;
-import org.matsim.freight.carriers.carrier.Tour.ServiceActivity;
-import org.matsim.freight.carriers.carrier.Tour.TourElement;
+import org.matsim.freight.carriers.*;
+import org.matsim.freight.carriers.Tour.ServiceActivity;
+import org.matsim.freight.carriers.Tour.TourElement;
 import org.matsim.freight.carriers.controler.CarrierControlerUtils;
 import org.matsim.freight.carriers.controler.CarrierModule;
 import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
@@ -390,7 +389,7 @@ public class RunFreight {
 		FreightCarriersConfigGroup freightConfig = ConfigUtils.addOrGetModule( scenario.getConfig(), FreightCarriersConfigGroup.class );
 		freightConfig.setTimeWindowHandling(FreightCarriersConfigGroup.TimeWindowHandling.enforceBeginnings);
 
-		CarrierUtils.addOrGetCarriers(scenario);
+		CarriersUtils.addOrGetCarriers(scenario);
 		CarrierModule listener = new CarrierModule();
 		controler.addOverridingModule( new AbstractModule(){
 			@Override

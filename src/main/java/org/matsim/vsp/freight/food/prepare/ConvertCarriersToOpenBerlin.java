@@ -8,7 +8,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.filter.NetworkFilterManager;
-import org.matsim.freight.carriers.carrier.*;
+import org.matsim.freight.carriers.*;
 import org.matsim.utils.objectattributes.attributable.Attributes;
 import org.matsim.vehicles.Vehicle;
 
@@ -44,7 +44,7 @@ class ConvertCarriersToOpenBerlin {
 
 		Carriers newCarriers = new Carriers();
 		for(Carrier oldCarrier: oldCarriers.getCarriers().values()){
-			Carrier newCarrier = CarrierUtils.createCarrier(oldCarrier.getId());
+			Carrier newCarrier = CarriersUtils.createCarrier(oldCarrier.getId());
 
 			convertCarrierCapabilities(oldNetwork, newNetworkFiltered, oldCarrier, newCarrier);
 			convertCarrierServices(oldNetwork, newNetworkFiltered, oldCarrier, newCarrier);
@@ -89,7 +89,7 @@ class ConvertCarriersToOpenBerlin {
 					.setEarliestStart(carrierVehicle.getEarliestStartTime())
 					.setLatestEnd(carrierVehicle.getLatestEndTime())
 					.build();
-			CarrierUtils.addCarrierVehicle(newCarrier, newCarrierVehicle);
+			CarriersUtils.addCarrierVehicle(newCarrier, newCarrierVehicle);
 		}
 	}
 
@@ -106,7 +106,7 @@ class ConvertCarriersToOpenBerlin {
 			for (String attKey : service.getAttributes().getAsMap().keySet()){
 				newService.getAttributes().putAttribute(attKey, service.getAttributes().getAttribute(attKey));
 			}
-			CarrierUtils.addService(newCarrier, newService);
+			CarriersUtils.addService(newCarrier, newService);
 		}
 	}
 
@@ -126,7 +126,7 @@ class ConvertCarriersToOpenBerlin {
 			for (String attKey : shipment.getAttributes().getAsMap().keySet()){
 				newShipment.getAttributes().putAttribute(attKey, shipment.getAttributes().getAttribute(attKey));
 			}
-			CarrierUtils.addShipment(newCarrier, newShipment);
+			CarriersUtils.addShipment(newCarrier, newShipment);
 		}
 	}
 

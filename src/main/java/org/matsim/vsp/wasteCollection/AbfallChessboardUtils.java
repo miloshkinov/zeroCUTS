@@ -6,16 +6,16 @@ import java.util.Map;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.freight.carriers.carrier.Carrier;
-import org.matsim.freight.carriers.carrier.CarrierCapabilities;
-import org.matsim.freight.carriers.carrier.CarrierVehicle;
-import org.matsim.freight.carriers.carrier.CarrierVehicleTypeLoader;
-import org.matsim.freight.carriers.carrier.CarrierVehicleTypes;
-import org.matsim.freight.carriers.carrier.Carriers;
+import org.matsim.freight.carriers.Carrier;
+import org.matsim.freight.carriers.CarrierCapabilities;
+import org.matsim.freight.carriers.CarrierVehicle;
+import org.matsim.freight.carriers.CarrierVehicleTypeLoader;
+import org.matsim.freight.carriers.CarrierVehicleTypes;
+import org.matsim.freight.carriers.Carriers;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
-import org.matsim.freight.carriers.carrier.CarrierCapabilities.FleetSize;
-import org.matsim.freight.carriers.carrier.CarrierImpl;
+import org.matsim.freight.carriers.CarrierCapabilities.FleetSize;
+import org.matsim.freight.carriers.CarrierImpl;
 
 public class AbfallChessboardUtils {
 

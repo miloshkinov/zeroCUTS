@@ -6,15 +6,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.freight.carriers.carrier.Carrier;
-import org.matsim.freight.carriers.carrier.CarrierPlan;
-import org.matsim.freight.carriers.carrier.CarrierService;
-import org.matsim.freight.carriers.carrier.CarrierUtils;
-import org.matsim.freight.carriers.carrier.CarrierVehicle;
-import org.matsim.freight.carriers.carrier.CarrierVehicleTypes;
-import org.matsim.freight.carriers.carrier.ScheduledTour;
-import org.matsim.freight.carriers.carrier.Tour;
-import org.matsim.freight.carriers.carrier.CarrierCapabilities.FleetSize;
+import org.matsim.freight.carriers.*;
+import org.matsim.freight.carriers.CarrierCapabilities.FleetSize;
 import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
 import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
 import org.matsim.freight.carriers.jsprit.NetworkRouter;
@@ -73,7 +66,7 @@ class DistanceConstraintUtils {
 	 */
 
 	static VehicleRoutingTransportCostsMatrix createMatrix(VehicleRoutingProblem.Builder vrpBuilder,
-			Carrier singleCarrier, Network network, Builder netBuilder) {
+														   Carrier singleCarrier, Network network, Builder netBuilder) {
 
 		double distance = 0;
 		int startTime = 10000000;
@@ -94,14 +87,14 @@ class DistanceConstraintUtils {
 
 				} else {
 
-					Carrier oneShipmentCarrier = CarrierUtils.createCarrier(Id.create("OneShipment", Carrier.class));
+					Carrier oneShipmentCarrier = CarriersUtils.createCarrier(Id.create("OneShipment", Carrier.class));
 					for (VehicleType vehicleType : singleCarrier.getCarrierCapabilities().getVehicleTypes()) {
 
 						CarrierVehicle testVehicle = CarrierVehicle.Builder
 								.newInstance(Id.create("testVehicle", Vehicle.class), Id.createLinkId(from), vehicleType)
 								.setEarliestStart(0).setLatestEnd(72 * 3600).build();
 						oneShipmentCarrier.getCarrierCapabilities().getVehicleTypes().add(vehicleType);
-						CarrierUtils.addCarrierVehicle(oneShipmentCarrier, testVehicle);
+						CarriersUtils.addCarrierVehicle(oneShipmentCarrier, testVehicle);
 						oneShipmentCarrier.getCarrierCapabilities().setFleetSize(FleetSize.FINITE);
 						break;
 					}
@@ -109,7 +102,7 @@ class DistanceConstraintUtils {
 					CarrierService testService = CarrierService.Builder
 							.newInstance(Id.create("singleService", CarrierService.class), Id.createLinkId(to))
 							.setServiceDuration(0).build();
-					CarrierUtils.addService(oneShipmentCarrier, testService);
+					CarriersUtils.addService(oneShipmentCarrier, testService);
 
 					VehicleRoutingProblem.Builder vrpBuilder2 = MatsimJspritFactory
 							.createRoutingProblemBuilder(oneShipmentCarrier, network);
