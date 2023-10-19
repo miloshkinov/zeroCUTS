@@ -27,8 +27,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import org.matsim.contrib.freight.analysis.RunFreightAnalysisEventbased;
 import org.matsim.core.utils.io.UncheckedIOException;
+import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
 import org.matsim.freightDemandGeneration.FreightDemandGeneration;
 import org.matsim.vsp.freightAnalysis.FreightAnalyse;
 
@@ -77,7 +77,7 @@ public class FreightDemandGenerationExample {
         File lastFile = fileData.get(fileData.size() - 1);
         String[] argsAnalysis = {lastFile.toString(), "true"};
         FreightAnalyse.main(argsAnalysis);
-        RunFreightAnalysisEventbased freightAnalysis = new RunFreightAnalysisEventbased(lastFile.toString() + "/",
+        RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(lastFile.toString() + "/",
                 lastFile.toString() + "/Analysis_new/", "EPSG:31468");
         freightAnalysis.runAnalysis();
     }

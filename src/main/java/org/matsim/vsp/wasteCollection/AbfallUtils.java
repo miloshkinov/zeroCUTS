@@ -22,30 +22,29 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.contrib.freight.FreightConfigGroup;
-import org.matsim.contrib.freight.carrier.Carrier;
-import org.matsim.contrib.freight.carrier.CarrierPlan;
-import org.matsim.contrib.freight.carrier.CarrierPlanXmlWriterV2;
-import org.matsim.contrib.freight.carrier.CarrierShipment;
-import org.matsim.contrib.freight.carrier.CarrierUtils;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
-import org.matsim.contrib.freight.carrier.Carriers;
-import org.matsim.contrib.freight.carrier.ScheduledTour;
-import org.matsim.contrib.freight.carrier.TimeWindow;
-import org.matsim.contrib.freight.carrier.Tour;
-import org.matsim.contrib.freight.carrier.Tour.Delivery;
-import org.matsim.contrib.freight.carrier.Tour.Leg;
-import org.matsim.contrib.freight.carrier.Tour.Pickup;
-import org.matsim.contrib.freight.carrier.Tour.TourElement;
-import org.matsim.contrib.freight.controler.CarrierModule;
-import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
-import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts;
-import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts.Builder;
-import org.matsim.contrib.freight.jsprit.NetworkRouter;
+import org.matsim.freight.carriers.FreightCarriersConfigGroup;
+import org.matsim.freight.carriers.Carrier;
+import org.matsim.freight.carriers.CarrierPlan;
+import org.matsim.freight.carriers.CarrierPlanXmlWriterV2;
+import org.matsim.freight.carriers.CarrierShipment;
+import org.matsim.freight.carriers.CarriersUtils;
+import org.matsim.freight.carriers.CarrierVehicleTypes;
+import org.matsim.freight.carriers.Carriers;
+import org.matsim.freight.carriers.ScheduledTour;
+import org.matsim.freight.carriers.TimeWindow;
+import org.matsim.freight.carriers.Tour;
+import org.matsim.freight.carriers.Tour.Delivery;
+import org.matsim.freight.carriers.Tour.Leg;
+import org.matsim.freight.carriers.Tour.Pickup;
+import org.matsim.freight.carriers.Tour.TourElement;
+import org.matsim.freight.carriers.controler.CarrierModule;
+import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
+import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
+import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts.Builder;
+import org.matsim.freight.carriers.jsprit.NetworkRouter;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.ControlerConfigGroup;
-import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
@@ -181,21 +180,21 @@ class AbfallUtils {
 	 * @param config
 	 */
 	static Config prepareConfig(Config config, int lastIteration, String inputVehicleTypes, String inputCarriers) {
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
-		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
-				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
+		config.controller().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
+		new OutputDirectoryHierarchy(config.controller().getOutputDirectory(), config.controller().getRunId(),
+				config.controller().getOverwriteFileSetting(), ControllerConfigGroup.CompressionType.gzip);
+		config.controller().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 
-		config.controler().setLastIteration(lastIteration);
+		config.controller().setLastIteration(lastIteration);
 		matsimIterations = lastIteration + 1;
 		config.global().setRandomSeed(4177);
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
+		config.controller().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 		config.global().setCoordinateSystem(TransformationFactory.GK4);
-		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
-		freightConfigGroup.setCarriersFile(inputCarriers);
-		freightConfigGroup.setCarriersVehicleTypesFile(inputVehicleTypes);
-		freightConfigGroup.setTravelTimeSliceWidth(1800);
-		freightConfigGroup.setTimeWindowHandling(FreightConfigGroup.TimeWindowHandling.enforceBeginnings);
+		FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);
+		freightCarriersConfigGroup.setCarriersFile(inputCarriers);
+		freightCarriersConfigGroup.setCarriersVehicleTypesFile(inputVehicleTypes);
+		freightCarriersConfigGroup.setTravelTimeSliceWidth(1800);
+		freightCarriersConfigGroup.setTimeWindowHandling(FreightCarriersConfigGroup.TimeWindowHandling.enforceBeginnings);
 
 		return config;
 	}
@@ -468,7 +467,7 @@ class AbfallUtils {
 	}
 
 	private static Carrier createSingleCarrier(String depot, HashMap<String, Carrier> carrierMap, String district) {
-		Carrier newCarrier = CarrierUtils.createCarrier(Id.create("Carrier " + district, Carrier.class));
+		Carrier newCarrier = CarriersUtils.createCarrier(Id.create("Carrier " + district, Carrier.class));
 		for (Carrier originalCarrier : carrierMap.values()) {
 			if (originalCarrier.getId().toString().contains(depot)) {
 				newCarrier.getCarrierCapabilities()
@@ -625,11 +624,11 @@ class AbfallUtils {
 			carrierCount++;
 			if (singleCarrier.getId() == Id.create("Carrier_Chessboard", Carrier.class))
 				new Plotter(problem, bestSolution).plot(
-						scenario.getConfig().controler().getOutputDirectory() + "/jsprit_CarrierPlans_Test01.png",
+						scenario.getConfig().controller().getOutputDirectory() + "/jsprit_CarrierPlans_Test01.png",
 						"bestSolution");
 		}
 		new CarrierPlanXmlWriterV2(carriers)
-				.write(scenario.getConfig().controler().getOutputDirectory() + "/jsprit_CarrierPlans.xml");
+				.write(scenario.getConfig().controller().getOutputDirectory() + "/jsprit_CarrierPlans.xml");
 
 	}
 
@@ -660,7 +659,7 @@ class AbfallUtils {
 //	private static CarrierScoringFunctionFactoryImpl createMyScoringFunction2(final Scenario scenario) {
 //
 //		return new CarrierScoringFunctionFactoryImpl(scenario.getNetwork());
-//		return new CarrierScoringFunctionFactoryImpl (scenario, scenario.getConfig().controler().getOutputDirectory()) {
+//		return new CarrierScoringFunctionFactoryImpl (scenario, scenario.getConfig().controller().getOutputDirectory()) {
 //
 //			public ScoringFunction createScoringFunction(final Carrier carrier){
 //				SumScoringFunction sumSf = new SumScoringFunction() ;
@@ -699,8 +698,6 @@ class AbfallUtils {
 
 	/**
 	 * Gives an output of a .txt file with some important information
-	 * 
-	 * @param allGarbage
 	 * 
 	 * @param
 	 */
@@ -997,7 +994,7 @@ class AbfallUtils {
 
 		FileWriter writer;
 		File file;
-		file = new File(scenario.getConfig().controler().getOutputDirectory() + "/01_Zusammenfassung.txt");
+		file = new File(scenario.getConfig().controller().getOutputDirectory() + "/01_Zusammenfassung.txt");
 		try {
 			writer = new FileWriter(file, true);
 			if (day != null) {
@@ -1153,7 +1150,7 @@ class AbfallUtils {
 		}
 		FileWriter writer;
 		File file;
-		file = new File(scenario.getConfig().controler().getOutputDirectory() + "/01_ZusammenfassungShipments.txt");
+		file = new File(scenario.getConfig().controller().getOutputDirectory() + "/01_ZusammenfassungShipments.txt");
 		try {
 			writer = new FileWriter(file, true);
 			writer.write("Anzahl der Abholgebiete:\t\t\t\t\t\t\t\t\t" + districtsWithShipments.size() + "\n");
@@ -1190,7 +1187,6 @@ class AbfallUtils {
 	/**
 	 * @param scenario
 	 * @param carriers
-	 * @param vehicleTypes
 	 * @throws IOException
 	 */
 
@@ -1217,7 +1213,7 @@ class AbfallUtils {
 
 		BufferedWriter writer;
 		File file;
-		file = new File(scenario.getConfig().controler().getOutputDirectory() + "/02_SummaryOutput.txt");
+		file = new File(scenario.getConfig().controller().getOutputDirectory() + "/02_SummaryOutput.txt");
 
 		writer = new BufferedWriter(new FileWriter(file, true));
 		String now = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").format(new Date());
