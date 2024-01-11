@@ -312,7 +312,7 @@ public class RunFreight {
 	 * @param carriers
 	 */
 	//TODO: Auch für Shipments auslegen und umbennnen. KMT feb'19
-	//TODO: Funktionaltität in contrib vorsehen -> FreightUtils? KMT feb'19
+	//TODO: Funktionaltität in contrib vorsehen -> CarrierControlerUtils? KMT feb'19
 	private static void checkServiceAssignment(Carriers carriers) {
 		for (Carrier c :carriers.getCarriers().values()){
 			ArrayList<CarrierService> assignedServices = new ArrayList<>();
@@ -429,7 +429,7 @@ public class RunFreight {
 
 	/**
 	 * TODO:  Activity: Kostensatz mitgeben, damit klar ist, wo er herkommt... oder vlt geht es in dem Konstrukt doch aus den Veh-Eigenschaften?? (KT, 17.04.15)
-	 * TODO: EXCEPTION CarrierScoringFunctionFactoryImpl in Freight contrib hinterlegen
+	 * TODO: Default CarrierScoringFunctionFactoryImpl in Freight contrib hinterlegen
 	 */
 	private static CarrierScoringFunctionFactoryImpl_KT createMyScoringFunction2 (final Scenario scenario) {
 

@@ -66,7 +66,7 @@ class DistanceConstraintUtils {
 	 */
 
 	static VehicleRoutingTransportCostsMatrix createMatrix(VehicleRoutingProblem.Builder vrpBuilder,
-			Carrier singleCarrier, Network network, Builder netBuilder) {
+														   Carrier singleCarrier, Network network, Builder netBuilder) {
 
 		double distance = 0;
 		int startTime = 10000000;

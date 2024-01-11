@@ -73,14 +73,14 @@ class RunFood {
 		}
 
 		if ( args.length==0 ) {
-			String inputPath = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/input/";
+			String inputPath = "../shared-svn/projects/freight/studies/Food_LCA-based/input/";
 			args = new String[] {
-					inputPath+"TwoCarrier_Shipment_OneTW_PickupTime_ICEVandBEV.xml",
-					inputPath + "vehicleTypesBVWP100_DC_Tax300.xml",
+					inputPath+"TwoCarrier_small_Shipment_OneTW_PickupTime_ICEVandBEV.xml",
+					inputPath + "vehicleTypes_LCA_noTax.xml",
 					inputPath + "mdvrp_algorithmConfig_2.xml",
 					"1",                                                    //only for demonstration.
 					inputPath + "networkChangeEvents.xml.gz",
-					"../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/Demo1ItDC",
+					"../shared-svn/projects/freight/studies/Food_LCA-based/output/Demo1It_small",
 					"true"
 			};
 		}
@@ -96,15 +96,15 @@ class RunFood {
 		controler.run();
 
 		final String outputPath = controler.getControlerIO().getOutputPath();
-//		RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(scenario, outputPath +"/Analysis/");
-//		freightAnalysis.runAnalysis();
+		RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(outputPath +"/", outputPath +"/Analysis/", config.global().getCoordinateSystem());
+		freightAnalysis.runAnalysis();
 	}
 
 
 	private static Config prepareConfig(String[] args) {
 		String carriersFileLocation = args[0];
 		String vehicleTypesFileLocation = args[1];
-//        String algorithmFileLocation = args[2]; //TODO: Read in Algorithm -> Put into freightConfigGroup?
+//        String algorithmFileLocation = args[2]; //TODO: Read in Algorithm -> Put into freightCarriersConfigGroup?
 		nuOfJspritIteration = Integer.parseInt(args[3]);
 		String networkChangeEventsFileLocation = args[4];
 		String outputLocation = args[5];
@@ -137,14 +137,14 @@ class RunFood {
 
 		config.plans().setActivityDurationInterpretation(PlansConfigGroup.ActivityDurationInterpretation.tryEndTimeThenDuration );
 		//freight configstuff
-		FreightCarriersConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);
-		freightConfigGroup.setCarriersFile(carriersFileLocation);
-		freightConfigGroup.setCarriersVehicleTypesFile(vehicleTypesFileLocation);
-		freightConfigGroup.setTravelTimeSliceWidth(1800);
-		freightConfigGroup.setTimeWindowHandling(FreightCarriersConfigGroup.TimeWindowHandling.enforceBeginnings);
+		FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);
+		freightCarriersConfigGroup.setCarriersFile(carriersFileLocation);
+		freightCarriersConfigGroup.setCarriersVehicleTypesFile(vehicleTypesFileLocation);
+		freightCarriersConfigGroup.setTravelTimeSliceWidth(1800);
+		freightCarriersConfigGroup.setTimeWindowHandling(FreightCarriersConfigGroup.TimeWindowHandling.enforceBeginnings);
 
 		if(useDistanceConstraint) {
-			freightConfigGroup.setUseDistanceConstraintForTourPlanning(FreightCarriersConfigGroup.UseDistanceConstraintForTourPlanning.basedOnEnergyConsumption);
+			freightCarriersConfigGroup.setUseDistanceConstraintForTourPlanning(FreightCarriersConfigGroup.UseDistanceConstraintForTourPlanning.basedOnEnergyConsumption);
 		}
 
 		return config;
@@ -262,7 +262,7 @@ class RunFood {
 				@Override public double getScore(){
 					return CarriersUtils.getJspritScore(carrier.getSelectedPlan()); //2nd Quickfix: Keep the current score -> which ist normally the score from jsprit. -> Better safe JspritScore as own value.
 //					return Double.MIN_VALUE; // 1st Quickfix, to have a "double" value for xsd (instead of neg.-Infinity).
-//					return Double.NEGATIVE_INFINITY; // EXCEPTION from KN -> causes errors with reading in carrierFile because Java writes "Infinity", while XSD needs "INF"
+//					return Double.NEGATIVE_INFINITY; // Default from KN -> causes errors with reading in carrierFile because Java writes "Infinity", while XSD needs "INF"
 				}
 				@Override public void handleEvent( Event event ){
 				}

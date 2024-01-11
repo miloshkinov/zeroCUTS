@@ -682,6 +682,8 @@ class AbfallUtils {
 
 	/**
 	 * Gives an output of a .txt file with some important information
+	 *
+	 * @param
 	 */
 	static void outputSummary(Collection<SimpleFeature> districtsWithGarbage, Scenario scenario,
 			HashMap<String, Carrier> carrierMap, String day, double volumeDustbin,
@@ -1169,7 +1171,6 @@ class AbfallUtils {
 	/**
 	 * @param scenario
 	 * @param carriers
-	 * @param vehicleTypes
 	 * @throws IOException
 	 */
 

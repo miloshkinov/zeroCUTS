@@ -258,7 +258,7 @@ public class RunFreightOnlyMatsim {
 
 	/**
 	 * TODO:  Activity: Kostensatz mitgeben, damit klar ist, wo er herkommt... oder vlt geht es in dem Konstrukt doch aus den Veh-Eigenschaften?? (KT, 17.04.15)
-	 * TODO: EXCEPTION CarrierScoringFunctionFactoryImpl in Freight contrib hinterlegen
+	 * TODO: Default CarrierScoringFunctionFactoryImpl in Freight contrib hinterlegen
 	 */
 	private static CarrierScoringFunctionFactoryImpl_KT createMyScoringFunction2 (final Scenario scenario) {
 

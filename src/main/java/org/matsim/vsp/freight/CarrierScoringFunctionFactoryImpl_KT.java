@@ -17,6 +17,8 @@ import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.SumScoringFunction;
 import org.matsim.freight.carriers.*;
+import org.matsim.freight.carriers.Tour.ServiceActivity;
+import org.matsim.freight.carriers.Tour.TourElement;
 import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
 import org.matsim.freight.carriers.controler.FreightActivity;
 import org.matsim.freight.carriers.jsprit.VehicleTypeDependentRoadPricingCalculator;
@@ -308,9 +310,9 @@ public class CarrierScoringFunctionFactoryImpl_KT implements CarrierScoringFunct
 			
 			for (ScheduledTour tour : carrier.getSelectedPlan().getScheduledTours() ){
 				if (!correctedTours.contains(tour)){
-					for (Tour.TourElement te : tour.getTour().getTourElements()) {
-						if (te instanceof Tour.ServiceActivity){
-							Tour.ServiceActivity sa = (Tour.ServiceActivity) te;
+					for (TourElement te : tour.getTour().getTourElements()) {
+						if (te instanceof  ServiceActivity){
+							ServiceActivity sa = (ServiceActivity) te;
 							if (sa.getLocation() == act.getLinkId()
 									&& sa.getTimeWindow() == act.getTimeWindow()
 									&& sa.getActivityType() == act.getType()){
