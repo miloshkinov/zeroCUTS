@@ -8,7 +8,6 @@ import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.utils.io.UncheckedIOException;
 import org.matsim.freight.carriers.*;
 
 import java.io.File;
@@ -94,7 +93,7 @@ public class FreightAnalyseKT {
 
 	private static final Logger log = LogManager.getLogger(FreightAnalyseKT.class);
 
-	public static void main(String[] args) throws UncheckedIOException, IOException {
+	public static void main(String[] args) throws IOException {
 		OutputDirectoryLogging.initLoggingWithOutputDirectory(OUTPUT_DIR);
 
 		FreightAnalyseKT analysis = new FreightAnalyseKT();
@@ -103,7 +102,7 @@ public class FreightAnalyseKT {
 		OutputDirectoryLogging.closeOutputDirLogging();
 	}
 
-	private void run() throws UncheckedIOException, IOException {
+	private void run() {
 
 //			File configFile = new File(RUN_DIR + "output_config.xml");
 ////			File configFile = new File(RUN_DIR + "output_config.xml.gz");

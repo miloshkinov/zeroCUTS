@@ -20,21 +20,21 @@ package org.matsim.vsp.freight.food.prepare;
 
 
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.CarrierPlanWriter;
-import org.matsim.freight.carriers.CarriersUtils;
 import org.matsim.freight.carriers.Carriers;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.examples.ExamplesUtils;
+import org.matsim.freight.carriers.CarriersUtils;
+import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 
 import java.util.concurrent.ExecutionException;
 
 
 /**
- * @see org.matsim.contrib.freight
+ * @see org.matsim.freight
  */
 public class ConvertToShipments {
 
@@ -52,9 +52,9 @@ public class ConvertToShipments {
 		config.controller().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
 
 		//freight settings
-		FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule( config, FreightCarriersConfigGroup.class ) ;
-		freightCarriersConfigGroup.setCarriersFile( "");
-		freightCarriersConfigGroup.setCarriersVehicleTypesFile( "vehicleTypes.xml");
+		FreightCarriersConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightCarriersConfigGroup.class ) ;
+		freightConfigGroup.setCarriersFile( "");
+		freightConfigGroup.setCarriersVehicleTypesFile( "vehicleTypes.xml");
 
 		// load scenario (this is not loading the freight material):
 		Scenario scenario = ScenarioUtils.loadScenario( config );
@@ -64,7 +64,7 @@ public class ConvertToShipments {
 
 
 		// how to set the capacity of the "light" vehicle type to "1":
-//		CarrierControlerUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 1 );
+//		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 1 );
 
 		// output before jsprit run (not necessary)
 		new CarrierPlanWriter(CarriersUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;

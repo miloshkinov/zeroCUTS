@@ -38,13 +38,24 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.freight.carriers.*;
+import org.matsim.freight.carriers.FreightCarriersConfigGroup;
+import org.matsim.freight.carriers.Carrier;
+import org.matsim.freight.carriers.CarrierPlan;
+import org.matsim.freight.carriers.CarrierPlanWriter;
+import org.matsim.freight.carriers.CarrierPlanXmlReader;
+import org.matsim.freight.carriers.CarrierService;
+import org.matsim.freight.carriers.CarrierVehicleTypeReader;
+import org.matsim.freight.carriers.CarrierVehicleTypeWriter;
+import org.matsim.freight.carriers.CarrierVehicleTypes;
+import org.matsim.freight.carriers.Carriers;
+import org.matsim.freight.carriers.ScheduledTour;
 import org.matsim.freight.carriers.Tour.ServiceActivity;
 import org.matsim.freight.carriers.Tour.TourElement;
 import org.matsim.freight.carriers.controler.CarrierControlerUtils;
 import org.matsim.freight.carriers.controler.CarrierModule;
 import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
 import org.matsim.freight.carriers.controler.CarrierStrategyManager;
+import org.matsim.freight.carriers.CarriersUtils;
 import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
 import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
 import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts.Builder;
@@ -146,12 +157,12 @@ public class RunFreight {
 		}
 
 		// (the directory structure is needed for jsprit output, which is before the
-		// controler starts. Maybe there is a better alternative ...)
+		// controller starts. Maybe there is a better alternative ...)
 		config.controller().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 		new OutputDirectoryHierarchy(config.controller().getOutputDirectory(), config.controller().getRunId(), config.controller().getOverwriteFileSetting(), CompressionType.gzip);
 		config.controller().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 		
-		config.controller().setLastIteration(LAST_MATSIM_ITERATION);	
+		config.controller().setLastIteration(LAST_MATSIM_ITERATION);
 		config.network().setInputFile(NETFILE);
 
 		//Damit nicht alle um Mitternacht losfahren
@@ -381,7 +392,7 @@ public class RunFreight {
 	 * @param scenario
 	 */
 	private static void matsimRun(Scenario scenario) {
-		final Controler controler = new Controler( scenario ) ;
+		final Controler controller = new Controler( scenario ) ;
 
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2(scenario);
 		CarrierStrategyManager planStrategyManagerFactory =  createMyStrategymanager(); //Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
@@ -391,18 +402,18 @@ public class RunFreight {
 
 		CarriersUtils.addOrGetCarriers(scenario);
 		CarrierModule listener = new CarrierModule();
-		controler.addOverridingModule( new AbstractModule(){
+		controller.addOverridingModule( new AbstractModule(){
 			@Override
 			public void install(){
 				bind( CarrierScoringFunctionFactory.class ).toInstance(scoringFunctionFactory) ;
 				bind( CarrierStrategyManager.class ).toInstance(planStrategyManagerFactory);
 			}
 		} ) ;
-		controler.addOverridingModule(listener);
+		controller.addOverridingModule(listener);
 
 		//The VSP default settings are designed for person transport simulation. After talking to Kai, they will be set to WARN here. Kai MT may'23
-		controler.getConfig().vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn);
-		controler.run();
+		controller.getConfig().vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn);
+		controller.run();
 	}
 
 

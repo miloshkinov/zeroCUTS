@@ -23,10 +23,13 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.*;
+import org.matsim.freight.carriers.controler.CarrierControlerUtils;
 import org.matsim.freight.carriers.controler.CarrierModule;
 import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
 import org.matsim.freight.carriers.controler.CarrierStrategyManager;
+import org.matsim.freight.carriers.CarriersUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.consistency.VspConfigConsistencyCheckerImpl;
@@ -41,7 +44,6 @@ import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.SumScoringFunction;
-import org.matsim.freight.carriers.controler.CarrierControlerUtils;
 import org.matsim.vehicles.VehicleType;
 import org.osgeo.proj4j.UnsupportedParameterException;
 
@@ -119,15 +121,15 @@ public class RunFreightOnlyMatsim {
 	private static Config createConfig() {
 		Config config = ConfigUtils.createConfig() ;
 
-		config.controller().setOutputDirectory(OUTPUT_DIR);
+		config. controller().setOutputDirectory(OUTPUT_DIR);
 
 		// (the directory structure is needed for jsprit output, which is before the
-		// controler starts. Maybe there is a better alternative ...)
-		config.controller().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
+		//  controller. starts. Maybe there is a better alternative ...)
+		config. controller().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 		new OutputDirectoryHierarchy(config.controller().getOutputDirectory(), config.controller().getRunId(), config.controller().getOverwriteFileSetting(), CompressionType.gzip);
 		config.controller().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 
-		config.controller().setLastIteration(LAST_MATSIM_ITERATION);	
+		config.controller().setLastIteration(LAST_MATSIM_ITERATION);
 		config.network().setInputFile(NETFILE);
 
 		config.network().setChangeEventsInputFile(NETWORKCHANGEEVENTFILE);
@@ -222,7 +224,7 @@ public class RunFreightOnlyMatsim {
 	 * @param scenario
 	 */
 	private static void matsimRun(Scenario scenario) {
-		final Controler controler = new Controler( scenario ) ;
+		final Controler controller = new Controler( scenario ) ;
 
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2(scenario);
 		CarrierStrategyManager planStrategyManagerFactory =  createMyStrategymanager(); //Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
@@ -232,15 +234,15 @@ public class RunFreightOnlyMatsim {
 
 		CarriersUtils.addOrGetCarriers(scenario);
 		CarrierModule listener = new CarrierModule();
-		controler.addOverridingModule( new AbstractModule(){
+		controller.addOverridingModule( new AbstractModule(){
 			@Override
 			public void install(){
 				bind( CarrierScoringFunctionFactory.class ).toInstance(scoringFunctionFactory) ;
 				bind( CarrierStrategyManager.class ).toInstance(planStrategyManagerFactory);
 			}
 		} ) ;
-		controler.addOverridingModule(listener);
-		controler.run();
+		controller.addOverridingModule(listener);
+		controller.run();
 	}
 
 

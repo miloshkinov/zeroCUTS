@@ -1,18 +1,13 @@
 package org.matsim.vsp.wasteCollection;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.graphhopper.jsprit.analysis.toolbox.Plotter;
+import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
+import com.graphhopper.jsprit.core.algorithm.box.SchrimpfFactory;
+import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
+import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
+import com.graphhopper.jsprit.core.util.Solutions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.locationtech.jts.geom.Geometry;
@@ -22,26 +17,6 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.freight.carriers.FreightCarriersConfigGroup;
-import org.matsim.freight.carriers.Carrier;
-import org.matsim.freight.carriers.CarrierPlan;
-import org.matsim.freight.carriers.CarrierPlanXmlWriterV2;
-import org.matsim.freight.carriers.CarrierShipment;
-import org.matsim.freight.carriers.CarriersUtils;
-import org.matsim.freight.carriers.CarrierVehicleTypes;
-import org.matsim.freight.carriers.Carriers;
-import org.matsim.freight.carriers.ScheduledTour;
-import org.matsim.freight.carriers.TimeWindow;
-import org.matsim.freight.carriers.Tour;
-import org.matsim.freight.carriers.Tour.Delivery;
-import org.matsim.freight.carriers.Tour.Leg;
-import org.matsim.freight.carriers.Tour.Pickup;
-import org.matsim.freight.carriers.Tour.TourElement;
-import org.matsim.freight.carriers.controler.CarrierModule;
-import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
-import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
-import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts.Builder;
-import org.matsim.freight.carriers.jsprit.NetworkRouter;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
@@ -52,17 +27,26 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
+import org.matsim.freight.carriers.*;
+import org.matsim.freight.carriers.Tour.Delivery;
+import org.matsim.freight.carriers.Tour.Leg;
+import org.matsim.freight.carriers.Tour.Pickup;
+import org.matsim.freight.carriers.Tour.TourElement;
+import org.matsim.freight.carriers.controler.CarrierModule;
+import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
+import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
+import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts.Builder;
+import org.matsim.freight.carriers.jsprit.NetworkRouter;
 import org.matsim.vehicles.VehicleType;
 import org.opengis.feature.simple.SimpleFeature;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
-import com.graphhopper.jsprit.analysis.toolbox.Plotter;
-import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
-import com.graphhopper.jsprit.core.algorithm.box.SchrimpfFactory;
-import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
-import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
-import com.graphhopper.jsprit.core.util.Solutions;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * @author Ricardo Ewert
@@ -190,11 +174,11 @@ class AbfallUtils {
 		config.global().setRandomSeed(4177);
 		config.controller().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 		config.global().setCoordinateSystem(TransformationFactory.GK4);
-		FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);
-		freightCarriersConfigGroup.setCarriersFile(inputCarriers);
-		freightCarriersConfigGroup.setCarriersVehicleTypesFile(inputVehicleTypes);
-		freightCarriersConfigGroup.setTravelTimeSliceWidth(1800);
-		freightCarriersConfigGroup.setTimeWindowHandling(FreightCarriersConfigGroup.TimeWindowHandling.enforceBeginnings);
+		FreightCarriersConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);
+		freightConfigGroup.setCarriersFile(inputCarriers);
+		freightConfigGroup.setCarriersVehicleTypesFile(inputVehicleTypes);
+		freightConfigGroup.setTravelTimeSliceWidth(1800);
+		freightConfigGroup.setTimeWindowHandling(FreightCarriersConfigGroup.TimeWindowHandling.enforceBeginnings);
 
 		return config;
 	}
@@ -635,9 +619,9 @@ class AbfallUtils {
 //	/**
 //	 * @param
 //	 */
-//	static void scoringAndManagerFactory(Scenario scenario, final Controler controler) {
-//		controler.addOverridingModule(new CarrierModule());
-//		controler.addOverridingModule(new AbstractModule() {
+//	static void scoringAndManagerFactory(Scenario scenario, final Controler controller) {
+//		controller.addOverridingModule(new CarrierModule());
+//		controller.addOverridingModule(new AbstractModule() {
 //			@Override
 //			public void install() {
 //				bind(CarrierScoringFunctionFactory.class).toInstance(createMyScoringFunction2(scenario));
@@ -645,12 +629,12 @@ class AbfallUtils {
 //			}
 //		});
 //	}
-	static Controler prepareControler(Scenario scenario) {
-		Controler controler = new Controler(scenario);
+	static Controler prepareController(Scenario scenario) {
+		Controler controller = new Controler(scenario);
 
-		controler.addOverridingModule(new CarrierModule());
+		controller.addOverridingModule(new CarrierModule());
 
-		return controler;
+		return controller;
 	}
 	/**
 	 * @param scenario
@@ -698,7 +682,7 @@ class AbfallUtils {
 
 	/**
 	 * Gives an output of a .txt file with some important information
-	 * 
+	 *
 	 * @param
 	 */
 	static void outputSummary(Collection<SimpleFeature> districtsWithGarbage, Scenario scenario,

@@ -86,7 +86,7 @@ public class AddAdditionalBEVTrucksToCarriers {
 			Gbl.assertIf(2 * numberOfVehiclesBefore == carrier.getCarrierCapabilities().getCarrierVehicles().size()); //Nachher müssen doppelt so viele Fahrzeuge drin sein
 		}
 
-		new CarrierPlanXmlWriterV2(carriers).write(OUTPUT_Carrier_File);
+		new CarrierPlanWriter(carriers).write(OUTPUT_Carrier_File);
 		System.out.println("### Done ###");
 	}
 

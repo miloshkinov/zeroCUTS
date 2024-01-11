@@ -158,25 +158,25 @@ class RunFood {
 		return scenario;
 	}
 	private static Controler prepareControler(Scenario scenario) {
-		Controler controler = new Controler(scenario);
+		Controler controller = new Controler(scenario);
 
-		controler.addOverridingModule(new CarrierModule());
+		controller.addOverridingModule(new CarrierModule());
 
-		controler.addOverridingModule(new AbstractModule() {
+		controller.addOverridingModule(new AbstractModule() {
 			@Override public void install() {
 				bind(CarrierScoringFunctionFactory.class).toInstance(new CarrierScoringFunctionFactory_KeepScore());
 			}
 		});
 
-		return controler;
+		return controller;
 	}
 
-	private static void runJsprit(Controler controler) throws ExecutionException, InterruptedException {
+	private static void runJsprit(Controler controller) throws ExecutionException, InterruptedException {
 		NetworkBasedTransportCosts.Builder netBuilder = NetworkBasedTransportCosts.Builder.newInstance(
-				controler.getScenario().getNetwork(), CarriersUtils.getCarrierVehicleTypes(controler.getScenario()).getVehicleTypes().values() );
+				controller.getScenario().getNetwork(), CarriersUtils.getCarrierVehicleTypes(controller.getScenario()).getVehicleTypes().values() );
 		final NetworkBasedTransportCosts netBasedCosts = netBuilder.build() ;
 
-		Carriers carriers = CarriersUtils.getCarriers(controler.getScenario());
+		Carriers carriers = CarriersUtils.getCarriers(controller.getScenario());
 
 		HashMap<Id<Carrier>, Integer> carrierActivityCounterMap = new HashMap<>();
 
@@ -209,7 +209,7 @@ class RunFood {
 					log.warn("Received negative number of jsprit iterations. This is invalid -> Setting number of jsprit iterations for carrier: " + carrier.getId() + " to " + nuOfJspritIteration);
 					CarriersUtils.setJspritIterations(carrier, nuOfJspritIteration);
 				} else {
-					log.warn("Overwriting the number of jsprit iterations for carrier: " + carrier.getId() + ". Value was before " + CarriersUtils.getJspritIterations(carrier) + "and is now " + nuOfJspritIteration);
+					log.warn("Overwriting the number of jsprit iterations for carrier: " + carrier.getId() + ". Value was before " +CarriersUtils.getJspritIterations(carrier) + "and is now " + nuOfJspritIteration);
 					CarriersUtils.setJspritIterations(carrier, nuOfJspritIteration);
 				}
 			} catch (Exception e) {
@@ -217,14 +217,14 @@ class RunFood {
 				CarriersUtils.setJspritIterations(carrier, nuOfJspritIteration);
 			}
 
-			VehicleRoutingProblem vrp = MatsimJspritFactory.createRoutingProblemBuilder(carrier, controler.getScenario().getNetwork())
+			VehicleRoutingProblem vrp = MatsimJspritFactory.createRoutingProblemBuilder(carrier, controller.getScenario().getNetwork())
 					.setRoutingCost(netBasedCosts)
 					.build();
 
 			log.warn("Ignore the algorithms file for jsprit and use an algorithm out of the box.");
-			Scenario scenario = controler.getScenario();
-			FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(controler.getConfig(), FreightCarriersConfigGroup.class);
-			VehicleRoutingAlgorithm vra = MatsimJspritFactory.loadOrCreateVehicleRoutingAlgorithm(scenario, freightCarriersConfigGroup, netBasedCosts, vrp);
+			Scenario scenario = controller.getScenario();
+			FreightCarriersConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(controller.getConfig(), FreightCarriersConfigGroup.class);
+			VehicleRoutingAlgorithm vra = MatsimJspritFactory.loadOrCreateVehicleRoutingAlgorithm(scenario, freightConfigGroup, netBasedCosts, vrp);
 			vra.getAlgorithmListeners().addListener(new StopWatch(), VehicleRoutingAlgorithmListeners.Priority.HIGH);
 			vra.setMaxIterations(CarriersUtils.getJspritIterations(carrier));
 			VehicleRoutingProblemSolution solution = Solutions.bestOf(vra.searchSolutions());
@@ -260,7 +260,7 @@ class RunFood {
 				@Override public void finish(){
 				}
 				@Override public double getScore(){
-					return carrier.getSelectedPlan().getScore(); //2nd Quickfix: Keep the current score -> which ist normally the score from jsprit. -> Better safe JspritScore as own value.
+					return CarriersUtils.getJspritScore(carrier.getSelectedPlan()); //2nd Quickfix: Keep the current score -> which ist normally the score from jsprit. -> Better safe JspritScore as own value.
 //					return Double.MIN_VALUE; // 1st Quickfix, to have a "double" value for xsd (instead of neg.-Infinity).
 //					return Double.NEGATIVE_INFINITY; // Default from KN -> causes errors with reading in carrierFile because Java writes "Infinity", while XSD needs "INF"
 				}

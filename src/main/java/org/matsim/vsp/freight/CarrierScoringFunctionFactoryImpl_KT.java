@@ -12,19 +12,16 @@ import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
-import org.matsim.freight.carriers.Carrier;
-import org.matsim.freight.carriers.CarrierPlan;
-import org.matsim.freight.carriers.CarrierVehicle;
-import org.matsim.freight.carriers.ScheduledTour;
+import org.matsim.core.population.routes.NetworkRoute;
+import org.matsim.core.population.routes.RouteUtils;
+import org.matsim.core.scoring.ScoringFunction;
+import org.matsim.core.scoring.SumScoringFunction;
+import org.matsim.freight.carriers.*;
 import org.matsim.freight.carriers.Tour.ServiceActivity;
 import org.matsim.freight.carriers.Tour.TourElement;
 import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
 import org.matsim.freight.carriers.controler.FreightActivity;
 import org.matsim.freight.carriers.jsprit.VehicleTypeDependentRoadPricingCalculator;
-import org.matsim.core.population.routes.NetworkRoute;
-import org.matsim.core.population.routes.RouteUtils;
-import org.matsim.core.scoring.ScoringFunction;
-import org.matsim.core.scoring.SumScoringFunction;
 import org.matsim.vehicles.Vehicle;
 
 /**

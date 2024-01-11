@@ -19,11 +19,7 @@
  * *********************************************************************** */
 package org.matsim.vsp.SmallScaleCommercialTraffic;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import javax.inject.Inject;
-
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -37,7 +33,6 @@ import org.matsim.application.MATSimAppCommand;
 import org.matsim.contrib.cadyts.car.CadytsCarModule;
 import org.matsim.contrib.cadyts.car.CadytsContext;
 import org.matsim.contrib.cadyts.general.CadytsConfigGroup;
-import org.matsim.contrib.cadyts.general.CadytsPlanChanger;
 import org.matsim.contrib.cadyts.general.CadytsScoring;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -48,23 +43,20 @@ import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.population.PopulationUtils;
-import org.matsim.core.replanning.PlanStrategy;
-import org.matsim.core.replanning.PlanStrategyImpl;
-import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.ScoringFunctionFactory;
 import org.matsim.core.scoring.SumScoringFunction;
-import org.matsim.core.scoring.functions.CharyparNagelActivityScoring;
-import org.matsim.core.scoring.functions.CharyparNagelAgentStuckScoring;
-import org.matsim.core.scoring.functions.CharyparNagelLegScoring;
 import org.matsim.core.scoring.functions.ScoringParameters;
 import org.matsim.core.scoring.functions.ScoringParametersForPerson;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
-
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import picocli.CommandLine;
+
+import javax.inject.Inject;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
 
 /**
  * @author Ricardo Ewert
@@ -124,10 +116,10 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 			addLongDistanceFreightTraffic(scenario);
 		createActivityParams(scenario);
 
-		Controler controler = prepareControler(scenario);
+		Controler controller = prepareController(scenario);
 		if (cadytsCalibration)
-			controler.addOverridingModule(new CadytsCarModule());
-//		controler.addOverridingModule(new AbstractModule() {
+			controller.addOverridingModule(new CadytsCarModule());
+//		controller.addOverridingModule(new AbstractModule() {
 //			@Override
 //			public void install() {
 ////		        bind(MainModeIdentifier.class).to(MainModeIdentifierImpl.class);
@@ -151,7 +143,7 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 		// include cadyts into the plan scoring (this will add the cadyts corrections to
 		// the scores)
 		if (cadytsCalibration)
-			controler.setScoringFunctionFactory(new ScoringFunctionFactory() {
+			controller.setScoringFunctionFactory(new ScoringFunctionFactory() {
 
 				@Inject
 				CadytsContext cadytsContext;
@@ -162,7 +154,7 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 				public ScoringFunction createNewScoringFunction(Person person) {
 					SumScoringFunction sumScoringFunction = new SumScoringFunction();
 
-					Config config = controler.getConfig();
+					Config config = controller.getConfig();
 
 					final ScoringParameters params = parameters.getScoringParameters(person);
 
@@ -174,9 +166,9 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 				}
 			});
 
-		controler.getConfig().vspExperimental().setVspDefaultsCheckingLevel(VspDefaultsCheckingLevel.abort);
+		controller.getConfig().vspExperimental().setVspDefaultsCheckingLevel(VspDefaultsCheckingLevel.abort);
 
-		controler.run();
+		controller.run();
 
 		return 0;
 	}
@@ -289,18 +281,18 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 	 * @param scenario
 	 * @return
 	 */
-	private Controler prepareControler(Scenario scenario) {
-		Controler controler = new Controler(scenario);
+	private Controler prepareController(Scenario scenario) {
+		Controler controller = new Controler(scenario);
 
-		if (controler.getConfig().transit().isUseTransit()) {
+		if (controller.getConfig().transit().isUseTransit()) {
 			// use the sbb pt raptor router
-			controler.addOverridingModule(new AbstractModule() {
+			controller.addOverridingModule(new AbstractModule() {
 				@Override
 				public void install() {
 					install(new SwissRailRaptorModule());
 				}
 			});
 		}
-		return controler;
+		return controller;
 	}
 }
