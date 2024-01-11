@@ -27,14 +27,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import org.matsim.contrib.freight.analysis.RunFreightAnalysisEventbased;
-import org.matsim.core.utils.io.UncheckedIOException;
+import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
 import org.matsim.freightDemandGeneration.FreightDemandGeneration;
 import org.matsim.vsp.freightAnalysis.FreightAnalyse;
 
 public class FreightDemandGenerationExample {
 
-    public static void main(String[] args) throws UncheckedIOException, IOException {
+    public static void main(String[] args) throws IOException {
         Path output = Path.of("output/demandGeneration/");
         Path vehicleFilePath = Path.of(
                 "../public-svn/matsim/scenarios/countries/de/freight-demand-generation/input_example/vehicleTypes_default.xml");
@@ -77,8 +76,8 @@ public class FreightDemandGenerationExample {
         File lastFile = fileData.get(fileData.size() - 1);
         String[] argsAnalysis = {lastFile.toString(), "true"};
         FreightAnalyse.main(argsAnalysis);
-        RunFreightAnalysisEventbased freightAnalysis = new RunFreightAnalysisEventbased(lastFile.toString() + "/",
-                lastFile.toString() + "/Analysis_new/", "EPSG:31468");
+        RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(lastFile + "/",
+                lastFile + "/Analysis_new/", "EPSG:31468");
         freightAnalysis.runAnalysis();
     }
 }

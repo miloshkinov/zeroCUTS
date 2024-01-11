@@ -3,9 +3,7 @@ package org.matsim.vsp.freightAnalysis;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contrib.freight.FreightConfigGroup;
-import org.matsim.contrib.freight.carrier.*;
-import org.matsim.contrib.freight.controler.FreightUtils;
+import org.matsim.freight.carriers.*;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -13,7 +11,6 @@ import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.core.utils.io.UncheckedIOException;
 
 import java.io.IOException;
 
@@ -37,7 +34,7 @@ public class FreightAnalyse {
 
 	private static final Logger log = LogManager.getLogger(FreightAnalyse.class);
 
-	public static void main(String[] args) throws UncheckedIOException, IOException {
+	public static void main(String[] args) throws IOException {
 		RUN_DIR = args[0] + "/";
 		OUTPUT_DIR = RUN_DIR + "Analysis/";
 		OutputDirectoryLogging.initLoggingWithOutputDirectory(OUTPUT_DIR);
@@ -54,7 +51,7 @@ public class FreightAnalyse {
 
 	}
 
-	private void run() throws UncheckedIOException {
+	private void run() {
 
 //			File configFile = new File(RUN_DIR + "output_config.xml");
 ////			File configFile = new File(RUN_DIR + "output_config.xml.gz");
@@ -67,12 +64,12 @@ public class FreightAnalyse {
 		config.vehicles().setVehiclesFile(RUN_DIR + runId + "output_allVehicles.xml.gz");
 		config.network().setInputFile(RUN_DIR + runId + "output_network.xml.gz");
 		config.global().setCoordinateSystem(networkCRS);
-		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
+		FreightCarriersConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);
 		freightConfigGroup.setCarriersFile(RUN_DIR + runId + "output_carriers.xml.gz");
 		freightConfigGroup.setCarriersVehicleTypesFile(RUN_DIR + runId + "output_carriersVehicleTypes.xml.gz");
 		
 		Scenario scenario = ScenarioUtils.loadScenario(config);
-		FreightUtils.loadCarriersAccordingToFreightConfig(scenario);
+		CarriersUtils.loadCarriersAccordingToFreightConfig(scenario);
 //		Network network = NetworkUtils.readNetwork(networkFile.getAbsolutePath());
 
 //		CarrierVehicleTypes vehicleTypes = new CarrierVehicleTypes();
@@ -98,7 +95,7 @@ public class FreightAnalyse {
 
 		TripWriter tripWriter = new TripWriter(tripHandler, OUTPUT_DIR);
 		if (!onlyAllCarrierResults) {
-			for (Carrier carrier : FreightUtils.addOrGetCarriers(scenario).getCarriers().values()) {
+			for (Carrier carrier : CarriersUtils.addOrGetCarriers(scenario).getCarriers().values()) {
 				// tripWriter.writeDetailedResultsSingleCarrier(carrier.getId().toString());
 				tripWriter.writeTourResultsSingleCarrier(carrier.getId().toString());
 			}
@@ -107,7 +104,7 @@ public class FreightAnalyse {
 		}
 		tripWriter.writeResultsPerVehicleTypes();
 		tripWriter.writeTourResultsAllCarrier();
-		tripWriter.writeResultsAllCarrier(FreightUtils.addOrGetCarriers(scenario));
+		tripWriter.writeResultsAllCarrier(CarriersUtils.addOrGetCarriers(scenario));
 
 		log.info("### Analysis DONE");
 

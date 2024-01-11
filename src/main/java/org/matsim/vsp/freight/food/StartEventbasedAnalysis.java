@@ -2,7 +2,7 @@ package org.matsim.vsp.freight.food;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.matsim.contrib.freight.analysis.RunFreightAnalysisEventbased;
+import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +30,7 @@ public class StartEventbasedAnalysis {
 			simOutputPath = simOutputPath + File.separator;
 		}
 		log.info("Running analysis for: " + simOutputPath);
-		RunFreightAnalysisEventbased freightAnalysis = new RunFreightAnalysisEventbased(simOutputPath, simOutputPath +"Analysis"+File.separator, null);
+		RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(simOutputPath, simOutputPath +"Analysis"+File.separator, null);
 		freightAnalysis.runAnalysis();
 	}
 }

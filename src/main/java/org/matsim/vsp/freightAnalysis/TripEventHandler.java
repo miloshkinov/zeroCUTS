@@ -13,7 +13,7 @@ import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
+import org.matsim.freight.carriers.CarrierVehicleTypes;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.Vehicles;
 

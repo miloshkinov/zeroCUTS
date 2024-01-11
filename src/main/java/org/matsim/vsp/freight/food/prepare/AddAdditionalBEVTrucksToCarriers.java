@@ -24,8 +24,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.matsim.api.core.v01.Id;
-import org.matsim.contrib.freight.carrier.*;
 import org.matsim.core.gbl.Gbl;
+import org.matsim.freight.carriers.*;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
@@ -80,13 +80,13 @@ public class AddAdditionalBEVTrucksToCarriers {
 			}
 
 			for (var vehicleToAdd : vehiclesToAdd) {
-				CarrierUtils.addCarrierVehicle(carrier, vehicleToAdd);
+				CarriersUtils.addCarrierVehicle(carrier, vehicleToAdd);
 			}
 
 			Gbl.assertIf(2 * numberOfVehiclesBefore == carrier.getCarrierCapabilities().getCarrierVehicles().size()); //Nachher müssen doppelt so viele Fahrzeuge drin sein
 		}
 
-		new CarrierPlanXmlWriterV2(carriers).write(OUTPUT_Carrier_File);
+		new CarrierPlanWriter(carriers).write(OUTPUT_Carrier_File);
 		System.out.println("### Done ###");
 	}
 
