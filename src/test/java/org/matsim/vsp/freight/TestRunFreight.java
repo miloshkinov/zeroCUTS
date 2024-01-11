@@ -22,12 +22,10 @@
 package org.matsim.vsp.freight;
 
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.matsim.testcases.MatsimTestUtils;
-import org.matsim.vsp.freight.RunFreight;
 
 /**
  * @author kturner
@@ -35,7 +33,8 @@ import org.matsim.vsp.freight.RunFreight;
  */
 public class TestRunFreight {
 	
-	@Rule public MatsimTestUtils utils = new MatsimTestUtils() ;
+	@RegisterExtension
+	private MatsimTestUtils utils = new MatsimTestUtils() ;
 
 	/**
 	 * First very simple Test method for {@link org.matsim.vsp.freight.RunFreight#main(java.lang.String[])}.
@@ -50,7 +49,7 @@ public class TestRunFreight {
 		} catch ( Exception ee ) {
 			LogManager.getLogger(this.getClass()).fatal("there was an exception: \n" + ee ) ;
 			// if one catches an exception, then one needs to explicitly fail the test:
-			Assert.fail();
+			Assertions.fail();
 		}
 	}
 }
