@@ -81,7 +81,9 @@ public class FreightAnalyseKT {
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/51a_ICEV_NwCE_BVWP_2000it_DCoff_noTax/" ;
 
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/21a_ICEV_NwCE_BVWP_10000it_DC_noTax/" ;
-	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/10000it/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/10000it/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/" ;
+
+	private static final String RUN_DIR = "./output/freightUpdate71-2/" ;
 
 
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/Demo1ItDC/" ;
@@ -109,7 +111,7 @@ public class FreightAnalyseKT {
 //			File populationFile = new File(RUN_DIR + "output_plans.xml.gz");
 		File networkFile = new File(RUN_DIR+ "output_network.xml.gz");
 		File carrierFile = new File(RUN_DIR+ "output_carriers.xml.gz");
-		File vehicleTypeFile = new File(RUN_DIR+ "output_vehicleTypes.xml.gz");
+		File vehicleTypeFile = new File(RUN_DIR+ "output_carriersVehicleTypes.xml.gz");
 
 		Network network = NetworkUtils.readNetwork(networkFile.getAbsolutePath());
 
