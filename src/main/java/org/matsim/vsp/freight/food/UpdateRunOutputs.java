@@ -1,21 +1,21 @@
 package org.matsim.vsp.freight.food;
 
-import java.io.IOException;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.freight.carriers.Carrier;
+import org.matsim.freight.carriers.CarrierPlan;
 import org.matsim.freight.carriers.CarrierPlanWriter;
-import org.matsim.freight.carriers.Carriers;
 import org.matsim.freight.carriers.CarriersUtils;
 import org.matsim.freight.carriers.FreightCarriersConfigGroup;
-import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
-import org.matsim.freight.carriers.controler.CarrierModule;
+import org.matsim.freight.carriers.ScheduledTour;
+import org.matsim.freight.carriers.Tour;
 
 /**
  * Diese Klasse soll den Output von "alten" runs derart updaten,
@@ -61,24 +61,36 @@ public class UpdateRunOutputs {
     new CarrierPlanWriter(CarriersUtils.getCarriers( scenario )).write( "output/unmodifiedCarriers.xml" ) ;
     // (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
 
-    // Solving the VRP (generate carrier's tour plans)
-//    CarriersUtils.runJsprit( scenario );
+    for (Carrier carrier : CarriersUtils.addOrGetCarriers(scenario).getCarriers().values()) {
+      final CarrierPlan selectedPlan = carrier.getSelectedPlan();
+
+      //Add meaningful TourIds.
+      int tourIdIndex = 1;
+      Collection<ScheduledTour> updatedScheduledTours = new LinkedList<>();
+      for (ScheduledTour scheduledTour : selectedPlan.getScheduledTours().stream().toList()) {
+        updatedScheduledTours.add(ScheduledTour.newInstance(
+            scheduledTour.getTour().duplicateWithNewId(Id.create(tourIdIndex, Tour.class)),
+            scheduledTour.getVehicle(),
+            scheduledTour.getDeparture() ));
+        tourIdIndex++;
+      }
+      selectedPlan.getScheduledTours().clear();
+      selectedPlan.getScheduledTours().addAll(updatedScheduledTours);
+
+      //put score into JspritScore and Set MATSimscore to -INF.
+      selectedPlan.setJspritScore(selectedPlan.getScore());
+      selectedPlan.setScore(Double.NEGATIVE_INFINITY);
+    }
+
+    new CarrierPlanWriter(CarriersUtils.getCarriers( scenario )).write( "output/updatedCarriersWithTourIds.xml" );
 //
-//    // Output after jsprit run (not necessary)
-//    new CarrierPlanWriter(CarriersUtils.getCarriers( scenario )).write( "output/jsprit_plannedCarriers.xml" ) ;
-//    // (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
+//    // ## MATSim configuration:  ##
+//    final Controler controler = new Controler( scenario ) ;
+//    controler.addOverridingModule(new CarrierModule() );
 //
-
-    //TODO: Unify TourIds .....
-    //Write it out again.
-
-    // ## MATSim configuration:  ##
-    final Controler controler = new Controler( scenario ) ;
-    controler.addOverridingModule(new CarrierModule() );
-
-
-    // ## Start of the MATSim-Run: ##
-    controler.run();
+//
+//    // ## Start of the MATSim-Run: ##
+//    controler.run();
 
 //    var analysis = new RunFreightAnalysisEventBased(config.controller().getOutputDirectory()+"/", config.controller().getOutputDirectory()+"/analysis", "EPSG:31468");
 //    try {
