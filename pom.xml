@@ -11,7 +11,7 @@
 	<description>zeroCUTS project</description>
 
 	<properties>
-		<matsim.version>16.0-PR3045</matsim.version>
+		<matsim.version>16.0-PR3117</matsim.version>
 <!--        <matsim.version>16.0-SNAPSHOT</matsim.version>-->
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -74,6 +74,14 @@
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>application</artifactId>
+			<version>${matsim.version}</version>
+			<!--<scope>compile</scope> -->
+		</dependency>
+
+		<!-- This is the matsim small-scale-traffic-generation contrib: -->
+		<dependency>
+			<groupId>org.matsim.contrib</groupId>
+			<artifactId>small-scale-traffic-generation</artifactId>
 			<version>${matsim.version}</version>
 			<!--<scope>compile</scope> -->
 		</dependency>
