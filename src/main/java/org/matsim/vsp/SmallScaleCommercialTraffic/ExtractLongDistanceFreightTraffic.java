@@ -67,6 +67,6 @@ public class ExtractLongDistanceFreightTraffic {
 		}
 		PopulationUtils.sampleDown(population, samplePopulationTo/inputPopulationSample);
 		PopulationUtils.writePopulation(population, outputPath.toString() + "/berlin_longDistanceFreight_"+(int)(samplePopulationTo*100)+"pct.xml.gz");
-		new File (outputPath.toString() + "/extracted-population.xml.gz").delete();
+		assert (new File (outputPath.toString() + "/extracted-population.xml.gz").delete());
 	}
 }
