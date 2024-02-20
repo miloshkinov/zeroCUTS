@@ -99,7 +99,8 @@ public class RunCreateSmallScaleCommercialTraffic {
 
         if (includeExistingModels) {
             new GenerateSmallScaleCommercialTrafficDemand().execute(
-                    configPath,                    "--sample", sampleSize,
+                    configPath,
+                    "--sample", sampleSize,
                     "--jspritIterations", jspritIterations,
                     "--creationOption", selectedCreationOption,
                     "--landuseConfiguration", selectedLanduseConfiguration,
