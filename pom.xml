@@ -78,6 +78,16 @@
 			<!--<scope>compile</scope> -->
 		</dependency>
 
+		<!-- This is the matsim small-scale-traffic-generation contrib: -->
+		<dependency>
+			<groupId>org.matsim.contrib</groupId>
+			<artifactId>small-scale-traffic-generation</artifactId>
+			<version>${matsim.version}</version>
+			<!--<scope>compile</scope> -->
+		</dependency>
+
+
+
 
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
