@@ -96,6 +96,8 @@ public class RunFoodEmissions2024 {
     final String linkEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerLink.csv";
     final String linkEmissionPerMAnalysisFile = analysisOutputDirectory + "/emissionsPerLinkPerM.csv";
     final String vehicleTypeFile = analysisOutputDirectory  + "/emissionVehicleInformation.csv";
+    final String vehicleEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerVerhicle.csv";
+    final String vehicleTypeEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerVehicleType.csv";
 
     Scenario scenario = ScenarioUtils.loadScenario(config);
     // network
@@ -323,9 +325,7 @@ public class RunFoodEmissions2024 {
 
     EmissionsWriterUtils.writePerLinkOutput(linkEmissionAnalysisFile, linkEmissionPerMAnalysisFile, scenario, emissionsEventHandler);
     EmissionsWriterUtils.writeEmissionConceptAssignmentOutput(vehicleTypeFile, scenario, emissionsEventHandler);
-
-    //Neu: pro Fzg(Typ)
-
+    EmissionsWriterUtils.writePerVehicleOutput(vehicleEmissionAnalysisFile,vehicleTypeEmissionAnalysisFile,scenario,emissionsPerVehicleEventHandler);
 
 
     int totalVehicles = scenario.getVehicles().getVehicles().size();
