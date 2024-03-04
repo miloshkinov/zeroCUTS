@@ -40,7 +40,8 @@ public class RunFoodEmissions2024 {
   public static void main(String[] args) throws IOException {
 
     final String runDirectory = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax"; //KMT
-    final String hbefaFileWarmDet = "original-input-data/HBEFA_summarized_final.csv"; //TODO: In verschlüsselte Dateien integrieren und ins public SVN laden. DAbei nochmal auf Spalten achten. mMn ist hier emConcept und Technology verdreht -.-
+    final String hbefaFileWarmDet = "original-input-data/HBEFA_summarized_final2.csv"; //TODO: In verschlüsselte Dateien integrieren und ins public SVN laden. DAbei nochmal auf Spalten achten. mMn ist hier emConcept und Technology verdreht -.-
+    //Tabelle mit Endung2 hat die Spalten korrigiert.
 
     RunFoodEmissions2024 analysis = new RunFoodEmissions2024(
         runDirectory,
@@ -74,14 +75,14 @@ public class RunFoodEmissions2024 {
 
     EmissionsConfigGroup eConfig = ConfigUtils.addOrGetModule(config, EmissionsConfigGroup.class);
     eConfig.setDetailedVsAverageLookupBehavior(
-        DetailedVsAverageLookupBehavior.tryDetailedThenTechnologyAverageThenAverageTable);
+        DetailedVsAverageLookupBehavior.tryDetailedThenTechnologyAverageElseAbort);
     eConfig.setHbefaTableConsistencyCheckingLevel(
         HbefaTableConsistencyCheckingLevel.none);  //KMT: Vielleicht nicht die beste Einstellung, aber das ist eine andere Baustelle ;)
 //		eConfig.setAverageColdEmissionFactorsFile("https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/22823adc0ee6a0e231f35ae897f7b224a86f3a7a.enc"); //scheint nicht ganz die richtige Tabelle zu sein
     eConfig.setAverageColdEmissionFactorsFile(
         "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/r9230ru2n209r30u2fn0c9rn20n2rujkhkjhoewt84202.enc"); //daher nun ausnahmsweise doch mal als lokale Kopie, damit wir weiter kommen.
     eConfig.setDetailedColdEmissionFactorsFile(
-        "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/5a297db51545335b2f7899002a1ea6c45d4511a3.enc");
+        "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/82t7b02rc0rji2kmsahfwp933u2rfjlkhfpi2u9r20.enc");
     eConfig.setAverageWarmEmissionFactorsFile(
         "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/7eff8f308633df1b8ac4d06d05180dd0c5fdf577.enc");
     eConfig.setDetailedWarmEmissionFactorsFile(this.hbefaWarmFileDet);
@@ -181,36 +182,36 @@ public class RunFoodEmissions2024 {
         EngineInformation heavy_26tEngineInformation = heavy_26tVehicleType.getEngineInformation();
         VehicleUtils.setHbefaVehicleCategory(heavy_26tEngineInformation,
             HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaTechnology(heavy_26tEngineInformation, "diesel");
+        VehicleUtils.setHbefaEmissionsConcept(heavy_26tEngineInformation, "diesel");
         VehicleUtils.setHbefaSizeClass(heavy_26tEngineInformation, "RT >20-26t");
-        VehicleUtils.setHbefaEmissionsConcept(heavy_26tEngineInformation, "average");
+        VehicleUtils.setHbefaTechnology(heavy_26tEngineInformation, "average");
       }
 
       if (heavy26t_electricityVehicleType != null) {
         EngineInformation heavy26t_electricityEngineInformation = heavy26t_electricityVehicleType.getEngineInformation();
         VehicleUtils.setHbefaVehicleCategory(heavy26t_electricityEngineInformation,
             HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaTechnology(heavy26t_electricityEngineInformation, "electricity");
+        VehicleUtils.setHbefaEmissionsConcept(heavy26t_electricityEngineInformation, "electricity");
         VehicleUtils.setHbefaSizeClass(heavy26t_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaEmissionsConcept(heavy26t_electricityEngineInformation, "average");
+        VehicleUtils.setHbefaTechnology(heavy26t_electricityEngineInformation, "average");
       }
 
       if (heavy26t_frozenVehicleType != null) {
         EngineInformation heavy26t_frozenEngineInformation = heavy26t_frozenVehicleType.getEngineInformation();
         VehicleUtils.setHbefaVehicleCategory(heavy26t_frozenEngineInformation,
             HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaTechnology(heavy26t_frozenEngineInformation, "diesel");
+        VehicleUtils.setHbefaEmissionsConcept(heavy26t_frozenEngineInformation, "diesel");
         VehicleUtils.setHbefaSizeClass(heavy26t_frozenEngineInformation, "RT >20-26t");
-        VehicleUtils.setHbefaEmissionsConcept(heavy26t_frozenEngineInformation, "average");
+        VehicleUtils.setHbefaTechnology(heavy26t_frozenEngineInformation, "average");
       }
 
       if (heavy26t_frozen_electricityVehicleType != null) {
         EngineInformation heavy26t_frozen_electricityEngineInformation = heavy26t_frozen_electricityVehicleType.getEngineInformation();
         VehicleUtils.setHbefaVehicleCategory(heavy26t_frozen_electricityEngineInformation,
             HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaTechnology(heavy26t_frozen_electricityEngineInformation, "electricity");
+        VehicleUtils.setHbefaEmissionsConcept(heavy26t_frozen_electricityEngineInformation, "electricity");
         VehicleUtils.setHbefaSizeClass(heavy26t_frozen_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaEmissionsConcept(heavy26t_frozen_electricityEngineInformation,
+        VehicleUtils.setHbefaTechnology(heavy26t_frozen_electricityEngineInformation,
             "average");
       }
 
@@ -218,72 +219,72 @@ public class RunFoodEmissions2024 {
         EngineInformation heavy40tEngineInformation = heavy40tVehicleType.getEngineInformation();
         VehicleUtils.setHbefaVehicleCategory(heavy40tEngineInformation,
             HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaTechnology(heavy40tEngineInformation, "diesel");
+        VehicleUtils.setHbefaEmissionsConcept(heavy40tEngineInformation, "diesel");
         VehicleUtils.setHbefaSizeClass(heavy40tEngineInformation, "RT >32t");
-        VehicleUtils.setHbefaEmissionsConcept(heavy40tEngineInformation, "average");
+        VehicleUtils.setHbefaTechnology(heavy40tEngineInformation, "average");
       }
 
       if (heavy40t_electricityVehicleType != null) {
         EngineInformation heavy40t_electricityEngineInformation = heavy40t_electricityVehicleType.getEngineInformation();
         VehicleUtils.setHbefaVehicleCategory(heavy40t_electricityEngineInformation,
             HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaTechnology(heavy40t_electricityEngineInformation, "electricity");
+        VehicleUtils.setHbefaEmissionsConcept(heavy40t_electricityEngineInformation, "electricity");
         VehicleUtils.setHbefaSizeClass(heavy40t_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaEmissionsConcept(heavy40t_electricityEngineInformation, "average");
+        VehicleUtils.setHbefaTechnology(heavy40t_electricityEngineInformation, "average");
       }
 
       if (light8tVehicleType != null) {
         EngineInformation light8tEngineInformation = light8tVehicleType.getEngineInformation();
         VehicleUtils.setHbefaVehicleCategory(light8tEngineInformation,
             HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaTechnology(light8tEngineInformation, "diesel");
+        VehicleUtils.setHbefaEmissionsConcept(light8tEngineInformation, "diesel");
         VehicleUtils.setHbefaSizeClass(light8tEngineInformation, "RT >7.5-12t");
-        VehicleUtils.setHbefaEmissionsConcept(light8tEngineInformation, "average");
+        VehicleUtils.setHbefaTechnology(light8tEngineInformation, "average");
       }
 
       if (light8t_electricityVehicleType != null) {
         EngineInformation light8t_electricityEngineInformation = light8t_electricityVehicleType.getEngineInformation();
         VehicleUtils.setHbefaVehicleCategory(light8t_electricityEngineInformation,
             HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaTechnology(light8t_electricityEngineInformation, "electricity");
+        VehicleUtils.setHbefaEmissionsConcept(light8t_electricityEngineInformation, "electricity");
         VehicleUtils.setHbefaSizeClass(light8t_electricityEngineInformation, "RT >7.5-12t");
-        VehicleUtils.setHbefaEmissionsConcept(light8t_electricityEngineInformation, "average");
+        VehicleUtils.setHbefaTechnology(light8t_electricityEngineInformation, "average");
       }
 
       if (light8t_frozenVehicleType != null) {
         EngineInformation light8t_frozenEngineInformation = light8t_frozenVehicleType.getEngineInformation();
         VehicleUtils.setHbefaVehicleCategory(light8t_frozenEngineInformation,
             HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaTechnology(light8t_frozenEngineInformation, "diesel");
+        VehicleUtils.setHbefaEmissionsConcept(light8t_frozenEngineInformation, "diesel");
         VehicleUtils.setHbefaSizeClass(light8t_frozenEngineInformation, "RT >7.5-12t");
-        VehicleUtils.setHbefaEmissionsConcept(light8t_frozenEngineInformation, "average");
+        VehicleUtils.setHbefaTechnology(light8t_frozenEngineInformation, "average");
       }
 
       if (light8t_frozen_electricityVehicleType != null) {
         EngineInformation light8t_frozen_electricityEngineInformation = light8t_frozen_electricityVehicleType.getEngineInformation();
         VehicleUtils.setHbefaVehicleCategory(light8t_frozen_electricityEngineInformation,
             HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaTechnology(light8t_frozen_electricityEngineInformation, "electricity");
+        VehicleUtils.setHbefaEmissionsConcept(light8t_frozen_electricityEngineInformation, "electricity");
         VehicleUtils.setHbefaSizeClass(light8t_frozen_electricityEngineInformation, "RT >7.5-12t");
-        VehicleUtils.setHbefaEmissionsConcept(light8t_frozen_electricityEngineInformation, "average");
+        VehicleUtils.setHbefaTechnology(light8t_frozen_electricityEngineInformation, "average");
       }
 
       if (medium18tVehicleType != null) {
         EngineInformation medium18tEngineInformation = medium18tVehicleType.getEngineInformation();
         VehicleUtils.setHbefaVehicleCategory(medium18tEngineInformation,
             HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaTechnology(medium18tEngineInformation, "diesel");
+        VehicleUtils.setHbefaEmissionsConcept(medium18tEngineInformation, "diesel");
         VehicleUtils.setHbefaSizeClass(medium18tEngineInformation, "RT >14-20t");
-        VehicleUtils.setHbefaEmissionsConcept(medium18tEngineInformation, "average");
+        VehicleUtils.setHbefaTechnology(medium18tEngineInformation, "average");
       }
 
       if (medium18t_electricityVehicleType != null) {
         EngineInformation medium18t_electricityEngineInformation = medium18t_electricityVehicleType.getEngineInformation();
         VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
             HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "electricity");
+        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
         VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "average");
+        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
       }
     }
 
