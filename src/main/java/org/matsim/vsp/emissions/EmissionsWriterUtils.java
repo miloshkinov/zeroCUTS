@@ -129,11 +129,11 @@ public class EmissionsWriterUtils {
       BufferedWriter vehicleWriter = new BufferedWriter(new FileWriter(vehicleFile));
       BufferedWriter vehicleTypeWriter = new BufferedWriter(new FileWriter(vehicleTypeFile));
 
-      vehicleWriter.write("vehicleId");
       vehicleWriter.write("vehicleId" + DELIMITER + "vehicleTypeId");
       vehicleTypeWriter.write("vehicleTypeId");
 
       Map<Id<Vehicle>, Map<Pollutant, Double>> vehicle2pollutants = emissionsEventHandler.getVehicle2pollutants();
+      log.warn("#### Vehicle2 Pollutant vor dem schreiben: " +vehicle2pollutants.get(Id.createVehicleId("freight_rewe_VERBRAUCHERMARKT_TROCKEN_veh_medium18t_electro_160444_1")).toString() );
       Map<Id<VehicleType>, Map<Pollutant, Double>> vehicleType2pollutants = new HashMap<>();
 
       for (Pollutant pollutant : Pollutant.values()) {
