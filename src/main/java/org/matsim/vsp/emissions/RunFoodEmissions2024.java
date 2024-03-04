@@ -67,7 +67,7 @@ public class RunFoodEmissions2024 {
     config.global().setCoordinateSystem("EPSG:31468");
 //		config.global().setCoordinateSystem("GK4");
     config.plans().setInputFile(null);
-    config.eventsManager().setNumberOfThreads(null);
+    config.eventsManager().setNumberOfThreads(1);
     config.eventsManager().setEstimatedNumberOfEvents(null);
 //    config.parallelEventHandling().setNumberOfThreads(null);
 //    config.parallelEventHandling().setEstimatedNumberOfEvents(null);
@@ -97,7 +97,7 @@ public class RunFoodEmissions2024 {
     final String linkEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerLink.csv";
     final String linkEmissionPerMAnalysisFile = analysisOutputDirectory + "/emissionsPerLinkPerM.csv";
     final String vehicleTypeFile = analysisOutputDirectory  + "/emissionVehicleInformation.csv";
-    final String vehicleEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerVerhicle.csv";
+    final String vehicleEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerVehicle.csv";
     final String vehicleTypeEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerVehicleType.csv";
 
     Scenario scenario = ScenarioUtils.loadScenario(config);

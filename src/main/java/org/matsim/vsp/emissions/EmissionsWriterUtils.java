@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
@@ -14,6 +15,7 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.emissions.Pollutant;
+import org.matsim.contrib.emissions.analysis.EmissionsByPollutant;
 import org.matsim.contrib.emissions.analysis.EmissionsOnLinkEventHandler;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
@@ -26,6 +28,7 @@ public class EmissionsWriterUtils {
 
   private static final Logger log = LogManager.getLogger(EmissionsWriterUtils.class);
   private static final String DELIMITER = ";";
+  private static final int NU_DIGITS = 5;
 
   /**
    * Schreibt CSV Dateien raus mit Emission pro LINK - einmal als Summe für den Link -> kann genutzt
@@ -45,7 +48,7 @@ public class EmissionsWriterUtils {
     log.info("Writing output per LINK...");
 
     NumberFormat nf = NumberFormat.getInstance(Locale.US);
-    nf.setMaximumFractionDigits(4);
+    nf.setMaximumFractionDigits(NU_DIGITS);
     nf.setGroupingUsed(false);
 
     {
@@ -119,7 +122,7 @@ public class EmissionsWriterUtils {
     log.info("Writing output per VEHICLE (TYPE)...");
 
     NumberFormat nf = NumberFormat.getInstance(Locale.US);
-    nf.setMaximumFractionDigits(4);
+    nf.setMaximumFractionDigits(NU_DIGITS);
     nf.setGroupingUsed(false);
 
     {
@@ -132,9 +135,9 @@ public class EmissionsWriterUtils {
       vehicleWriter.write("vehicleId" + DELIMITER + "vehicleTypeId");
       vehicleTypeWriter.write("vehicleTypeId");
 
-      Map<String, Map<Pollutant, Double>> vehicle2pollutants = emissionsEventHandler.getVehicle2pollutants();
-      log.warn("#### Vehicle2 Pollutant vor dem schreiben: " +vehicle2pollutants.get("freight_rewe_VERBRAUCHERMARKT_TROCKEN_veh_medium18t_electro_160444_1").toString());
-      Map<Id<VehicleType>, Map<Pollutant, Double>> vehicleType2pollutants = new HashMap<>();
+      Map<Id<Vehicle>, EmissionsByPollutant> vehicle2pollutants = emissionsEventHandler.getVehicle2pollutants();
+      log.warn("#### Vehicle2 Pollutant vor dem schreiben: " +vehicle2pollutants.get(Id.createVehicleId("freight_rewe_VERBRAUCHERMARKT_TROCKEN_veh_medium18t_electro_160444_1")).getEmissions().toString());
+      Map<Id<VehicleType>, EmissionsByPollutant> vehicleType2pollutants = new LinkedHashMap<>();
 
       for (Pollutant pollutant : Pollutant.values()) {
         vehicleWriter.write(DELIMITER + pollutant);
@@ -144,9 +147,9 @@ public class EmissionsWriterUtils {
       vehicleWriter.newLine();
       vehicleTypeWriter.newLine();
 
-      for (String vehicleId : vehicle2pollutants.keySet()) {
+      for (Id<Vehicle> vehicleId : vehicle2pollutants.keySet()) {
         final Id<VehicleType> vehicleTypeId = VehicleUtils.findVehicle(
-                Id.createVehicleId(vehicleId), scenario)
+                vehicleId, scenario)
             .getType().getId();
 
         vehicleWriter.write(vehicleId.toString());
@@ -154,26 +157,22 @@ public class EmissionsWriterUtils {
 
         for (Pollutant pollutant : Pollutant.values()) {
           double emissionValue = 0.;
-          if (vehicle2pollutants.get(vehicleId).get(pollutant) != null) {
-            emissionValue = vehicle2pollutants.get(vehicleId).get(pollutant);
-          }
+//          if (vehicle2pollutants.get(vehicleId).getEmission(pollutant) != null) {
+            emissionValue = vehicle2pollutants.get(vehicleId).getEmission(pollutant);
+//          }
           vehicleWriter.write(DELIMITER + nf.format(emissionValue));
         }
         vehicleWriter.newLine();
 
         {
           //Sum up per VehicleType
+          EmissionsByPollutant emissionsByPollutant = vehicle2pollutants.get(vehicleId);
           if (vehicleType2pollutants.get(vehicleTypeId) == null) {
-            vehicleType2pollutants.put(vehicleTypeId, vehicle2pollutants.get(vehicleId));
+            vehicleType2pollutants.put(vehicleTypeId, emissionsByPollutant);
           } else {
-            var emissions = vehicle2pollutants.get(vehicleId);
-            for (Pollutant pollutant : emissions.keySet()) {
-              vehicleType2pollutants.get(vehicleTypeId)
-                  .merge(pollutant, emissions.get(pollutant), Double::sum);
-            }
+            vehicleType2pollutants.get(vehicleTypeId).addEmissions(emissionsByPollutant.getEmissions());
           }
         }
-
       }
       // write it out per VehicleType.
       for (Id<VehicleType> vehicleTypeId : vehicleType2pollutants.keySet()) {
@@ -181,9 +180,9 @@ public class EmissionsWriterUtils {
 
         for (Pollutant pollutant : Pollutant.values()) {
           double emissionValue = 0.;
-          if (vehicleType2pollutants.get(vehicleTypeId).get(pollutant) != null) {
-            emissionValue = vehicleType2pollutants.get(vehicleTypeId).get(pollutant);
-          }
+//          if (vehicleType2pollutants.get(vehicleTypeId).getEmission(pollutant) != null) {
+            emissionValue = vehicleType2pollutants.get(vehicleTypeId).getEmission(pollutant);
+//          }
           vehicleTypeWriter.write(DELIMITER + nf.format(emissionValue));
         }
         vehicleTypeWriter.newLine();
