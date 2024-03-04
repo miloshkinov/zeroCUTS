@@ -41,11 +41,13 @@ import org.matsim.vehicles.VehicleType;
  */
 public class EmissionsPerVehicleEventHandler implements WarmEmissionEventHandler, ColdEmissionEventHandler {
 
-  private static final Id<Vehicle> FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1 = Id.createVehicleId(
-      "freight_rewe_VERBRAUCHERMARKT_TROCKEN_veh_medium18t_electro_160444_1");
+  private static final String FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1 =
+      "freight_rewe_VERBRAUCHERMARKT_TROCKEN_veh_medium18t_electro_160444_1";
   //TODO: Use EmissionByPollutant?
-    private final Map<Id<Vehicle>, Map<Pollutant, Double>> vehicle2pollutants = new HashMap<>();
+    private final Map<String, Map<Pollutant, Double>> vehicle2pollutants = new HashMap<>();
 //  private final Map<Id<VehicleType>, Map<Pollutant, Double>> vehicleType2pollutants = new HashMap<>();
+
+  private Double tempValue = 0.;
 
 	/**
 	 * Drop events after end time.
@@ -59,7 +61,7 @@ public class EmissionsPerVehicleEventHandler implements WarmEmissionEventHandler
      *
      * @return Total emissions per pollutant by vehicle id
      */
-    public Map<Id<Vehicle>, Map<Pollutant, Double>> getVehicle2pollutants() {
+    public Map<String, Map<Pollutant, Double>> getVehicle2pollutants() {
       System.out.println("#### Vehicle2Pollutant ABRUF: " +vehicle2pollutants.get(
           FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1).toString() );
       return vehicle2pollutants; }
@@ -89,19 +91,21 @@ public class EmissionsPerVehicleEventHandler implements WarmEmissionEventHandler
 
     private void handleEmissionEvent(double time, Id<Vehicle> vehicleId, Map<Pollutant, Double> emissions) {
 
-        //Sum up ver VehicleId
-        if (vehicle2pollutants.get(vehicleId) == null) { vehicle2pollutants.put(vehicleId, emissions); }
+      //Sum up ver VehicleId
+        if (vehicle2pollutants.get(vehicleId.toString()) == null) { vehicle2pollutants.put(vehicleId.toString(), emissions); }
         else {
             for (Pollutant key : emissions.keySet()) {
-                vehicle2pollutants.get(vehicleId).merge(key, emissions.get(key), Double::sum);
+                vehicle2pollutants.get(vehicleId.toString()).merge(key, emissions.get(key), Double::sum);
             }
         }
-        if (vehicleId.equals(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1)){
-          System.out.println("### vehId: " + vehicleId + "; emissions: "+ emissions.toString());
-          System.out.println("### vehicle2Pollutants " + vehicle2pollutants.get(vehicleId).toString());
-        }
-        if ( vehicle2pollutants.get(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1).get(Pollutant.CO) != 1.){
+//        if (vehicleId.toString().equals(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1)){
+//          System.out.println("### vehId: " + vehicleId + "; emissions: "+ emissions.toString());
+//          System.out.println("### vehicle2Pollutants " + vehicle2pollutants.get(vehicleId.toString()).toString());
+//        }
+
+        if ( vehicle2pollutants.get(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1).get(Pollutant.CO).doubleValue() != tempValue.doubleValue()){
           System.out.println("JETZT wurde was modifiziert: " + time + "vehid: " + vehicleId + "; emissions: "+ emissions.toString());
+          tempValue = vehicle2pollutants.get(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1).get(Pollutant.CO);
         }
     }
 }

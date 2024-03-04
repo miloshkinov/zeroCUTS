@@ -132,8 +132,8 @@ public class EmissionsWriterUtils {
       vehicleWriter.write("vehicleId" + DELIMITER + "vehicleTypeId");
       vehicleTypeWriter.write("vehicleTypeId");
 
-      Map<Id<Vehicle>, Map<Pollutant, Double>> vehicle2pollutants = emissionsEventHandler.getVehicle2pollutants();
-      log.warn("#### Vehicle2 Pollutant vor dem schreiben: " +vehicle2pollutants.get(Id.createVehicleId("freight_rewe_VERBRAUCHERMARKT_TROCKEN_veh_medium18t_electro_160444_1")).toString() );
+      Map<String, Map<Pollutant, Double>> vehicle2pollutants = emissionsEventHandler.getVehicle2pollutants();
+      log.warn("#### Vehicle2 Pollutant vor dem schreiben: " +vehicle2pollutants.get("freight_rewe_VERBRAUCHERMARKT_TROCKEN_veh_medium18t_electro_160444_1").toString());
       Map<Id<VehicleType>, Map<Pollutant, Double>> vehicleType2pollutants = new HashMap<>();
 
       for (Pollutant pollutant : Pollutant.values()) {
@@ -144,8 +144,9 @@ public class EmissionsWriterUtils {
       vehicleWriter.newLine();
       vehicleTypeWriter.newLine();
 
-      for (Id<Vehicle> vehicleId : vehicle2pollutants.keySet()) {
-        final Id<VehicleType> vehicleTypeId = VehicleUtils.findVehicle(vehicleId, scenario)
+      for (String vehicleId : vehicle2pollutants.keySet()) {
+        final Id<VehicleType> vehicleTypeId = VehicleUtils.findVehicle(
+                Id.createVehicleId(vehicleId), scenario)
             .getType().getId();
 
         vehicleWriter.write(vehicleId.toString());
