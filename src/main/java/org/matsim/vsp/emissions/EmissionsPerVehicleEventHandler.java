@@ -24,6 +24,7 @@ package org.matsim.vsp.emissions;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.events.Event;
 import org.matsim.contrib.emissions.Pollutant;
 import org.matsim.contrib.emissions.analysis.EmissionsByPollutant;
 import org.matsim.contrib.emissions.events.ColdEmissionEvent;
@@ -78,15 +79,15 @@ public class EmissionsPerVehicleEventHandler implements WarmEmissionEventHandler
 
     @Override
     public void handleEvent(WarmEmissionEvent event) {
-      handleEmissionEvent(event.getVehicleId(), event.getWarmEmissions());
+      handleEmissionEvent( event.getVehicleId(), event.getWarmEmissions(), event);
     }
 
     @Override
     public void handleEvent(ColdEmissionEvent event) {
-        handleEmissionEvent(event.getVehicleId(), event.getColdEmissions());
+        handleEmissionEvent(event.getVehicleId(), event.getColdEmissions(), event);
     }
 
-    private void handleEmissionEvent(Id<Vehicle> vehicleId, Map<Pollutant, Double> emissions) {
+    private void handleEmissionEvent(Id<Vehicle> vehicleId, Map<Pollutant, Double> emissions, Event event) {
 
       EmissionsByPollutant emissionsByPollutant = new EmissionsByPollutant(emissions);
 
@@ -103,9 +104,10 @@ public class EmissionsPerVehicleEventHandler implements WarmEmissionEventHandler
 //          System.out.println("### vehicle2Pollutants " + vehicle2pollutants.get(vehicleId.toString()).toString());
 //        }
 
-//        if ( vehicle2pollutants.get(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1).get(Pollutant.CO).doubleValue() != tempValue.doubleValue()){
-//          System.out.println("JETZT wurde was modifiziert: " + time + "vehid: " + vehicleId + "; emissions: "+ emissions.toString());
-//          tempValue = vehicle2pollutants.get(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1).get(Pollutant.CO);
-//        }
+        if ( vehicle2pollutants.get(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1).getEmission(Pollutant.CO) != tempValue.doubleValue()){
+          System.out.println("JETZT wurde was modifiziert: "  + "vehid: " + vehicleId + "; emissions: "+ emissions.toString());
+          System.out.println("EVENT:" + event.toString());
+          tempValue = vehicle2pollutants.get(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1).getEmission(Pollutant.CO);
+        }
     }
 }
