@@ -39,11 +39,14 @@ public class RunFoodEmissions2024 {
   private final String hbefaWarmFileDet;
   private final String analysisOutputDirectory;
 
+  private enum EtruckDefinition{ownVehicleType, allVehiclesAreElectric};
+  private final EtruckDefinition etruckDefinition = EtruckDefinition.allVehiclesAreElectric;
+
   public static void main(String[] args) throws IOException {
 
     String runDirectory;
     if (args.length == 0) {
-      runDirectory = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/72_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax25"; //KMT
+      runDirectory = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/CaseB_E100_NwCE_BVWP_Pickup_10000it/"; //KMT
     } else {
       runDirectory = args[0];
     }
@@ -161,33 +164,68 @@ public class RunFoodEmissions2024 {
 
     // vehicles
     {
-      VehicleType heavy_26tVehicleType = scenario.getVehicles().getVehicleTypes()
-          .get(Id.create("heavy26t", VehicleType.class));
-      VehicleType heavy26t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
-          .get(Id.create("heavy26t_electro", VehicleType.class));
-      VehicleType heavy26t_frozenVehicleType = scenario.getVehicles().getVehicleTypes()
-          .get(Id.create("heavy26t_frozen", VehicleType.class));
-      VehicleType heavy26t_frozen_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
-          .get(Id.create("heavy26t_frozen_electro", VehicleType.class));
-      VehicleType heavy40tVehicleType = scenario.getVehicles().getVehicleTypes()
-          .get(Id.create("heavy40t", VehicleType.class));
-      VehicleType heavy40t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
-          .get(Id.create("heavy40t_electro", VehicleType.class));
-      VehicleType light8tVehicleType = scenario.getVehicles().getVehicleTypes()
-          .get(Id.create("light8t", VehicleType.class));
-      VehicleType light8t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
-          .get(Id.create("light8t_electro", VehicleType.class));
-      VehicleType light8t_frozenVehicleType = scenario.getVehicles().getVehicleTypes()
-          .get(Id.create("light8t_frozen", VehicleType.class));
-      VehicleType light8t_frozen_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
-          .get(Id.create("light8t_frozen_electro", VehicleType.class));
-      VehicleType medium18tVehicleType = scenario.getVehicles().getVehicleTypes()
-          .get(Id.create("medium18t", VehicleType.class));
-      VehicleType medium18t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
-          .get(Id.create("medium18t_electro", VehicleType.class));
+      VehicleType heavy26t_VehicleType = null;
+      VehicleType heavy26t_electricityVehicleType = null;
+      VehicleType heavy26t_frozenVehicleType = null;
+      VehicleType heavy26t_frozen_electricityVehicleType = null;
+      VehicleType heavy40tVehicleType = null;
+      VehicleType heavy40t_electricityVehicleType = null;
+      VehicleType light8tVehicleType = null;
+      VehicleType light8t_electricityVehicleType = null;
+      VehicleType light8t_frozenVehicleType = null;
+      VehicleType light8t_frozen_electricityVehicleType = null;
+      VehicleType medium18tVehicleType = null;
+      VehicleType medium18t_electricityVehicleType = null;
 
-      if (heavy_26tVehicleType != null) {
-        EngineInformation heavy_26tEngineInformation = heavy_26tVehicleType.getEngineInformation();
+      switch (etruckDefinition) {
+        case ownVehicleType -> {
+          //Runs mit ordentlicher Definition:
+          heavy26t_VehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy26t", VehicleType.class));
+          heavy26t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy26t_electro", VehicleType.class));
+          heavy26t_frozenVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy26t_frozen", VehicleType.class));
+          heavy26t_frozen_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy26t_frozen_electro", VehicleType.class));
+          heavy40tVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy40t", VehicleType.class));
+          heavy40t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy40t_electro", VehicleType.class));
+          light8tVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("light8t", VehicleType.class));
+          light8t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("light8t_electro", VehicleType.class));
+          light8t_frozenVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("light8t_frozen", VehicleType.class));
+          light8t_frozen_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("light8t_frozen_electro", VehicleType.class));
+          medium18tVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("medium18t", VehicleType.class));
+          medium18t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("medium18t_electro", VehicleType.class));
+        }
+        case allVehiclesAreElectric -> { //TODO: Eigentlich müsste ich das schon beim Updaten der Runs "fixen".
+          heavy26t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy26t", VehicleType.class));
+          heavy26t_frozen_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy26t_frozen", VehicleType.class));
+          heavy40t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy40t", VehicleType.class));
+          light8t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("light8t", VehicleType.class));
+          light8t_frozen_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("light8t_frozen", VehicleType.class));
+          medium18t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("medium18t", VehicleType.class));
+        }
+        default -> throw new IllegalStateException("Unexpected value: " + etruckDefinition);
+      }
+
+
+
+      if (heavy26t_VehicleType != null) {
+        EngineInformation heavy_26tEngineInformation = heavy26t_VehicleType.getEngineInformation();
         VehicleUtils.setHbefaVehicleCategory(heavy_26tEngineInformation,
             HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
         VehicleUtils.setHbefaEmissionsConcept(heavy_26tEngineInformation, "diesel");
