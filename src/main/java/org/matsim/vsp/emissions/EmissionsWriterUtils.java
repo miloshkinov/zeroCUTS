@@ -28,7 +28,70 @@ public class EmissionsWriterUtils {
 
   private static final Logger log = LogManager.getLogger(EmissionsWriterUtils.class);
   private static final String DELIMITER = ";";
-  private static final int NU_DIGITS = 5;
+  private static final int NU_DIGITS = 4;
+
+  /**
+   * Schreibt CSV Dateien raus mit Emission pro LINK - einmal als Summe für den Link -> kann genutzt
+   * werden für Gesamtsumme der Emissionen. - einmal pro Meter -> für grafische Analyse
+   *
+   * @param pollutantEmissionAnalysisFile
+   * @param link2pollutants
+   * @throws IOException
+   */
+  static void writePerPollutantOutput(String pollutantEmissionAnalysisFile,
+      Map<Id<Link>, Map<Pollutant, Double>> link2pollutants)
+      throws IOException {
+    log.info("Emission analysis completed.");
+    log.info("Writing output per POLLUTANT...");
+
+    NumberFormat nf = NumberFormat.getInstance(Locale.US);
+    nf.setMaximumFractionDigits(NU_DIGITS);
+    nf.setGroupingUsed(false);
+
+    {
+      File file = new File(pollutantEmissionAnalysisFile);
+
+      BufferedWriter pollutantWriter = new BufferedWriter(new FileWriter(file));
+
+      pollutantWriter.write("Run");
+
+//      Map<Id<Link>, Map<Pollutant, Double>> link2pollutants = emissionsEventHandler.getLink2pollutants();
+
+      for (Pollutant pollutant : Pollutant.values()) {
+        pollutantWriter.write(DELIMITER + pollutant);
+      }
+      pollutantWriter.newLine();
+
+      EmissionsByPollutant emissionsByPollutant = new EmissionsByPollutant(new LinkedHashMap<>());
+      Map<Pollutant, Double> emissionsByPollutant2 = new HashMap<>();
+
+      for (Id<Link> linkId : link2pollutants.keySet()) {
+        pollutantWriter.write(""); //Todo bekomme ich hier noch eine Info zum Run her?
+
+        //Sum up
+        {
+          //Sum up per VehicleType
+          Map<Pollutant, Double> emissions = link2pollutants.get(linkId);
+          emissionsByPollutant.addEmissions(emissions);
+
+          for (Pollutant pollutant : emissions.keySet()) {
+            emissionsByPollutant2.merge(pollutant, emissions.get(pollutant), Double::sum);
+          }
+        }
+      }
+
+      for (Pollutant pollutant : Pollutant.values()) {
+//        double emissionValue = emissionsByPollutant.getEmission(pollutant);
+        double emissionValue = emissionsByPollutant2.get(pollutant);
+        pollutantWriter.write(DELIMITER + nf.format(emissionValue));
+      }
+      pollutantWriter.newLine();
+
+      pollutantWriter.close();
+      log.info("Output written to " + pollutantEmissionAnalysisFile);
+
+    }
+  }
 
   /**
    * Schreibt CSV Dateien raus mit Emission pro LINK - einmal als Summe für den Link -> kann genutzt
@@ -37,12 +100,12 @@ public class EmissionsWriterUtils {
    * @param linkEmissionAnalysisFile
    * @param linkEmissionPerMAnalysisFile
    * @param scenario
-   * @param emissionsEventHandler
+   * @param link2pollutants
    * @throws IOException
    */
   static void writePerLinkOutput(String linkEmissionAnalysisFile,
       String linkEmissionPerMAnalysisFile, Scenario scenario,
-      EmissionsOnLinkEventHandler emissionsEventHandler)
+      Map<Id<Link>, Map<Pollutant, Double>> link2pollutants)
       throws IOException {
     log.info("Emission analysis completed.");
     log.info("Writing output per LINK...");
@@ -61,8 +124,6 @@ public class EmissionsWriterUtils {
       absolutWriter.write("linkId");
       perMeterWriter.write("linkId");
 
-      Map<Id<Link>, Map<Pollutant, Double>> link2pollutants = emissionsEventHandler.getLink2pollutants();
-
       for (Pollutant pollutant : Pollutant.values()) {
         absolutWriter.write(DELIMITER + pollutant);
         perMeterWriter.write(DELIMITER + pollutant + " [g/m]");
@@ -76,12 +137,9 @@ public class EmissionsWriterUtils {
         perMeterWriter.write(linkId.toString());
 
         for (Pollutant pollutant : Pollutant.values()) {
-          double emissionValue = 0.;
-          if (link2pollutants.get(linkId).get(pollutant) != null) {
-            emissionValue = link2pollutants.get(linkId).get(pollutant);
-          }
-          absolutWriter.write(DELIMITER + nf.format(emissionValue));
+          double emissionValue = link2pollutants.get(linkId).getOrDefault(pollutant, 0.);
 
+          absolutWriter.write(DELIMITER + nf.format(emissionValue));
 
           double emissionPerM = Double.NaN;
           Link link = scenario.getNetwork().getLinks().get(linkId);
@@ -158,7 +216,7 @@ public class EmissionsWriterUtils {
         for (Pollutant pollutant : Pollutant.values()) {
           double emissionValue = 0.;
 //          if (vehicle2pollutants.get(vehicleId).getEmission(pollutant) != null) {
-            emissionValue = vehicle2pollutants.get(vehicleId).getEmission(pollutant);
+          emissionValue = vehicle2pollutants.get(vehicleId).getEmission(pollutant);
 //          }
           vehicleWriter.write(DELIMITER + nf.format(emissionValue));
         }
@@ -181,7 +239,7 @@ public class EmissionsWriterUtils {
         for (Pollutant pollutant : Pollutant.values()) {
           double emissionValue = 0.;
 //          if (vehicleType2pollutants.get(vehicleTypeId).getEmission(pollutant) != null) {
-            emissionValue = vehicleType2pollutants.get(vehicleTypeId).getEmission(pollutant);
+          emissionValue = vehicleType2pollutants.get(vehicleTypeId).getEmission(pollutant);
 //          }
           vehicleTypeWriter.write(DELIMITER + nf.format(emissionValue));
         }

@@ -1,6 +1,7 @@
 package org.matsim.vsp.emissions;
 
 import java.io.IOException;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -8,6 +9,7 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.emissions.EmissionModule;
 import org.matsim.contrib.emissions.HbefaVehicleCategory;
+import org.matsim.contrib.emissions.Pollutant;
 import org.matsim.contrib.emissions.analysis.EmissionsOnLinkEventHandler;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup.DetailedVsAverageLookupBehavior;
@@ -309,7 +311,7 @@ public class RunFoodEmissions2024 {
     emissionModule.getEmissionEventsManager().addHandler(emissionEventWriter);
 
 
-    EmissionsOnLinkEventHandler emissionsEventHandler = new EmissionsOnLinkEventHandler(24*3600.);
+    EmissionsOnLinkEventHandler emissionsEventHandler = new EmissionsOnLinkEventHandler(48*3600.);
     eventsManager.addHandler(emissionsEventHandler);
 
     EmissionsPerVehicleEventHandler emissionsPerVehicleEventHandler = new EmissionsPerVehicleEventHandler();
@@ -323,10 +325,13 @@ public class RunFoodEmissions2024 {
     log.info("Done reading the events file.");
     log.info("Finish processing...");
 
+    final Map<Id<Link>, Map<Pollutant, Double>> link2pollutants = emissionsEventHandler.getLink2pollutants();
 
-    EmissionsWriterUtils.writePerLinkOutput(linkEmissionAnalysisFile, linkEmissionPerMAnalysisFile, scenario, emissionsEventHandler);
-    EmissionsWriterUtils.writeEmissionConceptAssignmentOutput(vehicleTypeFile, scenario, emissionsEventHandler);
-    EmissionsWriterUtils.writePerVehicleOutput(vehicleEmissionAnalysisFile,vehicleTypeEmissionAnalysisFile,scenario,emissionsPerVehicleEventHandler);
+    EmissionsWriterUtils.writePerLinkOutput(linkEmissionAnalysisFile, linkEmissionPerMAnalysisFile, scenario, link2pollutants);
+//    EmissionsWriterUtils.writeEmissionConceptAssignmentOutput(vehicleTypeFile, scenario, emissionsEventHandler);
+    EmissionsWriterUtils.writePerVehicleOutput(vehicleEmissionAnalysisFile,vehicleTypeEmissionAnalysisFile,scenario, emissionsPerVehicleEventHandler);
+    EmissionsWriterUtils.writePerPollutantOutput(analysisOutputDirectory  + "/emissionsPerPollutant.csv",
+        link2pollutants);
 
 
     int totalVehicles = scenario.getVehicles().getVehicles().size();
