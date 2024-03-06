@@ -194,7 +194,7 @@ public class EmissionsWriterUtils {
       vehicleTypeWriter.write("vehicleTypeId");
 
       Map<Id<Vehicle>, EmissionsByPollutant> vehicle2pollutants = emissionsEventHandler.getVehicle2pollutants();
-      log.warn("#### Vehicle2 Pollutant vor dem schreiben: " +vehicle2pollutants.get(Id.createVehicleId("freight_rewe_VERBRAUCHERMARKT_TROCKEN_veh_medium18t_electro_160444_1")).getEmissions().toString());
+//      log.warn("#### Vehicle2 Pollutant vor dem schreiben: " +vehicle2pollutants.get(Id.createVehicleId("freight_rewe_VERBRAUCHERMARKT_TROCKEN_veh_medium18t_electro_160444_1")).getEmissions().toString());
       Map<Id<VehicleType>, EmissionsByPollutant> vehicleType2pollutants = new LinkedHashMap<>();
 
       for (Pollutant pollutant : Pollutant.values()) {

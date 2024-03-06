@@ -41,7 +41,13 @@ public class RunFoodEmissions2024 {
 
   public static void main(String[] args) throws IOException {
 
-    final String runDirectory = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/72_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax25"; //KMT
+    String runDirectory;
+    if (args.length == 0) {
+      runDirectory = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/72_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax25"; //KMT
+    } else {
+      runDirectory = args[0];
+    }
+
     final String hbefaFileWarmDet = "original-input-data/HBEFA_summarized_final2.csv"; //TODO: In verschlüsselte Dateien integrieren und ins public SVN laden. DAbei nochmal auf Spalten achten. mMn ist hier emConcept und Technology verdreht -.-
     //Tabelle mit Endung2 hat die Spalten korrigiert.
 
