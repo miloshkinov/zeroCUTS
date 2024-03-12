@@ -20,30 +20,13 @@
 
 package org.matsim.vsp.freight.food;
 
-import com.graphhopper.jsprit.analysis.toolbox.StopWatch;
-import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
-import com.graphhopper.jsprit.core.algorithm.listener.VehicleRoutingAlgorithmListeners;
-import com.graphhopper.jsprit.core.problem.VehicleRoutingProblem;
-import com.graphhopper.jsprit.core.problem.solution.VehicleRoutingProblemSolution;
-import com.graphhopper.jsprit.core.util.Solutions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
-import org.matsim.freight.carriers.FreightCarriersConfigGroup;
-import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
-import org.matsim.freight.carriers.Carrier;
-import org.matsim.freight.carriers.CarrierPlan;
-import org.matsim.freight.carriers.CarriersUtils;
-import org.matsim.freight.carriers.Carriers;
-import org.matsim.freight.carriers.controler.CarrierModule;
-import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
-import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
-import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
-import org.matsim.freight.carriers.jsprit.NetworkRouter;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlansConfigGroup;
@@ -53,39 +36,52 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
+import org.matsim.freight.carriers.Carrier;
+import org.matsim.freight.carriers.CarriersUtils;
+import org.matsim.freight.carriers.FreightCarriersConfigGroup;
+import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
+import org.matsim.freight.carriers.controler.CarrierModule;
+import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
+import picocli.CommandLine;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.stream.Collectors;
+import java.nio.file.Path;
 
-class RunFood {
+@CommandLine.Command(name = "solve-food-scenarios", description = "Solves the food scenarios", showDefaultValues = true)
+
+class RunFood implements MATSimAppCommand {
 
 	static final Logger log = LogManager.getLogger(RunFood.class);
 
+	@CommandLine.Option(names = "--carriersFilePath", description = "Path to the carriers file.", required = true, defaultValue = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/input_2024/I-Base_carrierLEH_v2_withFleet_Shipment_OneTW_PickupTime.xml")
+	private static Path carriersFilePath;
+
+	@CommandLine.Option(names = "--vehicleTypesFilePath", description = "Path to the vehicleTypes file.", required = true, defaultValue = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/input_2024/vehicleTypes_Food_2024.xml")
+	private static Path vehicleTypesFilePath;
+
+	@CommandLine.Option(names = "--nuOfJspritIteration", description = "Sets the number of jsprit iterations.", required = true, defaultValue = "1")
 	private static int nuOfJspritIteration;
 
-	public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
+	@CommandLine.Option(names = "--networkChangeEventsFile", description = "Path to the networkChangeEvents file.", defaultValue = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/input_2024/networkChangeEvents_Berlin_V6.0-10pct.xml.gz")
+	private static String networkChangeEventsFileLocation;
 
-		for (String arg : args) {
-			log.info( arg );
-		}
+	@CommandLine.Option(names = "--outputLocation", description = "Path to the output location.", required = true, defaultValue = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/input_2024/test/output")
+	private static String outputLocation;
 
-		if ( args.length==0 ) {
-			String inputPath = "../shared-svn/projects/freight/studies/Food_LCA-based/input/";
-			args = new String[] {
-					inputPath+"TwoCarrier_small_Shipment_OneTW_PickupTime_ICEVandBEV.xml",
-					inputPath + "vehicleTypes_LCA_noTax.xml",
-					inputPath + "mdvrp_algorithmConfig_2.xml",
-					"1",                                                    //only for demonstration.
-					inputPath + "networkChangeEvents.xml.gz",
-					"../shared-svn/projects/freight/studies/Food_LCA-based/output/Demo1It_small",
-					"true"
-			};
-		}
+	@CommandLine.Option(names = "--networkPath", description = "Path to the network.", required = true, defaultValue = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.0/input/berlin-v6.0-network.xml.gz")
+	private static String networkPath;
 
-		Config config = prepareConfig( args ) ;
+	@CommandLine.Option(names = "--useDistanceConstraint", description = "Use distance constraint for tour planning.")
+	private static boolean useDistanceConstraint;
+
+	public static void main(String[] args) {
+		System.exit(new CommandLine(new RunFood()).execute(args));
+	}
+
+		@Override
+		public Integer call() throws Exception {
+
+
+		Config config = prepareConfig() ;
 		Scenario scenario = prepareScenario( config ) ;
 		Controler controler = prepareControler( scenario ) ;
 
@@ -99,25 +95,13 @@ class RunFood {
 		final String outputPath = controler.getControlerIO().getOutputPath();
 		RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(outputPath +"/", outputPath +"/Analysis/", config.global().getCoordinateSystem());
 		freightAnalysis.runAnalysis();
+
+		return 0;
 	}
 
 
-	private static Config prepareConfig(String[] args) {
-		String carriersFileLocation = args[0];
-		String vehicleTypesFileLocation = args[1];
+	private static Config prepareConfig() {
 //        String algorithmFileLocation = args[2]; //TODO: Read in Algorithm -> Put into freightCarriersConfigGroup?
-		nuOfJspritIteration = Integer.parseInt(args[3]);
-		String networkChangeEventsFileLocation = args[4];
-		String outputLocation = args[5];
-
-		boolean useDistanceConstraint = false;
-		try {
-			useDistanceConstraint = Boolean.parseBoolean(args[6]);
-		} catch (Exception e) {
-			log.warn("Was not able to parse the boolean for using the distance constraint. Using + " + useDistanceConstraint + " as default.");
-//            e.printStackTrace();
-		}
-
 
 		Config config = ConfigUtils.createConfig();
 		config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
@@ -126,22 +110,19 @@ class RunFood {
 		config.controller().setLastIteration(0);
 		config.controller().setOutputDirectory(outputLocation);
 
-		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
+		config.network().setInputFile(networkPath);
 
-		if (!Objects.equals(networkChangeEventsFileLocation, "")){
+		if (networkChangeEventsFileLocation == null || networkChangeEventsFileLocation.isEmpty()){
 			log.info("Setting networkChangeEventsInput file: " + networkChangeEventsFileLocation);
 			config.network().setTimeVariantNetwork(true);
 			config.network().setChangeEventsInputFile(networkChangeEventsFileLocation);
 		}
 
-//        config.addConfigConsistencyChecker(new VspConfigConsistencyCheckerImpl());
-//        config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn);
-
 		config.plans().setActivityDurationInterpretation(PlansConfigGroup.ActivityDurationInterpretation.tryEndTimeThenDuration );
 		//freight configstuff
 		FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);
-		freightCarriersConfigGroup.setCarriersFile(carriersFileLocation);
-		freightCarriersConfigGroup.setCarriersVehicleTypesFile(vehicleTypesFileLocation);
+		freightCarriersConfigGroup.setCarriersFile(carriersFilePath.toString());
+		freightCarriersConfigGroup.setCarriersVehicleTypesFile(vehicleTypesFilePath.toString());
 		freightCarriersConfigGroup.setTravelTimeSliceWidth(1800);
 		freightCarriersConfigGroup.setTimeWindowHandling(FreightCarriersConfigGroup.TimeWindowHandling.enforceBeginnings);
 
@@ -156,7 +137,9 @@ class RunFood {
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 
 		CarriersUtils.loadCarriersAccordingToFreightConfig(scenario);
-
+		CarriersUtils.getCarriers(scenario).getCarriers().values().forEach(carrier -> {
+			CarriersUtils.setJspritIterations(carrier, nuOfJspritIteration);
+			});
 		return scenario;
 	}
 	private static Controler prepareControler(Scenario scenario) {
