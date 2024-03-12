@@ -121,6 +121,7 @@ class RunFood {
 		Config config = ConfigUtils.createConfig();
 		config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 		config.global().setRandomSeed(4177);
+		config.global().setCoordinateSystem("EPSG:25832");
 		config.controller().setLastIteration(0);
 		config.controller().setOutputDirectory(outputLocation);
 
