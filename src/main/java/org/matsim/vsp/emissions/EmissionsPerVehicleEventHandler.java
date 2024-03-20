@@ -23,6 +23,8 @@ package org.matsim.vsp.emissions;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.Event;
 import org.matsim.contrib.emissions.Pollutant;
@@ -38,6 +40,7 @@ import org.matsim.vehicles.Vehicle;
  * by time bin and link-id, or only by link-id.
  */
 public class EmissionsPerVehicleEventHandler implements WarmEmissionEventHandler, ColdEmissionEventHandler {
+  private static final Logger log = LogManager.getLogger( EmissionsPerVehicleEventHandler.class );
 
 //  private static final Id<Vehicle> FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1 =
 //      Id.createVehicleId("freight_rewe_VERBRAUCHERMARKT_TROCKEN_veh_medium18t_electro_160444_1");
@@ -90,6 +93,10 @@ public class EmissionsPerVehicleEventHandler implements WarmEmissionEventHandler
     private void handleEmissionEvent(Id<Vehicle> vehicleId, Map<Pollutant, Double> emissions, Event event) {
 
       EmissionsByPollutant emissionsByPollutant = new EmissionsByPollutant(emissions);
+
+      log.warn( "vehicleId=" + vehicleId );
+      log.warn( "emissions=" + emissions) ;
+      log.warn( "emissionsByPollutant=" + emissionsByPollutant ) ;
 
       //Sum up ver VehicleId
         if (vehicle2pollutants.get(vehicleId) == null) {
