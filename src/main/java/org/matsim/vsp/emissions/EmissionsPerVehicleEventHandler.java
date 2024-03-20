@@ -21,8 +21,10 @@
 
 package org.matsim.vsp.emissions;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -91,8 +93,12 @@ public class EmissionsPerVehicleEventHandler implements WarmEmissionEventHandler
     }
 
     private void handleEmissionEvent(Id<Vehicle> vehicleId, Map<Pollutant, Double> emissions, Event event) {
+    var newMap = new HashMap<Pollutant, Double>();
+      for (Entry<Pollutant, Double> pollutantDoubleEntry : emissions.entrySet()) {
+        newMap.put(pollutantDoubleEntry.getKey(), (Double) pollutantDoubleEntry.getValue().doubleValue());
+      }
 
-      EmissionsByPollutant emissionsByPollutant = new EmissionsByPollutant(emissions);
+      EmissionsByPollutant emissionsByPollutant = new EmissionsByPollutant(newMap);
 
 //      log.warn( "vehicleId=" + vehicleId );
 //      log.warn( "emissions=" + emissions) ;
@@ -102,7 +108,13 @@ public class EmissionsPerVehicleEventHandler implements WarmEmissionEventHandler
         if (vehicle2pollutants.get(vehicleId) == null) {
           vehicle2pollutants.put(vehicleId, emissionsByPollutant); }
         else {
-                vehicle2pollutants.get(vehicleId).addEmissions(emissions);
+                var current = vehicle2pollutants.get(vehicleId);
+                var currentCo  = current.getEmission(Pollutant.CO);
+                var electroCo = vehicle2pollutants.get(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1).getEmission(Pollutant.CO);
+          if(vehicleId.equals(Id.createVehicleId("freight_rewe_SUPERMARKT_TROCKEN_veh_heavy26t_160444_5"))){
+            System.out.println("current CO: " + currentCo + " ++ electro CO: " + electroCo);
+          }
+                current.addEmissions(emissions);
         }
 
 

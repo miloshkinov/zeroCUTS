@@ -44,7 +44,7 @@ public class RunEmissionEventsAnalysis2024 {
     }
     RunEmissionEventsAnalysis2024 analysis = new RunEmissionEventsAnalysis2024(
         runDirectory,
-        runDirectory+"/emissionsAnalysis/");
+        runDirectory+"/emissionsAnalysis2");
     analysis.run();
 
   }
@@ -64,7 +64,9 @@ public class RunEmissionEventsAnalysis2024 {
     config.network().setInputFile(runDirectory + "/output_network.xml.gz");
     config.global().setCoordinateSystem("EPSG:31468");
 
-    final String emissionEventsFile =  runDirectory + "/emission.events.offline2.xml";
+//    final String emissionEventsFile =  runDirectory + "/emission.events.offline2.xml";
+    final String emissionEventsFile =  runDirectory + "/emission.events.selected2Events.xml";
+
 
     final String linkEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerLink.csv";
     final String linkEmissionPerMAnalysisFile = analysisOutputDirectory + "/emissionsPerLinkPerM.csv";
