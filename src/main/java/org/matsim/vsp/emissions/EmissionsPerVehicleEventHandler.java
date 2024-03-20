@@ -42,8 +42,8 @@ import org.matsim.vehicles.Vehicle;
 public class EmissionsPerVehicleEventHandler implements WarmEmissionEventHandler, ColdEmissionEventHandler {
   private static final Logger log = LogManager.getLogger( EmissionsPerVehicleEventHandler.class );
 
-//  private static final Id<Vehicle> FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1 =
-//      Id.createVehicleId("freight_rewe_VERBRAUCHERMARKT_TROCKEN_veh_medium18t_electro_160444_1");
+  private static final Id<Vehicle> FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1 =
+      Id.createVehicleId("freight_rewe_VERBRAUCHERMARKT_TROCKEN_veh_medium18t_electro_160444_1");
 
     private final Map<Id<Vehicle>, EmissionsByPollutant> vehicle2pollutants = new LinkedHashMap<>();
 //  private final Map<Id<VehicleType>, Map<Pollutant, Double>> vehicleType2pollutants = new HashMap<>();
@@ -94,9 +94,9 @@ public class EmissionsPerVehicleEventHandler implements WarmEmissionEventHandler
 
       EmissionsByPollutant emissionsByPollutant = new EmissionsByPollutant(emissions);
 
-      log.warn( "vehicleId=" + vehicleId );
-      log.warn( "emissions=" + emissions) ;
-      log.warn( "emissionsByPollutant=" + emissionsByPollutant ) ;
+//      log.warn( "vehicleId=" + vehicleId );
+//      log.warn( "emissions=" + emissions) ;
+//      log.warn( "emissionsByPollutant=" + emissionsByPollutant ) ;
 
       //Sum up ver VehicleId
         if (vehicle2pollutants.get(vehicleId) == null) {
@@ -106,10 +106,12 @@ public class EmissionsPerVehicleEventHandler implements WarmEmissionEventHandler
         }
 
 
-//        if ( vehicle2pollutants.get(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1).getEmission(Pollutant.CO) != tempValue.doubleValue()){
-//          System.out.println("JETZT wurde was modifiziert: "  + "vehid: " + vehicleId + "; emissions: "+ emissions.toString());
-//          System.out.println("EVENT:" + event.toString());
-//          tempValue = vehicle2pollutants.get(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1).getEmission(Pollutant.CO);
-//        }
+        if ( vehicle2pollutants.get(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1).getEmission(Pollutant.CO) != tempValue.doubleValue()){
+          System.out.println("JETZT wurde was modifiziert: "  + "vehid: " + vehicleId);
+          System.out.println("EMISSIONS: "+ emissions.toString());
+          System.out.println("EVENT:" + event.toString());
+          System.out.println("---");
+          tempValue = vehicle2pollutants.get(FREIGHT_REWE_VERBRAUCHERMARKT_TROCKEN_VEH_MEDIUM_18_T_ELECTRO_160444_1).getEmission(Pollutant.CO);
+        }
     }
 }

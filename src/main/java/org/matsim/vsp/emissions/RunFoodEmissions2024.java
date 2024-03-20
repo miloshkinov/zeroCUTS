@@ -104,7 +104,7 @@ public class RunFoodEmissions2024 {
     final String eventsFile = runDirectory + "/output_events.xml.gz";
 
     final String emissionEventOutputFile =
-        analysisOutputDirectory + "/emission.events.offline.xml.gz";
+        analysisOutputDirectory + "/emission.events.offline2.xml";
     final String linkEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerLink.csv";
     final String linkEmissionPerMAnalysisFile = analysisOutputDirectory + "/emissionsPerLinkPerM.csv";
     final String vehicleTypeFile = analysisOutputDirectory  + "/emissionVehicleInformation.csv";
@@ -365,6 +365,8 @@ public class RunFoodEmissions2024 {
     MatsimEventsReader matsimEventsReader = new MatsimEventsReader(eventsManager);
     matsimEventsReader.readFile(eventsFile);
     eventsManager.finishProcessing();
+
+    emissionEventWriter.closeFile();
 
     log.info("Done reading the events file.");
     log.info("Finish processing...");
