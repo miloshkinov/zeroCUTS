@@ -40,13 +40,13 @@ public class RunFoodEmissions2024 {
   private final String analysisOutputDirectory;
 
   private enum EtruckDefinition{ownVehicleType, allVehiclesAreElectric};
-  private final EtruckDefinition etruckDefinition = EtruckDefinition.allVehiclesAreElectric;
+  private final EtruckDefinition etruckDefinition = EtruckDefinition.ownVehicleType;
 
   public static void main(String[] args) throws IOException {
 
     String runDirectory;
     if (args.length == 0) {
-      runDirectory = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/CaseB_E100_NwCE_BVWP_Pickup_10000it/"; //KMT
+      runDirectory = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/"; //KMT
     } else {
       runDirectory = args[0];
     }
