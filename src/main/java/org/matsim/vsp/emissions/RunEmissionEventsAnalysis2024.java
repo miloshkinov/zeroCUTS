@@ -28,9 +28,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 public class RunEmissionEventsAnalysis2024 {
 
   private static final Logger log = LogManager.getLogger(RunEmissionEventsAnalysis2024.class);
-
   private final String runDirectory;
-
   private final String analysisOutputDirectory;
 
 
@@ -70,26 +68,12 @@ public class RunEmissionEventsAnalysis2024 {
 
     final String linkEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerLink.csv";
     final String linkEmissionPerMAnalysisFile = analysisOutputDirectory + "/emissionsPerLinkPerM.csv";
-//    final String vehicleTypeFile = analysisOutputDirectory  + "/emissionVehicleInformation.csv";
     final String vehicleEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerVehicle.csv";
     final String vehicleTypeEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerVehicleType.csv";
 
     Scenario scenario = ScenarioUtils.loadScenario(config);
 
-
     EventsManager eventsManager = EventsUtils.createEventsManager();
-
-
-//    AbstractModule module = new AbstractModule(){
-//      @Override
-//      public void install(){
-//        bind( Scenario.class ).toInstance( scenario );
-//        bind( EventsManager.class ).toInstance( eventsManager );
-//        bind( EmissionModule.class ) ;
-//      }
-//    };
-//
-//    com.google.inject.Injector injector = Injector.createInjector(config, module);
 
     EmissionsOnLinkEventHandler emissionsEventHandler = new EmissionsOnLinkEventHandler(48*3600.);
     eventsManager.addHandler(emissionsEventHandler);
@@ -98,8 +82,6 @@ public class RunEmissionEventsAnalysis2024 {
     eventsManager.addHandler(emissionsPerVehicleEventHandler);
 
     eventsManager.initProcessing();
-//    MatsimEventsReader matsimEventsReader = new MatsimEventsReader(eventsManager);
-//    matsimEventsReader.readFile(emissionEventsFile);
     EmissionEventsReader emissionReader = new EmissionEventsReader(eventsManager);
     emissionReader.readFile(emissionEventsFile);
     eventsManager.finishProcessing();
@@ -110,7 +92,6 @@ public class RunEmissionEventsAnalysis2024 {
     final Map<Id<Link>, Map<Pollutant, Double>> link2pollutants = emissionsEventHandler.getLink2pollutants();
 
     EmissionsWriterUtils.writePerLinkOutput(linkEmissionAnalysisFile, linkEmissionPerMAnalysisFile, scenario, link2pollutants);
-//    EmissionsWriterUtils.writeEmissionConceptAssignmentOutput(vehicleTypeFile, scenario, emissionsEventHandler);
     EmissionsWriterUtils.writePerVehicleOutput(vehicleEmissionAnalysisFile,vehicleTypeEmissionAnalysisFile,scenario, emissionsPerVehicleEventHandler);
     EmissionsWriterUtils.writePerPollutantOutput(analysisOutputDirectory  + "/emissionsPerPollutant.csv",
         link2pollutants);
@@ -118,15 +99,6 @@ public class RunEmissionEventsAnalysis2024 {
 
     int totalVehicles = scenario.getVehicles().getVehicles().size();
     log.info("Total number of vehicles: " + totalVehicles);
-
-
-//    scenario.getVehicles().getVehicles().values().stream()
-//        .map(vehicle -> vehicle.getType())
-//        .collect(Collectors.groupingBy(category -> category, Collectors.counting()))
-//        .entrySet()
-//        .forEach(entry -> log.info("nr of " + VehicleUtils.getHbefaVehicleCategory(entry.getKey().getEngineInformation()) + " vehicles running on " + VehicleUtils.getHbefaEmissionsConcept(entry.getKey().getEngineInformation())
-//            +" = " + entry.getValue() + " (equals " + ((double)entry.getValue()/(double)totalVehicles) + "% overall)"));
-//
 
   }
 
