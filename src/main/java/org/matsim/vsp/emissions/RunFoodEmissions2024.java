@@ -39,7 +39,7 @@ public class RunFoodEmissions2024 {
   private final String hbefaWarmFileDet;
   private final String analysisOutputDirectory;
 
-  private enum EtruckDefinition{ownVehicleType, allVehiclesAreElectric};
+  private enum EtruckDefinition{ownVehicleType, allVehiclesAreElectric}
   private final EtruckDefinition etruckDefinition = EtruckDefinition.ownVehicleType;
 
   public static void main(String[] args) throws IOException {
@@ -117,7 +117,7 @@ public class RunFoodEmissions2024 {
     // network
     for (Link link : scenario.getNetwork().getLinks().values()) {
 
-      double freespeed = Double.NaN;
+      double freespeed;
 
       if (link.getFreespeed() <= 13.888889) {
         freespeed = link.getFreespeed() * 2;
@@ -336,7 +336,7 @@ public class RunFoodEmissions2024 {
       }
     }
 
-    // the following is copy paste from the example...
+    // the following is copy and paste from the example...
 
     EventsManager eventsManager = EventsUtils.createEventsManager();
 
