@@ -51,8 +51,10 @@ public class RunFoodEmissions2024 {
       runDirectory = args[0];
     }
 
-    final String hbefaFileWarmDet = "original-input-data/HBEFA_summarized_final2.csv"; //TODO: In verschlüsselte Dateien integrieren und ins public SVN laden. DAbei nochmal auf Spalten achten. mMn ist hier emConcept und Technology verdreht -.-
-    //Tabelle mit Endung2 hat die Spalten korrigiert.
+    final String hbefaFileWarmDet = "original-input-data/HBEFA_summarized_final2.csv";
+    //TODO: In verschlüsselte Dateien integrieren und ins public SVN laden.
+    // Dabei nochmal auf Spalten achten. mMn ist hier emConcept und Technology verdreht -.-
+    // Tabelle mit Endung2 hat die Spalten korrigiert.
 
     RunFoodEmissions2024 analysis = new RunFoodEmissions2024(
         runDirectory,
