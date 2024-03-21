@@ -374,7 +374,6 @@ public class RunFoodEmissions2024 {
     final Map<Id<Link>, Map<Pollutant, Double>> link2pollutants = emissionsEventHandler.getLink2pollutants();
 
     EmissionsWriterUtils.writePerLinkOutput(linkEmissionAnalysisFile, linkEmissionPerMAnalysisFile, scenario, link2pollutants);
-//    EmissionsWriterUtils.writeEmissionConceptAssignmentOutput(vehicleTypeFile, scenario, emissionsEventHandler);
     EmissionsWriterUtils.writePerVehicleOutput(vehicleEmissionAnalysisFile,vehicleTypeEmissionAnalysisFile,scenario, emissionsPerVehicleEventHandler);
     EmissionsWriterUtils.writePerPollutantOutput(analysisOutputDirectory  + "/emissionsPerPollutant.csv",
         link2pollutants);
@@ -382,15 +381,6 @@ public class RunFoodEmissions2024 {
 
     int totalVehicles = scenario.getVehicles().getVehicles().size();
     log.info("Total number of vehicles: " + totalVehicles);
-
-
-//    scenario.getVehicles().getVehicles().values().stream()
-//        .map(vehicle -> vehicle.getType())
-//        .collect(Collectors.groupingBy(category -> category, Collectors.counting()))
-//        .entrySet()
-//        .forEach(entry -> log.info("nr of " + VehicleUtils.getHbefaVehicleCategory(entry.getKey().getEngineInformation()) + " vehicles running on " + VehicleUtils.getHbefaEmissionsConcept(entry.getKey().getEngineInformation())
-//            +" = " + entry.getValue() + " (equals " + ((double)entry.getValue()/(double)totalVehicles) + "% overall)"));
-//
 
   }
 
