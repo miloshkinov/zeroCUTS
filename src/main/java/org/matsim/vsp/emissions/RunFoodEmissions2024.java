@@ -1,6 +1,8 @@
 package org.matsim.vsp.emissions;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,40 +38,73 @@ public class RunFoodEmissions2024 {
   private static final Logger log = LogManager.getLogger(RunFoodEmissions2024.class);
 
   private final String runDirectory;
-  private final String hbefaWarmFileDet;
+
   private final String analysisOutputDirectory;
 
   private enum EtruckDefinition{ownVehicleType, allVehiclesAreElectric}
-  private final EtruckDefinition etruckDefinition = EtruckDefinition.ownVehicleType;
+  private static EtruckDefinition etruckDefinition;
 
   public static void main(String[] args) throws IOException {
 
-    String runDirectory;
+
+    //    // Update EFoods2020 -- ICEV-Case:
+//    final String pathToRunDir = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/";
+//    var listOfRuns = List.of(
+//        "Base_NwCE_BVWP_Pickup_10000it/"
+//    )   ;
+//    etruckDefinition= EtruckDefinition.ownVehicleType; //For CaseA and B only
+
+    //    // Update EFoods2020 -- BEV-Cases:
+//    final String pathToRunDir = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/";
+//    var listOfRuns = List.of(
+//        "CaseA_E160_NwCE_BVWP_Pickup_10000it/",
+//        "CaseB_E100_NwCE_BVWP_Pickup_10000it/"
+//    )   ;
+//    etruckDefinition= EtruckDefinition.allVehiclesAreElectric; //For CaseA and B only
+
+
+
+    final String pathToRunDir = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/";
+    var listOfRuns = List.of(
+        "foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/",
+        "foodRetailing_wo_rangeConstraint/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/"//,
+//        "foodRetailing_wo_rangeConstraint/72_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax25/",
+//        "foodRetailing_wo_rangeConstraint/73_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax50/",
+//        "foodRetailing_wo_rangeConstraint/74_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax100/",
+//        "foodRetailing_wo_rangeConstraint/75_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax150/",
+//        "foodRetailing_wo_rangeConstraint/76_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax200/",
+//        "foodRetailing_wo_rangeConstraint/77_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax250/",
+//        "foodRetailing_wo_rangeConstraint/78_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax300/",
+//        //nun Runs mit ReichweitenConstraint
+//        "foodRetailing_with_rangeConstraint/21_ICEVBEV_NwCE_BVWP_10000it_DC_noTax/",
+//        "foodRetailing_with_rangeConstraint/22_ICEVBEV_NwCE_BVWP_10000it_DC_Tax25/",
+//        "foodRetailing_with_rangeConstraint/23_ICEVBEV_NwCE_BVWP_10000it_DC_Tax50/",
+//        "foodRetailing_with_rangeConstraint/24_ICEVBEV_NwCE_BVWP_10000it_DC_Tax100/",
+//        "foodRetailing_with_rangeConstraint/25_ICEVBEV_NwCE_BVWP_10000it_DC_Tax150/",
+//        "foodRetailing_with_rangeConstraint/26_ICEVBEV_NwCE_BVWP_10000it_DC_Tax200/",
+//        "foodRetailing_with_rangeConstraint/27_ICEVBEV_NwCE_BVWP_10000it_DC_Tax250/",
+//        "foodRetailing_with_rangeConstraint/28_ICEVBEV_NwCE_BVWP_10000it_DC_Tax300/"
+    )   ;
+    etruckDefinition= EtruckDefinition.ownVehicleType;
+
+
     if (args.length == 0) {
-      runDirectory = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/"; //KMT
+      for (String runDir : listOfRuns) {
+        new RunFoodEmissions2024(pathToRunDir + runDir).run();
+      }
     } else {
-      runDirectory = args[0];
+      new RunFoodEmissions2024(args[0]).run();
     }
-
-    final String hbefaFileWarmDet = "original-input-data/HBEFA_summarized_final2.csv";
-    //TODO: In verschlüsselte Dateien integrieren und ins public SVN laden.
-    // Dabei nochmal auf Spalten achten. mMn ist hier emConcept und Technology verdreht -.-
-    // Tabelle mit Endung2 hat die Spalten korrigiert.
-
-    RunFoodEmissions2024 analysis = new RunFoodEmissions2024(
-        runDirectory,
-        hbefaFileWarmDet,
-        runDirectory);
-    analysis.run();
-
   }
 
-  public RunFoodEmissions2024(String runDirectory, String hbefaFileWarm,  String analysisOutputDirectory) {
+  public RunFoodEmissions2024(String runDirectory) {
     this.runDirectory = runDirectory;
-    this.hbefaWarmFileDet = hbefaFileWarm;
+
+    String analysisOutputDirectory = runDirectory + "/analysis/1_emissions/";
 
     if (!analysisOutputDirectory.endsWith("/")) analysisOutputDirectory = analysisOutputDirectory + "/";
     this.analysisOutputDirectory = analysisOutputDirectory;
+    new File(this.analysisOutputDirectory).mkdirs();
   }
 
   void run() throws IOException {
@@ -98,7 +133,11 @@ public class RunFoodEmissions2024 {
         "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/82t7b02rc0rji2kmsahfwp933u2rfjlkhfpi2u9r20.enc");
     eConfig.setAverageWarmEmissionFactorsFile(
         "https://svn.vsp.tu-berlin.de/repos/public-svn/3507bb3997e5657ab9da76dbedbb13c9b5991d3e/0e73947443d68f95202b71a156b337f7f71604ae/7eff8f308633df1b8ac4d06d05180dd0c5fdf577.enc");
-    eConfig.setDetailedWarmEmissionFactorsFile(this.hbefaWarmFileDet);
+
+    //TODO: In verschlüsselte Dateien integrieren und ins public SVN laden.
+    // Dabei nochmal auf Spalten achten. mMn ist hier emConcept und Technology verdreht -.-
+    // Tabelle mit Endung2 hat die Spalten korrigiert.
+    eConfig.setDetailedWarmEmissionFactorsFile("original-input-data/HBEFA_summarized_final2.csv");
 //    eConfig.setHbefaRoadTypeSource(HbefaRoadTypeSource.fromLinkAttributes);
   eConfig.setNonScenarioVehicles(NonScenarioVehicles.ignore);
 
@@ -106,12 +145,13 @@ public class RunFoodEmissions2024 {
     final String eventsFile = runDirectory + "/output_events.xml.gz";
 
     final String emissionEventOutputFile =
-        analysisOutputDirectory + "/emission.events.offline2.xml";
-    final String linkEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerLink.csv";
-    final String linkEmissionPerMAnalysisFile = analysisOutputDirectory + "/emissionsPerLinkPerM.csv";
-    final String vehicleTypeFile = analysisOutputDirectory  + "/emissionVehicleInformation.csv";
-    final String vehicleEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerVehicle.csv";
-    final String vehicleTypeEmissionAnalysisFile = analysisOutputDirectory  + "/emissionsPerVehicleType.csv";
+        analysisOutputDirectory + "emission.events.offline2.xml";
+    final String linkEmissionAnalysisFile = analysisOutputDirectory  + "emissionsPerLink.csv";
+    final String linkEmissionPerMAnalysisFile = analysisOutputDirectory + "emissionsPerLinkPerM.csv";
+//    final String vehicleTypeFile = analysisOutputDirectory  + "emissionVehicleInformation.csv";
+    final String vehicleEmissionAnalysisFile = analysisOutputDirectory  + "emissionsPerVehicle.csv";
+    final String vehicleTypeEmissionAnalysisFile = analysisOutputDirectory  + "emissionsPerVehicleType.csv";
+    final String pollutantEmissionAnalysisFile = analysisOutputDirectory + "emissionsPerPollutant.csv";
 
     Scenario scenario = ScenarioUtils.loadScenario(config);
     // network
@@ -377,8 +417,7 @@ public class RunFoodEmissions2024 {
 
     EmissionsWriterUtils.writePerLinkOutput(linkEmissionAnalysisFile, linkEmissionPerMAnalysisFile, scenario, link2pollutants);
     EmissionsWriterUtils.writePerVehicleOutput(vehicleEmissionAnalysisFile,vehicleTypeEmissionAnalysisFile,scenario, emissionsPerVehicleEventHandler);
-    EmissionsWriterUtils.writePerPollutantOutput(analysisOutputDirectory  + "/emissionsPerPollutant.csv",
-        link2pollutants);
+    EmissionsWriterUtils.writePerPollutantOutput(pollutantEmissionAnalysisFile, link2pollutants);
 
 
     int totalVehicles = scenario.getVehicles().getVehicles().size();

@@ -2,6 +2,7 @@ package org.matsim.vsp.emissions;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,17 +35,56 @@ public class RunEmissionEventsAnalysis2024 {
 
   public static void main(String[] args) throws IOException {
 
-    String runDirectory;
-    if (args.length == 0) {
-      runDirectory = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax"; //KMT
-    } else {
-      runDirectory = args[0];
-    }
-    RunEmissionEventsAnalysis2024 analysis = new RunEmissionEventsAnalysis2024(
-        runDirectory,
-        runDirectory+"/emissionsAnalysis2");
-    analysis.run();
+//    // Update EFoods2020::
+//    final String pathToRunDir = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/";
+//    var listOfRuns = List.of(
+//        "Base_NwCE_BVWP_Pickup_10000it/",
+//        "CaseA_E160_NwCE_BVWP_Pickup_10000it/",
+//        "CaseB_E100_NwCE_BVWP_Pickup_10000it/"
+//    )   ;
 
+
+        final String pathToRunDir = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/";
+    var listOfRuns = List.of(
+        "foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/",
+        "foodRetailing_wo_rangeConstraint/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/",
+        "foodRetailing_wo_rangeConstraint/72_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax25/",
+        "foodRetailing_wo_rangeConstraint/73_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax50/",
+        "foodRetailing_wo_rangeConstraint/74_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax100/",
+        "foodRetailing_wo_rangeConstraint/75_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax150/",
+        "foodRetailing_wo_rangeConstraint/76_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax200/",
+        "foodRetailing_wo_rangeConstraint/77_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax250/",
+        "foodRetailing_wo_rangeConstraint/78_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax300/",
+        //nun Runs mit ReichweitenConstraint
+        "foodRetailing_with_rangeConstraint/21_ICEVBEV_NwCE_BVWP_10000it_DC_noTax/",
+        "foodRetailing_with_rangeConstraint/22_ICEVBEV_NwCE_BVWP_10000it_DC_Tax25/",
+        "foodRetailing_with_rangeConstraint/23_ICEVBEV_NwCE_BVWP_10000it_DC_Tax50/",
+        "foodRetailing_with_rangeConstraint/24_ICEVBEV_NwCE_BVWP_10000it_DC_Tax100/",
+        "foodRetailing_with_rangeConstraint/25_ICEVBEV_NwCE_BVWP_10000it_DC_Tax150/",
+        "foodRetailing_with_rangeConstraint/26_ICEVBEV_NwCE_BVWP_10000it_DC_Tax200/",
+        "foodRetailing_with_rangeConstraint/27_ICEVBEV_NwCE_BVWP_10000it_DC_Tax250/",
+        "foodRetailing_with_rangeConstraint/28_ICEVBEV_NwCE_BVWP_10000it_DC_Tax300/"
+    )   ;
+
+
+    if (args.length == 0) {
+      for (String runDir : listOfRuns) {
+        String runDirectory = pathToRunDir + runDir;
+
+        RunEmissionEventsAnalysis2024 analysis = new RunEmissionEventsAnalysis2024(
+            runDirectory,
+            runDirectory+"/analysis/1_emissions/");
+        analysis.run();
+      }
+//      runDirectory = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax"; //KMT
+    } else {
+     String runDirectory = args[0];
+
+      RunEmissionEventsAnalysis2024 analysis = new RunEmissionEventsAnalysis2024(
+          runDirectory,
+          runDirectory+"/analysis/1_emissions/");
+      analysis.run();
+    }
   }
 
   public RunEmissionEventsAnalysis2024(String runDirectory, String analysisOutputDirectory) {
@@ -52,7 +92,7 @@ public class RunEmissionEventsAnalysis2024 {
 
     if (!analysisOutputDirectory.endsWith("/")) analysisOutputDirectory = analysisOutputDirectory + "/";
     this.analysisOutputDirectory = analysisOutputDirectory;
-    new File(this.analysisOutputDirectory).mkdir();
+    new File(this.analysisOutputDirectory).mkdirs();
   }
 
   void run() throws IOException {
