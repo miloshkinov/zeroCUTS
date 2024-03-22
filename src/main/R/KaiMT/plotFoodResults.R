@@ -48,6 +48,7 @@ df_tours$vehicleCategory <- factor(df_tours$vehicleCategory, levels = desired_or
 #Runde Werte auf 2 Nachkommastellen
 df_tours$travelDistance.km. <- as.numeric(df_tours$travelDistance.km.)
 df_tours$travelDistance.km. <- round(df_tours$travelDistance.km.,2)
+df_tours$tourDuration.h. <- round(as.numeric(df_tours$tourDuration.h.),2)
 
 # # Ensure both plots have the same levels
 # common_levels <- intersect(levels(df$vehicleCategory), levels(df$vehicleCategory))
@@ -63,22 +64,37 @@ bar_plot <- plot_ly(x = ~df$vehicleCategory, y = df$nuOfVehicles, type = 'bar') 
 bar_plot_costs <- plot_ly(x = df$vehicleCategory, y = df$totalCosts.EUR., type = 'bar', name = 'Total Costs') %>%
   layout(xaxis = list(title = 'Category'), yaxis = list(title = 'Total Costs (EUR)'))
 
-# 4. Box Plot for Traveled Distances by Vehicle Type (Interactive)
+## 4. Box Plot for Traveled Distances by Vehicle Type (Interactive)
+# Max Reichweite auf 100km aufgerundet.
 max_y_km <- round(max(df_tours$travelDistance.km.),-2)
 
+dummyDf <- data.frame(vehicleCategory=desired_order)
+dummyDf <- mutate(dummyDf, dummyVal=-9999.)
+dummyDf$vehicleCategory <- factor(dummyDf$vehicleCategory, levels = desired_order)
 
 box_plot_distances <- plot_ly(data = df_tours, x = ~vehicleCategory, y = ~travelDistance.km., 
                               type = 'box', boxpoints = "all", jitter = 0.5, pointpos = -1.0) %>%
   layout(xaxis = list(title = 'Category'), yaxis = list(title = 'Traveled Distances (km)', range = list(0.,max_y_km)))
 
 # 4b Violin- Plot Distances by Vehicle Type (Interactive)
-violin_plot_distances <- plot_ly(data = df_tours, 
-                                 x = ~vehicleCategory, 
-                                 y = ~travelDistance.km., 
-                                 split = ~vehicleCategory,
+##TODO: Farb-Schema festlegen ODER Grouped ViolinePlot??
+
+violin_plot_distances <- plot_ly(#data = df_tours, 
+                                 x = ~df_tours$vehicleCategory, 
+                                 y = ~df_tours$travelDistance.km., 
+                                 split = ~df_tours$vehicleCategory,
                                  type = 'violin',
                                  box = list(visible = T),
                                  points = "all", jitter = 0.5, pointpos = -1.5) %>%
+  ### Rumgespielt, wie man zweiten Trace rein bekommt. Aber eigentlich will ich ja zweite Abbildung mit anderer x-Achse, 
+  ### Oder sonst wie einbauen, dass es auch dne 40t_electro gibt.
+  # add_trace(#data = df_tours, 
+  #   x = ~df_tours$vehicleCategory, 
+  #   y = ~df_tours$tourDuration.h., 
+  #   split = ~df_tours$vehicleCategory,
+  #   type = 'violin',
+  #   box = list(visible = T),
+  #   points = "all", jitter = 0.5, pointpos = -1.5) %>%
   layout(xaxis = list(title = 'Category'), yaxis = list(title = 'Traveled Distances (km)', range = list(0.,max_y_km)))
 
 # Display the plots separately
