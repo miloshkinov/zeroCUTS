@@ -1,7 +1,13 @@
 ##Kopie von Ricardo. Muss dann noch angepasst werden. KMT März 24
 
 #setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/analysis")
-setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/Base_NwCE_BVWP_Pickup_10000it/analysis")
+EFood <- FALSE
+
+
+#####E-Food: Alle Fzg-Typen sind Electro und müssen so gesetzt werden.
+#setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/Base_NwCE_BVWP_Pickup_10000it/analysis")
+setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/CaseA_E160_NwCE_BVWP_Pickup_10000it/analysis")
+EFood <- TRUE
 
 # Install and load necessary packages
 if (!requireNamespace("tidyverse", quietly = TRUE)) {
@@ -38,14 +44,30 @@ create_vehicle_categories <- function(data) {
                                                     no = as.character(vehicleTypeId))))))))))
 }
 
+make_all_vehicles_electric <- function(data) {
+  data <- data %>%
+    mutate(vehicleTypeId=paste0(vehicleTypeId,"_electro"))
+}
 
 df <- df_org # Erstmal nur eine Kopie davon in der dann gearbeitet wird.
 df_tours <- select(df_tours_org, "vehicleId","vehicleTypeId", "travelDistance.km.", "tourDuration.h.")
 
+if (EFood == TRUE){
+  df_tours <- make_all_vehicles_electric(df_tours)
+  df <- make_all_vehicles_electric(df)
+}
+
 ## Füge Dumm-Werte hinzu, damit die erste und letzte Spalte auf jeden Fall mit geplottet werden.
+## Packe in jede Spalte was, damit Farbpalette gilt -.-
 ## ACHTUNG: Damit nun keine Rechnungen mehr auf dem Datensatz machen!
 df_tours <- rbind(df_tours, list("DUMMY_7.5t", "light8t", -999, -999))
-df_tours <- rbind(df_tours, list("DUMMY_40t-E", "heavy40t_electro", -999, -999))
+df_tours <- rbind(df_tours, list("DUMMY_7.5tE", "light8t_electro", -999, -999))
+df_tours <- rbind(df_tours, list("DUMMY_18t", "medium18t", -999, -999))
+df_tours <- rbind(df_tours, list("DUMMY_18tE", "medium18t_electro", -999, -999))
+df_tours <- rbind(df_tours, list("DUMMY_26t", "heavy26t", -999, -999))
+df_tours <- rbind(df_tours, list("DUMMY_26tE", "heavy26t_electro", -999, -999))
+df_tours <- rbind(df_tours, list("DUMMY_40t", "heavy40t", -999, -999))
+df_tours <- rbind(df_tours, list("DUMMY_40tE", "heavy40t_electro", -999, -999))
 
 df <- create_vehicle_categories(df)
 df_tours <- create_vehicle_categories(df_tours)
@@ -80,7 +102,7 @@ bar_plot_costs <- plot_ly(x = df$vehicleCategory, y = df$totalCosts.EUR., type =
 ## Max Reichweite auf 100km aufgerundet.
 #max_y_km <- round(max(df_tours$travelDistance.km.),-2)
 # Max Reichweite um 100km erhöht für Violinen-Plot und auf 100km aufgerundet.
-max_y_km <- round(max(df_tours$travelDistance.km.+100),-2)
+max_y_km <- ceiling((max(df_tours$travelDistance.km.)+100)/100)*100
 
 ##Temporärer Versuch mit 2. Datensatz/Trace .. hat nicht geklappt.
 #dummyDf <- data.frame(vehicleCategory=desired_order)
@@ -99,24 +121,17 @@ violin_plot_distances <- plot_ly(#data = df_tours,
                                  y = ~df_tours$travelDistance.km., 
                                  split = ~df_tours$vehicleCategory,
                                  type = 'violin',
-                                 width = 800,
+                                 width = 1000,
                                  height = 500,
                                  box = list(visible = T),
                                  points = "all", jitter = 0.5, pointpos = -1.5) %>%
-  ### Rumgespielt, wie man zweiten Trace rein bekommt. Aber eigentlich will ich ja zweite Abbildung mit anderer x-Achse, 
-  ### Oder sonst wie einbauen, dass es auch dne 40t_electro gibt.
-  # add_trace(#data = df_tours, 
-  #   x = ~df_tours$vehicleCategory, 
-  #   y = ~df_tours$tourDuration.h., 
-  #   split = ~df_tours$vehicleCategory,
-  #   type = 'violin',
-  #   box = list(visible = T),
-  #   points = "all", jitter = 0.5, pointpos = -1.5) %>%
-  layout(
-    xaxis = list(title = 'Category'), 
-    yaxis = list(title = 'Traveled Distances (km)',  range = list(-45.,max_y_km)), 
-    showlegend = FALSE
-    )
+        layout(
+          xaxis = list(title = 'Category'), 
+          yaxis = list(title = 'Traveled Distances (km)',  range = list(-45.,max_y_km)), 
+          #Aktuell noch ziemlich hässliche Farbpalette, aber sie Funktioniert, dass alle Diesel Rot und alle E-Fzg Grün sind.
+          colorway = c("red", "green","red", "green","red", "green","red", "green"),
+          showlegend = FALSE
+          )
 
 # Display the plots separately
 print(bar_plot %>% layout(title = 'Number of Vehicles by Vehicle Category'))
