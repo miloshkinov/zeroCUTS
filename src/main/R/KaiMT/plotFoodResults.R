@@ -5,9 +5,9 @@ EFood <- FALSE
 
 
 #####E-Food: Alle Fzg-Typen sind Electro und müssen so gesetzt werden.
-#setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/Base_NwCE_BVWP_Pickup_10000it/analysis")
-setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/CaseA_E160_NwCE_BVWP_Pickup_10000it/analysis")
-EFood <- TRUE
+setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/Base_NwCE_BVWP_Pickup_10000it/analysis")
+#setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/CaseA_E160_NwCE_BVWP_Pickup_10000it/analysis")
+#EFood <- TRUE
 
 # Install and load necessary packages
 if (!requireNamespace("tidyverse", quietly = TRUE)) {
@@ -107,7 +107,7 @@ bar_plot_costs <- plot_ly(x = df$vehicleCategory, y = df$totalCosts.EUR., type =
 ## Max Reichweite auf 100km aufgerundet.
 #max_y_km <- round(max(df_tours$travelDistance.km.),-2)
 # Max Reichweite um 100km erhöht für Violinen-Plot und auf 100km aufgerundet.
-max_y_km <- ceiling((max(df_tours$travelDistance.km.)+100)/100)*100
+max_y_km <- ceiling((max(df_tours$travelDistance.km.)+100)/100)*100-1
 
 ##Temporärer Versuch mit 2. Datensatz/Trace .. hat nicht geklappt.
 #dummyDf <- data.frame(vehicleCategory=desired_order)
@@ -121,6 +121,10 @@ box_plot_distances <- plot_ly(data = df_tours, x = ~vehicleCategory, y = ~travel
 # 4b Violin- Plot Distances by Vehicle Type (Interactive)
 ##TODO: Farb-Schema festlegen ODER Grouped ViolinePlot??
 
+colorsKMT8 <- c("#1c18a0", "#9013fe" , "#1e54b6", "#760e95", "#3c71d9", "#aa108e", "#1f90cc","#DF0174")
+colorsAna <- c("#1c18a0", "#1e54b6", "#1f90cc", "#3c71d9", "#9013fe", "#760e95", "#aa108e", "c40d1e", "#a40c2e", "#5e082c","#4e0c49","#3d1066")
+
+
 violin_plot_distances <- plot_ly(#data = df_tours, 
                                  x = ~df_tours$vehicleCategory, 
                                  y = ~df_tours$travelDistance.km., 
@@ -131,10 +135,12 @@ violin_plot_distances <- plot_ly(#data = df_tours,
                                  box = list(visible = T),
                                  points = "all", jitter = 0.5, pointpos = -1.5) %>%
         layout(
-          xaxis = list(title = 'Category'), 
-          yaxis = list(title = 'Traveled Distances (km)',  range = list(-45.,max_y_km)), 
+          xaxis = list(title = 'Vehicle Type'), 
+          yaxis = list(title = 'Tour Distance (km)',  range = list(-45.,max_y_km)), 
           #Aktuell noch ziemlich hässliche Farbpalette, aber sie Funktioniert, dass alle Diesel Rot und alle E-Fzg Grün sind.
-          colorway = c("red", "green","red", "green","red", "green","red", "green"),
+          #colorway = c("red", "green","red", "green","red", "green","red", "green"),
+          #colorway = colorsAna,
+          colorway = colorsKMT8,
           showlegend = FALSE
           )
 
@@ -142,4 +148,5 @@ violin_plot_distances <- plot_ly(#data = df_tours,
 print(bar_plot %>% layout(title = 'Number of Vehicles by Vehicle Category'))
 print(bar_plot_costs %>% layout(title = 'Total Costs by Vehicle Category'))
 print(box_plot_distances %>% layout(title = 'Traveled Distances by Vehicle Category'))
-print(violin_plot_distances %>% layout(title = 'Traveled Distances by Vehicle Category'))
+print(violin_plot_distances %>% layout())
+
