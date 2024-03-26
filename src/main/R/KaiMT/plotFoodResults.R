@@ -121,6 +121,10 @@ box_plot_distances <- plot_ly(data = df_tours, x = ~vehicleCategory, y = ~travel
 # 4b Violin- Plot Distances by Vehicle Type (Interactive)
 ##TODO: Farb-Schema festlegen ODER Grouped ViolinePlot??
 
+colorsKMT8 <- c("#1c18a0", "#9013fe" , "#1e54b6", "#760e95", "#3c71d9", "#aa108e", "#1f90cc","#DF0174")
+colorsAna <- c("#1c18a0", "#1e54b6", "#1f90cc", "#3c71d9", "#9013fe", "#760e95", "#aa108e", "c40d1e", "#a40c2e", "#5e082c","#4e0c49","#3d1066")
+
+
 violin_plot_distances <- plot_ly(#data = df_tours, 
                                  x = ~df_tours$vehicleCategory, 
                                  y = ~df_tours$travelDistance.km., 
@@ -134,7 +138,9 @@ violin_plot_distances <- plot_ly(#data = df_tours,
           xaxis = list(title = 'Category'), 
           yaxis = list(title = 'Traveled Distances (km)',  range = list(-45.,max_y_km)), 
           #Aktuell noch ziemlich hässliche Farbpalette, aber sie Funktioniert, dass alle Diesel Rot und alle E-Fzg Grün sind.
-          colorway = c("red", "green","red", "green","red", "green","red", "green"),
+          #colorway = c("red", "green","red", "green","red", "green","red", "green"),
+          #colorway = colorsAna,
+          colorway = colorsKMT8,
           showlegend = FALSE
           )
 
