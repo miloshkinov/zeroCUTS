@@ -44,6 +44,7 @@ create_vehicle_categories <- function(data) {
                                                     no = as.character(vehicleTypeId))))))))))
 }
 
+## Ergänze alle vehicleTypeIds um "_electro"
 make_all_vehicles_electric <- function(data) {
   data <- data %>%
     mutate(vehicleTypeId=paste0(vehicleTypeId,"_electro"))
@@ -52,27 +53,31 @@ make_all_vehicles_electric <- function(data) {
 df <- df_org # Erstmal nur eine Kopie davon in der dann gearbeitet wird.
 df_tours <- select(df_tours_org, "vehicleId","vehicleTypeId", "travelDistance.km.", "tourDuration.h.")
 
+## Im EFood-Scenario waren die E-Fahrzeuge in den Policy-Cases NICHT als solche getaggt -> Mache sie hier zu E-Fahrzeugen.
 if (EFood == TRUE){
   df_tours <- make_all_vehicles_electric(df_tours)
   df <- make_all_vehicles_electric(df)
 }
 
-## Füge Dumm-Werte hinzu, damit die erste und letzte Spalte auf jeden Fall mit geplottet werden.
-## Packe in jede Spalte was, damit Farbpalette gilt -.-
-## ACHTUNG: Damit nun keine Rechnungen mehr auf dem Datensatz machen!
-df_tours <- rbind(df_tours, list("DUMMY_7.5t", "light8t", -999, -999))
-df_tours <- rbind(df_tours, list("DUMMY_7.5tE", "light8t_electro", -999, -999))
-df_tours <- rbind(df_tours, list("DUMMY_18t", "medium18t", -999, -999))
-df_tours <- rbind(df_tours, list("DUMMY_18tE", "medium18t_electro", -999, -999))
-df_tours <- rbind(df_tours, list("DUMMY_26t", "heavy26t", -999, -999))
-df_tours <- rbind(df_tours, list("DUMMY_26tE", "heavy26t_electro", -999, -999))
-df_tours <- rbind(df_tours, list("DUMMY_40t", "heavy40t", -999, -999))
-df_tours <- rbind(df_tours, list("DUMMY_40tE", "heavy40t_electro", -999, -999))
 
+## Ergänze eine Spalte mit den VehicleCategories
 df <- create_vehicle_categories(df)
 df_tours <- create_vehicle_categories(df_tours)
 
 
+## Füge Dummy-Werte hinzu, damit jede Spalte auf jeden Fall einen Wert hat und mit geplottet wird
+## ACHTUNG: Damit nun keine Rechnungen mehr auf dem Datensatz machen!
+addDummyValues <- function(data) {
+  vehTypesInData <- unique(select(data, matches("vehicleCategory")))  ## Alle VehicleTypes als Spaltenvektor
+  for(myVar in desired_order){
+    if (nrow(filter(vehTypesInData, vehicleCategory == myVar)) == 0){ ##Wenn Anzahl  == 0 (Also nicht vorhanden)
+      data <- rbind(data, list("DUMMY_VEH", "DUMMY_TYPE", -999, -999, myVar))  ##Dann packe Dummy-WErt dazu
+    }
+  }
+  return(data)
+}
+
+df_tours <- addDummyValues(df_tours)
 
 
 # Convert 'vehicleCategory' to a factor with the desired order
