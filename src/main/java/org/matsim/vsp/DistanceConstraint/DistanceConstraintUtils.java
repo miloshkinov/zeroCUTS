@@ -6,21 +6,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.contrib.freight.carrier.Carrier;
-import org.matsim.contrib.freight.carrier.CarrierPlan;
-import org.matsim.contrib.freight.carrier.CarrierService;
-import org.matsim.contrib.freight.carrier.CarrierUtils;
-import org.matsim.contrib.freight.carrier.CarrierVehicle;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
-import org.matsim.contrib.freight.carrier.ScheduledTour;
-import org.matsim.contrib.freight.carrier.Tour;
-import org.matsim.contrib.freight.carrier.CarrierCapabilities.FleetSize;
-import org.matsim.contrib.freight.jsprit.MatsimJspritFactory;
-import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts;
-import org.matsim.contrib.freight.jsprit.NetworkRouter;
-import org.matsim.contrib.freight.jsprit.NetworkBasedTransportCosts.Builder;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.population.routes.RouteUtils;
+import org.matsim.freight.carriers.*;
+import org.matsim.freight.carriers.CarrierCapabilities.FleetSize;
+import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
+import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
+import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts.Builder;
+import org.matsim.freight.carriers.jsprit.NetworkRouter;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 
@@ -47,7 +40,6 @@ import com.graphhopper.jsprit.core.util.VehicleRoutingTransportCostsMatrix;
  *         battery. The base for calculating the consumption is only the driven
  *         distance and not the transported weight or other influences. But is
  *         possible to integrate it.
- * 
  *         !! No recharging is integrated. Vehicles are totally loaded at the
  *         beginning.
  *
@@ -57,7 +49,7 @@ class DistanceConstraintUtils {
 
 	/**
 	 * Creates a VehicleRoutingCostMatrix for calculating the distance between all
-	 * different locations of a carrier. Matrix has informations about the distance
+	 * different locations of a carrier. Matrix has information about the distance
 	 * and the travelTime between every location. This is necessary for the
 	 * distanceConstraint for the electric vehicles, because in the normal
 	 * netBasedCosts only costs and travelTimes are calculated. Therefore for every
@@ -73,7 +65,7 @@ class DistanceConstraintUtils {
 	 */
 
 	static VehicleRoutingTransportCostsMatrix createMatrix(VehicleRoutingProblem.Builder vrpBuilder,
-			Carrier singleCarrier, Network network, Builder netBuilder) {
+														   Carrier singleCarrier, Network network, Builder netBuilder) {
 
 		double distance = 0;
 		int startTime = 10000000;
@@ -94,14 +86,14 @@ class DistanceConstraintUtils {
 
 				} else {
 
-					Carrier oneShipmentCarrier = CarrierUtils.createCarrier(Id.create("OneShipment", Carrier.class));
+					Carrier oneShipmentCarrier = CarriersUtils.createCarrier(Id.create("OneShipment", Carrier.class));
 					for (VehicleType vehicleType : singleCarrier.getCarrierCapabilities().getVehicleTypes()) {
 
 						CarrierVehicle testVehicle = CarrierVehicle.Builder
 								.newInstance(Id.create("testVehicle", Vehicle.class), Id.createLinkId(from), vehicleType)
 								.setEarliestStart(0).setLatestEnd(72 * 3600).build();
 						oneShipmentCarrier.getCarrierCapabilities().getVehicleTypes().add(vehicleType);
-						CarrierUtils.addCarrierVehicle(oneShipmentCarrier, testVehicle);
+						CarriersUtils.addCarrierVehicle(oneShipmentCarrier, testVehicle);
 						oneShipmentCarrier.getCarrierCapabilities().setFleetSize(FleetSize.FINITE);
 						break;
 					}
@@ -109,7 +101,7 @@ class DistanceConstraintUtils {
 					CarrierService testService = CarrierService.Builder
 							.newInstance(Id.create("singleService", CarrierService.class), Id.createLinkId(to))
 							.setServiceDuration(0).build();
-					CarrierUtils.addService(oneShipmentCarrier, testService);
+					CarriersUtils.addService(oneShipmentCarrier, testService);
 
 					VehicleRoutingProblem.Builder vrpBuilder2 = MatsimJspritFactory
 							.createRoutingProblemBuilder(oneShipmentCarrier, network);
@@ -160,7 +152,7 @@ class DistanceConstraintUtils {
 }
 
 /**
- * Creates the distance constrain
+ * Creates the distance constraint
  *
  */
 class DistanceConstraint implements HardActivityConstraint {
@@ -182,15 +174,15 @@ class DistanceConstraint implements HardActivityConstraint {
 	}
 
 	/**
-	 * When adding a TourActivity to the tour and the vehicle of the tour is
-	 * electric drive the algorithm always checks the fulfilled method if all
-	 * conditions (constraints) are fulfilled or not. This method is always been
-	 * checked by the distance constraint, if the new vehicle is electric. Because
+	 * When adding a TourActivity to the tour, and the vehicle of the tour is
+	 * electric drive, the algorithm always checks the fulfilled method if all
+	 * conditions (constraints) are fulfilled or not. This method is always
+	 * checked by the distance constraint if the new vehicle is electric. Because
 	 * every activity is added separately and the pickup before the delivery of a
 	 * shipment, it will investigate which additional distance is necessary for the
 	 * pickup and which minimal additional distance of the associated Delivery is
 	 * needed. This is also important for the fulfilled decision of this function.
-	 * At the end the conditions checks if the electric consumption of the tour
+	 * In the end, the conditions checks if the electric consumption of the tour
 	 * including the additional shipment is possible with the used capacity of the
 	 * battery.
 	 */
@@ -201,15 +193,15 @@ class DistanceConstraint implements HardActivityConstraint {
 		double additionalDistance;
 
 		VehicleType vehicleTypeOfNewVehicle = vehicleTypes.getVehicleTypes()
-				.get(Id.create(context.getNewVehicle().getType().getTypeId().toString(), VehicleType.class));
+				.get(Id.create(context.getNewVehicle().getType().getTypeId(), VehicleType.class));
 
 		if (vehicleTypeOfNewVehicle.getEngineInformation().getAttributes()
 				.getAttribute("fuelType").equals("electricity")) {
 
-			Double electricityCapacityinkWh = (Double) vehicleTypeOfNewVehicle.getEngineInformation().getAttributes()
-					.getAttribute("engeryCapacity");
+			Double electricityCapacityInkWh = (Double) vehicleTypeOfNewVehicle.getEngineInformation().getAttributes()
+					.getAttribute("energyCapacity");
 			Double electricityConsumptionPerkm = (Double) vehicleTypeOfNewVehicle.getEngineInformation().getAttributes()
-					.getAttribute("engeryConsumptionPerKm");
+					.getAttribute("energyConsumptionPerKm");
 			Double routeConsumption = null;
 
 			Double routeDistance = stateManager.getRouteState(context.getRoute(), distanceStateId, Double.class);
@@ -231,7 +223,7 @@ class DistanceConstraint implements HardActivityConstraint {
 			double additionalConsumption = additionalDistance * (electricityConsumptionPerkm / 1000);
 			double newRouteConsumption = routeConsumption + additionalConsumption;
 
-			if (newRouteConsumption > electricityCapacityinkWh) {
+			if (newRouteConsumption > electricityCapacityInkWh) {
 				return ConstraintsStatus.NOT_FULFILLED;
 			} else
 				return ConstraintsStatus.FULFILLED;
@@ -244,12 +236,12 @@ class DistanceConstraint implements HardActivityConstraint {
 	 * Finds a minimal additional distance for the tour, when a pickup is added to
 	 * the plan. The AssociatedActivities contains both activities of a job which
 	 * should be added to the existing tour. The TourActivities which are already in
-	 * the tour are found in context.getRoute().getTourActivities. In this method
-	 * the position of the new pickup is fixed and three options of the location of
+	 * the tour are found in context.getRoute().getTourActivities. In this method,
+	 * the position of the new pickup is fixed, and three options of the location of
 	 * the delivery activity will be checked: delivery between every other activity
 	 * after the pickup, delivery as the last activity before the end and delivery
 	 * directly behind the new pickup. This method gives back the minimal distance
-	 * of this three options.
+	 * of these three options.
 	 * 
 	 * @param context
 	 * @param newAct
@@ -263,17 +255,17 @@ class DistanceConstraint implements HardActivityConstraint {
 		if (context.getAssociatedActivities().get(1).getName().contains("deliverShipment")) {
 			TourActivity assignedDelivery = context.getAssociatedActivities().get(1);
 			minimalAdditionalDistance = 0;
-			int indexNextActicity = nextAct.getIndex();
+			int indexNextActivity = nextAct.getIndex();
 			int index = 0;
 			int countIndex = 0;
 
 			// search the index of the activity behind the pickup activity which should be
 			// added to the tour
 			for (TourActivity tourActivity : context.getRoute().getTourActivities().getActivities()) {
-				if (tourActivity.getIndex() == indexNextActicity) {
+				if (tourActivity.getIndex() == indexNextActivity) {
 					while (countIndex < context.getRoute().getTourActivities().getActivities().size()) {
 						if (context.getRoute().getTourActivities().getActivities().get(countIndex)
-								.getIndex() == indexNextActicity) {
+								.getIndex() == indexNextActivity) {
 							index = countIndex;
 							break;
 						}
@@ -282,7 +274,7 @@ class DistanceConstraint implements HardActivityConstraint {
 				break;
 			}
 
-			// search the minimal distance between every exiting TourAcitivity
+			// search the minimal distance between every exiting TourActivity
 			while ((index + 1) < context.getRoute().getTourActivities().getActivities().size()) {
 				TourActivity activityBefore = context.getRoute().getTourActivities().getActivities().get(index);
 				TourActivity activityAfter = context.getRoute().getTourActivities().getActivities().get(index + 1);
@@ -293,7 +285,7 @@ class DistanceConstraint implements HardActivityConstraint {
 			}
 			// checks the distance if the delivery is the last activity before the end of
 			// the tour
-			if (context.getRoute().getTourActivities().getActivities().size() > 0) {
+			if (!context.getRoute().getTourActivities().getActivities().isEmpty()) {
 				TourActivity activityLastDelivery = context.getRoute().getTourActivities().getActivities()
 						.get(context.getRoute().getTourActivities().getActivities().size() - 1);
 				TourActivity activityEnd = context.getRoute().getEnd();
@@ -333,7 +325,7 @@ class DistanceConstraint implements HardActivityConstraint {
 }
 
 /**
- * Given class for working with the a distance constraint
+ * Given class for working with a distance constraint
  *
  */
 class DistanceUpdater implements StateUpdater, ActivityVisitor {

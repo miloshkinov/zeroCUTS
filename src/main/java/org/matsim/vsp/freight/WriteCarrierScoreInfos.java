@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.matsim.api.core.v01.Id;
-import org.matsim.contrib.freight.carrier.Carrier;
-import org.matsim.contrib.freight.carrier.Carriers;
+import org.matsim.freight.carriers.Carrier;
+import org.matsim.freight.carriers.Carriers;
 
 /**
  * @author kt
@@ -56,8 +56,8 @@ class WriteCarrierScoreInfos {
 			if (carrier.getSelectedPlan() == null) {
 				return;
 			}
-			scoresOfCarrier.put(carrier.getId(), carrier.getSelectedPlan().getScore());
-			totalScore = totalScore + carrier.getSelectedPlan().getScore();
+			scoresOfCarrier.put(carrier.getId(), carrier.getSelectedPlan().getJspritScore());
+			totalScore = totalScore + carrier.getSelectedPlan().getJspritScore();
 			}
 
 		}

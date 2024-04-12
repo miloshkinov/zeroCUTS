@@ -3,13 +3,12 @@ package org.matsim.vsp.freight.food.analyse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.contrib.freight.carrier.*;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.utils.io.UncheckedIOException;
+import org.matsim.freight.carriers.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,7 +81,9 @@ public class FreightAnalyseKT {
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/51a_ICEV_NwCE_BVWP_2000it_DCoff_noTax/" ;
 
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/21a_ICEV_NwCE_BVWP_10000it_DC_noTax/" ;
-	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/10000it/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/" ;
+//	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/20200611_fa8d691/10000it/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/" ;
+
+	private static final String RUN_DIR = "./output/freightUpdate71-2/" ;
 
 
 //	private static final String RUN_DIR = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/output/Demo1ItDC/" ;
@@ -94,7 +95,7 @@ public class FreightAnalyseKT {
 
 	private static final Logger log = LogManager.getLogger(FreightAnalyseKT.class);
 
-	public static void main(String[] args) throws UncheckedIOException, IOException {
+	public static void main(String[] args) throws IOException {
 		OutputDirectoryLogging.initLoggingWithOutputDirectory(OUTPUT_DIR);
 
 		FreightAnalyseKT analysis = new FreightAnalyseKT();
@@ -103,14 +104,14 @@ public class FreightAnalyseKT {
 		OutputDirectoryLogging.closeOutputDirLogging();
 	}
 
-	private void run() throws UncheckedIOException, IOException {
+	private void run() {
 
 //			File configFile = new File(RUN_DIR + "output_config.xml");
 ////			File configFile = new File(RUN_DIR + "output_config.xml.gz");
 //			File populationFile = new File(RUN_DIR + "output_plans.xml.gz");
 		File networkFile = new File(RUN_DIR+ "output_network.xml.gz");
 		File carrierFile = new File(RUN_DIR+ "output_carriers.xml.gz");
-		File vehicleTypeFile = new File(RUN_DIR+ "output_vehicleTypes.xml.gz");
+		File vehicleTypeFile = new File(RUN_DIR+ "output_carriersVehicleTypes.xml.gz");
 
 		Network network = NetworkUtils.readNetwork(networkFile.getAbsolutePath());
 

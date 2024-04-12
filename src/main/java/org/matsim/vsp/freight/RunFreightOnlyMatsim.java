@@ -23,20 +23,21 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contrib.freight.FreightConfigGroup;
-import org.matsim.contrib.freight.carrier.*;
-import org.matsim.contrib.freight.controler.CarrierModule;
-import org.matsim.contrib.freight.controler.CarrierScoringFunctionFactory;
-import org.matsim.contrib.freight.controler.CarrierStrategyManager;
-import org.matsim.contrib.freight.controler.FreightUtils;
+import org.matsim.freight.carriers.FreightCarriersConfigGroup;
+import org.matsim.freight.carriers.*;
+import org.matsim.freight.carriers.controler.CarrierControlerUtils;
+import org.matsim.freight.carriers.controler.CarrierModule;
+import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
+import org.matsim.freight.carriers.controler.CarrierStrategyManager;
+import org.matsim.freight.carriers.CarriersUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.consistency.VspConfigConsistencyCheckerImpl;
-import org.matsim.core.config.groups.ControlerConfigGroup.CompressionType;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
+import org.matsim.core.config.groups.ControllerConfigGroup.CompressionType;
+import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
-import org.matsim.core.config.groups.StrategyConfigGroup.StrategySettings;
+import org.matsim.core.config.groups.ReplanningConfigGroup.StrategySettings;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup.VspDefaultsCheckingLevel;
 import org.matsim.core.controler.*;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
@@ -120,15 +121,15 @@ public class RunFreightOnlyMatsim {
 	private static Config createConfig() {
 		Config config = ConfigUtils.createConfig() ;
 
-		config.controler().setOutputDirectory(OUTPUT_DIR);
+		config. controller().setOutputDirectory(OUTPUT_DIR);
 
 		// (the directory structure is needed for jsprit output, which is before the
-		// controler starts. Maybe there is a better alternative ...)
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
-		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(), config.controler().getOverwriteFileSetting(), CompressionType.gzip);
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
+		//  controller. starts. Maybe there is a better alternative ...)
+		config. controller().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
+		new OutputDirectoryHierarchy(config.controller().getOutputDirectory(), config.controller().getRunId(), config.controller().getOverwriteFileSetting(), CompressionType.gzip);
+		config.controller().setOverwriteFileSetting(OverwriteFileSetting.overwriteExistingFiles);
 
-		config.controler().setLastIteration(LAST_MATSIM_ITERATION);	
+		config.controller().setLastIteration(LAST_MATSIM_ITERATION);
 		config.network().setInputFile(NETFILE);
 
 		config.network().setChangeEventsInputFile(NETWORKCHANGEEVENTFILE);
@@ -139,22 +140,22 @@ public class RunFreightOnlyMatsim {
 
 		//Some config stuff to comply to vsp-defaults even there is currently only 1 MATSim iteration and 
 		//therefore no need for e.g. a strategy! KMT jan/18
-		config.planCalcScore().setFractionOfIterationsToStartScoreMSA(0.8);
+		config.scoring().setFractionOfIterationsToStartScoreMSA(0.8);
 		config.plans().setRemovingUnneccessaryPlanAttributes(true);
-		config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
+		config.routing().setAccessEgressType(RoutingConfigGroup.AccessEgressType.accessEgressModeToLink);
 		config.qsim().setUsingTravelTimeCheckInTeleportation(true);
 		config.qsim().setTrafficDynamics(TrafficDynamics.kinematicWaves);
-		config.strategy().setFractionOfIterationsToDisableInnovation(0.8);
+		config.replanning().setFractionOfIterationsToDisableInnovation(0.8);
 
 		StrategySettings stratSettings1 = new StrategySettings();
 		stratSettings1.setStrategyName("ChangeExpBeta");
 		stratSettings1.setWeight(0.1);
-		config.strategy().addStrategySettings(stratSettings1);
+		config.replanning().addStrategySettings(stratSettings1);
 
 		StrategySettings stratSettings2 = new StrategySettings();
 		stratSettings2.setStrategyName("BestScore");
 		stratSettings2.setWeight(0.9);
-		config.strategy().addStrategySettings(stratSettings2);
+		config.replanning().addStrategySettings(stratSettings2);
 
 		config.vspExperimental().setVspDefaultsCheckingLevel(VspDefaultsCheckingLevel.warn);
 		config.addConfigConsistencyChecker(new VspConfigConsistencyCheckerImpl());
@@ -223,32 +224,32 @@ public class RunFreightOnlyMatsim {
 	 * @param scenario
 	 */
 	private static void matsimRun(Scenario scenario) {
-		final Controler controler = new Controler( scenario ) ;
+		final Controler controller = new Controler( scenario ) ;
 
 		CarrierScoringFunctionFactory scoringFunctionFactory = createMyScoringFunction2(scenario);
 		CarrierStrategyManager planStrategyManagerFactory =  createMyStrategymanager(); //Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
 
-		FreightConfigGroup freightConfig = ConfigUtils.addOrGetModule( scenario.getConfig(), FreightConfigGroup.class );
-		freightConfig.setTimeWindowHandling(FreightConfigGroup.TimeWindowHandling.enforceBeginnings);
+		FreightCarriersConfigGroup freightConfig = ConfigUtils.addOrGetModule( scenario.getConfig(), FreightCarriersConfigGroup.class );
+		freightConfig.setTimeWindowHandling(FreightCarriersConfigGroup.TimeWindowHandling.enforceBeginnings);
 
-		FreightUtils.addOrGetCarriers(scenario);
+		CarriersUtils.addOrGetCarriers(scenario);
 		CarrierModule listener = new CarrierModule();
-		controler.addOverridingModule( new AbstractModule(){
+		controller.addOverridingModule( new AbstractModule(){
 			@Override
 			public void install(){
 				bind( CarrierScoringFunctionFactory.class ).toInstance(scoringFunctionFactory) ;
 				bind( CarrierStrategyManager.class ).toInstance(planStrategyManagerFactory);
 			}
 		} ) ;
-		controler.addOverridingModule(listener);
-		controler.run();
+		controller.addOverridingModule(listener);
+		controller.run();
 	}
 
 
 	//Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
 	//Da keine Strategy notwendig, hier zunächst eine "leere" Factory
 	private static CarrierStrategyManager createMyStrategymanager() {
-		return FreightUtils.createDefaultCarrierStrategyManager();
+		return CarrierControlerUtils.createDefaultCarrierStrategyManager();
 	}
 
 
@@ -261,7 +262,7 @@ public class RunFreightOnlyMatsim {
 	 */
 	private static CarrierScoringFunctionFactoryImpl_KT createMyScoringFunction2 (final Scenario scenario) {
 
-		return new CarrierScoringFunctionFactoryImpl_KT(scenario, scenario.getConfig().controler().getOutputDirectory()) {
+		return new CarrierScoringFunctionFactoryImpl_KT(scenario, scenario.getConfig().controller().getOutputDirectory()) {
 
 			public ScoringFunction createScoringFunction(final Carrier carrier){
 				SumScoringFunction sumSf = new SumScoringFunction() ;

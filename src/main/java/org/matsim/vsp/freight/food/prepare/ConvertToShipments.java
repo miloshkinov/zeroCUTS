@@ -20,21 +20,21 @@ package org.matsim.vsp.freight.food.prepare;
 
 
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contrib.freight.FreightConfigGroup;
-import org.matsim.contrib.freight.carrier.CarrierPlanWriter;
-import org.matsim.contrib.freight.carrier.Carriers;
-import org.matsim.contrib.freight.controler.FreightUtils;
+import org.matsim.freight.carriers.CarrierPlanWriter;
+import org.matsim.freight.carriers.Carriers;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.examples.ExamplesUtils;
+import org.matsim.freight.carriers.CarriersUtils;
+import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 
 import java.util.concurrent.ExecutionException;
 
 
 /**
- * @see org.matsim.contrib.freight
+ * @see org.matsim.freight
  */
 public class ConvertToShipments {
 
@@ -47,12 +47,12 @@ public class ConvertToShipments {
 		config.plans().setInputFile( null ); // remove passenger input
 
 		//more general settings
-		config.controler().setOutputDirectory("./output/freight" );
+		config.controller().setOutputDirectory("./output/freight" );
 
-		config.controler().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
+		config.controller().setLastIteration(0 );		// yyyyyy iterations currently do not work; needs to be fixed.  (Internal discussion at end of file.)
 
 		//freight settings
-		FreightConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightConfigGroup.class ) ;
+		FreightCarriersConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightCarriersConfigGroup.class ) ;
 		freightConfigGroup.setCarriersFile( "");
 		freightConfigGroup.setCarriersVehicleTypesFile( "vehicleTypes.xml");
 
@@ -60,24 +60,24 @@ public class ConvertToShipments {
 		Scenario scenario = ScenarioUtils.loadScenario( config );
 
 		//load carriers according to freight config
-		FreightUtils.loadCarriersAccordingToFreightConfig( scenario );
+		CarriersUtils.loadCarriersAccordingToFreightConfig( scenario );
 
 
 		// how to set the capacity of the "light" vehicle type to "1":
 //		FreightUtils.getCarrierVehicleTypes( scenario ).getVehicleTypes().get( Id.create("light", VehicleType.class ) ).getCapacity().setOther( 1 );
 
 		// output before jsprit run (not necessary)
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
+		new CarrierPlanWriter(CarriersUtils.getCarriers( scenario )).write( "output/jsprit_unplannedCarriers.xml" ) ;
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
 
 		// Solving the VRP (generate carrier's tour plans)
-		FreightUtils.runJsprit( scenario );
+		CarriersUtils.runJsprit( scenario );
 
 		// Output after jsprit run (not necessary)
-		new CarrierPlanWriter(FreightUtils.getCarriers( scenario )).write( "output/jsprit_plannedCarriers.xml" ) ;
+		new CarrierPlanWriter(CarriersUtils.getCarriers( scenario )).write( "output/jsprit_plannedCarriers.xml" ) ;
 		// (this will go into the standard "output" directory.  note that this may be removed if this is also used as the configured output dir.)
 
-		Carriers newCarriers = FreightUtils.createShipmentVRPCarrierFromServiceVRPSolution(FreightUtils.getCarriers( scenario ));
+		Carriers newCarriers = CarriersUtils.createShipmentVRPCarrierFromServiceVRPSolution(CarriersUtils.getCarriers( scenario ));
 		new CarrierPlanWriter(newCarriers).write( "output/carriersWithShipments.xml" ) ;
 	}
 

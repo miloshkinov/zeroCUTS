@@ -19,11 +19,7 @@
  * *********************************************************************** */
 package org.matsim.vsp.SmallScaleCommercialTraffic;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import javax.inject.Inject;
-
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -37,34 +33,30 @@ import org.matsim.application.MATSimAppCommand;
 import org.matsim.contrib.cadyts.car.CadytsCarModule;
 import org.matsim.contrib.cadyts.car.CadytsContext;
 import org.matsim.contrib.cadyts.general.CadytsConfigGroup;
-import org.matsim.contrib.cadyts.general.CadytsPlanChanger;
 import org.matsim.contrib.cadyts.general.CadytsScoring;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.ControlerConfigGroup;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
+import org.matsim.core.config.groups.ControllerConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup.VspDefaultsCheckingLevel;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.population.PopulationUtils;
-import org.matsim.core.replanning.PlanStrategy;
-import org.matsim.core.replanning.PlanStrategyImpl;
-import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.ScoringFunctionFactory;
 import org.matsim.core.scoring.SumScoringFunction;
-import org.matsim.core.scoring.functions.CharyparNagelActivityScoring;
-import org.matsim.core.scoring.functions.CharyparNagelAgentStuckScoring;
-import org.matsim.core.scoring.functions.CharyparNagelLegScoring;
 import org.matsim.core.scoring.functions.ScoringParameters;
 import org.matsim.core.scoring.functions.ScoringParametersForPerson;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
-
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import picocli.CommandLine;
+
+import javax.inject.Inject;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
 
 /**
  * @author Ricardo Ewert
@@ -87,7 +79,8 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 	
 	@CommandLine.Option(names = "--cadytsCalibration", description = "If cadyts calibartion should be used.", required = true, defaultValue = "false")
 	private boolean cadytsCalibration;
-
+	@CommandLine.Option(names = "--weight", description = "Strategy weight for calibration config.", defaultValue = "1")
+	private double weight;
 	public static void main(String[] args) {
 		System.exit(new CommandLine(new RunMATSimCommercialTraffic()).execute(args));
 	}
@@ -106,12 +99,12 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 			sampleName = String.valueOf((int) (inputScale * 100));
 		else
 			sampleName = String.valueOf((inputScale * 100));
-		config.controler().setOutputDirectory(Path.of(config.controler().getOutputDirectory()).resolve(modelName)
+		config.controller().setOutputDirectory(Path.of(config.controller().getOutputDirectory()).resolve(modelName)
 				.resolve(usedTrafficType + "_" + sampleName + "pct" + "_"
 						+ java.time.LocalDate.now() + "_" + java.time.LocalTime.now().toSecondOfDay()) + "_run");
-		log.info("Output folder is set to: " + config.controler().getOutputDirectory());
-		new OutputDirectoryHierarchy(config.controler().getOutputDirectory(), config.controler().getRunId(),
-				config.controler().getOverwriteFileSetting(), ControlerConfigGroup.CompressionType.gzip);
+		log.info("Output folder is set to: " + config.controller().getOutputDirectory());
+		new OutputDirectoryHierarchy(config.controller().getOutputDirectory(), config.controller().getRunId(),
+				config.controller().getOverwriteFileSetting(), ControllerConfigGroup.CompressionType.gzip);
 		config.counts().setCountsScaleFactor(1 / inputScale);
 		config.counts().setAnalyzedModes("freight");
 		config.qsim().setFlowCapFactor(inputScale);
@@ -123,34 +116,34 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 			addLongDistanceFreightTraffic(scenario);
 		createActivityParams(scenario);
 
-		Controler controler = prepareControler(scenario);
+		Controler controller = prepareController(scenario);
 		if (cadytsCalibration)
-			controler.addOverridingModule(new CadytsCarModule());
-		controler.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
-//		        bind(MainModeIdentifier.class).to(MainModeIdentifierImpl.class);
-//		        bind(AnalysisMainModeIdentifier.class).to(MainModeIdentifier.class);
-				bind(AnalysisMainModeIdentifier.class).to(TransportPlanningMainModeIdentifierRE.class);
-				if (cadytsCalibration)
-					addPlanStrategyBinding("planChangerCadyts").toProvider(new javax.inject.Provider<>() {
-						@Inject
-						Scenario scenario;
-						@Inject
-						CadytsContext cadytsContext;
-
-						@Override
-						public PlanStrategy get() {
-							return new PlanStrategyImpl.Builder((new CadytsPlanChanger(scenario, cadytsContext)))
-									.build();
-						}
-					});
-			}
-		});
+			controller.addOverridingModule(new CadytsCarModule());
+//		controller.addOverridingModule(new AbstractModule() {
+//			@Override
+//			public void install() {
+////		        bind(MainModeIdentifier.class).to(MainModeIdentifierImpl.class);
+////		        bind(AnalysisMainModeIdentifier.class).to(MainModeIdentifier.class);
+//				bind(AnalysisMainModeIdentifier.class).to(TransportPlanningMainModeIdentifierRE.class);
+//				if (cadytsCalibration)
+//					addPlanStrategyBinding("planChangerCadyts").toProvider(new javax.inject.Provider<>() {
+//						@Inject
+//						Scenario scenario;
+//						@Inject
+//						CadytsContext cadytsContext;
+//
+//						@Override
+//						public PlanStrategy get() {
+//							return new PlanStrategyImpl.Builder((new CadytsPlanChanger(scenario, cadytsContext)))
+//									.build();
+//						}
+//					});
+//			}
+//		});
 		// include cadyts into the plan scoring (this will add the cadyts corrections to
 		// the scores)
 		if (cadytsCalibration)
-			controler.setScoringFunctionFactory(new ScoringFunctionFactory() {
+			controller.setScoringFunctionFactory(new ScoringFunctionFactory() {
 
 				@Inject
 				CadytsContext cadytsContext;
@@ -159,25 +152,23 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 
 				@Override
 				public ScoringFunction createNewScoringFunction(Person person) {
+					SumScoringFunction sumScoringFunction = new SumScoringFunction();
+
+					Config config = controller.getConfig();
+
 					final ScoringParameters params = parameters.getScoringParameters(person);
 
-					SumScoringFunction scoringFunctionAccumulator = new SumScoringFunction();
-					scoringFunctionAccumulator.addScoringFunction(new CharyparNagelLegScoring(params,
-							controler.getScenario().getNetwork(), config.transit().getTransitModes()));
-					scoringFunctionAccumulator.addScoringFunction(new CharyparNagelActivityScoring(params));
-					scoringFunctionAccumulator.addScoringFunction(new CharyparNagelAgentStuckScoring(params));
-					final CadytsScoring<Link> scoringFunction = new CadytsScoring<>(person.getSelectedPlan(), config,
-							cadytsContext);
-					scoringFunction.setWeightOfCadytsCorrection(30. * config.planCalcScore().getBrainExpBeta());
-					scoringFunctionAccumulator.addScoringFunction(scoringFunction);
+					final CadytsScoring<Link> scoringFunction = new CadytsScoring<>(person.getSelectedPlan(), config, cadytsContext);
+					scoringFunction.setWeightOfCadytsCorrection(weight * config.scoring().getBrainExpBeta());
+					sumScoringFunction.addScoringFunction(scoringFunction);
 
-					return scoringFunctionAccumulator;
+					return sumScoringFunction;
 				}
 			});
 
-		controler.getConfig().vspExperimental().setVspDefaultsCheckingLevel(VspDefaultsCheckingLevel.abort);
+		controller.getConfig().vspExperimental().setVspDefaultsCheckingLevel(VspDefaultsCheckingLevel.abort);
 
-		controler.run();
+		controller.run();
 
 		return 0;
 	}
@@ -247,7 +238,7 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 					String newTypeName = ((Activity) planElement).getType() + "_" + i;
 					((Activity) planElement).setType(newTypeName);
 					if (newTypeName.contains("service")) {
-						config.planCalcScore()
+						config.scoring()
 								.addActivityParams(new ActivityParams(newTypeName)
 										.setTypicalDuration(((Activity) planElement).getMaximumDuration().seconds())
 										.setOpeningTime(tourStartTime).setClosingTime(tourStartTime + 8. * 3600.));
@@ -255,7 +246,7 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 					}
 					if (newTypeName.contains("start") && !newTypeName.contains("freight")) {
 						tourStartTime = ((Activity) planElement).getEndTime().seconds();
-						config.planCalcScore()
+						config.scoring()
 								.addActivityParams(new ActivityParams(newTypeName).setOpeningTime(6. * 3600.)
 										.setClosingTime(20. * 3600.).setLatestStartTime(tourStartTime)
 										.setEarliestEndTime(6. * 3600.).setTypicalDuration(5 * 60));
@@ -265,7 +256,7 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 						double tourEndTime = tourStartTime + 9 * 3600;
 						if (tourEndTime > 24 * 3600)
 							tourEndTime = 24 * 3600;
-						config.planCalcScore()
+						config.scoring()
 								.addActivityParams(new ActivityParams(newTypeName)
 										.setOpeningTime(tourStartTime + 6 * 3600).setClosingTime(tourEndTime)
 										.setLatestStartTime(tourEndTime).setTypicalDuration(5 * 60));
@@ -273,11 +264,11 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 					}
 					if (newTypeName.contains("freight_start")) {
 						tourStartTime = ((Activity) planElement).getEndTime().seconds();
-						config.planCalcScore().addActivityParams(new ActivityParams(newTypeName).setTypicalDuration(1));
+						config.scoring().addActivityParams(new ActivityParams(newTypeName).setTypicalDuration(1));
 						continue;
 					}
 					if (newTypeName.contains("freight_end")) {
-						config.planCalcScore().addActivityParams(new ActivityParams(newTypeName).setTypicalDuration(1));
+						config.scoring().addActivityParams(new ActivityParams(newTypeName).setTypicalDuration(1));
 					}
 				}
 			}
@@ -290,18 +281,18 @@ public class RunMATSimCommercialTraffic implements MATSimAppCommand {
 	 * @param scenario
 	 * @return
 	 */
-	private Controler prepareControler(Scenario scenario) {
-		Controler controler = new Controler(scenario);
+	private Controler prepareController(Scenario scenario) {
+		Controler controller = new Controler(scenario);
 
-		if (controler.getConfig().transit().isUseTransit()) {
+		if (controller.getConfig().transit().isUseTransit()) {
 			// use the sbb pt raptor router
-			controler.addOverridingModule(new AbstractModule() {
+			controller.addOverridingModule(new AbstractModule() {
 				@Override
 				public void install() {
 					install(new SwissRailRaptorModule());
 				}
 			});
 		}
-		return controler;
+		return controller;
 	}
 }

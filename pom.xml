@@ -11,7 +11,7 @@
 	<description>zeroCUTS project</description>
 
 	<properties>
-		<matsim.version>16.0-PR2546</matsim.version>
+		<matsim.version>16.0-PR3120</matsim.version>
 <!--        <matsim.version>16.0-SNAPSHOT</matsim.version>-->
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -78,20 +78,21 @@
 			<!--<scope>compile</scope> -->
 		</dependency>
 
+		<!-- This is the matsim small-scale-traffic-generation contrib: -->
+		<dependency>
+			<groupId>org.matsim.contrib</groupId>
+			<artifactId>small-scale-traffic-generation</artifactId>
+			<version>${matsim.version}</version>
+			<!--<scope>compile</scope> -->
+		</dependency>
+
+
+
 
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>emissions</artifactId>
 			<version>${matsim.version}</version>
-		</dependency>
-
-
-		<!-- Include the JUnit testing library. Not transitive. -->
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.13.1</version>
-			<scope>test</scope>
 		</dependency>
 
 		<!--MATSim test infrastructure. Not transitive. -->
@@ -100,6 +101,12 @@
 			<artifactId>matsim</artifactId>
 			<type>test-jar</type>
 			<version>${matsim.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>5.10.1</version>
 			<scope>test</scope>
 		</dependency>
 

@@ -20,9 +20,9 @@
 
 package org.matsim.vsp.freight.food.prepare;
 
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypeReader;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypeWriter;
-import org.matsim.contrib.freight.carrier.CarrierVehicleTypes;
+import org.matsim.freight.carriers.CarrierVehicleTypeReader;
+import org.matsim.freight.carriers.CarrierVehicleTypeWriter;
+import org.matsim.freight.carriers.CarrierVehicleTypes;
 import org.matsim.vehicles.*;
 
 

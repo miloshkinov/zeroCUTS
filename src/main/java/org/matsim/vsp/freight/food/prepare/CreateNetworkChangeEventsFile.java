@@ -39,18 +39,18 @@ import java.util.List;
 /**
  * This class is based on matsim-code-examples: RunCreateNetworkChangeEventsFromExistingSimulationExample
  */
-public class createNetworkChangeEventsFile {
+public class CreateNetworkChangeEventsFile {
 
     private static final int ENDTIME = 36 * 3600;
     private static final int TIMESTEP = 15 * 60;
-    private static final String NETWORKFILE = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz";
-    private static final String SIMULATION_EVENTS_FILE = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/output-berlin-v5.4-10pct/berlin-v5.4-10pct.output_events.xml.gz";
-    private static final String CHANGE_EVENTS_FILE = "../tubCloud/Shared/vsp_zerocuts/scenarios/Fracht_LEH-Shipments-Berlin_oneTW/input/networkChangeEvents.xml.gz";
+    private static final String NETWORKFILE = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz";
+    private static final String SIMULATION_EVENTS_FILE = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/output-berlinv5.5/berlin-v5.5.3-10pct.output_events.xml.gz";
+    private static final String CHANGE_EVENTS_FILE = "output/networkChangeEvents_V5.5-10pct.xml.gz";
     private static final double MINIMUMFREESPEED = 1.39; //5 km/h
 
 
     public static void main(String[] args) {
-        createNetworkChangeEventsFile ncg = new createNetworkChangeEventsFile();
+        CreateNetworkChangeEventsFile ncg = new CreateNetworkChangeEventsFile();
         ncg.run();
     }
 
@@ -78,7 +78,8 @@ public class createNetworkChangeEventsFile {
                     NetworkChangeEvent nce = new NetworkChangeEvent(time);
                     nce.addLink(l);
                     double newFreespeed = length / newTravelTime;
-                    if (newFreespeed < MINIMUMFREESPEED) newFreespeed = MINIMUMFREESPEED;
+                    if (newFreespeed < MINIMUMFREESPEED && l.getFreespeed() > MINIMUMFREESPEED)
+                        newFreespeed = MINIMUMFREESPEED;
                     ChangeValue freespeedChange = new ChangeValue(ChangeType.ABSOLUTE_IN_SI_UNITS, newFreespeed);
                     nce.setFreespeedChange(freespeedChange);
 
