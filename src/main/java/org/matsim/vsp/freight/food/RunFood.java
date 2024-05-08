@@ -77,13 +77,13 @@ class RunFood implements MATSimAppCommand {
 		System.exit(new CommandLine(new RunFood()).execute(args));
 	}
 
-		@Override
-		public Integer call() throws Exception {
+	@Override
+	public Integer call() throws Exception {
 
 
-		Config config = prepareConfig() ;
-		Scenario scenario = prepareScenario( config ) ;
-		Controler controler = prepareControler( scenario ) ;
+		Config config = prepareConfig();
+		Scenario scenario = prepareScenario(config);
+		Controler controler = prepareControler(scenario);
 
 		CarriersUtils.runJsprit(scenario);
 
@@ -92,7 +92,8 @@ class RunFood implements MATSimAppCommand {
 		controler.run();
 
 		final String outputPath = controler.getControlerIO().getOutputPath();
-		RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(outputPath +"/", outputPath +"/Analysis/", config.global().getCoordinateSystem());
+		RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(outputPath + "/", outputPath + "/Analysis/",
+				config.global().getCoordinateSystem());
 		freightAnalysis.runAnalysis();
 
 		return 0;
