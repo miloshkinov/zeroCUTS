@@ -67,7 +67,7 @@ public class ExtractLongDistanceFreightTraffic {
 			PopulationUtils.putSubpopulation(person, "longDistanceFreight");
 		}
 		PopulationUtils.sampleDown(population, samplePopulationTo/inputPopulationSample);
-		PopulationUtils.writePopulation(population, outputPath.toString() + "/berlin_longDistanceFreight_"+(int)(samplePopulationTo*100)+"pct.xml.gz");
-		assert (new File (outputPath.toString() + "/extracted-population.xml.gz").delete());
+		PopulationUtils.writePopulation(population, outputPath + "/berlin_longDistanceFreight_"+(int)(samplePopulationTo*100)+"pct.xml.gz");
+		assert (new File (outputPath + "/extracted-population.xml.gz").delete());
 	}
 }
