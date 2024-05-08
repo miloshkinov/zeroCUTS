@@ -60,12 +60,12 @@ create_vehicle_categories <- function(data) {
   
 }
 # Read data for the base case
-df <- read.delim("run3_Base_100it/Analysis/TimeDistance_perVehicleType.tsv")
-df_tours <- read.delim("run3_Base_100it/Analysis/TimeDistance_perVehicle.tsv")
+df <- read.delim("Base_10000/Analysis/TimeDistance_perVehicleType.tsv")
+df_tours <- read.delim("Base_10000/Analysis/TimeDistance_perVehicle.tsv")
 
 # Read data for the policy case
-df_policy <- read.delim("run2_EV_100it/Analysis/TimeDistance_perVehicleType.tsv")
-df_tours_policy <- read.delim("run2_EV_100it/Analysis/TimeDistance_perVehicle.tsv")
+df_policy <- read.delim("EV_only_10000/Analysis/TimeDistance_perVehicleType.tsv")
+df_tours_policy <- read.delim("EV_only_10000/Analysis/TimeDistance_perVehicle.tsv")
 
 #add categories
 df <- create_vehicle_categories(df)
@@ -107,9 +107,34 @@ box_plot_distances_policy <- plot_ly(data = df_tours_policy, x = ~vehicleCategor
                               type = 'box', boxpoints = "all", jitter = 0.0, pointpos = -0.0) %>%
   layout(xaxis = list(title = 'Vehicle Type'), yaxis = list(title = 'Traveled Distances (km)'))
 
-# Display the combined bar plot
+# Merge the base case and policy case data frames
+combined_df_tours <- bind_rows(
+  mutate(df_tours, Case = "Base"),
+  mutate(df_tours_policy, Case = "Policy")
+)
+
+# Create a box plot for traveled distances by vehicle type for both cases
+combined_box_plot_distances <- plot_ly(data = combined_df_tours, x = ~vehicleCategory, y = ~travelDistance.km., color = ~Case,
+                                       type = 'box', boxpoints = "all", jitter = 0.0, pointpos = -0.0, colors = "Set1") %>%
+  layout(xaxis = list(title = 'Vehicle Type'), yaxis = list(title = 'Traveled Distances (km)'),
+         title = 'Box Plot of Traveled Distances by Vehicle Type - Base vs. Policy') %>%
+  layout(font = list(size = 16))
+
 print(combined_bar_plot_vehicles)
 print(combined_bar_plot_costs)
 print(combined_bar_plot_distances)
 print(box_plot_distances %>% layout(title = 'Box Plot of Traveled Distances by Vehicle Type - Base'))
 print(box_plot_distances_policy %>% layout(title = 'Box Plot of Traveled Distances by Vehicle Type - EV'))
+print(combined_box_plot_distances)
+
+
+# Create a box plot for traveled distances by vehicle type for both cases
+combined_box_plot_distances <- plot_ly(data = combined_df_tours, x = ~vehicleCategory, y = ~travelDistance.km.,
+                                       type = 'box', boxpoints = "all", jitter = 0.0, pointpos = -0.0) %>%
+  add_boxplot(data = filter(combined_df_tours, Case == "Base"), color = I("Set2"), colo width = 0.5, name = "Base Case") %>%
+  add_boxplot(data = filter(combined_df_tours, Case == "Policy"), color = I("Set1"), width = 0.5, name = "Policy Case") %>%
+  layout(xaxis = list(title = 'Vehicle Type'), yaxis = list(title = 'Traveled Distances (km)'),
+         title = 'Box Plot of Traveled Distances by Vehicle Type - Base vs. Policy')
+
+# Display the combined box plot
+print(combined_box_plot_distances)
