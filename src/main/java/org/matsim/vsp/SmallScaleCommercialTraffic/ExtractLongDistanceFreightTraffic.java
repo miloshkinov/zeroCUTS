@@ -59,7 +59,8 @@ public class ExtractLongDistanceFreightTraffic {
 				"--input-crs", inputCRS,
 				"--target-crs", targetCRS,
 				"--shp-crs", shpCRS,
-				"--cut-on-boundary"
+				"--cut-on-boundary",
+				"--tripType", "TRANSIT"
 				);
 		Population population = PopulationUtils.readPopulation(outputPath.toString() + "/extracted-population.xml.gz");
 		for (Person person : population.getPersons().values()) {
