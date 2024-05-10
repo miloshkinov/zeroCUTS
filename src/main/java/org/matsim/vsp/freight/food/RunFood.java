@@ -42,6 +42,8 @@ import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
 import org.matsim.freight.carriers.controler.CarrierModule;
 import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
+import org.matsim.vehicles.EngineInformation;
+import org.matsim.vehicles.VehicleUtils;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
@@ -73,6 +75,15 @@ class RunFood implements MATSimAppCommand {
 	@CommandLine.Option(names = "--useDistanceConstraint", description = "Use distance constraint for tour planning.")
 	private static boolean useDistanceConstraint;
 
+	@CommandLine.Option(names = "--calculateVariableConsumptionCosts", description = "Recalculate variable costs based on the given.")
+	private static boolean calculateVariableConsumptionCosts;
+
+	@CommandLine.Option(names = "--fuelCosts_EUR_per_l", description = "Fuel costs in EUR per liter.", required = true, defaultValue = "1.23") //TODO check: vwlich oder gewerbl.??
+	private static double fuelCosts_EUR_per_l;
+
+	@CommandLine.Option(names = "--energyCosts_EUR_per_kWh", description = "Energy costs in EUR per kWh.", required = true, defaultValue = "0.2216") //TODO check: vwlich oder gewerbl.??
+	private static double energyCosts_EUR_per_kWh;
+
 	public static void main(String[] args) {
 		System.exit(new CommandLine(new RunFood()).execute(args));
 	}
@@ -80,9 +91,21 @@ class RunFood implements MATSimAppCommand {
 	@Override
 	public Integer call() throws Exception {
 
+//		calculateVariableConsumptionCosts = true;
 
 		Config config = prepareConfig();
 		Scenario scenario = prepareScenario(config);
+
+		if (calculateVariableConsumptionCosts) {
+			log.warn("We assume that the variable costs in the vehicleTypes don't contain fuel and energy costs.");
+			log.warn("Recalculating variable costs based on the given fuel and energy costs.");
+			log.warn("Fuel costs: {} EUR per liter.", fuelCosts_EUR_per_l);
+			log.warn("Energy costs: {} EUR per kWh.", energyCosts_EUR_per_kWh);
+			calculateVariableConsumptionCosts(scenario, fuelCosts_EUR_per_l, energyCosts_EUR_per_kWh);
+			outputLocation = outputLocation + "_fuel" + fuelCosts_EUR_per_l + "_energy" + energyCosts_EUR_per_kWh + "/";
+			config.controller().setOutputDirectory(outputLocation);
+		}
+
 		Controler controler = prepareControler(scenario);
 
 		CarriersUtils.runJsprit(scenario);
@@ -97,6 +120,36 @@ class RunFood implements MATSimAppCommand {
 		freightAnalysis.runAnalysis();
 
 		return 0;
+	}
+
+	/**
+	 * Recalculates the variable costs based on the given fuel and energy costs.
+	 * Assumes that the variable costs in the vehicleTypes don't contain fuel and energy costs.
+	 *
+	 * @param scenario             the scenario
+	 * @param fuelCostsEurPerL     fuel costs in EUR per liter
+	 * @param energyCostsEurPerKWh energy costs in EUR per kWh
+	 */
+	private void calculateVariableConsumptionCosts(Scenario scenario, double fuelCostsEurPerL, double energyCostsEurPerKWh) {
+		CarriersUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().values().forEach(vehicleType -> {
+			EngineInformation engineInformation = vehicleType.getEngineInformation();
+			String engineType = VehicleUtils.getHbefaTechnology(engineInformation);
+			double basicVariableCostsPerMeter = vehicleType.getCostInformation().getCostsPerMeter(); // existing variable costs based on Kostensätze file
+			double energieCostsPerMeter;
+			if (engineType.equals("electricity")){
+				double energyConsumptionKWhPerMeter = VehicleUtils.getEnergyConsumptionKWhPerMeter(engineInformation);
+				energieCostsPerMeter = energyConsumptionKWhPerMeter * energyCostsEurPerKWh;
+
+			} else if (engineType.equals("diesel")) {
+				double fuelConsumptionLitersPerMeter = VehicleUtils.getFuelConsumption(vehicleType);
+				energieCostsPerMeter = fuelConsumptionLitersPerMeter * fuelCostsEurPerL;
+
+			} else
+				throw new IllegalArgumentException("EngineType not supported: " + engineType);
+
+			double newVariableCosts = basicVariableCostsPerMeter + energieCostsPerMeter;
+			vehicleType.getCostInformation().setCostsPerMeter(newVariableCosts);
+		});
 	}
 
 
