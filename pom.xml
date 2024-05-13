@@ -57,41 +57,41 @@
 		<dependency>
 			<groupId>org.matsim</groupId>
 			<artifactId>matsim</artifactId>
-			<version>${matsim.version}</version>
+			<version>${project.parent.version}</version>
 		</dependency>
 
 		<!-- This is the matsim freight contrib: -->
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>freight</artifactId>
-			<version>${matsim.version}</version>
+			<version>${project.parent.version}</version>
 		</dependency>
 		
 		<!-- This is the matsim vsp contrib: -->
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>vsp</artifactId>
-			<version>${matsim.version}</version>
+			<version>${project.parent.version}</version>
 		</dependency>
 
 		<!-- This is the matsim application contrib: -->
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>application</artifactId>
-			<version>${matsim.version}</version>
+			<version>${project.parent.version}</version>
 		</dependency>
 
 		<!-- This is the matsim small-scale-traffic-generation contrib: -->
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>small-scale-traffic-generation</artifactId>
-			<version>${matsim.version}</version>
+			<version>${project.parent.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>emissions</artifactId>
-			<version>${matsim.version}</version>
+			<version>${project.parent.version}</version>
 		</dependency>
 
 		<!--MATSim test infrastructure. Not transitive. -->
@@ -99,7 +99,7 @@
 			<groupId>org.matsim</groupId>
 			<artifactId>matsim</artifactId>
 			<type>test-jar</type>
-			<version>${matsim.version}</version>
+			<version>${project.parent.version}</version>
 			<scope>test</scope>
 		</dependency>
 
