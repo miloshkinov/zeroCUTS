@@ -11,7 +11,8 @@
 	<description>zeroCUTS project</description>
 
 	<properties>
-		<matsim.version>25.0-PR3212</matsim.version>
+<!--		<matsim.version>25.0-PR3212</matsim.version>-->
+		<matsim.version>2025.0-2024w20</matsim.version>
 <!--        <matsim.version>16.0-SNAPSHOT</matsim.version>-->
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -85,8 +86,6 @@
 			<version>${matsim.version}</version>
 			<!--<scope>compile</scope> -->
 		</dependency>
-
-
 
 
 		<dependency>
@@ -213,44 +212,44 @@
 			</plugin>
 		</plugins>
 
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-surefire-plugin</artifactId>
-					<version>3.0.0-M7</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-failsafe-plugin</artifactId>
-					<version>3.0.0-M7</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jar-plugin</artifactId>
-					<version>3.2.2</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-source-plugin</artifactId>
-					<version>3.3.1</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-resources-plugin</artifactId>
-					<version>3.3.1</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-install-plugin</artifactId>
-					<version>3.0.0-M1</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-javadoc-plugin</artifactId>
-					<version>3.6.3</version>
-				</plugin>
-			</plugins>
-		</pluginManagement>
+<!--		<pluginManagement>-->
+<!--			<plugins>-->
+<!--				<plugin>-->
+<!--					<groupId>org.apache.maven.plugins</groupId>-->
+<!--					<artifactId>maven-surefire-plugin</artifactId>-->
+<!--					<version>3.0.0-M7</version>-->
+<!--				</plugin>-->
+<!--				<plugin>-->
+<!--					<groupId>org.apache.maven.plugins</groupId>-->
+<!--					<artifactId>maven-failsafe-plugin</artifactId>-->
+<!--					<version>3.0.0-M7</version>-->
+<!--				</plugin>-->
+<!--				<plugin>-->
+<!--					<groupId>org.apache.maven.plugins</groupId>-->
+<!--					<artifactId>maven-jar-plugin</artifactId>-->
+<!--					<version>3.2.2</version>-->
+<!--				</plugin>-->
+<!--				<plugin>-->
+<!--					<groupId>org.apache.maven.plugins</groupId>-->
+<!--					<artifactId>maven-source-plugin</artifactId>-->
+<!--					<version>3.3.1</version>-->
+<!--				</plugin>-->
+<!--				<plugin>-->
+<!--					<groupId>org.apache.maven.plugins</groupId>-->
+<!--					<artifactId>maven-resources-plugin</artifactId>-->
+<!--					<version>3.3.1</version>-->
+<!--				</plugin>-->
+<!--				<plugin>-->
+<!--					<groupId>org.apache.maven.plugins</groupId>-->
+<!--					<artifactId>maven-install-plugin</artifactId>-->
+<!--					<version>3.0.0-M1</version>-->
+<!--				</plugin>-->
+<!--				<plugin>-->
+<!--					<groupId>org.apache.maven.plugins</groupId>-->
+<!--					<artifactId>maven-javadoc-plugin</artifactId>-->
+<!--					<version>3.6.3</version>-->
+<!--				</plugin>-->
+<!--			</plugins>-->
+<!--		</pluginManagement>-->
 	</build>
 </project>
