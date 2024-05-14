@@ -75,7 +75,7 @@ df_tours_policy <- create_vehicle_categories(df_tours_policy)
 
 # Specify the desired order of vehicleTypeId
 desired_order <- c("light8t", "light8t_electro","medium18t", "medium18t_electro",
-                   "heavy26t", "heavy26t_electro", "heavy40t", "heavy40t_electro", "Sum")
+                   "heavy26t", "heavy26t_electro", "heavy40t", "heavy40t_electro")
 
 # Convert 'vehicleTypeId' to a factor with the desired order for both base and policy cases
 df$vehicleCategory <- factor(df$vehicleCategory, levels = desired_order)
