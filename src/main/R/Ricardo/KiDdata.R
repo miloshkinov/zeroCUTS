@@ -54,7 +54,7 @@ createTourStartDistribution <- function(Fahrten, Fahrzeug, filter_Wirtschaftszwe
     right_join(Fahrzeug, by = 'K00') %>%
     filter(F07b == 1 & F04 != "-1:-1") %>%
     mutate(stunde_start =  as.integer(format(as.POSIXct(F04, format = "%H:%M"), format = "%H"))) %>%
-    select(K00,F04,stunde_start, K19b, K01, K03, F07a) 
+    select(K00,F04,stunde_start, K19b, K01, K03, F07a, K91, K92)
   
   if (!is.null(filter_vehicleTypes)){
     Fahrten_mit_Wirtschaftszweig <- Fahrten_mit_Wirtschaftszweig %>%
@@ -71,13 +71,13 @@ createTourStartDistribution <- function(Fahrten, Fahrzeug, filter_Wirtschaftszwe
   }
   
   if ("all" %in% filter_Gesamtgewicht == FALSE){
-    Ketten_Aufenthaltsdauer <- Ketten_Aufenthaltsdauer %>% 
+    Fahrten_mit_Wirtschaftszweig <- Fahrten_mit_Wirtschaftszweig %>%
       filter(K03 >= as.integer(filter_Gesamtgewicht[1])) %>%
       filter(K03 < as.integer(filter_Gesamtgewicht[2]))
   }
   
-  startzeiten_Beginn = data.frame(K00 = integer(0), K19b = character(0), stunde_start = integer(0))
-  for(i in 1:nrow(Fahrten_mit_Wirtschaftszweig)) {
+  startzeiten_Beginn <- data.frame(K00 = integer(0), K19b = character(0), stunde_start = integer(0))
+  for(i in seq_len(nrow(Fahrten_mit_Wirtschaftszweig))) {
     row <- Fahrten_mit_Wirtschaftszweig[i,]
     if(row$K00 %in% startzeiten_Beginn$K00){
       row_existing <- startzeiten_Beginn[startzeiten_Beginn$K00 == row$K00,]
@@ -107,7 +107,7 @@ createTourStartDistribution <- function(Fahrten, Fahrzeug, filter_Wirtschaftszwe
   ggplot(data = startzeiten_Beginn, aes(x = stunde_start, y = after_stat(count)/sum(after_stat(count))*100)) +
     geom_bar() +
     geom_text(stat='count', aes(label = round(after_stat(count)/sum(after_stat(count))*100, 1), vjust = -0.5)) +
-    labs (title = paste("Fahrtbeginn",  nameVerkehrsmodell, nameWirtschaftsklasse, nameGesamtgewicht),
+    labs (title = iconv(paste("Fahrtbeginn",  nameVerkehrsmodell, nameWirtschaftsklasse, nameGesamtgewicht), from = "latin1", to = "UTF-8"),
           y = "Anteil in Prozent",
           x = "Zeitintervall",
           tag = paste("Mean: ", toString(result_mean))) +
@@ -121,10 +121,10 @@ createTourStartDistribution <- function(Fahrten, Fahrzeug, filter_Wirtschaftszwe
 createStopDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszweig, filter_vehicleTypes, filter_verkehrsmodell, filter_Gesamtgewicht, bins) {
   
   #Filter Fahrzwecke. Wenn in Tour min. Fahrt den Zweck "1" Transport von Gütern hat, wird die Tour zum GoodsTransport gezählt
-  fahrzeug_Fahrzweck = data.frame(K00 = integer(0), F07a = integer(0))
+  fahrzeug_Fahrzweck <- data.frame(K00 = integer(0), F07a = integer(0))
   Fahrten_dienstlich <- Fahrten %>%
     filter(F07b == 1)
-  for(i in 1:nrow(Fahrten_dienstlich)) {
+  for(i in seq_len(nrow(Fahrten_dienstlich))) {
     row <- Fahrten_dienstlich[i,]
     if (row$K00 %in% fahrzeug_Fahrzweck$K00){
       if(row$F07a == 1){
@@ -169,8 +169,8 @@ createStopDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszwe
       filter(K03 < as.integer(filter_Gesamtgewicht[2]))
   }
   
-  Stopp_Dauern = data.frame(StopDauer = integer(0), Nutzlast = integer(0))
-  for(i in 1:nrow(Ketten_Aufenthaltsdauer)) {
+  Stopp_Dauern <- data.frame(StopDauer = integer(0), Nutzlast = integer(0))
+  for(i in seq_len(nrow(Ketten_Aufenthaltsdauer))) {
     row <- Ketten_Aufenthaltsdauer[i,]
     for(i in 1:row$Anzahl_Stops) {
       Stopp_Dauern <- Stopp_Dauern %>%
@@ -201,7 +201,7 @@ createStopDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszwe
     #theme(legend.position = "bottom") +
    # geom_col(position = "dodge") +
     geom_text(stat='count', aes(label = round(after_stat(count)/sum(after_stat(count))*100, 1), vjust = -0.5)) +
-    labs (title = paste("Stopp-Dauern im", nameVerkehrsmodell, nameWirtschaftsklasse, nameGesamtgewicht),
+    labs (title = iconv(paste("Stopp-Dauern im", nameVerkehrsmodell, nameWirtschaftsklasse, nameGesamtgewicht), from = "latin1", to = "UTF-8"),
           y = "Anteil in Prozent",
           x = "Zeitintervall in Minuten",
           tag = paste("Mean: ", toString(result_mean), "min")) +
@@ -215,10 +215,10 @@ createStopDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszwe
 createTourDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszweig, filter_vehicleTypes, filter_verkehrsmodell, filter_Gesamtgewicht, bins) {
 
   #Filter Fahrzwecke. Wenn in Tour min. Fahrt den Zweck "1" Transport von Gütern hat, wird die Tour zum GoodsTransport gezählt
-  fahrzeug_Fahrzweck = data.frame(K00 = integer(0), F07a = integer(0))
+  fahrzeug_Fahrzweck <- data.frame(K00 = integer(0), F07a = integer(0))
   Fahrten_dienstlich <- Fahrten %>%
     filter(F07b == 1)
-  for(i in 1:nrow(Fahrten_dienstlich)) {
+  for(i in seq_len(nrow(Fahrten_dienstlich))) {
     row <- Fahrten_dienstlich[i,]
     if (row$K00 %in% fahrzeug_Fahrzweck$K00){
       if(row$F07a == 1){
@@ -236,7 +236,7 @@ createTourDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszwe
     right_join(Fahrzeug, by = 'K00') %>%
     filter(T01 != -1) %>%
     filter(T07 == 1) %>%
-    select(K00, K19b, K01, T04, T01, T07, F07a)
+    select(K00, K19b, K01, T04, T01, T07, F07a, K03)
   
   if (!is.null(filter_vehicleTypes)){
     Ketten_TourDauer <- Ketten_TourDauer %>%
@@ -252,9 +252,15 @@ createTourDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszwe
     Ketten_TourDauer <- Ketten_TourDauer %>% 
       filter(F07a %in% filter_verkehrsmodell)
   }
-  tourDauern = data.frame(K00 = integer(0), K19b = character(0), tourStart = character(0), tourEnde = character(0))
+
+  if ("all" %in% filter_Gesamtgewicht == FALSE){
+    Ketten_TourDauer <- Ketten_TourDauer %>%
+      filter(K03 >= as.integer(filter_Gesamtgewicht[1])) %>%
+      filter(K03 < as.integer(filter_Gesamtgewicht[2]))
+  }
+  tourDauern <- data.frame(K00 = integer(0), K19b = character(0), tourStart = character(0), tourEnde = character(0))
   
-  for(i in 1:nrow(Ketten_TourDauer)) {
+  for(i in seq_len(nrow(Ketten_TourDauer))) {
     newRow <- Ketten_TourDauer[i,]
     if(newRow$K00 %in% tourDauern$K00){
       row_existing <- tourDauern[tourDauern$K00 == newRow$K00,]
@@ -286,7 +292,8 @@ createTourDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszwe
   
   nameWirtschaftsklasse <- nameWirtschaftsklasse(filter_Wirtschaftszweig)
   nameVerkehrsmodell <- nameVerkehrsmodell(filter_verkehrsmodell)
-  
+  nameGesamtgewicht <- nameGesamtgewicht(filter_Gesamtgewicht)
+
 #  ggplot(data = tourDauern, aes(x = bins)) +
 #    geom_bar() +
 #    labs (title = paste("Verteilung der Tour-Dauern ", toString(filter_Wirtschaftszweig)),
@@ -295,11 +302,11 @@ createTourDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszwe
 #    theme(plot.margin = margin(1, 4, 1, 1, "lines"),
 #          plot.tag.position = c(.9,.9),
 #          plot.tag = element_text(hjust =0, size=15))
-  
+
   ggplot(data = tourDauern, aes(x = bins, y = after_stat(count)/sum(after_stat(count))*100)) +
     geom_bar() +
     geom_text(stat='count', aes(label = round(after_stat(count)/sum(after_stat(count))*100, 1), vjust = -0.5)) +
-    labs (title = paste("Tour-Dauern WV", nameWirtschaftsklasse, nameVerkehrsmodell),
+    labs (title = iconv(paste("Tour-Dauern WV", nameWirtschaftsklasse, nameVerkehrsmodell, nameGesamtgewicht), from = "latin1", to = "UTF-8"),
           y = "Anteil in Prozent",
           x = "Zeitintervall",
           tag = paste("Mean: ", toString(result_mean), "min")) +
