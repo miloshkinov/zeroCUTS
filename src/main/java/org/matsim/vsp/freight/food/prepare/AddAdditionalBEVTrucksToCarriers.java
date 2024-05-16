@@ -42,10 +42,10 @@ public class AddAdditionalBEVTrucksToCarriers {
 	private static final String OUTPUT_Carrier_File = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/input_2024/I-Base_carrierLEH_v2_withFleet_Shipment_OneTW_PickupTime_ICEVandBEV.xml" ;
 	private static final String vehicleTypes_File = "../shared-svn/projects/freight/studies/WP51_EmissionsFood/input_2024/vehicleTypes_Food_2024.xml";
 
-	private static final List<String> newVehicleTypes_8t = Arrays.asList("Mitsubishi", "Quantron");
-	private static final List<String> newVehicleTypes_18t = Arrays.asList("Renault", "Volvo");
-	private static final List<String> newVehicleTypes_26t = Arrays.asList("Renault", "Daimler");
-	private static final List<String> newVehicleTypes_40t = Arrays.asList("Daimler", "Scania");
+	private static final List<String> newVehicleTypes_8t = Arrays.asList("small_Mitsubishi", "large_Quantron");
+	private static final List<String> newVehicleTypes_18t = Arrays.asList("small_Renault", "large_Volvo");
+	private static final List<String> newVehicleTypes_26t = Arrays.asList("small_Volvo", "large_Daimler");
+	private static final List<String> newVehicleTypes_40t = Arrays.asList("small_Daimler", "large_Scania");
 
 	public static void main(String[] args) {
 		Carriers carriers = new Carriers();
