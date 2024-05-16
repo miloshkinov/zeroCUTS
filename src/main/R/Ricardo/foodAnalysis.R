@@ -235,8 +235,8 @@ plot_ly(scenario_data, x = ~factor(Year), y = ~Costs, color = ~Scenario, type = 
 # Create 3D scatter plot for different fuel and energy costs
 scatterplot3d(plot_data$fuel, plot_data$energy, plot_data$costs,
               main = "Total Costs vs. Fuel and Energy",
-              xlab = "Fuel",
-              ylab = "Energy",
+              xlab = "Fuel Costs (EUR/l)",
+              ylab = "Energy Costs (EUR/kWh)",
               zlab = "Total Costs",
               color = "blue",
               pch = 16)
