@@ -193,7 +193,7 @@ scenario_data$Year <- factor(scenario_data$Year)
 
 # Melt the data to long format
 melted_distances <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("distance_electro", "distance_diesel"))
-melted_vehicles <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("number_diesel_vehicle", "number_electro_vehicle"))
+melted_vehicles <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("number_electro_vehicle", "number_diesel_vehicle"))
 
 # Define custom colors for each variable
 custom_colors_Distance <- c("distance_electro" = "green",
