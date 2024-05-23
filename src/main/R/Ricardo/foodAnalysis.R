@@ -208,7 +208,9 @@ ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
   ggtitle("Driven distance Comparison for the Different Scenarios and Years") +
   xlab("Scenarios") +
   ylab("Driven Distance (km)") +
-  labs(fill = "Engine Type")
+  labs(fill = "Engine Type") +
+  theme(legend.position = "top",
+        text = element_text(size = 20))
 
 # Plot to compare the number of vehicles for the different scenarios and years
 ggplot(melted_vehicles, aes(x = Scenario, y = value, fill = variable)) +
@@ -218,7 +220,9 @@ ggplot(melted_vehicles, aes(x = Scenario, y = value, fill = variable)) +
   ggtitle("Fleet comparision for the Different Scenarios and Years") +
   xlab("Scenarios") +
   ylab("Number of vehicles") +
-  labs(fill = "Engine Type")
+  labs(fill = "Engine Type") +
+  theme(legend.position = "top",
+        text = element_text(size = 20))
 
 # Define colors for the different scenarios
 scenario_colors <- c("Base Case" = "grey", "Pessimistic" = "orange", "Optimistic" = "green")
