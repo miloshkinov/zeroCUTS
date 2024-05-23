@@ -222,12 +222,15 @@ scenario_data$Year <- factor(scenario_data$Year)
 # Melt the data to long format
 melted_distances <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("distance_electro", "distance_diesel"))
 melted_vehicles <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("number_electro_vehicle", "number_diesel_vehicle"))
+melted_costs <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("Costs"))
 
 # Define custom colors for each variable
 custom_colors_Distance <- c("distance_electro" = "green",
                             "distance_diesel" = "red")
 custom_colors_Vehicles <- c("number_electro_vehicle" = "green",
                             "number_diesel_vehicle" = "red")
+custom_colors_Costs <- c("Base Case" = "grey", "Pessimistic" = "orange", "Optimistic" = "green")
+
 # Plot to compare the driven distance for the different scenarios and years
 ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
   geom_bar(stat = 'identity', position = 'stack') +
@@ -238,7 +241,8 @@ ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
   ylab("Driven Distance (km)") +
   labs(fill = "Engine Type") +
   theme(legend.position = "top",
-        text = element_text(size = 20))
+        text = element_text(size = 20),
+        axis.text.x = element_text(angle = 90, hjust = 1))
 
 # Plot to compare the number of vehicles for the different scenarios and years
 ggplot(melted_vehicles, aes(x = Scenario, y = value, fill = variable)) +
@@ -250,19 +254,35 @@ ggplot(melted_vehicles, aes(x = Scenario, y = value, fill = variable)) +
   ylab("Number of vehicles") +
   labs(fill = "Engine Type") +
   theme(legend.position = "top",
-        text = element_text(size = 20))
+        text = element_text(size = 20),
+        axis.text.x = element_text(angle = 90, hjust = 1))
 
+# Plot to compare the total costs for the different scenarios and years
+ggplot(melted_costs, aes(x = Scenario, y = value, fill = Scenario)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  scale_fill_manual(values = custom_colors_Costs) +
+  facet_grid(~Year) +
+  ggtitle("Costs Comparison for Different Scenarios and Years") +
+  xlab("Scenarios") +
+  ylab("Costs") +
+  labs(fill = "Scenario") +
+  theme(legend.position = "none",
+        text = element_text(size = 20),
+        axis.text.x = element_text(angle = 90, hjust = 1))
 # Define colors for the different scenarios
-scenario_colors <- c("Base Case" = "grey", "Pessimistic" = "orange", "Optimistic" = "green")
 
 # Plot the costs comparison for the different scenarios and years
-plot_ly(scenario_data, x = ~factor(Year), y = ~Costs, color = ~Scenario, type = "bar", colors = scenario_colors) %>%
+plot_ly(scenario_data, x = ~factor(Year), y = ~Costs, color = ~Scenario, type = "bar", colors = custom_colors_Costs) %>%
   layout(title = "Costs Comparison for Different Scenarios and Years",
          xaxis = list(title = "Year"),
          yaxis = list(title = "Costs"),
          barmode = "group",
          # Set the desired order of scenarios
          legend = list(traceorder = "normal"))
+
+
+
+#################### 3D plots ####################
 
 # Create 3D scatter plot for different fuel and energy costs
 scatterplot3d(plot_data$fuel, plot_data$energy, plot_data$costs,
