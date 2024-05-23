@@ -16,13 +16,41 @@ plot_data <- data.frame()
 plot_data_base <- data.frame()
 
 # Define diesel prices for each year
-diesel_prices <- c("2024" = 1.55, "2030" = 1.78, "2050" = 3.2)
+diesel_price_assumptions <- data.frame(
+  year = c(2024, 2030, 2050),
+  price = c(1.55, 1.78, 3.2)
+)
 
 # Define energy prices for each year (optimistic and pessimistic)
-energy_prices <- list(
-  "2024" = c("optimistic" = 0.18, "pessimistic" = 0.24),
-  "2030" = c("optimistic" = 0.18, "pessimistic" = 0.21),
-  "2050" = c("optimistic" = 0.18, "pessimistic" = 0.21)
+energy_prices_assumptions <- data.frame(
+  year = c(2024, 2030, 2050),
+  optimistic = c(0.18, 0.18, 0.18),
+  pessimistic = c(0.24, 0.21, 0.21)
+)
+
+# Define the years you want to interpolate for
+interpolate_years <- 2024:2050
+# Use the approx() function to interpolate the diesel prices for the years in between
+interpolated_prices <- approx(diesel_price_assumptions$year, diesel_price_assumptions$price, xout = interpolate_years)
+# Create a data frame with the interpolated prices
+diesel_prices <- data.frame(
+  year = interpolated_prices$x,
+  price = interpolated_prices$y
+)
+# Sort the data frame by year
+diesel_prices <- diesel_prices[order(diesel_prices$year), ]
+# Convert Year column to factor for better grouping
+diesel_prices$year <- factor(diesel_prices$year)
+
+# Use the approx() function to interpolate the optimistic energy prices for the years in between
+interpolated_optimistic_prices <- approx(energy_prices_assumptions$year, energy_prices_assumptions$optimistic, xout = interpolate_years)
+# Use the approx() function to interpolate the pessimistic energy prices for the years in between
+interpolated_pessimistic_prices <- approx(energy_prices_assumptions$year, energy_prices_assumptions$pessimistic, xout = interpolate_years)
+# Create a data frame with the interpolated prices
+energy_prices <- data.frame(
+  year = interpolated_optimistic_prices$x,
+  optimistic = interpolated_optimistic_prices$y,
+  pessimistic = interpolated_pessimistic_prices$y
 )
 
 # Iterate through each folder
@@ -83,17 +111,17 @@ for (folder_base in folders_base) {
   plot_data_base <- rbind(plot_data_base, data.frame(fuel = fuel, energy = energy, costs = total_costs, total_kilometers = total_kilometers, total_kilometers_electro = total_kilometers_electro, total_kilometers_diesel = total_kilometers_diesel, total_vehicle_diesel = total_vehicle_diesel, total_vehicle_electro = total_vehicle_electro))
 }
 # Find the row where fuel and or energy equals the desired values
-row_index_base_2024 <- which(plot_data_base$fuel == diesel_prices["2024"])
-row_index_base_2030 <- which(plot_data_base$fuel == diesel_prices["2030"])
-row_index_base_2050 <- which(plot_data_base$fuel == diesel_prices["2050"])
+row_index_base_2024 <- which(plot_data_base$fuel == subset(diesel_prices, year == 2024)$price)
+row_index_base_2030 <- which(plot_data_base$fuel == subset(diesel_prices, year == 2030)$price)
+row_index_base_2050 <- which(plot_data_base$fuel == subset(diesel_prices, year == 2050)$price)
 
-row_index_optimistic_2024 <- which(plot_data$fuel == diesel_prices["2024"] & plot_data$energy == energy_prices[["2024"]][["optimistic"]])
-row_index_optimistic_2030 <- which(plot_data$fuel == diesel_prices["2030"] & plot_data$energy == energy_prices[["2030"]][["optimistic"]])
-row_index_optimistic_2050 <- which(plot_data$fuel == diesel_prices["2050"] & plot_data$energy == energy_prices[["2050"]][["optimistic"]])
+row_index_optimistic_2024 <- which(plot_data$fuel == subset(diesel_prices, year == 2024)$price & plot_data$energy == subset(energy_prices, year == 2024)[["optimistic"]])
+row_index_optimistic_2030 <- which(plot_data$fuel == subset(diesel_prices, year == 2030)$price & plot_data$energy == subset(energy_prices, year == 2030)[["optimistic"]])
+row_index_optimistic_2050 <- which(plot_data$fuel == subset(diesel_prices, year == 2050)$price & plot_data$energy == subset(energy_prices, year == 2050)[["optimistic"]])
 
-row_index_pessimistic_2024 <- which(plot_data$fuel == diesel_prices["2024"] & plot_data$energy == energy_prices[["2024"]][["pessimistic"]])
-row_index_pessimistic_2030 <- which(plot_data$fuel == diesel_prices["2030"] & plot_data$energy == energy_prices[["2030"]][["pessimistic"]])
-row_index_pessimistic_2050 <- which(plot_data$fuel == diesel_prices["2050"] & plot_data$energy == energy_prices[["2050"]][["pessimistic"]])
+row_index_pessimistic_2024 <- which(plot_data$fuel == subset(diesel_prices, year == 2024)$price & plot_data$energy == subset(energy_prices, year == 2024)[["pessimistic"]])
+row_index_pessimistic_2030 <- which(plot_data$fuel == subset(diesel_prices, year == 2030)$price & plot_data$energy == subset(energy_prices, year == 2030)[["pessimistic"]])
+row_index_pessimistic_2050 <- which(plot_data$fuel == subset(diesel_prices, year == 2050)$price & plot_data$energy == subset(energy_prices, year == 2050)[["pessimistic"]])
 
 # Extract the corresponding cost value
 cost_base_2024 <- plot_data_base$costs[row_index_base_2024]
