@@ -237,6 +237,19 @@ public class RunFoodEmissions2024 {
       VehicleType medium18tVehicleType = null;
       VehicleType medium18t_electricityVehicleType = null;
 
+      VehicleType heavy26t_electro_large_Daimler_VehicleType= null;
+      VehicleType heavy26t_electro_small_Volvo_VehicleType = null;
+      VehicleType heavy26t_frozen_electro_large_Daimler_VehicleType = null;
+      VehicleType heavy26t_frozen_electro_small_Volvo_VehicleType = null;
+      VehicleType heavy40t_electro_large_Scania_VehicleType = null;
+      VehicleType heavy40t_electro_small_Daimler_VehicleType = null;
+      VehicleType light8t_electro_large_Quantron_VehicleType = null;
+      VehicleType light8t_electro_small_Mitsubishi_VehicleType = null;
+      VehicleType light8t_frozen_electro_large_Quantron_VehicleType = null;
+      VehicleType light8t_frozen_electro_small_Mitsubishi_VehicleType = null;
+      VehicleType medium18t_electro_large_Volvo_VehicleType = null;
+      VehicleType medium18t_electro_small_Renault_VehicleType = null;
+
       switch (etruckDefinition) {
         case ownVehicleType -> {
           //Runs mit ordentlicher Definition:
@@ -264,7 +277,48 @@ public class RunFoodEmissions2024 {
               .get(Id.create("medium18t", VehicleType.class));
           medium18t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
               .get(Id.create("medium18t_electro", VehicleType.class));
+
+          //And now the vehicle types for EFood2024:
+          heavy26t_electro_large_Daimler_VehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy26t_electro_large_Daimler", VehicleType.class));
+
+          heavy26t_electro_small_Volvo_VehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy26t_electro_small_Volvo", VehicleType.class));
+
+          heavy26t_frozen_electro_large_Daimler_VehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy26t_frozen_electro_large_Daimler", VehicleType.class));
+
+          heavy26t_frozen_electro_small_Volvo_VehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy26t_frozen_electro_small_Volvo", VehicleType.class));
+
+          heavy40t_electro_large_Scania_VehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy40t_electro_large_Scania", VehicleType.class));
+
+          heavy40t_electro_small_Daimler_VehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("heavy40t_electro_small_Daimler", VehicleType.class));
+
+          light8t_electro_large_Quantron_VehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("light8t_electro_large_Quantron", VehicleType.class));
+
+          light8t_electro_small_Mitsubishi_VehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("light8t_electro_small_Mitsubishi", VehicleType.class));
+
+          light8t_frozen_electro_large_Quantron_VehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("light8t_frozen_electro_large_Quantron", VehicleType.class));
+
+          light8t_frozen_electro_small_Mitsubishi_VehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("light8t_frozen_electro_small_Mitsubishi", VehicleType.class));
+
+          medium18t_electro_large_Volvo_VehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("medium18t_electro_large_Volvo", VehicleType.class));
+
+          medium18t_electro_small_Renault_VehicleType = scenario.getVehicles().getVehicleTypes()
+              .get(Id.create("medium18t_electro_small_Renault", VehicleType.class));
+
         }
+
+
+
         case allVehiclesAreElectric -> { //TODO: Eigentlich müsste ich das schon beim Updaten der Runs "fixen".
           heavy26t_electricityVehicleType = scenario.getVehicles().getVehicleTypes()
               .get(Id.create("heavy26t", VehicleType.class));
@@ -281,7 +335,6 @@ public class RunFoodEmissions2024 {
         }
         default -> throw new IllegalStateException("Unexpected value: " + etruckDefinition);
       }
-
 
 
       if (heavy26t_VehicleType != null) {
@@ -392,6 +445,68 @@ public class RunFoodEmissions2024 {
         VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
         VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
       }
+
+      //E-Food 2024:
+
+      if (heavy26t_electro_large_Daimler_VehicleType != null) {
+        EngineInformation medium18t_electricityEngineInformation = heavy26t_electro_large_Daimler_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
+            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
+        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
+        VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
+        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
+      }
+
+
+      if (heavy26t_electro_small_Volvo_VehicleType  != null) {
+        EngineInformation medium18t_electricityEngineInformation = heavy26t_electro_small_Volvo_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
+            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
+        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
+        VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
+        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
+      }
+
+      if (heavy26t_frozen_electro_large_Daimler_VehicleType  != null) {
+        EngineInformation medium18t_electricityEngineInformation = heavy26t_frozen_electro_large_Daimler_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
+            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
+        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
+        VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
+        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
+      }
+
+      if (heavy26t_frozen_electro_small_Volvo_VehicleType  != null) {
+        EngineInformation medium18t_electricityEngineInformation = heavy26t_frozen_electro_small_Volvo_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
+            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
+        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
+        VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
+        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
+      }
+
+      if (heavy40t_electro_large_Scania_VehicleType  != null) {
+        EngineInformation medium18t_electricityEngineInformation = heavy40t_electro_large_Scania_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
+            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
+        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
+        VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
+        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
+      }
+
+      if (heavy40t_electro_small_Daimler_VehicleType  != null) {
+        EngineInformation medium18t_electricityEngineInformation = heavy40t_electro_small_Daimler_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
+            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
+        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
+        VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
+        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
+      }
+
+
+
+
+
     }
 
     // the following is copy and paste from the example...
