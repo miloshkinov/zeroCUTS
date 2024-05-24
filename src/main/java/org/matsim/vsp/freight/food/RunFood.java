@@ -66,7 +66,7 @@ class RunFood {
 
 	private static int nuOfJspritIteration;
 
-	public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
+    public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
 
 		for (String arg : args) {
 			log.info( arg );
@@ -124,7 +124,8 @@ class RunFood {
 		config.controller().setLastIteration(0);
 		config.controller().setOutputDirectory(outputLocation);
 
-		config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
+        config.network().setInputFile("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.4-10pct/input/berlin-v5-network.xml.gz");
+
 
 		if (!Objects.equals(networkChangeEventsFileLocation, "")){
 			log.info("Setting networkChangeEventsInput file: " + networkChangeEventsFileLocation);

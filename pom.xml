@@ -10,17 +10,14 @@
 	<name>zeroCUTS project</name>
 	<description>zeroCUTS project</description>
 
-	<properties>
-<!--		<matsim.version>16.0-PR3120</matsim.version>-->
-        <matsim.version>16.0-SNAPSHOT</matsim.version>
-
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<maven.compiler.release>17</maven.compiler.release>
-		<argLine/>
-		
-
-	</properties>
+	<parent>
+		<groupId>org.matsim</groupId>
+		<artifactId>matsim-all</artifactId>
+		<version>2025.0-2024w21</version>
+		<!--		    <version>2025.0-PR3245</version>-->
+		<!--        <version>2025.0-SNAPSHOT</version>-->
+		<relativePath/>
+	</parent>
 
 	<repositories>
 
@@ -42,57 +39,48 @@
 			<id>matsim</id>
 			<url>https://repo.matsim.org/repository/matsim</url>
 		</repository>
-
 	</repositories>
 
 	<dependencies>
-
 		<!-- This is the matsim "core": -->
 		<dependency>
 			<groupId>org.matsim</groupId>
 			<artifactId>matsim</artifactId>
-			<version>${matsim.version}</version>
+			<version>${project.parent.version}</version>
 		</dependency>
 
 		<!-- This is the matsim freight contrib: -->
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>freight</artifactId>
-			<version>${matsim.version}</version>
-			<!--<scope>compile</scope> -->
+			<version>${project.parent.version}</version>
 		</dependency>
 		
 		<!-- This is the matsim vsp contrib: -->
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>vsp</artifactId>
-			<version>${matsim.version}</version>
-			<!--<scope>compile</scope> -->
+			<version>${project.parent.version}</version>
 		</dependency>
 
 		<!-- This is the matsim application contrib: -->
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>application</artifactId>
-			<version>${matsim.version}</version>
-			<!--<scope>compile</scope> -->
+			<version>${project.parent.version}</version>
 		</dependency>
 
 		<!-- This is the matsim small-scale-traffic-generation contrib: -->
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>small-scale-traffic-generation</artifactId>
-			<version>${matsim.version}</version>
-			<!--<scope>compile</scope> -->
+			<version>${project.parent.version}</version>
 		</dependency>
-
-
-
 
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>emissions</artifactId>
-			<version>${matsim.version}</version>
+			<version>${project.parent.version}</version>
 		</dependency>
 
 		<!--MATSim test infrastructure. Not transitive. -->
@@ -100,16 +88,21 @@
 			<groupId>org.matsim</groupId>
 			<artifactId>matsim</artifactId>
 			<type>test-jar</type>
-			<version>${matsim.version}</version>
+			<version>${project.parent.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Junit 5 testing. Version is inherited from the parent project (MATSim), thus not needed here -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-api</artifactId>
-			<version>5.10.1</version>
+			<artifactId>junit-jupiter</artifactId>
 			<scope>test</scope>
 		</dependency>
-
 
 	</dependencies>
 
@@ -118,7 +111,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.10.1</version>
+				<version>3.13.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -147,7 +140,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.2.2</version>
+				<version>3.5.3</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -213,44 +206,5 @@
 			</plugin>
 		</plugins>
 
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-surefire-plugin</artifactId>
-					<version>3.0.0-M7</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-failsafe-plugin</artifactId>
-					<version>3.0.0-M7</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jar-plugin</artifactId>
-					<version>3.2.2</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-source-plugin</artifactId>
-					<version>3.2.1</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-resources-plugin</artifactId>
-					<version>3.2.0</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-install-plugin</artifactId>
-					<version>3.0.0-M1</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-javadoc-plugin</artifactId>
-					<version>3.4.0</version>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 	</build>
 </project>
