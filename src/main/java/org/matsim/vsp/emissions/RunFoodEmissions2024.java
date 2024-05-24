@@ -62,31 +62,49 @@ public class RunFoodEmissions2024 {
 //    )   ;
 //    etruckDefinition= EtruckDefinition.allVehiclesAreElectric; //For CaseA and B only
 
+//    final String pathToRunDir = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/";
+//    var listOfRuns = List.of(
+//        "foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/",
+//        "foodRetailing_wo_rangeConstraint/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/",
+//        "foodRetailing_wo_rangeConstraint/72_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax25/",
+//        "foodRetailing_wo_rangeConstraint/73_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax50/",
+//        "foodRetailing_wo_rangeConstraint/74_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax100/",
+//        "foodRetailing_wo_rangeConstraint/75_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax150/",
+//        "foodRetailing_wo_rangeConstraint/76_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax200/",
+//        "foodRetailing_wo_rangeConstraint/77_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax250/",
+//        "foodRetailing_wo_rangeConstraint/78_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax300/",
+//        //nun Runs mit ReichweitenConstraint
+//        "foodRetailing_with_rangeConstraint/21_ICEVBEV_NwCE_BVWP_10000it_DC_noTax/",
+//        "foodRetailing_with_rangeConstraint/22_ICEVBEV_NwCE_BVWP_10000it_DC_Tax25/",
+//        "foodRetailing_with_rangeConstraint/23_ICEVBEV_NwCE_BVWP_10000it_DC_Tax50/",
+//        "foodRetailing_with_rangeConstraint/24_ICEVBEV_NwCE_BVWP_10000it_DC_Tax100/",
+//        "foodRetailing_with_rangeConstraint/25_ICEVBEV_NwCE_BVWP_10000it_DC_Tax150/",
+//        "foodRetailing_with_rangeConstraint/26_ICEVBEV_NwCE_BVWP_10000it_DC_Tax200/",
+//        "foodRetailing_with_rangeConstraint/27_ICEVBEV_NwCE_BVWP_10000it_DC_Tax250/",
+//        "foodRetailing_with_rangeConstraint/28_ICEVBEV_NwCE_BVWP_10000it_DC_Tax300/"
+//    )   ;
 
-
-    final String pathToRunDir = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/";
+    //EFood 2024
+    final String pathToRunDir = "/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/";
     var listOfRuns = List.of(
-        "foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/",
-        "foodRetailing_wo_rangeConstraint/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/",
-        "foodRetailing_wo_rangeConstraint/72_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax25/",
-        "foodRetailing_wo_rangeConstraint/73_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax50/",
-        "foodRetailing_wo_rangeConstraint/74_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax100/",
-        "foodRetailing_wo_rangeConstraint/75_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax150/",
-        "foodRetailing_wo_rangeConstraint/76_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax200/",
-        "foodRetailing_wo_rangeConstraint/77_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax250/",
-        "foodRetailing_wo_rangeConstraint/78_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax300/",
-        //nun Runs mit ReichweitenConstraint
-        "foodRetailing_with_rangeConstraint/21_ICEVBEV_NwCE_BVWP_10000it_DC_noTax/",
-        "foodRetailing_with_rangeConstraint/22_ICEVBEV_NwCE_BVWP_10000it_DC_Tax25/",
-        "foodRetailing_with_rangeConstraint/23_ICEVBEV_NwCE_BVWP_10000it_DC_Tax50/",
-        "foodRetailing_with_rangeConstraint/24_ICEVBEV_NwCE_BVWP_10000it_DC_Tax100/",
-        "foodRetailing_with_rangeConstraint/25_ICEVBEV_NwCE_BVWP_10000it_DC_Tax150/",
-        "foodRetailing_with_rangeConstraint/26_ICEVBEV_NwCE_BVWP_10000it_DC_Tax200/",
-        "foodRetailing_with_rangeConstraint/27_ICEVBEV_NwCE_BVWP_10000it_DC_Tax250/",
-        "foodRetailing_with_rangeConstraint/28_ICEVBEV_NwCE_BVWP_10000it_DC_Tax300/"
+        //ICEVs only -> 3 Runs
+        "costsVariation_onlyICEV_10000it/Food_fuel1.55_energy0.18/",
+        "costsVariation_onlyICEV_10000it/Food_fuel1.78_energy0.18/",
+        "costsVariation_onlyICEV_10000it/Food_fuel3.2_energy0.18/",
+        //ICEV and BEV
+        "costsVariation_mixedFleet_withDC_5000it/Food_fuel1.55_energy0.18/",
+        "costsVariation_mixedFleet_withDC_5000it/Food_fuel1.55_energy0.21/",
+        "costsVariation_mixedFleet_withDC_5000it/Food_fuel1.55_energy0.24/",
+        "costsVariation_mixedFleet_withDC_5000it/Food_fuel1.78_energy0.18/",
+        "costsVariation_mixedFleet_withDC_5000it/Food_fuel1.78_energy0.21/",
+        "costsVariation_mixedFleet_withDC_5000it/Food_fuel1.78_energy0.24/",
+        "costsVariation_mixedFleet_withDC_5000it/Food_fuel3.2_energy0.18/",
+        "costsVariation_mixedFleet_withDC_5000it/Food_fuel3.2_energy0.21/",
+        "costsVariation_mixedFleet_withDC_5000it/Food_fuel3.2_energy0.24/"
     )   ;
-    etruckDefinition= EtruckDefinition.ownVehicleType;
 
+
+    etruckDefinition= EtruckDefinition.ownVehicleType;
 
     if (args.length == 0) {
       for (String runDir : listOfRuns) {
@@ -100,7 +118,7 @@ public class RunFoodEmissions2024 {
   public RunFoodEmissions2024(String runDirectory) {
     this.runDirectory = runDirectory;
 
-    String analysisOutputDirectory = runDirectory + "/analysis/1_emissions/";
+    String analysisOutputDirectory = runDirectory + "/Analysis/1_emissions/";
 
     if (!analysisOutputDirectory.endsWith("/")) analysisOutputDirectory = analysisOutputDirectory + "/";
     this.analysisOutputDirectory = analysisOutputDirectory;
