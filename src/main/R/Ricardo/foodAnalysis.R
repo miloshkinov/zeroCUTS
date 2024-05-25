@@ -79,6 +79,9 @@ for (folder in folders) {
   
   # Calculate sum of totalCosts[EUR] column
   total_costs <- sum(analysis_data$totalCosts.EUR)
+  total_fixCosts <- sum(analysis_data$fixedCosts.EUR.)
+  total_varCosts_time <- sum(analysis_data$varCostsTime.EUR)
+  total_varCosts_distance <- sum(analysis_data$varCostsDist.EUR)
 
   total_kilometers <- sum(analysis_data$SumOfTravelDistances.km.)
   total_kilometers_electro <- sum(analysis_data$SumOfTravelDistances.km[grepl("_electro", analysis_data$vehicleTypeId)])
@@ -88,7 +91,7 @@ for (folder in folders) {
   total_vehicle_electro <- sum(analysis_data$nuOfVehicles [grepl("_electro", analysis_data$vehicleTypeId)])
 
   # Append parameters and results to the dataframe
-  plot_data <- rbind(plot_data, data.frame(fuel = fuel, energy = energy, costs = total_costs, total_kilometers = total_kilometers, total_kilometers_electro = total_kilometers_electro, total_kilometers_diesel = total_kilometers_diesel, total_vehicle_diesel = total_vehicle_diesel, total_vehicle_electro = total_vehicle_electro))
+  plot_data <- rbind(plot_data, data.frame(fuel = fuel, energy = energy, costs = total_costs, fixCosts = total_fixCosts, variableCosts_time = total_varCosts_time, variableCosts_dist = total_varCosts_distance, total_kilometers = total_kilometers, total_kilometers_electro = total_kilometers_electro, total_kilometers_diesel = total_kilometers_diesel, total_vehicle_diesel = total_vehicle_diesel, total_vehicle_electro = total_vehicle_electro))
 }
 
 # Iterate through each folder for base
@@ -108,6 +111,9 @@ for (folder_base in folders_base) {
 
   # Calculate sum of totalCosts[EUR] column
   total_costs <- sum(analysis_data_base$totalCosts.EUR)
+  total_fixCosts <- sum(analysis_data_base$fixedCosts.EUR.)
+  total_varCosts_time <- sum(analysis_data_base$varCostsTime.EUR)
+  total_varCosts_distance <- sum(analysis_data_base$varCostsDist.EUR)
 
   total_kilometers <- sum(analysis_data_base$SumOfTravelDistances.km.)
   total_kilometers_electro <- sum(analysis_data_base$SumOfTravelDistances.km[grepl("_electro", analysis_data_base$vehicleTypeId)])
@@ -117,7 +123,7 @@ for (folder_base in folders_base) {
   total_vehicle_electro <- sum(analysis_data_base$nuOfVehicles[grepl("_electro", analysis_data_base$vehicleTypeId)])
 
   # Append parameters and results to the dataframe
-  plot_data_base <- rbind(plot_data_base, data.frame(fuel = fuel, energy = energy, costs = total_costs, total_kilometers = total_kilometers, total_kilometers_electro = total_kilometers_electro, total_kilometers_diesel = total_kilometers_diesel, total_vehicle_diesel = total_vehicle_diesel, total_vehicle_electro = total_vehicle_electro))
+  plot_data_base <- rbind(plot_data_base, data.frame(fuel = fuel, energy = energy, costs = total_costs, fixCosts = total_fixCosts, variableCosts_time = total_varCosts_time, variableCosts_dist = total_varCosts_distance, total_kilometers = total_kilometers, total_kilometers_electro = total_kilometers_electro, total_kilometers_diesel = total_kilometers_diesel, total_vehicle_diesel = total_vehicle_diesel, total_vehicle_electro = total_vehicle_electro))
 }
 # Find the row where fuel and or energy equals the desired values
 row_index_base_2024 <- which(plot_data_base$fuel == subset(diesel_prices, year == 2024)$price)
