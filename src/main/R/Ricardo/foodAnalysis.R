@@ -66,17 +66,18 @@ energy_prices <- data.frame(
 for (folder in folders) {
   # Extract parameters from folder name using regular expressions
   params <- strsplit(folder, "_")[[1]]
-  
+
   # Extracting parameters from folder name
   fuel <- as.numeric(gsub("fuel", "", params[2]))
   energy <- as.numeric(gsub("energy", "", params[3]))
-  
+
   # Path to the analysis file
   analysis_file <- file.path(folder, "Analysis", "TimeDistance_perVehicleType.tsv")
-  
+
   # Read the analysis file
   analysis_data <- read.table(analysis_file, header = TRUE, sep = "\t")
   
+
   # Calculate sum of totalCosts[EUR] column
   total_costs <- sum(analysis_data$totalCosts.EUR)
   total_fixCosts <- sum(analysis_data$fixedCosts.EUR.)
