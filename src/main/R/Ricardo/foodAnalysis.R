@@ -5,15 +5,24 @@ library(ggplot2)
 library(reshape2)
 
 # Set the working directory to the folder containing your simulation run folders
-setwd("C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_V2")
+setwd("C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_5000it")
 
 # List all folders in the testFolder directory
-folders <- list.dirs(path = "C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_V2", full.names = FALSE, recursive = FALSE)
-path_base <- "C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_V2_base"
-folders_base <- list.dirs(path = "C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_V2_base", full.names = FALSE, recursive = FALSE)
+folders <- list.dirs(path = "C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_5000it", full.names = FALSE, recursive = FALSE)
+path_base <- "C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_base_10000it"
+folders_base <- list.dirs(path = "C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_base_10000it", full.names = FALSE, recursive = FALSE)
+
+# File contains consumption information of each vehicleType
+path_vehicleTypeFile <- "C:/Users/Ricardo/git/zerocuts/output/food/vehTypVariableCostsWithoutEngine.csv"
+vehcileTypeFile <- read.table(path_vehicleTypeFile, header = TRUE, sep = "\t")
+
 # Initialize an empty dataframe to store the data
 plot_data <- data.frame()
 plot_data_base <- data.frame()
+plot_data_annual_costs <- data.frame()
+
+# Define the number of working days per year to calculate the annual costs
+days_per_year <- 250
 
 # Define diesel prices for each year
 diesel_price_assumptions <- data.frame(
