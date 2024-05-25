@@ -4,6 +4,35 @@ library(plotly)
 library(ggplot2)
 library(reshape2)
 
+##### function ######
+calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario){
+  for (Year in diesel_prices$year) {
+    fuelThisYear <- subset(diesel_prices, Year == year)$price
+    energyThisYear <- ifelse(Scenario == "Optimistic",subset(energy_prices, Year == year)$optimistic, subset(energy_prices, Year == year)$pessimistic)
+    fixcosts <- sum(analysis_data$fixedCosts.EUR.)
+    varCosts_time <- sum(analysis_data$varCostsTime.EUR)
+    varCosts_without_consumption <- sum(analysis_data$varCostsWithoutConsumption.EUR)
+    varCosts_consumption <- sum(ifelse(grepl("_electro", analysis_data$vehicleTypeId),
+                                       energyThisYear * analysis_data$Consumption,
+                                       fuelThisYear * analysis_data$Consumption))
+    costs_sum <- fixcosts +
+      varCosts_time +
+      varCosts_without_consumption +
+      varCosts_consumption
+    plot_data_annual_costs <- rbind(plot_data_annual_costs,
+                                    data.frame(year = Year,
+                                               scenario = Scenario,
+                                               diesel_price = fuelThisYear,
+                                               energy_price = energyThisYear,
+                                               totalCosts = costs_sum,
+                                               fixCosts = fixcosts,
+                                               varCosts_time = varCosts_time,
+                                               varCosts_without_consumption = varCosts_without_consumption,
+                                               varCosts_consumption = varCosts_consumption))
+  }
+  return(plot_data_annual_costs)
+}
+
 # Set the working directory to the folder containing your simulation run folders
 setwd("C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_5000it")
 
@@ -76,7 +105,24 @@ for (folder in folders) {
 
   # Read the analysis file
   analysis_data <- read.table(analysis_file, header = TRUE, sep = "\t")
-  
+
+  analysis_data <- merge(analysis_data, vehcileTypeFile, by = "vehicleTypeId")
+
+  analysis_data$varCostsWithoutConsumption.EUR <- analysis_data$costsWithoutConsumption.EUR.m. * analysis_data$SumOfTravelDistances.m.
+  # analysis_data$varCostsConsumption.EUR <- ifelse(grepl("_electro", analysis_data$vehicleTypeId),
+  #                                                 energy * analysis_data$SumOfTravelDistances.m. * analysis_data$energyConsumptionPerMeter,
+  #                                                 fuel * analysis_data$SumOfTravelDistances.m. * analysis_data$energyConsumptionPerMeter)
+  analysis_data$Consumption <- analysis_data$SumOfTravelDistances.m. * analysis_data$energyConsumptionPerMeter
+  if (fuel == 1.55 && energy == 0.24) {
+    # year 2024 with pessimitic energy prices
+    Scenario <- "Pessimistic"
+    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario)
+  }
+  if (fuel == 1.55 && energy == 0.18) {
+    # year 2024 with optimistic energy prices
+    Scenario <- "Optimistic"
+    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario)
+  }
 
   # Calculate sum of totalCosts[EUR] column
   total_costs <- sum(analysis_data$totalCosts.EUR)
@@ -110,6 +156,17 @@ for (folder_base in folders_base) {
   # Read the analysis file
   analysis_data_base <- read.table(analysis_file_base, header = TRUE, sep = "\t")
 
+  analysis_data_base <- merge(analysis_data_base, vehcileTypeFile, by = "vehicleTypeId")
+
+  analysis_data_base$varCostsWithoutConsumption.EUR <- analysis_data_base$costsWithoutConsumption.EUR.m. * analysis_data_base$SumOfTravelDistances.m.
+
+  analysis_data_base$Consumption <- analysis_data_base$SumOfTravelDistances.m. * analysis_data_base$energyConsumptionPerMeter
+  Scenario <- "Base"
+  if (Scenario %in% plot_data_annual_costs$Scenario && fuel == 1.55) {
+      # year 2024 with pessimitic energy prices
+      Scenario <- "Base"
+    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario)
+  }
   # Calculate sum of totalCosts[EUR] column
   total_costs <- sum(analysis_data_base$totalCosts.EUR)
   total_fixCosts <- sum(analysis_data_base$fixedCosts.EUR.)
