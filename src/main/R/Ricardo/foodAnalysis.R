@@ -37,6 +37,10 @@ calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, p
   return(plot_data_annual_costs)
 }
 
+#Todo: nutze eine Option um dann Setting RE oder KMT zu laden.
+
+### Settings Ricardo
+
 # Set the working directory to the folder containing your simulation run folders
 setwd("C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_5000it")
 
@@ -48,6 +52,24 @@ folders_base <- list.dirs(path = "C:/Users/Ricardo/git/zerocuts/output/food/cost
 # File contains consumption information of each vehicleType
 path_vehicleTypeFile <- "C:/Users/Ricardo/git/zerocuts/output/food/vehTypVariableCostsWithoutEngine.csv"
 vehcileTypeFile <- read.table(path_vehicleTypeFile, header = TRUE, sep = "\t")
+
+
+#### Settings KMT
+# Set the working directory to the folder containing your simulation run folders
+setwd("/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_mixedFleet_withDC_5000it")
+
+# List all folders in the testFolder directory
+folders <- list.dirs(path = "/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_mixedFleet_withDC_5000it", full.names = FALSE, recursive = FALSE)
+path_base <- "/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_onlyICEV_10000it"
+folders_base <- list.dirs(path = "/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_onlyICEV_10000it", full.names = FALSE, recursive = FALSE)
+
+# File contains consumption information of each vehicleType
+path_vehicleTypeFile <- "/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/vehTypVariableCostsWithoutEngine.csv"
+vehcileTypeFile <- read.table(path_vehicleTypeFile, header = TRUE, sep = "\t")
+
+
+### START Inhalt
+
 
 # Initialize an empty dataframe to store the data
 plot_data <- data.frame()
