@@ -36,6 +36,10 @@ import org.matsim.vehicles.VehicleUtils;
 public class RunFoodEmissions2024 {
 
   private static final Logger log = LogManager.getLogger(RunFoodEmissions2024.class);
+  private static final String HGV_STRING = HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString();
+  private static final String DIESEL = "diesel";
+  private static final String ELECTRICITY = "electricity";
+  private static final String AVERAGE = "average";
 
   private final String runDirectory;
 
@@ -88,9 +92,9 @@ public class RunFoodEmissions2024 {
     final String pathToRunDir = "/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/";
     var listOfRuns = List.of(
         //ICEVs only -> 3 Runs
-        "costsVariation_onlyICEV_10000it/Food_fuel1.55_energy0.18/",
-        "costsVariation_onlyICEV_10000it/Food_fuel1.78_energy0.18/",
-        "costsVariation_onlyICEV_10000it/Food_fuel3.2_energy0.18/",
+//        "costsVariation_onlyICEV_10000it/Food_fuel1.55_energy0.18/",
+//        "costsVariation_onlyICEV_10000it/Food_fuel1.78_energy0.18/",
+//        "costsVariation_onlyICEV_10000it/Food_fuel3.2_energy0.18/",
         //ICEV and BEV
         "costsVariation_mixedFleet_withDC_5000it/Food_fuel1.55_energy0.18/",
         "costsVariation_mixedFleet_withDC_5000it/Food_fuel1.55_energy0.21/",
@@ -314,9 +318,7 @@ public class RunFoodEmissions2024 {
 
           medium18t_electro_small_Renault_VehicleType = scenario.getVehicles().getVehicleTypes()
               .get(Id.create("medium18t_electro_small_Renault", VehicleType.class));
-
         }
-
 
 
         case allVehiclesAreElectric -> { //TODO: Eigentlich müsste ich das schon beim Updaten der Runs "fixen".
@@ -338,173 +340,198 @@ public class RunFoodEmissions2024 {
 
 
       if (heavy26t_VehicleType != null) {
-        EngineInformation heavy_26tEngineInformation = heavy26t_VehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(heavy_26tEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(heavy_26tEngineInformation, "diesel");
-        VehicleUtils.setHbefaSizeClass(heavy_26tEngineInformation, "RT >20-26t");
-        VehicleUtils.setHbefaTechnology(heavy_26tEngineInformation, "average");
+        EngineInformation engineInfo = heavy26t_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, DIESEL);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >20-26t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (heavy26t_electricityVehicleType != null) {
-        EngineInformation heavy26t_electricityEngineInformation = heavy26t_electricityVehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(heavy26t_electricityEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(heavy26t_electricityEngineInformation, "electricity");
-        VehicleUtils.setHbefaSizeClass(heavy26t_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaTechnology(heavy26t_electricityEngineInformation, "average");
+        EngineInformation engineInfo = heavy26t_electricityVehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (heavy26t_frozenVehicleType != null) {
-        EngineInformation heavy26t_frozenEngineInformation = heavy26t_frozenVehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(heavy26t_frozenEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(heavy26t_frozenEngineInformation, "diesel");
-        VehicleUtils.setHbefaSizeClass(heavy26t_frozenEngineInformation, "RT >20-26t");
-        VehicleUtils.setHbefaTechnology(heavy26t_frozenEngineInformation, "average");
+        EngineInformation engineInfo = heavy26t_frozenVehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, DIESEL);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >20-26t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (heavy26t_frozen_electricityVehicleType != null) {
-        EngineInformation heavy26t_frozen_electricityEngineInformation = heavy26t_frozen_electricityVehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(heavy26t_frozen_electricityEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(heavy26t_frozen_electricityEngineInformation, "electricity");
-        VehicleUtils.setHbefaSizeClass(heavy26t_frozen_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaTechnology(heavy26t_frozen_electricityEngineInformation,
-            "average");
+        EngineInformation engineInfo = heavy26t_frozen_electricityVehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (heavy40tVehicleType != null) {
-        EngineInformation heavy40tEngineInformation = heavy40tVehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(heavy40tEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(heavy40tEngineInformation, "diesel");
-        VehicleUtils.setHbefaSizeClass(heavy40tEngineInformation, "RT >32t");
-        VehicleUtils.setHbefaTechnology(heavy40tEngineInformation, "average");
+        EngineInformation engineInfo = heavy40tVehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, DIESEL);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >32t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (heavy40t_electricityVehicleType != null) {
-        EngineInformation heavy40t_electricityEngineInformation = heavy40t_electricityVehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(heavy40t_electricityEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(heavy40t_electricityEngineInformation, "electricity");
-        VehicleUtils.setHbefaSizeClass(heavy40t_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaTechnology(heavy40t_electricityEngineInformation, "average");
+        EngineInformation engineInfo = heavy40t_electricityVehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (light8tVehicleType != null) {
-        EngineInformation light8tEngineInformation = light8tVehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(light8tEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(light8tEngineInformation, "diesel");
-        VehicleUtils.setHbefaSizeClass(light8tEngineInformation, "RT >7.5-12t");
-        VehicleUtils.setHbefaTechnology(light8tEngineInformation, "average");
+        EngineInformation engineInfo = light8tVehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, DIESEL);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >7.5-12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (light8t_electricityVehicleType != null) {
-        EngineInformation light8t_electricityEngineInformation = light8t_electricityVehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(light8t_electricityEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(light8t_electricityEngineInformation, "electricity");
-        VehicleUtils.setHbefaSizeClass(light8t_electricityEngineInformation, "RT >7.5-12t");
-        VehicleUtils.setHbefaTechnology(light8t_electricityEngineInformation, "average");
+        EngineInformation engineInfo = light8t_electricityVehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >7.5-12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (light8t_frozenVehicleType != null) {
-        EngineInformation light8t_frozenEngineInformation = light8t_frozenVehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(light8t_frozenEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(light8t_frozenEngineInformation, "diesel");
-        VehicleUtils.setHbefaSizeClass(light8t_frozenEngineInformation, "RT >7.5-12t");
-        VehicleUtils.setHbefaTechnology(light8t_frozenEngineInformation, "average");
+        EngineInformation engineInfo = light8t_frozenVehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, DIESEL);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >7.5-12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (light8t_frozen_electricityVehicleType != null) {
-        EngineInformation light8t_frozen_electricityEngineInformation = light8t_frozen_electricityVehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(light8t_frozen_electricityEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(light8t_frozen_electricityEngineInformation, "electricity");
-        VehicleUtils.setHbefaSizeClass(light8t_frozen_electricityEngineInformation, "RT >7.5-12t");
-        VehicleUtils.setHbefaTechnology(light8t_frozen_electricityEngineInformation, "average");
+        EngineInformation engineInfo = light8t_frozen_electricityVehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >7.5-12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (medium18tVehicleType != null) {
-        EngineInformation medium18tEngineInformation = medium18tVehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(medium18tEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(medium18tEngineInformation, "diesel");
-        VehicleUtils.setHbefaSizeClass(medium18tEngineInformation, "RT >14-20t");
-        VehicleUtils.setHbefaTechnology(medium18tEngineInformation, "average");
+        EngineInformation engineInfo = medium18tVehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, DIESEL);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >14-20t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (medium18t_electricityVehicleType != null) {
-        EngineInformation medium18t_electricityEngineInformation = medium18t_electricityVehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
-        VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
+        EngineInformation engineInfo = medium18t_electricityVehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       //E-Food 2024:
-
       if (heavy26t_electro_large_Daimler_VehicleType != null) {
-        EngineInformation medium18t_electricityEngineInformation = heavy26t_electro_large_Daimler_VehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
-        VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
+        EngineInformation engineInfo = heavy26t_electro_large_Daimler_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
 
       if (heavy26t_electro_small_Volvo_VehicleType  != null) {
-        EngineInformation medium18t_electricityEngineInformation = heavy26t_electro_small_Volvo_VehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
-        VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
+        EngineInformation engineInfo = heavy26t_electro_small_Volvo_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (heavy26t_frozen_electro_large_Daimler_VehicleType  != null) {
-        EngineInformation medium18t_electricityEngineInformation = heavy26t_frozen_electro_large_Daimler_VehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
-        VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
+        EngineInformation engineInfo = heavy26t_frozen_electro_large_Daimler_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (heavy26t_frozen_electro_small_Volvo_VehicleType  != null) {
-        EngineInformation medium18t_electricityEngineInformation = heavy26t_frozen_electro_small_Volvo_VehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
-        VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
+        EngineInformation engineInfo = heavy26t_frozen_electro_small_Volvo_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (heavy40t_electro_large_Scania_VehicleType  != null) {
-        EngineInformation medium18t_electricityEngineInformation = heavy40t_electro_large_Scania_VehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
-        VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
+        EngineInformation engineInfo = heavy40t_electro_large_Scania_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
       if (heavy40t_electro_small_Daimler_VehicleType  != null) {
-        EngineInformation medium18t_electricityEngineInformation = heavy40t_electro_small_Daimler_VehicleType.getEngineInformation();
-        VehicleUtils.setHbefaVehicleCategory(medium18t_electricityEngineInformation,
-            HbefaVehicleCategory.HEAVY_GOODS_VEHICLE.toString());
-        VehicleUtils.setHbefaEmissionsConcept(medium18t_electricityEngineInformation, "electricity");
-        VehicleUtils.setHbefaSizeClass(medium18t_electricityEngineInformation, "RT >12t");
-        VehicleUtils.setHbefaTechnology(medium18t_electricityEngineInformation, "average");
+        EngineInformation engineInfo = heavy40t_electro_small_Daimler_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
       }
 
+      if (light8t_electro_large_Quantron_VehicleType != null) {
+        EngineInformation engineInfo = light8t_electro_large_Quantron_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >7.5-12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
+      }
 
+      if (light8t_electro_small_Mitsubishi_VehicleType != null) {
+        EngineInformation engineInfo = light8t_electro_small_Mitsubishi_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >7.5-12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
+      }
 
+      if (light8t_frozen_electro_large_Quantron_VehicleType != null) {
+        EngineInformation engineInfo = light8t_frozen_electro_large_Quantron_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >7.5-12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
+      }
+
+      if (light8t_frozen_electro_small_Mitsubishi_VehicleType != null) {
+        EngineInformation engineInfo = light8t_frozen_electro_small_Mitsubishi_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >7.5-12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
+      }
+
+      if (medium18t_electro_large_Volvo_VehicleType != null) {
+        EngineInformation engineInfo = medium18t_electro_large_Volvo_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
+      }
+
+      if (medium18t_electro_small_Renault_VehicleType != null) {
+        EngineInformation engineInfo = medium18t_electro_small_Renault_VehicleType.getEngineInformation();
+        VehicleUtils.setHbefaVehicleCategory(engineInfo, HGV_STRING);
+        VehicleUtils.setHbefaEmissionsConcept(engineInfo, ELECTRICITY);
+        VehicleUtils.setHbefaSizeClass(engineInfo, "RT >12t");
+        VehicleUtils.setHbefaTechnology(engineInfo, AVERAGE);
+      }
 
 
     }
