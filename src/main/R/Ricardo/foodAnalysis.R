@@ -5,21 +5,24 @@ library(ggplot2)
 library(reshape2)
 
 ##### function ######
-calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario){
+calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year){
+  cumulated_costs <- 0
   for (Year in diesel_prices$year) {
     fuelThisYear <- subset(diesel_prices, Year == year)$price
     energyThisYear <- ifelse(Scenario == "Optimistic",subset(energy_prices, Year == year)$optimistic, subset(energy_prices, Year == year)$pessimistic)
-    fixcosts <- sum(analysis_data$fixedCosts.EUR.)
-    varCosts_time <- sum(analysis_data$varCostsTime.EUR)
-    varCosts_without_consumption <- sum(analysis_data$varCostsWithoutConsumption.EUR)
+    fixcosts <- sum(analysis_data$fixedCosts.EUR.) * working_Days_per_year
+    varCosts_time <- sum(analysis_data$varCostsTime.EUR) * working_Days_per_year
+    varCosts_without_consumption <- sum(analysis_data$varCostsWithoutConsumption.EUR) * working_Days_per_year
     varCosts_consumption <- sum(ifelse(grepl("_electro", analysis_data$vehicleTypeId),
                                        energyThisYear * analysis_data$Consumption,
-                                       fuelThisYear * analysis_data$Consumption))
+                                       fuelThisYear * analysis_data$Consumption)) * working_Days_per_year
     costs_sum <- fixcosts +
       varCosts_time +
       varCosts_without_consumption +
       varCosts_consumption
-    plot_data_annual_costs <- rbind(plot_data_annual_costs,
+      cumulated_costs <- cumulated_costs + costs_sum
+
+      plot_data_annual_costs <- rbind(plot_data_annual_costs,
                                     data.frame(year = Year,
                                                scenario = Scenario,
                                                diesel_price = fuelThisYear,
@@ -28,7 +31,8 @@ calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, p
                                                fixCosts = fixcosts,
                                                varCosts_time = varCosts_time,
                                                varCosts_without_consumption = varCosts_without_consumption,
-                                               varCosts_consumption = varCosts_consumption))
+                                               varCosts_consumption = varCosts_consumption,
+                                               cumulated_costs = cumulated_costs))
   }
   return(plot_data_annual_costs)
 }
@@ -51,7 +55,7 @@ plot_data_base <- data.frame()
 plot_data_annual_costs <- data.frame()
 
 # Define the number of working days per year to calculate the annual costs
-days_per_year <- 250
+working_Days_per_year <- 250
 
 # Define diesel prices for each year
 diesel_price_assumptions <- data.frame(
@@ -116,12 +120,12 @@ for (folder in folders) {
   if (fuel == 1.55 && energy == 0.24) {
     # year 2024 with pessimitic energy prices
     Scenario <- "Pessimistic"
-    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario)
+    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year)
   }
   if (fuel == 1.55 && energy == 0.18) {
     # year 2024 with optimistic energy prices
     Scenario <- "Optimistic"
-    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario)
+    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year)
   }
 
   # Calculate sum of totalCosts[EUR] column
@@ -165,7 +169,7 @@ for (folder_base in folders_base) {
   if (Scenario %in% plot_data_annual_costs$Scenario && fuel == 1.55) {
       # year 2024 with pessimitic energy prices
       Scenario <- "Base"
-    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario)
+    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year)
   }
   # Calculate sum of totalCosts[EUR] column
   total_costs <- sum(analysis_data_base$totalCosts.EUR)
@@ -342,7 +346,18 @@ ggplot(melted_costs, aes(x = Scenario, y = value, fill = Scenario)) +
   theme(legend.position = "none",
         text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1))
-# Define colors for the different scenarios
+
+# Plot to compare the cumulated costs for the different scenarios and years
+ggplot(plot_data_annual_costs, aes(x = year, y = cumulated_costs, fill = Scenario)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  scale_fill_manual(values = custom_colors_Costs) +
+  ggtitle("Cumulated Costs Comparison for Different Scenarios and Years") +
+  xlab("Year") +
+  ylab("Cumulated Costs") +
+  labs(fill = "Scenario") +
+  theme(legend.position = "top",
+        text = element_text(size = 20),
+        axis.text.x = element_text(angle = 90, hjust = 1))
 
 # Plot the costs comparison for the different scenarios and years
 plot_ly(scenario_data, x = ~factor(Year), y = ~Costs, color = ~Scenario, type = "bar", colors = custom_colors_Costs) %>%
