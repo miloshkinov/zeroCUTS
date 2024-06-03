@@ -5,18 +5,20 @@ library(ggplot2)
 library(reshape2)
 
 ##### function ######
-calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year){
+calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle){
   cumulated_costs <- 0
   for (Year in diesel_prices$year) {
     fuelThisYear <- subset(diesel_prices, Year == year)$price
     energyThisYear <- ifelse(Scenario == "Optimistic",subset(energy_prices, Year == year)$optimistic, subset(energy_prices, Year == year)$pessimistic)
-    fixcosts <- sum(analysis_data$fixedCosts.EUR.) * working_Days_per_year
+    fixcosts_vehicles <- sum(analysis_data$fixedCosts.EUR.) * working_Days_per_year
+    fixcosts_chargingInfratructure <- annual_carging_infrastructure_costs_EUR_per_year_and_vehicle * sum(analysis_data$nuOfVehicles [grepl("_electro", analysis_data$vehicleTypeId)])
     varCosts_time <- sum(analysis_data$varCostsTime.EUR) * working_Days_per_year
     varCosts_without_consumption <- sum(analysis_data$varCostsWithoutConsumption.EUR) * working_Days_per_year
     varCosts_consumption <- sum(ifelse(grepl("_electro", analysis_data$vehicleTypeId),
                                        energyThisYear * analysis_data$Consumption,
                                        fuelThisYear * analysis_data$Consumption)) * working_Days_per_year
-    costs_sum <- fixcosts +
+    costs_sum <- fixcosts_vehicles +
+      fixcosts_chargingInfratructure +
       varCosts_time +
       varCosts_without_consumption +
       varCosts_consumption
@@ -28,7 +30,8 @@ calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, p
                                                diesel_price = fuelThisYear,
                                                energy_price = energyThisYear,
                                                totalCosts = costs_sum,
-                                               fixCosts = fixcosts,
+                                               fixCosts = fixcosts_vehicles,
+                                               fixCosts_chargingInfratructure = fixcosts_chargingInfratructure,
                                                varCosts_time = varCosts_time,
                                                varCosts_without_consumption = varCosts_without_consumption,
                                                varCosts_consumption = varCosts_consumption,
@@ -92,6 +95,9 @@ energy_prices_assumptions <- data.frame(
   pessimistic = c(0.24, 0.21, 0.21)
 )
 
+# Set costs for charging infrastructure per year
+annual_carging_infrastructure_costs_EUR_per_year_and_vehicle <- 1638
+
 # Define the years you want to interpolate for
 interpolate_years <- 2024:2050
 # Use the approx() function to interpolate the diesel prices for the years in between
@@ -142,12 +148,12 @@ for (folder in folders) {
   if (fuel == 1.55 && energy == 0.24) {
     # year 2024 with pessimitic energy prices
     Scenario <- "Pessimistic"
-    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year)
+    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
   }
   if (fuel == 1.55 && energy == 0.18) {
     # year 2024 with optimistic energy prices
     Scenario <- "Optimistic"
-    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year)
+    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
   }
 
   # Calculate sum of totalCosts[EUR] column
@@ -187,11 +193,10 @@ for (folder_base in folders_base) {
   analysis_data_base$varCostsWithoutConsumption.EUR <- analysis_data_base$costsWithoutConsumption.EUR.m. * analysis_data_base$SumOfTravelDistances.m.
 
   analysis_data_base$Consumption <- analysis_data_base$SumOfTravelDistances.m. * analysis_data_base$energyConsumptionPerMeter
-  Scenario <- "Base"
-  if (Scenario %in% plot_data_annual_costs$Scenario && fuel == 1.55) {
+  Scenario <- "Base Case"
+  if (!(Scenario %in% plot_data_annual_costs$Scenario) && fuel == 1.55) {
       # year 2024 with pessimitic energy prices
-      Scenario <- "Base"
-    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year)
+    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data_base, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
   }
   # Calculate sum of totalCosts[EUR] column
   total_costs <- sum(analysis_data_base$totalCosts.EUR)
@@ -322,13 +327,18 @@ scenario_data$Year <- factor(scenario_data$Year)
 melted_distances <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("distance_electro", "distance_diesel"))
 melted_vehicles <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("number_electro_vehicle", "number_diesel_vehicle"))
 melted_costs <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("Costs"))
-
+plot_data_annual_costs_long <- plot_data_annual_costs %>%
+  pivot_longer(cols = c(fixCosts, varCosts_time, varCosts_without_consumption, varCosts_consumption),
+               names_to = "cost_type", values_to = "cost_value")
 # Define custom colors for each variable
 custom_colors_Distance <- c("distance_electro" = "green",
                             "distance_diesel" = "red")
 custom_colors_Vehicles <- c("number_electro_vehicle" = "green",
                             "number_diesel_vehicle" = "red")
 custom_colors_Costs <- c("Base Case" = "grey", "Pessimistic" = "orange", "Optimistic" = "green")
+
+custom_colors_Costs_years <- c("fixCosts" = "red", "varCosts_time" = "blue",
+                         "varCosts_without_consumption" = "green", "varCosts_consumption" = "purple")
 
 # Plot to compare the driven distance for the different scenarios and years
 ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
