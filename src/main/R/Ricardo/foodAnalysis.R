@@ -47,15 +47,15 @@ calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, p
 ### Settings Ricardo
 
 # Set the working directory to the folder containing your simulation run folders
-setwd("C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_5000it")
+setwd("C:/Users/erica/shared/zerocuts/output/food/costsVariation_withDC_5000it")
 
 # List all folders in the testFolder directory
-folders <- list.dirs(path = "C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_5000it", full.names = FALSE, recursive = FALSE)
-path_base <- "C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_base_10000it"
-folders_base <- list.dirs(path = "C:/Users/Ricardo/git/zerocuts/output/food/costsVariation_withDC_base_10000it", full.names = FALSE, recursive = FALSE)
+folders <- list.dirs(path = "C:/Users/erica/shared/zerocuts/output/food/costsVariation_withDC_5000it", full.names = FALSE, recursive = FALSE)
+path_base <- "C:/Users/erica/shared/zerocuts/output/food/costsVariation_withDC_base_10000it"
+folders_base <- list.dirs(path = "C:/Users/erica/shared/zerocuts/output/food/costsVariation_withDC_base_10000it", full.names = FALSE, recursive = FALSE)
 
 # File contains consumption information of each vehicleType
-path_vehicleTypeFile <- "C:/Users/Ricardo/git/zerocuts/output/food/vehTypVariableCostsWithoutEngine.csv"
+path_vehicleTypeFile <- "C:/Users/erica/shared/zerocuts/output/food/vehTypVariableCostsWithoutEngine.csv"
 vehcileTypeFile <- read.table(path_vehicleTypeFile, header = TRUE, sep = "\t")
 
 
