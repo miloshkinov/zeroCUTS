@@ -12,26 +12,26 @@ calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, p
   for (Year in diesel_prices$year) {
     fuelThisYear <- subset(diesel_prices, Year == year)$price
     energyThisYear <- ifelse(Scenario == "Optimistic",subset(energy_prices, Year == year)$optimistic, subset(energy_prices, Year == year)$pessimistic)
-    fixcosts_vehicles <- sum(analysis_data$fixedCosts.EUR.) * working_Days_per_year
-    fixcosts_chargingInfratructure <- annual_carging_infrastructure_costs_EUR_per_year_and_vehicle * sum(analysis_data$nuOfVehicles [grepl("_electro", analysis_data$vehicleTypeId)])
-    varCosts_time <- sum(analysis_data$varCostsTime.EUR) * working_Days_per_year
-    varCosts_without_consumption <- sum(analysis_data$varCostsWithoutConsumption.EUR) * working_Days_per_year
+    fixcosts_vehicles <- sum(analysis_data$fixedCosts.EUR.) * working_Days_per_year / 1000000
+    fixcosts_chargingInfratructure <- annual_carging_infrastructure_costs_EUR_per_year_and_vehicle * sum(analysis_data$nuOfVehicles [grepl("_electro", analysis_data$vehicleTypeId)])  / 1000000
+    varCosts_time <- sum(analysis_data$varCostsTime.EUR) * working_Days_per_year / 1000000
+    varCosts_without_consumption <- sum(analysis_data$varCostsWithoutConsumption.EUR) * working_Days_per_year / 1000000
     varCosts_consumption <- sum(ifelse(grepl("_electro", analysis_data$vehicleTypeId),
                                        energyThisYear * analysis_data$Consumption,
-                                       fuelThisYear * analysis_data$Consumption)) * working_Days_per_year
+                                       fuelThisYear * analysis_data$Consumption)) * working_Days_per_year / 1000000
     costs_sum <- fixcosts_vehicles +
       fixcosts_chargingInfratructure +
       varCosts_time +
       varCosts_without_consumption +
       varCosts_consumption
-      cumulated_costs <- cumulated_costs + costs_sum
+    cumulated_costs <- cumulated_costs + costs_sum
 
       plot_data_annual_costs <- rbind(plot_data_annual_costs,
                                     data.frame(year = Year,
                                                scenario = Scenario,
                                                diesel_price = fuelThisYear,
                                                energy_price = energyThisYear,
-                                               totalCosts = costs_sum,
+                                               totalCosts_mio = costs_sum,
                                                fixCosts = fixcosts_vehicles,
                                                fixCosts_chargingInfratructure = fixcosts_chargingInfratructure,
                                                varCosts_time = varCosts_time,
