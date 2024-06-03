@@ -3,6 +3,8 @@ library(scatterplot3d)
 library(plotly)
 library(ggplot2)
 library(reshape2)
+library(dplyr)
+library(tidyr)
 
 ##### function ######
 calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle){
@@ -380,13 +382,43 @@ ggplot(melted_costs, aes(x = Scenario, y = value, fill = Scenario)) +
         axis.text.x = element_text(angle = 90, hjust = 1))
 
 # Plot to compare the cumulated costs for the different scenarios and years
-ggplot(plot_data_annual_costs, aes(x = year, y = cumulated_costs, fill = Scenario)) +
+ggplot(plot_data_annual_costs, aes(x = year, y = totalCosts, fill = scenario)) +
   geom_bar(stat = 'identity', position = 'dodge') +
   scale_fill_manual(values = custom_colors_Costs) +
+  geom_line(aes(x = year, y = cumulated_costs, group = scenario, color = scenario)) +
   ggtitle("Cumulated Costs Comparison for Different Scenarios and Years") +
   xlab("Year") +
   ylab("Cumulated Costs") +
   labs(fill = "Scenario") +
+  theme(legend.position = "top",
+        text = element_text(size = 20),
+        axis.text.x = element_text(angle = 90, hjust = 1))+
+          scale_y_continuous(
+            name = "Cumulated Costs",
+            sec.axis = sec_axis(~ ., name = "Cumulative Costs",
+                                breaks = scales::breaks_width(1000), # You can adjust breaks according to your data
+                                labels = scales::comma))
+
+
+ggplot(plot_data_annual_costs_long, aes(x = year, y = cost_value, fill = cost_type)) +
+  geom_bar(stat = 'identity', position = 'stack') +
+  facet_wrap(~ scenario) +
+  scale_fill_manual(values = custom_colors_Costs_years) +
+  ggtitle("Cumulated Costs Comparison for Different Scenarios and Years") +
+  xlab("Year") +
+  ylab("Cumulated Costs") +
+  labs(fill = "Cost Type") +
+  theme(legend.position = "top",
+        text = element_text(size = 20),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(plot_data_annual_costs_long, aes(x = as.factor(year), y = cost_value, fill = cost_type)) +
+  geom_bar(stat = 'identity', position = position_dodge(width = 0.8)) +
+  facet_grid(~ scenario) +
+  scale_fill_manual(values = custom_colors_Costs_years) +
+  ggtitle("Cumulated Costs Comparison for Different Scenarios and Years") +
+  xlab("Year") +
+  ylab("Cumulated Costs") +
+  labs(fill = "Cost Type") +
   theme(legend.position = "top",
         text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1))
