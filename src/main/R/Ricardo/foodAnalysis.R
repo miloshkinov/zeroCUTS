@@ -321,16 +321,19 @@ scenario_data <- data.frame(
 )
 # Reorder the scenarios in the costs_data dataframe
 scenario_data$Scenario <- factor(scenario_data$Scenario, levels = c("Base Case", "Pessimistic", "Optimistic"))
+plot_data_annual_costs$scenario <- factor(plot_data_annual_costs$scenario, levels = c("Base Case", "Pessimistic", "Optimistic"))
 
 # Convert Year column to factor for better grouping
 scenario_data$Year <- factor(scenario_data$Year)
-
+plot_data_annual_costs$year <- as.numeric(plot_data_annual_costs$year)
 # Melt the data to long format
 melted_distances <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("distance_electro", "distance_diesel"))
 melted_vehicles <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("number_electro_vehicle", "number_diesel_vehicle"))
 melted_costs <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("Costs"))
+melted_costs_annual <- reshape2::melt(plot_data_annual_costs, id.vars = c("year", "scenario", "cumulated_costs"), measure.vars = c("totalCosts_mio"))
+
 plot_data_annual_costs_long <- plot_data_annual_costs %>%
-  pivot_longer(cols = c(fixCosts, varCosts_time, varCosts_without_consumption, varCosts_consumption),
+  pivot_longer(cols = c(fixCosts, varCosts_time, varCosts_without_consumption, varCosts_consumption, fixCosts_chargingInfratructure),
                names_to = "cost_type", values_to = "cost_value")
 # Define custom colors for each variable
 custom_colors_Distance <- c("distance_electro" = "green",
@@ -340,7 +343,7 @@ custom_colors_Vehicles <- c("number_electro_vehicle" = "green",
 custom_colors_Costs <- c("Base Case" = "grey", "Pessimistic" = "orange", "Optimistic" = "green")
 
 custom_colors_Costs_years <- c("fixCosts" = "red", "varCosts_time" = "blue",
-                         "varCosts_without_consumption" = "green", "varCosts_consumption" = "purple")
+                         "varCosts_without_consumption" = "green", "varCosts_consumption" = "purple", "fixCosts_chargingInfratructure" = "black")
 
 # Plot to compare the driven distance for the different scenarios and years
 ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
@@ -381,25 +384,49 @@ ggplot(melted_costs, aes(x = Scenario, y = value, fill = Scenario)) +
         text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1))
 
-# Plot to compare the cumulated costs for the different scenarios and years
-ggplot(plot_data_annual_costs, aes(x = year, y = totalCosts, fill = scenario)) +
-  geom_bar(stat = 'identity', position = 'dodge') +
+# Plot to compare the total costs for the different scenarios and years
+# Define scale factor if needed to align the scales
+scale_factor <- max(melted_costs_annual$value) / max(melted_costs_annual$cumulated_costs)
+ggplot(melted_costs_annual, aes(x = year, fill = scenario)) +
+  geom_bar(aes(y = value), stat = 'identity', position = position_dodge()) +
+  geom_line(aes(y = cumulated_costs * scale_factor, group = scenario, color = scenario), size = 1.0) +
   scale_fill_manual(values = custom_colors_Costs) +
-  geom_line(aes(x = year, y = cumulated_costs, group = scenario, color = scenario)) +
-  ggtitle("Cumulated Costs Comparison for Different Scenarios and Years") +
-  xlab("Year") +
-  ylab("Cumulated Costs") +
+  scale_color_manual(values = custom_colors_Costs) +  # Set line colors similar to bar colors
+  ggtitle("Costs Comparison for Different Scenarios and Years") +
+  xlab("Years") +
+  ylab("Costs (in Million EUR)") +
   labs(fill = "Scenario") +
-  theme(legend.position = "top",
-        text = element_text(size = 20),
-        axis.text.x = element_text(angle = 90, hjust = 1))+
-          scale_y_continuous(
-            name = "Cumulated Costs",
-            sec.axis = sec_axis(~ ., name = "Cumulative Costs",
-                                breaks = scales::breaks_width(1000), # You can adjust breaks according to your data
-                                labels = scales::comma))
+  theme(legend.position = "bottom",
+        text = element_text(size = 12),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  scale_y_continuous(sec.axis = sec_axis(~.*10, name = "Cumulated Costs (in Million EUR)")
+  )  +
+  guides(color = FALSE)  # Hide legend for line colors
+
+melted_costs_annual_filtered <- melted_costs_annual %>%
+  filter(year <= 2030)
+
+scale_factor <- max(melted_costs_annual_filtered$value) / max(melted_costs_annual_filtered$cumulated_costs)
+
+ggplot(melted_costs_annual_filtered, aes(x = year, fill = scenario)) +
+  geom_bar(aes(y = value), stat = 'identity', position = position_dodge()) +
+  geom_line(aes(y = cumulated_costs * scale_factor, group = scenario, color = scenario), size = 1.0) +
+  scale_fill_manual(values = custom_colors_Costs) +
+  scale_color_manual(values = custom_colors_Costs) +  # Set line colors similar to bar colors
+  ggtitle("Costs Comparison for Different Scenarios and Years") +
+  xlab("Years") +
+  ylab("Costs (in Million EUR)") +
+  labs(fill = "Scenario") +
+  theme(legend.position = "bottom",
+        text = element_text(size = 12),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  scale_y_continuous(sec.axis = sec_axis(~.*10, name = "Cumulated Costs (in Million EUR)")) +
+  guides(color = FALSE)  # Hide legend for line colors
 
 
+
+
+# Plot compares the different cost types for the different scenarios and years
 ggplot(plot_data_annual_costs_long, aes(x = year, y = cost_value, fill = cost_type)) +
   geom_bar(stat = 'identity', position = 'stack') +
   facet_wrap(~ scenario) +
@@ -410,18 +437,9 @@ ggplot(plot_data_annual_costs_long, aes(x = year, y = cost_value, fill = cost_ty
   labs(fill = "Cost Type") +
   theme(legend.position = "top",
         text = element_text(size = 20),
-        axis.text.x = element_text(angle = 90, hjust = 1))
-ggplot(plot_data_annual_costs_long, aes(x = as.factor(year), y = cost_value, fill = cost_type)) +
-  geom_bar(stat = 'identity', position = position_dodge(width = 0.8)) +
-  facet_grid(~ scenario) +
-  scale_fill_manual(values = custom_colors_Costs_years) +
-  ggtitle("Cumulated Costs Comparison for Different Scenarios and Years") +
-  xlab("Year") +
-  ylab("Cumulated Costs") +
-  labs(fill = "Cost Type") +
-  theme(legend.position = "top",
-        text = element_text(size = 20),
-        axis.text.x = element_text(angle = 90, hjust = 1))
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  scale_x_continuous(breaks = seq(min(plot_data_annual_costs_long$year), max(plot_data_annual_costs_long$year), by = 5))
+
 
 # Plot the costs comparison for the different scenarios and years
 plot_ly(scenario_data, x = ~factor(Year), y = ~Costs, color = ~Scenario, type = "bar", colors = custom_colors_Costs) %>%
