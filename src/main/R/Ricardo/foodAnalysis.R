@@ -9,7 +9,7 @@ library(RColorBrewer)
 
 ##### function ######
 
-calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle){
+calculateAnnualValues <- function (diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle){
   cumulated_costs <- 0
   for (Year in diesel_prices$year) {
     fuelThisYear <- subset(diesel_prices, Year == year)$price
@@ -152,12 +152,12 @@ for (folder in folders) {
   if (fuel == 1.55 && energy == 0.24) {
     # year 2024 with pessimitic energy prices
     Scenario <- "Pessimistic"
-    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
+    plot_data_annual_costs <- calculateAnnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
   }
   if (fuel == 1.55 && energy == 0.18) {
     # year 2024 with optimistic energy prices
     Scenario <- "Optimistic"
-    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
+    plot_data_annual_costs <- calculateAnnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
   }
 
   # Calculate sum of totalCosts[EUR] column
@@ -200,7 +200,7 @@ for (folder_base in folders_base) {
   Scenario <- "Base Case"
   if (!(Scenario %in% plot_data_annual_costs$Scenario) && fuel == 1.55) {
       # year 2024 with pessimitic energy prices
-    plot_data_annual_costs <- calculateAnualValues(diesel_prices, energy_prices, analysis_data_base, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
+    plot_data_annual_costs <- calculateAnnualValues(diesel_prices, energy_prices, analysis_data_base, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
   }
   # Calculate sum of totalCosts[EUR] column
   total_costs <- sum(analysis_data_base$totalCosts.EUR)
