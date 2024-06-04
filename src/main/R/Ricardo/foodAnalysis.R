@@ -8,6 +8,7 @@ library(tidyr)
 library(RColorBrewer)
 
 ##### function ######
+
 calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle){
   cumulated_costs <- 0
   for (Year in diesel_prices$year) {
@@ -355,7 +356,7 @@ names(custom_colors_Costs_years) <- c(
   "fixCosts_chargingInfratructure",
   "fixCosts"
 )
-# Plot to compare the driven distance for the different scenarios and years
+################################### Plot to compare the driven distance for the different scenarios and years ###################################
 ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
   geom_bar(stat = 'identity', position = 'stack') +
   scale_fill_manual(values = custom_colors_Distance) +  # Set custom colors
@@ -368,7 +369,7 @@ ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
         text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1))
 
-# Plot to compare the number of vehicles for the different scenarios and years
+################################### Plot to compare the number of vehicles for the different scenarios and years ###################################
 ggplot(melted_vehicles, aes(x = Scenario, y = value, fill = variable)) +
   geom_bar(stat = 'identity', position = 'stack') +
   scale_fill_manual(values = custom_colors_Vehicles) +  # Set custom colors
@@ -381,7 +382,7 @@ ggplot(melted_vehicles, aes(x = Scenario, y = value, fill = variable)) +
         text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1))
 
-# Plot to compare the total costs for the different scenarios and years
+################################### Plot to compare the total costs for the different scenarios and years ###################################
 ggplot(melted_costs, aes(x = Scenario, y = value, fill = Scenario)) +
   geom_bar(stat = 'identity', position = 'dodge') +
   scale_fill_manual(values = custom_colors_Costs) +
@@ -413,6 +414,7 @@ ggplot(melted_costs_annual, aes(x = year, fill = scenario)) +
   )  +
   guides(color = FALSE)  # Hide legend for line colors
 
+################################### (first 5 years) Plot to compare the total costs for the different scenarios and years ###################################
 melted_costs_annual_filtered <- melted_costs_annual %>%
   filter(year <= 2030)
 
@@ -433,6 +435,7 @@ ggplot(melted_costs_annual_filtered, aes(x = year, fill = scenario)) +
   scale_y_continuous(sec.axis = sec_axis(~.*10, name = "Cumulated Costs (in Million EUR)")) +
   guides(color = FALSE)  # Hide legend for line colors
 
+################################### Plot compares the different cost types for the different scenarios and years ###################################
 # Define the new labels for cost types
 new_labels <- c(
   "Energy_Consumption" = "Costs Energy Consumption",
@@ -441,7 +444,7 @@ new_labels <- c(
   "fixCosts_chargingInfratructure" = "Fixed Costs Charging Infrastructure",
   "fixCosts" = "Vehicle Fixed Costs"
 )
-# Plot compares the different cost types for the different scenarios and years
+
 ggplot(plot_data_annual_costs_long, aes(x = year, y = cost_value, fill = cost_type)) +
   geom_bar(stat = 'identity', position = 'stack') +
   facet_wrap(~ scenario) +
@@ -457,7 +460,7 @@ ggplot(plot_data_annual_costs_long, aes(x = year, y = cost_value, fill = cost_ty
   scale_x_continuous(breaks = seq(min(plot_data_annual_costs_long$year), max(plot_data_annual_costs_long$year), by = 5))
 
 
-# Plot the costs comparison for the different scenarios and years
+################################### Plot the costs comparison for the different scenarios and years ###################################
 plot_ly(scenario_data, x = ~factor(Year), y = ~Costs, color = ~Scenario, type = "bar", colors = custom_colors_Costs) %>%
   layout(title = "Costs Comparison for Different Scenarios and Years",
          xaxis = list(title = "Year"),
