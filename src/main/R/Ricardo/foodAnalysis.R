@@ -5,6 +5,7 @@ library(ggplot2)
 library(reshape2)
 library(dplyr)
 library(tidyr)
+library(RColorBrewer)
 
 ##### function ######
 calculateAnualValues <- function (diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle){
@@ -335,6 +336,9 @@ melted_costs_annual <- reshape2::melt(plot_data_annual_costs, id.vars = c("year"
 plot_data_annual_costs_long <- plot_data_annual_costs %>%
   pivot_longer(cols = c(fixCosts, varCosts_time, varCosts_without_consumption, varCosts_consumption, fixCosts_chargingInfratructure),
                names_to = "cost_type", values_to = "cost_value")
+# Convert cost_type to a factor and specify the order
+plot_data_annual_costs_long$cost_type <- factor(plot_data_annual_costs_long$cost_type, levels = c("varCosts_consumption", "varCosts_without_consumption", "varCosts_time", "fixCosts_chargingInfratructure", "fixCosts"))
+
 # Define custom colors for each variable
 custom_colors_Distance <- c("distance_electro" = "green",
                             "distance_diesel" = "red")
@@ -342,9 +346,15 @@ custom_colors_Vehicles <- c("number_electro_vehicle" = "green",
                             "number_diesel_vehicle" = "red")
 custom_colors_Costs <- c("Base Case" = "grey", "Pessimistic" = "orange", "Optimistic" = "green")
 
-custom_colors_Costs_years <- c("fixCosts" = "red", "varCosts_time" = "blue",
-                         "varCosts_without_consumption" = "green", "varCosts_consumption" = "purple", "fixCosts_chargingInfratructure" = "black")
-
+# Define custom colors for each cost type
+custom_colors_Costs_years <- brewer.pal(n = 5, name = "Dark2")
+names(custom_colors_Costs_years) <- c(
+  "Energy_Consumption",
+  "varCosts_without_consumption",
+  "varCosts_time",
+  "fixCosts_chargingInfratructure",
+  "fixCosts"
+)
 # Plot to compare the driven distance for the different scenarios and years
 ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
   geom_bar(stat = 'identity', position = 'stack') +
@@ -423,19 +433,25 @@ ggplot(melted_costs_annual_filtered, aes(x = year, fill = scenario)) +
   scale_y_continuous(sec.axis = sec_axis(~.*10, name = "Cumulated Costs (in Million EUR)")) +
   guides(color = FALSE)  # Hide legend for line colors
 
-
-
-
+# Define the new labels for cost types
+new_labels <- c(
+  "Energy_Consumption" = "Costs Energy Consumption",
+  "varCosts_without_consumption" = "Variable Costs without Consumption",
+  "varCosts_time" = "Costs Time",
+  "fixCosts_chargingInfratructure" = "Fixed Costs Charging Infrastructure",
+  "fixCosts" = "Vehicle Fixed Costs"
+)
 # Plot compares the different cost types for the different scenarios and years
 ggplot(plot_data_annual_costs_long, aes(x = year, y = cost_value, fill = cost_type)) +
   geom_bar(stat = 'identity', position = 'stack') +
   facet_wrap(~ scenario) +
-  scale_fill_manual(values = custom_colors_Costs_years) +
+  scale_fill_manual(values = custom_colors_Costs_years, labels = new_labels) +
   ggtitle("Cumulated Costs Comparison for Different Scenarios and Years") +
   xlab("Year") +
-  ylab("Cumulated Costs") +
+  ylab("Costs (in Million EUR)") +
   labs(fill = "Cost Type") +
-  theme(legend.position = "top",
+  guides(fill = guide_legend(nrow = 2)) +  # Adjust the legend to have 2 rows
+  theme(legend.position = "bottom",
         text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1)) +
   scale_x_continuous(breaks = seq(min(plot_data_annual_costs_long$year), max(plot_data_annual_costs_long$year), by = 5))
