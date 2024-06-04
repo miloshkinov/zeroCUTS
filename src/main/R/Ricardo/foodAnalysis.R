@@ -6,6 +6,7 @@ library(reshape2)
 library(dplyr)
 library(tidyr)
 library(RColorBrewer)
+library(ggpattern)
 
 ##### function ######
 
@@ -252,10 +253,6 @@ number_electro_vehicle_base_2024 <- plot_data_base$total_vehicle_electro[row_ind
 number_electro_vehicle_base_2030 <- plot_data_base$total_vehicle_electro[row_index_base_2030]
 number_electro_vehicle_base_2050 <- plot_data_base$total_vehicle_electro[row_index_base_2050]
 
-total_costs_optimistic_2024 <- plot_data$costs[row_index_optimistic_2024]
-total_costs_optimistic_2030 <- plot_data$costs[row_index_optimistic_2030]
-total_costs_optimistic_2050 <- plot_data$costs[row_index_optimistic_2050]
-
 distance_diesel_optimistic_2024 <- plot_data$total_kilometers_diesel[row_index_optimistic_2024]
 distance_diesel_optimistic_2030 <- plot_data$total_kilometers_diesel[row_index_optimistic_2030]
 distance_diesel_optimistic_2050 <- plot_data$total_kilometers_diesel[row_index_optimistic_2050]
@@ -272,9 +269,9 @@ number_electro_vehicle_optimistic_2024 <- plot_data$total_vehicle_electro[row_in
 number_electro_vehicle_optimistic_2030 <- plot_data$total_vehicle_electro[row_index_optimistic_2030]
 number_electro_vehicle_optimistic_2050 <- plot_data$total_vehicle_electro[row_index_optimistic_2050]
 
-total_costs_pessimistic_2024 <- plot_data$costs[row_index_pessimistic_2024]
-total_costs_pessimistic_2030 <- plot_data$costs[row_index_pessimistic_2030]
-total_costs_pessimistic_2050 <- plot_data$costs[row_index_pessimistic_2050]
+total_costs_optimistic_2024 <- plot_data$costs[row_index_optimistic_2024] + number_electro_vehicle_optimistic_2024 * annual_carging_infrastructure_costs_EUR_per_year_and_vehicle / working_Days_per_year
+total_costs_optimistic_2030 <- plot_data$costs[row_index_optimistic_2030] + number_electro_vehicle_optimistic_2030 * annual_carging_infrastructure_costs_EUR_per_year_and_vehicle / working_Days_per_year
+total_costs_optimistic_2050 <- plot_data$costs[row_index_optimistic_2050] + number_electro_vehicle_optimistic_2050 * annual_carging_infrastructure_costs_EUR_per_year_and_vehicle / working_Days_per_year
 
 distance_diesel_pesimistic_2024 <- plot_data$total_kilometers_diesel[row_index_pessimistic_2024]
 distance_diesel_pesimistic_2030 <- plot_data$total_kilometers_diesel[row_index_pessimistic_2030]
@@ -291,6 +288,10 @@ number_diesel_vehicle_pessimistic_2050 <- plot_data$total_vehicle_diesel[row_ind
 number_electro_vehicle_pessimistic_2024 <- plot_data$total_vehicle_electro[row_index_pessimistic_2024]
 number_electro_vehicle_pessimistic_2030 <- plot_data$total_vehicle_electro[row_index_pessimistic_2030]
 number_electro_vehicle_pessimistic_2050 <- plot_data$total_vehicle_electro[row_index_pessimistic_2050]
+
+total_costs_pessimistic_2024 <- plot_data$costs[row_index_pessimistic_2024] + number_electro_vehicle_pessimistic_2024 * annual_carging_infrastructure_costs_EUR_per_year_and_vehicle / working_Days_per_year
+total_costs_pessimistic_2030 <- plot_data$costs[row_index_pessimistic_2030] + number_electro_vehicle_pessimistic_2030 * annual_carging_infrastructure_costs_EUR_per_year_and_vehicle / working_Days_per_year
+total_costs_pessimistic_2050 <- plot_data$costs[row_index_pessimistic_2050] + number_electro_vehicle_pessimistic_2050 * annual_carging_infrastructure_costs_EUR_per_year_and_vehicle / working_Days_per_year
 # Calculate costs for each scenario and year
 costs_2024 <- c(cost_base_2024, total_costs_pessimistic_2024, total_costs_optimistic_2024)
 costs_2030 <- c(cost_base_2030, total_costs_pessimistic_2030, total_costs_optimistic_2030)
@@ -341,11 +342,12 @@ plot_data_annual_costs_long <- plot_data_annual_costs %>%
 plot_data_annual_costs_long$cost_type <- factor(plot_data_annual_costs_long$cost_type, levels = c("varCosts_consumption", "varCosts_without_consumption", "varCosts_time", "fixCosts_chargingInfratructure", "fixCosts"))
 
 # Define custom colors for each variable
-custom_colors_Distance <- c("distance_electro" = "green",
-                            "distance_diesel" = "red")
-custom_colors_Vehicles <- c("number_electro_vehicle" = "green",
-                            "number_diesel_vehicle" = "red")
-custom_colors_Costs <- c("Base Case" = "grey", "Policy Case" = "orange", "Low Electricity Price" = "green")
+custom_colors_Distance <- brewer.pal(n = 2, name = "Set2")
+names(custom_colors_Distance) <- c("distance_electro", "distance_diesel")
+custom_colors_Vehicles <- brewer.pal(n = 2, name = "Set2")
+names(custom_colors_Vehicles) <- c("number_electro_vehicle", "number_diesel_vehicle")
+custom_colors_Costs <- brewer.pal(n = 3, name = "Set1")
+names(custom_colors_Costs) <- c("Base Case", "Policy Case", "Low Electricity Price")
 
 # Define custom colors for each cost type
 custom_colors_Costs_years <- brewer.pal(n = 5, name = "Dark2")
@@ -391,15 +393,15 @@ ggplot(melted_costs, aes(x = Scenario, y = value, fill = Scenario)) +
   scale_fill_manual(values = custom_colors_Costs) +
   facet_grid(~Year) +
   ggtitle("Costs Comparison for Different Scenarios and Years") +
-  xlab("Scenarios") +
-  ylab("Costs") +
-  labs(fill = "Scenario") +
-  theme(legend.position = "none",
+  xlab(NULL) +
+  ylab("Costs in EUR") +
+  labs(fill = NULL) +
+  theme(legend.position = "bottom",
         text = element_text(size = 20),
-        axis.text.x = element_text(angle = 90, hjust = 1))
+        axis.text.x = element_blank())
 
 ################################### Plot to compare the total costs for the different scenarios and years ###################################
-scale_factor <- max(melted_costs_annual$value) / max(melted_costs_annual$cumulated_costs)
+scale_factor <- max(melted_costs_annual$value) / max(melted_costs_annual$cumulated_costs) * 1.5
 ggplot(melted_costs_annual, aes(x = year, fill = scenario)) +
   geom_bar(aes(y = value), stat = 'identity', position = position_dodge()) +
   geom_line(aes(y = cumulated_costs * scale_factor, group = scenario, color = scenario), size = 1.0) +
@@ -407,14 +409,30 @@ ggplot(melted_costs_annual, aes(x = year, fill = scenario)) +
   scale_color_manual(values = custom_colors_Costs) +  # Set line colors similar to bar colors
   ggtitle("Costs Comparison for Different Scenarios and Years") +
   xlab("Years") +
-  ylab("Costs (in Million EUR)") +
+  ylab("Annual Costs (in Million EUR)") +
   labs(fill = "Scenario") +
   theme(legend.position = "bottom",
-        text = element_text(size = 12),
+        text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1)) +
-  scale_y_continuous(sec.axis = sec_axis(~.*10, name = "Cumulated Costs (in Million EUR)")
+  scale_y_continuous(sec.axis = sec_axis(~./scale_factor, name = "Cumulated Costs (in Million EUR)")
   )  +
   guides(color = FALSE)  # Hide legend for line colors
+
+ggplot(melted_costs_annual, aes(x = year, color = scenario)) +
+  geom_bar(aes(y = value), stat = 'identity', position = position_dodge(), fill = NA) +
+  geom_line(aes(y = cumulated_costs * scale_factor, group = scenario, color = scenario), size = 1.0) +
+  scale_fill_manual(values = custom_colors_Costs) +
+  scale_color_manual(values = custom_colors_Costs) +  # Set line colors similar to bar colors
+  ggtitle("Costs Comparison for Different Scenarios and Years") +
+  xlab("Years") +
+  ylab("Annual Costs (in Million EUR)") +
+  labs(color = NULL) +
+  theme(legend.position = "bottom",
+        text = element_text(size = 20),
+        axis.text.x = element_text(angle = 90, hjust = 1)) +
+  scale_y_continuous(sec.axis = sec_axis(~./scale_factor, name = "Cumulated Costs (in Million EUR)")
+  )
+
 
 ################################### (first 5 years) Plot to compare the total costs for the different scenarios and years ###################################
 melted_costs_annual_filtered <- melted_costs_annual %>%
@@ -432,14 +450,14 @@ ggplot(melted_costs_annual_filtered, aes(x = year, fill = scenario)) +
   ylab("Costs (in Million EUR)") +
   labs(fill = "Scenario") +
   theme(legend.position = "bottom",
-        text = element_text(size = 12),
+        text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1)) +
-  scale_y_continuous(sec.axis = sec_axis(~.*10, name = "Cumulated Costs (in Million EUR)")) +
+  scale_y_continuous(sec.axis = sec_axis(~./scale_factor, name = "Cumulated Costs (in Million EUR)")) +
   guides(color = FALSE)  # Hide legend for line colors
 
 ################################### Plot compares the different cost types for the different scenarios and years ###################################
 # Define the new labels for cost types
-new_labels <- c(
+new_labels_costTypes <- c(
   "varCosts_consumption" = "Costs Energy Consumption",
   "varCosts_without_consumption" = "Variable Costs without Consumption",
   "varCosts_time" = "Costs Time",
@@ -450,8 +468,8 @@ new_labels <- c(
 ggplot(plot_data_annual_costs_long, aes(x = year, y = cost_value, fill = cost_type)) +
   geom_bar(stat = 'identity', position = 'stack') +
   facet_wrap(~ scenario) +
-  scale_fill_manual(values = custom_colors_Costs_years, labels = new_labels) +
-  ggtitle("Cumulated Costs Comparison for Different Scenarios and Years") +
+  scale_fill_manual(values = custom_colors_Costs_years, labels = new_labels_costTypes) +
+  ggtitle("Prediction of the Annual Costs for Different Scenarios") +
   xlab("Year") +
   ylab("Costs (in Million EUR)") +
   labs(fill = "Cost Type") +
