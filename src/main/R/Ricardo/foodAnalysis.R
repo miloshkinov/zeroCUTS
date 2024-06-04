@@ -356,6 +356,9 @@ names(custom_colors_Costs_years) <- c(
   "fixCosts_chargingInfratructure",
   "fixCosts"
 )
+
+#####################################################  PLOTS  ###############################################################
+
 ################################### Plot to compare the driven distance for the different scenarios and years ###################################
 ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
   geom_bar(stat = 'identity', position = 'stack') +
