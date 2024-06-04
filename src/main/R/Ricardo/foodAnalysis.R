@@ -350,7 +350,7 @@ custom_colors_Costs <- c("Base Case" = "grey", "Policy Case" = "orange", "Low El
 # Define custom colors for each cost type
 custom_colors_Costs_years <- brewer.pal(n = 5, name = "Dark2")
 names(custom_colors_Costs_years) <- c(
-  "Energy_Consumption",
+  "varCosts_consumption",
   "varCosts_without_consumption",
   "varCosts_time",
   "fixCosts_chargingInfratructure",
@@ -440,7 +440,7 @@ ggplot(melted_costs_annual_filtered, aes(x = year, fill = scenario)) +
 ################################### Plot compares the different cost types for the different scenarios and years ###################################
 # Define the new labels for cost types
 new_labels <- c(
-  "Energy_Consumption" = "Costs Energy Consumption",
+  "varCosts_consumption" = "Costs Energy Consumption",
   "varCosts_without_consumption" = "Variable Costs without Consumption",
   "varCosts_time" = "Costs Time",
   "fixCosts_chargingInfratructure" = "Fixed Costs Charging Infrastructure",
