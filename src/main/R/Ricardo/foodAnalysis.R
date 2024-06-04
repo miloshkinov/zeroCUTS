@@ -395,8 +395,7 @@ ggplot(melted_costs, aes(x = Scenario, y = value, fill = Scenario)) +
         text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1))
 
-# Plot to compare the total costs for the different scenarios and years
-# Define scale factor if needed to align the scales
+################################### Plot to compare the total costs for the different scenarios and years ###################################
 scale_factor <- max(melted_costs_annual$value) / max(melted_costs_annual$cumulated_costs)
 ggplot(melted_costs_annual, aes(x = year, fill = scenario)) +
   geom_bar(aes(y = value), stat = 'identity', position = position_dodge()) +
