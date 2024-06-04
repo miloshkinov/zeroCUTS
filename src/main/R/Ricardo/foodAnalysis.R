@@ -329,8 +329,8 @@ plot_data_annual_costs$year <- as.numeric(plot_data_annual_costs$year)
 # Melt the data to long format
 melted_distances <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("distance_electro", "distance_diesel"))
 melted_vehicles <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("number_electro_vehicle", "number_diesel_vehicle"))
-melted_costs <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = c("Costs"))
-melted_costs_annual <- reshape2::melt(plot_data_annual_costs, id.vars = c("year", "scenario", "cumulated_costs"), measure.vars = c("totalCosts_mio"))
+melted_costs <- reshape2::melt(scenario_data, id.vars = c("Year", "Scenario"), measure.vars = "Costs")
+melted_costs_annual <- reshape2::melt(plot_data_annual_costs, id.vars = c("year", "scenario", "cumulated_costs"), measure.vars = "totalCosts_mio")
 
 plot_data_annual_costs_long <- plot_data_annual_costs %>%
   pivot_longer(cols = c(fixCosts, varCosts_time, varCosts_without_consumption, varCosts_consumption, fixCosts_chargingInfratructure),
