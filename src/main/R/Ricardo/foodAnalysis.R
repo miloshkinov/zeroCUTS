@@ -14,7 +14,7 @@ calculateAnnualValues <- function (diesel_prices, energy_prices, analysis_data, 
   cumulated_costs <- 0
   for (Year in diesel_prices$year) {
     fuelThisYear <- subset(diesel_prices, Year == year)$price
-    energyThisYear <- ifelse(Scenario == "Low Electricity Price",subset(energy_prices, Year == year)$optimistic, subset(energy_prices, Year == year)$pessimistic)
+    energyThisYear <- ifelse(Scenario == "High Electricity Price",subset(energy_prices, Year == year)$pessimistic, subset(energy_prices, Year == year)$optimistic)
     fixcosts_vehicles <- sum(analysis_data$fixedCosts.EUR.) * working_Days_per_year / 1000000
     fixcosts_chargingInfratructure <- annual_carging_infrastructure_costs_EUR_per_year_and_vehicle * sum(analysis_data$nuOfVehicles [grepl("_electro", analysis_data$vehicleTypeId)])  / 1000000
     varCosts_time <- sum(analysis_data$varCostsTime.EUR) * working_Days_per_year / 1000000
@@ -150,14 +150,14 @@ for (folder in folders) {
   #                                                 energy * analysis_data$SumOfTravelDistances.m. * analysis_data$energyConsumptionPerMeter,
   #                                                 fuel * analysis_data$SumOfTravelDistances.m. * analysis_data$energyConsumptionPerMeter)
   analysis_data$Consumption <- analysis_data$SumOfTravelDistances.m. * analysis_data$energyConsumptionPerMeter
-  if (fuel == 1.55 && energy == 0.24) {
+  if (fuel == 1.55 && energy == 0.18) {
     # year 2024 with pessimitic energy prices
     Scenario <- "Policy Case"
     plot_data_annual_costs <- calculateAnnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
   }
-  if (fuel == 1.55 && energy == 0.18) {
+  if (fuel == 1.55 && energy == 0.24) {
     # year 2024 with optimistic energy prices
-    Scenario <- "Low Electricity Price"
+    Scenario <- "High Electricity Price"
     plot_data_annual_costs <- calculateAnnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
   }
 
@@ -315,7 +315,7 @@ number_electro_vehicle_2050 <- c(number_electro_vehicle_base_2050, number_electr
 # Create a dataframe
 scenario_data <- data.frame(
   Year = rep(c(2024, 2030, 2050), each = 3),
-  Scenario = rep(c("Base Case", "Policy Case", "Low Electricity Price"), times = 3),
+  Scenario = rep(c("Base Case", "High Electricity Price", "Policy Case"), times = 3),
   Costs = c(costs_2024, costs_2030, costs_2050),
   distance_diesel = c(distance_diesel_2024, distance_diesel_2030, distance_diesel_2050),
   distance_electro = c(distance_electro_2024, distance_electro_2030, distance_electro_2050),
@@ -323,8 +323,8 @@ scenario_data <- data.frame(
   number_electro_vehicle = c(number_electro_vehicle_2024, number_electro_vehicle_2030, number_electro_vehicle_2050)
 )
 # Reorder the scenarios in the costs_data dataframe
-scenario_data$Scenario <- factor(scenario_data$Scenario, levels = c("Base Case", "Policy Case", "Low Electricity Price"))
-plot_data_annual_costs$scenario <- factor(plot_data_annual_costs$scenario, levels = c("Base Case", "Policy Case", "Low Electricity Price"))
+scenario_data$Scenario <- factor(scenario_data$Scenario, levels = c("Base Case", "Policy Case", "High Electricity Price"))
+plot_data_annual_costs$scenario <- factor(plot_data_annual_costs$scenario, levels = c("Base Case", "Policy Case", "High Electricity Price"))
 
 # Convert Year column to factor for better grouping
 scenario_data$Year <- factor(scenario_data$Year)
@@ -347,7 +347,7 @@ names(custom_colors_Distance) <- c("distance_electro", "distance_diesel")
 custom_colors_Vehicles <- brewer.pal(n = 2, name = "Set2")
 names(custom_colors_Vehicles) <- c("number_electro_vehicle", "number_diesel_vehicle")
 custom_colors_Costs <- brewer.pal(n = 3, name = "Set1")
-names(custom_colors_Costs) <- c("Base Case", "Policy Case", "Low Electricity Price")
+names(custom_colors_Costs) <- c("Base Case", "Policy Case", "High Electricity Price")
 
 # Define custom colors for each cost type
 custom_colors_Costs_years <- brewer.pal(n = 5, name = "Dark2")
