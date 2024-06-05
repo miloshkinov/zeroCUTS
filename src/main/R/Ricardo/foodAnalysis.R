@@ -7,6 +7,7 @@ library(dplyr)
 library(tidyr)
 library(RColorBrewer)
 library(ggpattern)
+library(ggrepel)
 
 ##### function ######
 
@@ -423,6 +424,7 @@ ggplot(melted_costs_annual, aes(x = year, fill = scenario)) +
   scale_y_continuous(sec.axis = sec_axis(~./scale_factor, name = "Cumulated Costs (in Million EUR)")
   )  +
   guides(color = FALSE)  # Hide legend for line colors
+melted_costs_annual_2050 <- melted_costs_annual[melted_costs_annual$year == 2050,]
 
 ggplot(melted_costs_annual, aes(x = year, color = scenario)) +
   geom_bar(aes(y = value), stat = 'identity', position = position_dodge(), fill = NA) +
@@ -436,10 +438,8 @@ ggplot(melted_costs_annual, aes(x = year, color = scenario)) +
   theme(legend.position = "bottom",
         text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1)) +
-  scale_y_continuous(sec.axis = sec_axis(~./scale_factor, name = "Cumulated Costs (in Million EUR)")
-  )
-
-
+  scale_y_continuous(sec.axis = sec_axis(~./scale_factor, name = "Cumulated Costs (in Million EUR)")) +
+  geom_label_repel(data = melted_costs_annual_2050, aes(y = cumulated_costs * scale_factor, label = round(cumulated_costs, 0)), direction = "y", max.overlaps = Inf, show.legend = FALSE, size = 5)
 ################################### (first 5 years) Plot to compare the total costs for the different scenarios and years ###################################
 melted_costs_annual_filtered <- melted_costs_annual %>%
   filter(year <= 2030)
