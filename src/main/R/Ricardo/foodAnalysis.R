@@ -362,14 +362,20 @@ names(custom_colors_Costs_years) <- c(
 #####################################################  PLOTS  ###############################################################
 
 ################################### Plot to compare the driven distance for the different scenarios and years ###################################
+new_labels_vehicleTypes <- c(
+  "distance_electro" = "BEVs",
+  "distance_diesel" = "ICEVs",
+  "number_electro_vehicle" = "BEVs",
+  "number_diesel_vehicle" = "ICEVs"
+)
 ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
   geom_bar(stat = 'identity', position = 'stack') +
-  scale_fill_manual(values = custom_colors_Distance) +  # Set custom colors
+  scale_fill_manual(values = custom_colors_Distance, labels = new_labels_vehicleTypes) +  # Set custom colors
   facet_grid(~Year) +
   ggtitle("Driven distance Comparison for the Different Scenarios and Years") +
-  xlab("Scenarios") +
+  xlab(NULL) +
   ylab("Driven Distance (km)") +
-  labs(fill = "Engine Type") +
+  labs(fill = NULL) +
   theme(legend.position = "top",
         text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1))
@@ -377,12 +383,12 @@ ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
 ################################### Plot to compare the number of vehicles for the different scenarios and years ###################################
 ggplot(melted_vehicles, aes(x = Scenario, y = value, fill = variable)) +
   geom_bar(stat = 'identity', position = 'stack') +
-  scale_fill_manual(values = custom_colors_Vehicles) +  # Set custom colors
+  scale_fill_manual(values = custom_colors_Vehicles, labels = new_labels_vehicleTypes) +  # Set custom colors
   facet_grid(~Year) +
   ggtitle("Fleet comparision for the Different Scenarios and Years") +
-  xlab("Scenarios") +
+  xlab(NULL) +
   ylab("Number of vehicles") +
-  labs(fill = "Engine Type") +
+  labs(fill = NULL) +
   theme(legend.position = "top",
         text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1))
