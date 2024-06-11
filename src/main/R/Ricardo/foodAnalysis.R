@@ -403,8 +403,8 @@ ggplot(melted_costs, aes(x = Scenario, y = value, fill = Scenario)) +
   xlab(NULL) +
   ylab("Costs in EUR") +
   labs(fill = NULL) +
-  theme(legend.position = "bottom",
-        text = element_text(size = 20),
+  theme(legend.position = "top",
+        text = element_text(size = 24),
         axis.text.x = element_blank())
 
 ################################### Plot to compare the total costs for the different scenarios and years ###################################
@@ -440,6 +440,7 @@ ggplot(melted_costs_annual, aes(x = year, color = scenario)) +
         axis.text.x = element_text(angle = 90, hjust = 1)) +
   scale_y_continuous(sec.axis = sec_axis(~./scale_factor, name = "Cumulated Costs (in Million EUR)")) +
   geom_label_repel(data = melted_costs_annual_2050, aes(y = cumulated_costs * scale_factor, label = round(cumulated_costs, 0)), direction = "y", max.overlaps = Inf, show.legend = FALSE, size = 5)
+
 ################################### (first 5 years) Plot to compare the total costs for the different scenarios and years ###################################
 melted_costs_annual_filtered <- melted_costs_annual %>%
   filter(year <= 2030)
