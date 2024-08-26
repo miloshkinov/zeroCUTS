@@ -1,16 +1,21 @@
 ##Erstelle die Violinen-Plota für die Fahrweiten in den Food-Sceanrien KMT März 24
 
-#setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/analysis")
+#setwd("C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/analysis")
 EFood <- FALSE
 
 
 #####E-Food: Alle Fzg-Typen sind Electro und müssen so gesetzt werden.
-setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/Base_NwCE_BVWP_Pickup_10000it/analysis")
-#setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/CaseA_E160_NwCE_BVWP_Pickup_10000it/analysis")
+setwd("C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/Base_NwCE_BVWP_Pickup_10000it/analysis")
+#setwd("C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/CaseA_E160_NwCE_BVWP_Pickup_10000it/analysis")
+EFood <- TRUE
+
+#####E-Food 2024
+#setwd("/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_onlyICEV_10000it/Food_fuel1.55_energy0.18/Analysis")
+#setwd("/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_mixedFleet_withDC_5000it/Food_fuel1.55_energy0.18/Analysis")
 #EFood <- TRUE
 
 #####E-Food 2024
-setwd("/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_onlyICEV_10000it/Food_fuel1.55_energy0.18/Analysis")
+#setwd("/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_onlyICEV_10000it/Food_fuel1.55_energy0.18/Analysis")
 #setwd("/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_mixedFleet_withDC_5000it/Food_fuel1.55_energy0.18/Analysis")
 #EFood <- TRUE
 
