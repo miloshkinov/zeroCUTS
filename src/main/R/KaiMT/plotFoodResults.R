@@ -159,4 +159,3 @@ print(bar_plot %>% layout(title = 'Number of Vehicles by Vehicle Category'))
 print(bar_plot_costs %>% layout(title = 'Total Costs by Vehicle Category'))
 print(box_plot_distances %>% layout(title = 'Traveled Distances by Vehicle Category'))
 print(violin_plot_distances %>% layout())
-
