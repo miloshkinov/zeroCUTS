@@ -20,6 +20,7 @@ if (!requireNamespace("gridExtra", quietly = TRUE)) {
 library(tidyverse)
 library(plotly)
 library(gridExtra)
+library(tibble)
 
 # Hauptverzeichnis, in dem sich die Unterordner befinden
 main_dir <- getwd()
@@ -27,10 +28,15 @@ main_dir <- getwd()
 # Liste der Unterordner im Hauptverzeichnis
 subdirs <- list.dirs(main_dir, full.names = TRUE, recursive = FALSE)
 
-# Initialisiere eine Liste, um alle Plots zu speichern
-all_plots_DistVioline <- list()
-all_plots_CostsBalken <- list()
-all_plots_AnzFzgBalken <- list()
+# Erstelle ein leeres tibble zur Speicherung der Plots
+all_plots_DistViolin <- tibble(
+  subdir = character(),  # Speicherort für die Unterordnernamen
+  plot = list()          # Speicherort für die Plots
+)
+all_plots_DistViolin_gg <- tibble(
+  subdir = character(),  # Speicherort für die Unterordnernamen
+  plot = list()          # Speicherort für die Plots
+)
 
 # Durchlaufe alle Unterordner und erstelle einen Plot für jeden Datensatz
 for (subdir in subdirs) {
@@ -41,10 +47,11 @@ for (subdir in subdirs) {
   # Read the CSV file
   # Überprüfe, ob die Datei existiert
   if (file.exists(file_path_VehType)) {
-    df_org <- read.csv2(file_path_VehType)
+    df_org <- read.delim2(file_path_VehType)
+
     
     if (file.exists(file_path_veh)) { 
-        df_tours_org <- read.csv2(file_path_veh)
+        df_tours_org <- read.delim2(file_path_veh)
         
         # Specify the desired order of vehicleTypeId
         desired_order <- c("7.5t", "7.5t_electro","18t", "18t_electro","26t", "26t_electro","40t", "40t_electro")
@@ -143,10 +150,10 @@ for (subdir in subdirs) {
         colorsKMT8 <- c("#1c18a0", "#9013fe" , "#1e54b6", "#760e95", "#3c71d9", "#aa108e", "#1f90cc","#DF0174")
         colorsAna <- c("#1c18a0", "#1e54b6", "#1f90cc", "#3c71d9", "#9013fe", "#760e95", "#aa108e", "c40d1e", "#a40c2e", "#5e082c","#4e0c49","#3d1066")
         
-        
-        violin_plot_distances <- plot_ly(#data = df_tours, 
-          x = ~df_tours$vehicleCategory, 
-          y = ~df_tours$travelDistance.km., 
+        ### plotly ####
+        violin_plot_distances <- plot_ly(#data = df_tours,
+          x = ~df_tours$vehicleCategory,
+          y = ~df_tours$travelDistance.km.,
           split = ~df_tours$vehicleCategory,
           type = 'violin',
           width = 1000,
@@ -154,25 +161,52 @@ for (subdir in subdirs) {
           box = list(visible = T),
           points = "all", jitter = 0.5, pointpos = -1.5) %>%
           layout(
-            xaxis = list(title = 'Vehicle Type'), 
-            yaxis = list(title = 'Tour Distance (km)',  range = list(-45.,max_y_km)), 
+            xaxis = list(title = 'Vehicle Type'),
+            yaxis = list(title = 'Tour Distance (km)',  range = list(-45.,max_y_km)),
             #Aktuell noch ziemlich hässliche Farbpalette, aber sie Funktioniert, dass alle Diesel Rot und alle E-Fzg Grün sind.
             #colorway = c("red", "green","red", "green","red", "green","red", "green"),
             #colorway = colorsAna,
             colorway = colorsKMT8,
-            showlegend = FALSE
+            showlegend = FALSE,
+            title = basename(subdir)
           )
-        
+
         # # Display the plots separately
-        # print(bar_plot %>% layout(title = 'Number of Vehicles by Vehicle Category'))
-        # print(bar_plot_costs %>% layout(title = 'Total Costs by Vehicle Category'))
-        # print(box_plot_distances %>% layout(title = 'Traveled Distances by Vehicle Category'))
-        # print(violin_plot_distances %>% layout())
+        print(violin_plot_distances)
         
-        # Füge die Plots den all Plots hinzu
-        # all_plots_AnzFzgBalken <- c(all_plots_AnzFzgBalken, list(bar_plot %>% layout(title = 'Number of Vehicles by Vehicle Category')))
-        # all_plots_CostsBalken <- c(all_plots_CostsBalken, list(bar_plot_costs %>% layout(title = 'Total Costs by Vehicle Category')))
-        all_plots_DistVioline <- c(all_plots_DistVioline, list(violin_plot_distances %>% layout()))
+        # Optional: Plot als PNG speichern
+        # ggsave(filename = "violin_plot_distances.png", plot = violin_plot_distances_gg, width = 10, height = 5)
+
+        # Füge den Plot und den Subdir-Namen dem Tibble hinzu
+        all_plots_DistViolin <- all_plots_DistViolin  %>% add_row(subdir = basename(subdir), plot = list(violin_plot_distances))
+        ###ENDE Plotly ####
+
+        
+        ####TEST mit ggplot
+        # Erstellen des Violin-Plots mit ggplot2
+        violin_plot_distances_gg <- ggplot(df_tours, aes(x = vehicleCategory, y = travelDistance.km., fill = vehicleCategory)) +
+          geom_violin(trim = FALSE, width = 1) + 
+          geom_boxplot(width = 0.1, outlier.shape = NA) + 
+          geom_jitter(position = position_jitter(width = 0.2), size = 1.5, alpha = 0.6) +
+          scale_y_continuous(limits = c(-45, max_y_km)) +
+          scale_fill_manual(values = colorsKMT8) +  # Anpassung der Farben
+          labs(title = basename(subdir), x = "Vehicle Type", y = "Tour Distance (km)") +
+          theme_minimal() + 
+          theme(legend.position = "none", 
+                plot.title = element_text(hjust = 0.5, size = 16))
+        
+        # Plot anzeigen
+         print(violin_plot_distances_gg)
+        
+        # Optional: Plot als PNG speichern
+        # ggsave(filename = "violin_plot_distances.png", plot = violin_plot_distances_gg, width = 10, height = 5)
+       
+         
+         # Füge den Plot und den Subdir-Namen dem Tibble hinzu
+         all_plots_DistViolin_gg <- all_plots_DistViolin_gg %>% add_row(subdir = basename(subdir), plot = list(violin_plot_distances_gg))
+         
+         
+         #### Ende ggplot
     } 
     else  {  message(paste("Datei nicht gefunden in:", subdir, file_path_veh))} } 
     
@@ -180,8 +214,32 @@ for (subdir in subdirs) {
   
 }
 
-# Kombiniere alle Plots zu einem Subplot
-combined_plot <- subplot(all_plots_DistVioline, nrows = length(all_plots_DistVioline) %/% 2 + length(all_plots_DistVioline) %% 2, shareX = TRUE, shareY = TRUE)
+###plotly###
+# Test: Durchlaufen der Tibble und Anzeigen der Plots
+for (i in seq_len(nrow(all_plots_DistViolin))) {
+  print(all_plots_DistViolin$plot[[i]])
+}
+
+# Kombiniere die plotly-Plots zu einem einzigen Subplot
+combined_plot <- subplot(all_plots_DistViolin$plot, nrows = length(all_plots_DistViolin$plot) %/% 2 + length(all_plots_DistViolin$plot) %% 2, shareX = TRUE, shareY = TRUE)
 
 # Zeige den kombinierten Plot an
 combined_plot
+
+
+###ggplot###
+# Test: Durchlaufen der Tibble und Anzeigen der Plots
+for (i in seq_len(nrow(all_plots_DistViolin_gg))) {
+  print(all_plots_DistViolin_gg$plot[[i]])
+}
+
+# Kombiniere die Plots zu einem einzigen Subplot
+combined_plot_gg <- wrap_plots(all_plots_DistViolin_gg$plot, ncol = 2)
+
+# Zeige den kombinierten Plot an
+print(combined_plot_gg)
+
+# Optional: Speichern des kombinierten Plots
+ggsave(filename = "combined_violin_plots_gg.png", plot = combined_plot_gg, width = 20, height = 10)
+
+
