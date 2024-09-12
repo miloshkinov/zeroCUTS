@@ -14,8 +14,8 @@ library(ggrepel)
 calculateAnnualValues <- function (diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle){
   cumulated_costs <- 0
   for (Year in diesel_prices$year) {
-    fuelThisYear <- subset(diesel_prices, Year == year)$price
-    energyThisYear <- ifelse(Scenario == "High Electricity Price",subset(energy_prices, Year == year)$pessimistic, subset(energy_prices, Year == year)$optimistic)
+    fuelThisYear <- ifelse(Scenario == "Base Case" | Scenario == "High Electricity Price" | Scenario == "Policy Case",subset(diesel_prices, Year == year)$assumed_price_development, subset(diesel_prices, Year == year)$constant)
+    energyThisYear <- ifelse(Scenario == "High Electricity Price",subset(energy_prices, Year == year)$pessimistic, ifelse(Scenario == "ICEVs, BEVs - constant energy prices (2024)", subset(energy_prices, Year == year)$pessimistic_constant, subset(energy_prices, Year == year)$optimistic))
     fixcosts_vehicles <- sum(analysis_data$fixedCosts.EUR.) * working_Days_per_year / 1000000
     fixcosts_chargingInfratructure <- annual_carging_infrastructure_costs_EUR_per_year_and_vehicle * sum(analysis_data$nuOfVehicles [grepl("_electro", analysis_data$vehicleTypeId)])  / 1000000
     varCosts_time <- sum(analysis_data$varCostsTime.EUR) * working_Days_per_year / 1000000
@@ -91,14 +91,17 @@ working_Days_per_year <- 250
 # Define diesel prices for each year
 diesel_price_assumptions <- data.frame(
   year = c(2024, 2030, 2050),
-  price = c(1.55, 1.78, 3.2)
+  assumed_price_development = c(1.55, 1.78, 3.2),
+  constant = c(1.55, 1.55, 1.55)
 )
 
 # Define energy prices for each year (optimistic and pessimistic)
 energy_prices_assumptions <- data.frame(
   year = c(2024, 2030, 2050),
   optimistic = c(0.18, 0.18, 0.18),
-  pessimistic = c(0.24, 0.21, 0.21)
+  pessimistic = c(0.24, 0.21, 0.21),
+  pessimistic_constant = c(0.18, 0.18, 0.18)
+#  pessimistic_constant = c(0.24, 0.24, 0.24)
 )
 
 # Set costs for charging infrastructure per year
@@ -107,11 +110,12 @@ annual_carging_infrastructure_costs_EUR_per_year_and_vehicle <- 1638
 # Define the years you want to interpolate for
 interpolate_years <- 2024:2050
 # Use the approx() function to interpolate the diesel prices for the years in between
-interpolated_prices <- approx(diesel_price_assumptions$year, diesel_price_assumptions$price, xout = interpolate_years)
+assumed_price_development <- approx(diesel_price_assumptions$year, diesel_price_assumptions$assumed_price_development, xout = interpolate_years)
 # Create a data frame with the interpolated prices
 diesel_prices <- data.frame(
-  year = interpolated_prices$x,
-  price = interpolated_prices$y
+  year = assumed_price_development$x,
+  assumed_price_development = assumed_price_development$y,
+  constant = diesel_price_assumptions$constant
 )
 # Sort the data frame by year
 diesel_prices <- diesel_prices[order(diesel_prices$year), ]
@@ -126,7 +130,8 @@ interpolated_pessimistic_prices <- approx(energy_prices_assumptions$year, energy
 energy_prices <- data.frame(
   year = interpolated_optimistic_prices$x,
   optimistic = interpolated_optimistic_prices$y,
-  pessimistic = interpolated_pessimistic_prices$y
+  pessimistic = interpolated_pessimistic_prices$y,
+  pessimistic_constant = energy_prices_assumptions$pessimistic_constant
 )
 
 # Iterate through each folder
@@ -159,6 +164,8 @@ for (folder in folders) {
   if (fuel == 1.55 && energy == 0.24) {
     # year 2024 with optimistic energy prices
     Scenario <- "High Electricity Price"
+    plot_data_annual_costs <- calculateAnnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
+    Scenario <- "ICEVs, BEVs - constant energy prices (2024)"
     plot_data_annual_costs <- calculateAnnualValues(diesel_prices, energy_prices, analysis_data, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
   }
 
@@ -203,6 +210,8 @@ for (folder_base in folders_base) {
   if (!(Scenario %in% plot_data_annual_costs$Scenario) && fuel == 1.55) {
       # year 2024 with pessimitic energy prices
     plot_data_annual_costs <- calculateAnnualValues(diesel_prices, energy_prices, analysis_data_base, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
+    Scenario <- "ICEVs - constant diesel price (2024)"
+    plot_data_annual_costs <- calculateAnnualValues(diesel_prices, energy_prices, analysis_data_base, plot_data_annual_costs, Scenario, working_Days_per_year, annual_carging_infrastructure_costs_EUR_per_year_and_vehicle)
   }
   # Calculate sum of totalCosts[EUR] column
   total_costs <- sum(analysis_data_base$totalCosts.EUR)
@@ -221,17 +230,17 @@ for (folder_base in folders_base) {
   plot_data_base <- rbind(plot_data_base, data.frame(fuel = fuel, energy = energy, costs = total_costs, fixCosts = total_fixCosts, variableCosts_time = total_varCosts_time, variableCosts_dist = total_varCosts_distance, total_kilometers = total_kilometers, total_kilometers_electro = total_kilometers_electro, total_kilometers_diesel = total_kilometers_diesel, total_vehicle_diesel = total_vehicle_diesel, total_vehicle_electro = total_vehicle_electro))
 }
 # Find the row where fuel and or energy equals the desired values
-row_index_base_2024 <- which(plot_data_base$fuel == subset(diesel_prices, year == 2024)$price)
-row_index_base_2030 <- which(plot_data_base$fuel == subset(diesel_prices, year == 2030)$price)
-row_index_base_2050 <- which(plot_data_base$fuel == subset(diesel_prices, year == 2050)$price)
+row_index_base_2024 <- which(plot_data_base$fuel == subset(diesel_prices, year == 2024)$assumed_price_development)
+row_index_base_2030 <- which(plot_data_base$fuel == subset(diesel_prices, year == 2030)$assumed_price_development)
+row_index_base_2050 <- which(plot_data_base$fuel == subset(diesel_prices, year == 2050)$assumed_price_development)
 
-row_index_optimistic_2024 <- which(plot_data$fuel == subset(diesel_prices, year == 2024)$price & plot_data$energy == subset(energy_prices, year == 2024)[["optimistic"]])
-row_index_optimistic_2030 <- which(plot_data$fuel == subset(diesel_prices, year == 2030)$price & plot_data$energy == subset(energy_prices, year == 2030)[["optimistic"]])
-row_index_optimistic_2050 <- which(plot_data$fuel == subset(diesel_prices, year == 2050)$price & plot_data$energy == subset(energy_prices, year == 2050)[["optimistic"]])
+row_index_optimistic_2024 <- which(plot_data$fuel == subset(diesel_prices, year == 2024)$assumed_price_development & plot_data$energy == subset(energy_prices, year == 2024)[["optimistic"]])
+row_index_optimistic_2030 <- which(plot_data$fuel == subset(diesel_prices, year == 2030)$assumed_price_development & plot_data$energy == subset(energy_prices, year == 2030)[["optimistic"]])
+row_index_optimistic_2050 <- which(plot_data$fuel == subset(diesel_prices, year == 2050)$assumed_price_development & plot_data$energy == subset(energy_prices, year == 2050)[["optimistic"]])
 
-row_index_pessimistic_2024 <- which(plot_data$fuel == subset(diesel_prices, year == 2024)$price & plot_data$energy == subset(energy_prices, year == 2024)[["pessimistic"]])
-row_index_pessimistic_2030 <- which(plot_data$fuel == subset(diesel_prices, year == 2030)$price & plot_data$energy == subset(energy_prices, year == 2030)[["pessimistic"]])
-row_index_pessimistic_2050 <- which(plot_data$fuel == subset(diesel_prices, year == 2050)$price & plot_data$energy == subset(energy_prices, year == 2050)[["pessimistic"]])
+row_index_pessimistic_2024 <- which(plot_data$fuel == subset(diesel_prices, year == 2024)$assumed_price_development & plot_data$energy == subset(energy_prices, year == 2024)[["pessimistic"]])
+row_index_pessimistic_2030 <- which(plot_data$fuel == subset(diesel_prices, year == 2030)$assumed_price_development & plot_data$energy == subset(energy_prices, year == 2030)[["pessimistic"]])
+row_index_pessimistic_2050 <- which(plot_data$fuel == subset(diesel_prices, year == 2050)$assumed_price_development & plot_data$energy == subset(energy_prices, year == 2050)[["pessimistic"]])
 
 # Extract the corresponding cost value
 cost_base_2024 <- plot_data_base$costs[row_index_base_2024]
@@ -325,7 +334,7 @@ scenario_data <- data.frame(
 )
 # Reorder the scenarios in the costs_data dataframe
 scenario_data$Scenario <- factor(scenario_data$Scenario, levels = c("Base Case", "Policy Case", "High Electricity Price"))
-plot_data_annual_costs$scenario <- factor(plot_data_annual_costs$scenario, levels = c("Base Case", "Policy Case", "High Electricity Price"))
+plot_data_annual_costs$scenario <- factor(plot_data_annual_costs$scenario, levels = c("Base Case", "ICEVs - constant diesel price (2024)", "Policy Case", "High Electricity Price", "ICEVs, BEVs - constant energy prices (2024)"))
 
 # Convert Year column to factor for better grouping
 scenario_data$Year <- factor(scenario_data$Year)
@@ -349,6 +358,8 @@ custom_colors_Vehicles <- brewer.pal(n = 2, name = "Set2")
 names(custom_colors_Vehicles) <- c("number_electro_vehicle", "number_diesel_vehicle")
 custom_colors_Costs <- brewer.pal(n = 3, name = "Set1")
 names(custom_colors_Costs) <- c("Base Case", "Policy Case", "High Electricity Price")
+custom_colors_Costs_allScenarien <- brewer.pal(n = 5, name = "Set1")
+names(custom_colors_Costs_allScenarien) <- c("Base Case", "ICEVs - constant diesel price (2024)", "Policy Case", "High Electricity Price", "ICEVs, BEVs - constant energy prices (2024)")
 
 # Define custom colors for each cost type
 custom_colors_Costs_years <- brewer.pal(n = 5, name = "Dark2")
@@ -369,6 +380,14 @@ new_labels_vehicleTypes <- c(
   "number_electro_vehicle" = "BEVs",
   "number_diesel_vehicle" = "ICEVs"
 )
+new_labels_scenarios <- c(
+  "Base Case" = "ICEVs - \n diesel price increase",
+  "Policy Case" = "ICEVs, BEVs -\n low energy price",
+  "High Electricity Price" = "ICEVs, BEVs -\n high energy price"
+)
+melted_distances$Scenario <- factor(melted_distances$Scenario,
+                                                        levels = names(new_labels_scenarios),
+                                                        labels = new_labels_scenarios)
 ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
   geom_bar(stat = 'identity', position = 'stack') +
   scale_fill_manual(values = custom_colors_Distance, labels = new_labels_vehicleTypes) +  # Set custom colors
@@ -379,7 +398,7 @@ ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
   labs(fill = NULL) +
   theme(legend.position = "top",
         text = element_text(size = 20),
-        axis.text.x = element_text(angle = 90, hjust = 1))
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.3))
 
 ################################### Plot to compare the number of vehicles for the different scenarios and years ###################################
 ggplot(melted_vehicles, aes(x = Scenario, y = value, fill = variable)) +
@@ -395,14 +414,20 @@ ggplot(melted_vehicles, aes(x = Scenario, y = value, fill = variable)) +
         axis.text.x = element_text(angle = 90, hjust = 1))
 
 ################################### Plot to compare the total costs for the different scenarios and years ###################################
+new_labels_scenarios <- c(
+  "Base Case" = "ICEVs - diesel price increase",
+  "Policy Case" = "ICEVs, BEVs - low energy price",
+  "High Electricity Price" = "ICEVs, BEVs - high energy price"
+)
 ggplot(melted_costs, aes(x = Scenario, y = value, fill = Scenario)) +
   geom_bar(stat = 'identity', position = 'dodge') +
-  scale_fill_manual(values = custom_colors_Costs) +
+  scale_fill_manual(values = custom_colors_Costs, labels = new_labels_scenarios) +
   facet_grid(~Year) +
   ggtitle("Costs Comparison for Different Scenarios and Years") +
   xlab(NULL) +
   ylab("Costs in EUR") +
   labs(fill = NULL) +
+  guides(fill = guide_legend(nrow = 2)) +  # Arrange legend in 2 rows
   theme(legend.position = "top",
         text = element_text(size = 24),
         axis.text.x = element_blank())
@@ -441,6 +466,33 @@ ggplot(melted_costs_annual, aes(x = year, color = scenario)) +
   scale_y_continuous(sec.axis = sec_axis(~./scale_factor, name = "Cumulated Costs (in Million EUR)")) +
   geom_label_repel(data = melted_costs_annual_2050, aes(y = cumulated_costs * scale_factor, label = round(cumulated_costs, 0)), direction = "y", max.overlaps = Inf, show.legend = FALSE, size = 5)
 
+################################### Line plot of he cumulated costs for the different scenarios and years ###################################
+new_labels_scenarios <- c(
+  "Base Case" = "ICEVs - diesel price increase",
+  "Policy Case" = "ICEVs, BEVs - low energy price",
+  "High Electricity Price" = "ICEVs, BEVs - high energy price"
+)
+melted_costs_annual$scenario <- factor(melted_costs_annual$scenario,
+                                       levels = c("ICEVs - constant diesel price (2024)", "ICEVs, BEVs - constant energy prices (2024)", "Base Case", "Policy Case", "High Electricity Price"))
+
+melted_costs_annual_2050 <- melted_costs_annual[melted_costs_annual$year == 2050,]
+ggplot(melted_costs_annual, aes(x = year, y = cumulated_costs, group = scenario, color = scenario)) +
+  geom_line(size = 1.0) +  # Line plot for cumulated costs
+  scale_color_manual(values = custom_colors_Costs_allScenarien, labels = new_labels_scenarios) +  # Set line colors
+  ggtitle("Cumulative Costs Comparison for Different Scenarios and Years") +
+  xlab("Years") +
+  ylab("Cumulated Costs (in Million EUR)") +
+  labs(color = NULL) +
+  theme(legend.position = "bottom",
+        text = element_text(size = 20),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.margin = margin(5, 20, 5, 5), clip = "off") +
+  coord_cartesian(ylim = c(0, 750)) +
+  guides(color = guide_legend(nrow = 5)) +  # Adjust legend to have 2 rows
+  geom_label_repel(data = melted_costs_annual_2050, aes(label = round(cumulated_costs, 0)),
+                   direction = "y", max.overlaps = Inf, show.legend = FALSE, size = 5, force = 7)
+
+
 ################################### (first 5 years) Plot to compare the total costs for the different scenarios and years ###################################
 melted_costs_annual_filtered <- melted_costs_annual %>%
   filter(year <= 2030)
@@ -471,8 +523,18 @@ new_labels_costTypes <- c(
   "fixCosts_chargingInfratructure" = "Fixed Costs Charging Infrastructure",
   "fixCosts" = "Vehicle Fixed Costs"
 )
-
-ggplot(plot_data_annual_costs_long, aes(x = year, y = cost_value, fill = cost_type)) +
+new_labels_scenarios <- c(
+  "Base Case" = "ICEVs - diesel price increase",
+  "Policy Case" = "ICEVs, BEVs - low energy price",
+  "High Electricity Price" = "ICEVs, BEVs - high energy price"
+)
+plot_data_annual_costs_long_filtered <- plot_data_annual_costs_long %>%
+  filter(scenario != "ICEVs - constant diesel price (2024)" & scenario != "ICEVs, BEVs - constant energy prices (2024)")
+# Update the levels of the scenario factor
+plot_data_annual_costs_long_filtered$scenario <- factor(plot_data_annual_costs_long_filtered$scenario,
+                                                        levels = names(new_labels_scenarios),
+                                                        labels = new_labels_scenarios)
+ggplot(plot_data_annual_costs_long_filtered, aes(x = year, y = cost_value, fill = cost_type)) +
   geom_bar(stat = 'identity', position = 'stack') +
   facet_wrap(~ scenario) +
   scale_fill_manual(values = custom_colors_Costs_years, labels = new_labels_costTypes) +
@@ -484,7 +546,7 @@ ggplot(plot_data_annual_costs_long, aes(x = year, y = cost_value, fill = cost_ty
   theme(legend.position = "bottom",
         text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1)) +
-  scale_x_continuous(breaks = seq(min(plot_data_annual_costs_long$year), max(plot_data_annual_costs_long$year), by = 5))
+  scale_x_continuous(breaks = seq(min(plot_data_annual_costs_long_filtered$year), max(plot_data_annual_costs_long_filtered$year), by = 5))
 
 
 ################################### Plot the costs comparison for the different scenarios and years ###################################
