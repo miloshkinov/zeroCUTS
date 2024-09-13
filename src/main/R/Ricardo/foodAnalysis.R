@@ -392,11 +392,11 @@ ggplot(melted_distances, aes(x = Scenario, y = value, fill = variable)) +
   geom_bar(stat = 'identity', position = 'stack') +
   scale_fill_manual(values = custom_colors_Distance, labels = new_labels_vehicleTypes) +  # Set custom colors
   facet_grid(~Year) +
-  ggtitle("Driven distance Comparison for the Different Scenarios and Years") +
+  #ggtitle("Driven distance Comparison for the Different Scenarios and Years") +
   xlab(NULL) +
   ylab("Driven Distance (km)") +
   labs(fill = NULL) +
-  theme(legend.position = "top",
+  theme(legend.position = "bottom",
         text = element_text(size = 20),
         axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.3))
 
@@ -423,12 +423,12 @@ ggplot(melted_costs, aes(x = Scenario, y = value, fill = Scenario)) +
   geom_bar(stat = 'identity', position = 'dodge') +
   scale_fill_manual(values = custom_colors_Costs, labels = new_labels_scenarios) +
   facet_grid(~Year) +
-  ggtitle("Costs Comparison for Different Scenarios and Years") +
+  #ggtitle("Costs Comparison for Different Scenarios and Years") +
   xlab(NULL) +
   ylab("Costs in EUR") +
   labs(fill = NULL) +
   guides(fill = guide_legend(nrow = 2)) +  # Arrange legend in 2 rows
-  theme(legend.position = "top",
+  theme(legend.position = "bottom",
         text = element_text(size = 24),
         axis.text.x = element_blank())
 
@@ -481,6 +481,7 @@ ggplot(melted_costs_annual, aes(x = year, y = cumulated_costs, group = scenario,
   scale_color_manual(values = custom_colors_Costs_allScenarien, labels = new_labels_scenarios) +  # Set line colors
   ggtitle("Cumulative Costs Comparison for Different Scenarios and Years") +
   xlab("Years") +
+  xlab(NULL) +
   ylab("Cumulated Costs (in Million EUR)") +
   labs(color = NULL) +
   theme(legend.position = "bottom",
@@ -538,14 +539,16 @@ ggplot(plot_data_annual_costs_long_filtered, aes(x = year, y = cost_value, fill 
   geom_bar(stat = 'identity', position = 'stack') +
   facet_wrap(~ scenario) +
   scale_fill_manual(values = custom_colors_Costs_years, labels = new_labels_costTypes) +
-  ggtitle("Prediction of the Annual Costs for Different Scenarios") +
+  #ggtitle("Prediction of the Annual Costs for Different Scenarios") +
   xlab("Year") +
+  xlab(NULL) +
   ylab("Costs (in Million EUR)") +
   labs(fill = "Cost Type") +
+  labs(fill = NULL) +
   guides(fill = guide_legend(nrow = 2)) +  # Adjust the legend to have 2 rows
   theme(legend.position = "bottom",
         text = element_text(size = 20),
-        axis.text.x = element_text(angle = 90, hjust = 1)) +
+        axis.text.x = element_text(angle = 90, hjust = 0.9, vjust = 0.3)) +
   scale_x_continuous(breaks = seq(min(plot_data_annual_costs_long_filtered$year), max(plot_data_annual_costs_long_filtered$year), by = 5))
 
 
