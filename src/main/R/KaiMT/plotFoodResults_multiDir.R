@@ -151,7 +151,7 @@ for (subdir in subdirs) {
         colorsAna <- c("#1c18a0", "#1e54b6", "#1f90cc", "#3c71d9", "#9013fe", "#760e95", "#aa108e", "c40d1e", "#a40c2e", "#5e082c","#4e0c49","#3d1066")
         
         xValue <- df_tours$vehicleCategory
-        yValue <- df_tours$travelDistance.kmö
+        yValue <- df_tours$travelDistance.km
         
         ### plotly ####
         violin_plot_distances <- plot_ly(#data = df_tours,
