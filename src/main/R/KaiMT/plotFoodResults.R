@@ -154,6 +154,13 @@ violin_plot_distances <- plot_ly(#data = df_tours,
           showlegend = FALSE
           )
 
+print(violin_plot_distances %>% layout())
+#scope <- kaleido()
+#scope$transform(violin_plot_distances, "myplotKMT.pdf")
+#rm(scope); gc()
+#save_image(violin_plot_distances %>% layout(), "myplotKMT.pdf")
+#open_file(filename)
+
 # Display the plots separately
 print(bar_plot %>% layout(title = 'Number of Vehicles by Vehicle Category'))
 print(bar_plot_costs %>% layout(title = 'Total Costs by Vehicle Category'))

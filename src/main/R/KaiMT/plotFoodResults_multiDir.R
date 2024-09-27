@@ -150,6 +150,9 @@ for (subdir in subdirs) {
         colorsKMT8 <- c("#1c18a0", "#9013fe" , "#1e54b6", "#760e95", "#3c71d9", "#aa108e", "#1f90cc","#DF0174")
         colorsAna <- c("#1c18a0", "#1e54b6", "#1f90cc", "#3c71d9", "#9013fe", "#760e95", "#aa108e", "c40d1e", "#a40c2e", "#5e082c","#4e0c49","#3d1066")
         
+        xValue <- df_tours$vehicleCategory
+        yValue <- df_tours$travelDistance.kmö
+        
         ### plotly ####
         violin_plot_distances <- plot_ly(#data = df_tours,
           x = ~df_tours$vehicleCategory,
@@ -173,40 +176,43 @@ for (subdir in subdirs) {
 
         # # Display the plots separately
         print(violin_plot_distances)
+        readline(prompt = "Drücken Sie [ENTER], um fortzufahren...")
         
         # Optional: Plot als PNG speichern
         # ggsave(filename = "violin_plot_distances.png", plot = violin_plot_distances_gg, width = 10, height = 5)
-
+        #filename <- paste(basename(subdir),".png")
+        #save_image(violin_plot_distances, filename)
+        
         # Füge den Plot und den Subdir-Namen dem Tibble hinzu
         all_plots_DistViolin <- all_plots_DistViolin  %>% add_row(subdir = basename(subdir), plot = list(violin_plot_distances))
         ###ENDE Plotly ####
 
         
-        ####TEST mit ggplot
-        # Erstellen des Violin-Plots mit ggplot2
-        violin_plot_distances_gg <- ggplot(df_tours, aes(x = vehicleCategory, y = travelDistance.km., fill = vehicleCategory)) +
-          geom_violin(trim = FALSE, width = 1) + 
-          geom_boxplot(width = 0.1, outlier.shape = NA) + 
-          geom_jitter(position = position_jitter(width = 0.2), size = 1.5, alpha = 0.6) +
-          scale_y_continuous(limits = c(-45, max_y_km)) +
-          scale_fill_manual(values = colorsKMT8) +  # Anpassung der Farben
-          labs(title = basename(subdir), x = "Vehicle Type", y = "Tour Distance (km)") +
-          theme_minimal() + 
-          theme(legend.position = "none", 
-                plot.title = element_text(hjust = 0.5, size = 16))
-        
-        # Plot anzeigen
-         print(violin_plot_distances_gg)
-        
-        # Optional: Plot als PNG speichern
-        # ggsave(filename = "violin_plot_distances.png", plot = violin_plot_distances_gg, width = 10, height = 5)
-       
-         
-         # Füge den Plot und den Subdir-Namen dem Tibble hinzu
-         all_plots_DistViolin_gg <- all_plots_DistViolin_gg %>% add_row(subdir = basename(subdir), plot = list(violin_plot_distances_gg))
-         
-         
-         #### Ende ggplot
+        # ####TEST mit ggplot
+        # # Erstellen des Violin-Plots mit ggplot2
+        # violin_plot_distances_gg <- ggplot(df_tours, aes(x = vehicleCategory, y = travelDistance.km., fill = vehicleCategory)) +
+        #   geom_violin(trim = FALSE, width = 1) + 
+        #   geom_boxplot(width = 0.1, outlier.shape = NA) + 
+        #   geom_jitter(position = position_jitter(width = 0.2), size = 1.5, alpha = 0.6) +
+        #   scale_y_continuous(limits = c(-45, max_y_km)) +
+        #   scale_fill_manual(values = colorsKMT8) +  # Anpassung der Farben
+        #   labs(title = basename(subdir), x = "Vehicle Type", y = "Tour Distance (km)") +
+        #   theme_minimal() + 
+        #   theme(legend.position = "none", 
+        #         plot.title = element_text(hjust = 0.5, size = 16))
+        # 
+        # # Plot anzeigen
+        #  print(violin_plot_distances_gg)
+        # 
+        # # Optional: Plot als PNG speichern
+        # # ggsave(filename = "violin_plot_distances.png", plot = violin_plot_distances_gg, width = 10, height = 5)
+        # 
+        #  
+        #  # Füge den Plot und den Subdir-Namen dem Tibble hinzu
+        #  all_plots_DistViolin_gg <- all_plots_DistViolin_gg %>% add_row(subdir = basename(subdir), plot = list(violin_plot_distances_gg))
+        #  
+        #  
+        #  #### Ende ggplot
     } 
     else  {  message(paste("Datei nicht gefunden in:", subdir, file_path_veh))} } 
     
@@ -218,7 +224,9 @@ for (subdir in subdirs) {
 # Test: Durchlaufen der Tibble und Anzeigen der Plots
 for (i in seq_len(nrow(all_plots_DistViolin))) {
   print(all_plots_DistViolin$plot[[i]])
+
 }
+
 
 # Kombiniere die plotly-Plots zu einem einzigen Subplot
 combined_plot <- subplot(all_plots_DistViolin$plot, nrows = length(all_plots_DistViolin$plot) %/% 2 + length(all_plots_DistViolin$plot) %% 2, shareX = TRUE, shareY = TRUE)
@@ -227,19 +235,19 @@ combined_plot <- subplot(all_plots_DistViolin$plot, nrows = length(all_plots_Dis
 combined_plot
 
 
-###ggplot###
-# Test: Durchlaufen der Tibble und Anzeigen der Plots
-for (i in seq_len(nrow(all_plots_DistViolin_gg))) {
-  print(all_plots_DistViolin_gg$plot[[i]])
-}
-
-# Kombiniere die Plots zu einem einzigen Subplot
-combined_plot_gg <- wrap_plots(all_plots_DistViolin_gg$plot, ncol = 2)
-
-# Zeige den kombinierten Plot an
-print(combined_plot_gg)
-
-# Optional: Speichern des kombinierten Plots
-ggsave(filename = "combined_violin_plots_gg.png", plot = combined_plot_gg, width = 20, height = 10)
-
+# ###ggplot###
+# # Test: Durchlaufen der Tibble und Anzeigen der Plots
+# for (i in seq_len(nrow(all_plots_DistViolin_gg))) {
+#   print(all_plots_DistViolin_gg$plot[[i]])
+# }
+# 
+# # Kombiniere die Plots zu einem einzigen Subplot
+# combined_plot_gg <- wrap_plots(all_plots_DistViolin_gg$plot, ncol = 2)
+# 
+# # Zeige den kombinierten Plot an
+# print(combined_plot_gg)
+# 
+# # Optional: Speichern des kombinierten Plots
+# ggsave(filename = "combined_violin_plots_gg.png", plot = combined_plot_gg, width = 20, height = 10)
+# 
 
