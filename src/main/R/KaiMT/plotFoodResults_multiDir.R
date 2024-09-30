@@ -178,9 +178,8 @@ for (subdir in subdirs) {
         print(violin_plot_distances)
         readline(prompt = "Drücken Sie [ENTER], um fortzufahren...")
         
-        # Optional: Plot als PNG speichern
-        # ggsave(filename = "violin_plot_distances.png", plot = violin_plot_distances_gg, width = 10, height = 5)
-        #filename <- paste(basename(subdir),".png")
+        # Optional: Plot als PNG speichern -- funktioniert NICHT... Stürzt immer R ab
+       # filename <- paste(basename(subdir),".png")
         #save_image(violin_plot_distances, filename)
         
         # Füge den Plot und den Subdir-Namen dem Tibble hinzu
