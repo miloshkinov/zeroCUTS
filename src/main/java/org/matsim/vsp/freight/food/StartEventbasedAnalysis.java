@@ -18,7 +18,7 @@ public class StartEventbasedAnalysis {
 		String simOutputPath;
 
 		if ( args.length==0 ) {
-			simOutputPath = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/Food_LCA-based/output/01_LCA_ICEV_10000it_noTax";
+			simOutputPath = "C:\\git-and-svn\\shared-svn\\projects\\freight\\studies\\UpdateEventsfromEarlierStudies\\foodRetailing_wo_rangeConstraint\\71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax";
 		} else {
 			for (String arg : args) {
 				log.info( arg );
