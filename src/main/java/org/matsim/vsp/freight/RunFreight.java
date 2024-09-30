@@ -294,6 +294,7 @@ public class RunFreight {
 
 			NetworkRouter.routePlan(newPlan,netBasedCosts) ;
 
+			carrier.addPlan(newPlan) ;
 			carrier.setSelectedPlan(newPlan) ;
 
 			//Plot der Jsprit-Lösung
