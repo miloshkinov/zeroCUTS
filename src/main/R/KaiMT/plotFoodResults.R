@@ -1,16 +1,21 @@
 ##Erstelle die Violinen-Plota für die Fahrweiten in den Food-Sceanrien KMT März 24
 
-#setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/analysis")
+#setwd("C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/analysis")
 EFood <- FALSE
 
 
 #####E-Food: Alle Fzg-Typen sind Electro und müssen so gesetzt werden.
-setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/Base_NwCE_BVWP_Pickup_10000it/analysis")
-#setwd("/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/CaseA_E160_NwCE_BVWP_Pickup_10000it/analysis")
+setwd("C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/Base_NwCE_BVWP_Pickup_10000it/analysis")
+#setwd("C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/CaseA_E160_NwCE_BVWP_Pickup_10000it/analysis")
+EFood <- TRUE
+
+#####E-Food 2024
+#setwd("/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_onlyICEV_10000it/Food_fuel1.55_energy0.18/Analysis")
+#setwd("/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_mixedFleet_withDC_5000it/Food_fuel1.55_energy0.18/Analysis")
 #EFood <- TRUE
 
 #####E-Food 2024
-setwd("/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_onlyICEV_10000it/Food_fuel1.55_energy0.18/Analysis")
+#setwd("/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_onlyICEV_10000it/Food_fuel1.55_energy0.18/Analysis")
 #setwd("/Users/kturner/Library/CloudStorage/GoogleDrive-martins-turner@vsp.tu-berlin.de/.shortcut-targets-by-id/1ME69UR7QBzkeVgfJzUTSpxRBUWwH4GVC/vsp-projects/2023/zerocuts/EFood2024/costsVariation_mixedFleet_withDC_5000it/Food_fuel1.55_energy0.18/Analysis")
 #EFood <- TRUE
 
@@ -149,9 +154,15 @@ violin_plot_distances <- plot_ly(#data = df_tours,
           showlegend = FALSE
           )
 
+print(violin_plot_distances %>% layout())
+#scope <- kaleido()
+#scope$transform(violin_plot_distances, "myplotKMT.pdf")
+#rm(scope); gc()
+#save_image(violin_plot_distances %>% layout(), "myplotKMT.pdf")
+#open_file(filename)
+
 # Display the plots separately
 print(bar_plot %>% layout(title = 'Number of Vehicles by Vehicle Category'))
 print(bar_plot_costs %>% layout(title = 'Total Costs by Vehicle Category'))
 print(box_plot_distances %>% layout(title = 'Traveled Distances by Vehicle Category'))
 print(violin_plot_distances %>% layout())
-
