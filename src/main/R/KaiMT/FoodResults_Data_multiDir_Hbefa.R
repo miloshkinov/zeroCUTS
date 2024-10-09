@@ -42,6 +42,9 @@ library(plotly)
 library(gridExtra)
 library(tibble)
 
+library(here)
+source(here("src", "main", "R", "KaiMT", "RUtilsKMT.R")) # lädt Skript relativ zu diesem R-Skript (und nicht zum WorkingDir)
+
 pollutants2WriteExhaust <- c("Scenario", "CO", "CO2_TOTAL", "NOx", "PM", "PM2_5", "BC_exhaust")
 pollutants2WriteNonExhaust <- c("Scenario", "PM_non_exhaust", "PM2_5_non_exhaust", "BC_non_exhaust")
 
@@ -128,34 +131,6 @@ kombinierte_daten <- kombinierte_daten[, c("ScenarioLang", "Scenario", setdiff(n
 head(kombinierte_daten)
 
 
-### Relative Änderungen berechnen.
-#Funktion um relativeÄnderungen zu berechnen
-calcRelChanges <- function(data){
-  # Erhalte die numerischen Spalten im kombinierten DataFrame
-  numerische_spalten <- sapply(data, is.numeric)
-  
-  # Extrahiere die Referenzdaten aus dem kombinierten DataFrame
-  referenzdaten <- data[data$ScenarioLang == basename(referenz_ordner), numerische_spalten]
-  
-  # Gehe durch alle Szenarien außer dem Referenzszenario und berechne die relative Änderung
-  for (i in which(data$ScenarioLang != basename(referenz_ordner))) {
-    for (col in names(data)[numerische_spalten]) {
-      abs_wert <- as.numeric(data[i, col])  # Sicherstellen, dass es numerisch ist
-      ref_wert <- as.numeric(referenzdaten[[col]])        # Sicherstellen, dass es numerisch ist
-      
-      # Überprüfen, ob abs_wert und ref_wert numerisch sind
-      if (is.na(abs_wert) || is.na(ref_wert)) {
-        data[i, col] <- "NA"
-      } else if (ref_wert == 0) { # Bei Referenzwert 0 soll das speziell gehandelt werden
-        data[i, col] <- paste(abs_wert, " ( -- %)", sep = "")
-      } else { # Alles gut, rechne und füge hinzu.
-        rel_aenderung <- round(((abs_wert - ref_wert) / ref_wert) * 100, 1)
-        data[i, col] <- paste(abs_wert, " (", rel_aenderung, "%)", sep = "")
-      }
-    }
-  }
- data <- data 
-}
 
 #Funktion zum Schreiben des Outputs
 write_output <- function(output_file, dataframe) {
