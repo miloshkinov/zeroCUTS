@@ -114,16 +114,13 @@ kombinierte_daten <- kombinierte_daten[, !names(kombinierte_daten) %in% c("Run")
 # Bringe die Spalte "ScenarioLang" an die erste Stelle
 kombinierte_daten <- kombinierte_daten[, c("ScenarioLang", setdiff(names(kombinierte_daten), "ScenarioLang"))]
 
-# Erstelle die neue Spalte "Scenario" und initialisiere sie mit leeren Werten
-kombinierte_daten$Scenario <- ""
+# Erstelle die neue Spalte "Scenario": setze "Base Case", wenn es das Referenzszenario ist, sonst den Teil nach dem letzten Unterstrich
+kombinierte_daten$Scenario <- ifelse(
+  kombinierte_daten$ScenarioLang == basename(referenz_ordner), 
+  "Base Case", 
+  sub(".*_", "", kombinierte_daten$ScenarioLang)  # Extrahiert den Teil nach dem letzten Unterstrich
+)
 
-# Setze für die Referenzzeile den Wert auf "Base"
-kombinierte_daten$Scenario[1] <- "Base Case"
-
-# Für alle anderen Zeilen: Extrahiere den Teil nach dem letzten Unterstrich aus der Spalte "ScenarioLang"
-kombinierte_daten$Scenario[-1] <- sapply(kombinierte_daten$ScenarioLang[-1], function(x) {
-  sub(".*_", "", x)  # Extrahiert den Teil nach dem letzten Unterstrich
-})
 # Bringe die Spalte "Scenario" an die zweite Stelle
 kombinierte_daten <- kombinierte_daten[, c("ScenarioLang", "Scenario", setdiff(names(kombinierte_daten), c("ScenarioLang", "Scenario")))]
 
