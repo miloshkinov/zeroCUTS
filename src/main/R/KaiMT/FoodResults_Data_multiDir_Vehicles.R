@@ -3,9 +3,7 @@
 ## KMT Okt'24
 
 #### Erweiterungen FZG
-# - für Anzahl Fahrzeuge nach Typ (wie schon in Ch9 der Diss)
-# - für vkm travelled nach Typ (wie schon in Ch9 der Diss)
-# - Dazu dann immer noch Summenspalte ICEV, BEV, Gesamt
+# Ausgabe der km in csv-DAtei ist noch offen
 # - Das dann mal abgleichen mit aktueller Variante in Diss
 
 #### Erweiterungen W2w --> basierend auf der Grundlage hier
@@ -182,6 +180,9 @@ reshaped_data_km <- reshape_and_calculate_sums(summarized_data_km)
 # View the updated reshaped data
 print(reshaped_data_vehicles)
 print(reshaped_data_km)
+
+####TODO; Ausgabe der kilometer_Daten
+# Dazu am besten beim output-aufbereiten auch noch Dinge als Funktionen auslagern
 
 
 #### Ausgabe:
