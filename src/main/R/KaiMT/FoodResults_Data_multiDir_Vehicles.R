@@ -35,10 +35,6 @@ library(plotly)
 library(gridExtra)
 library(tibble)
 
-library(here)
-source(here("src", "main", "R", "KaiMT", "RUtilsKMT.R")) # lädt Skript relativ zu diesem R-Skript (und nicht zum WorkingDir)
-
-
 # Hauptverzeichnis, in dem sich die Unterordner befinden
 main_dir <- getwd()
 
@@ -101,7 +97,6 @@ for (subdir in subdirs) {
 # Entferne Leerzeichen am Anfang und Ende der Spaltennamen (scheint hier u.a. bei den vehiclTypeId so gewesen zu sein)
 names(kombinierte_daten) <- trimws(names(kombinierte_daten))
 
-
 #function to create categories
 create_vehicle_categories <- function(data) {
   data <- data %>% 
@@ -156,28 +151,56 @@ kombinierte_daten <- kombinierte_daten[, c("ScenarioLang", "Scenario", setdiff(n
 
 head(kombinierte_daten)
 
+# Group by Scenario, SizeClass, and engineType, then summarize the number of vehicles
+summarized_data_vehicles <- kombinierte_daten %>%
+  group_by(Scenario, sizeClass, engineType) %>%
+  summarize(nuOfVehicles = sum(nuOfVehicles, na.rm = TRUE)) %>%
+  ungroup()
+
+# Spread the data to have SizeClass and engineType as columns
+reshaped_data_vehicles <- summarized_data_vehicles %>%
+  unite("SizeClass_engineType", sizeClass, engineType, sep = "_") %>%
+  spread(key = SizeClass_engineType, value = nuOfVehicles, fill = 0)
+
+# Calculate the sum for BEV and ICEV
+reshaped_data_vehicles <- reshaped_data_vehicles %>%
+  mutate(
+    BEV_Total = rowSums(select(., contains("_BEV")), na.rm = TRUE),
+    ICEV_Total = rowSums(select(., contains("_ICEV")), na.rm = TRUE)
+  )
+
+# Calculate the total sum
+reshaped_data_vehicles <- reshaped_data_vehicles %>%
+  mutate(Total = BEV_Total + ICEV_Total)
+
+# View the updated reshaped data
+print(reshaped_data_vehicles)
 
 
-#################TODO: Zum Updaten.
+#### Ausgabe:
+# Define the desired order of scenarios
+scenario_order <- c("Base Case", "noTax", "Tax25", "Tax50", "Tax100", "Tax150", "Tax200", "Tax250", "Tax300")
+
+# Reorder the rows based on the scenario order
+reshaped_data_vehicles <- reshaped_data_vehicles %>%
+  mutate(Scenario = factor(Scenario, levels = scenario_order)) %>%
+  arrange(Scenario)
+
+# Define the desired order of columns
+column_order <- c("Scenario", "7.5t_ICEV", "7.5t_BEV", "18t_ICEV", "18t_BEV", "26t_ICEV", "26t_BEV", "40t_ICEV", "40t_BEV", "ICEV_Total", "BEV_Total", "Total")
+
 #Funktion zum Schreiben des Outputs
-write_output <- function(output_file, dataframe) {
-  cat("Erstma nur die ExhaustEmissions\n\n", file = output_file, append = TRUE)
-  write.table(dataframe %>% select(all_of(pollutants2WriteExhaust)), file = output_file, sep = ";", row.names = FALSE, col.names = TRUE, append = TRUE)
-  cat("\n\nUnd nun noch die Non-exhaustEmissions\n\n", file = output_file, append = TRUE)
-  write.table(dataframe %>% select(all_of(pollutants2WriteNonExhaust)), file = output_file, sep = ";", row.names = FALSE, col.names = TRUE, append = TRUE)
-  #Und nochmal alle Daten
-  write.table(dataframe, file = sub("\\.csv$", "_all.csv", output_file), sep = ";", row.names = FALSE, col.names = TRUE)
+write_output_kmt <- function(output_file, dataframe) {
+  cat("Summen über die jeweiligen Szenarien \n\n", file = output_file, append = TRUE)
+  write.table(dataframe %>% select(all_of(column_order)), file = output_file, sep = ";", row.names = FALSE, col.names = TRUE, append = TRUE)
 }
 
+write_output_kmt("vehiclesPerType_Anzahl.csv", reshaped_data_vehicles)
 
-####Berechne relative Änderungen und schreibe es raus
-kombinierte_daten_Anzahl <- kombinierte_daten
-##Todo: Ausgabe definieren -> Anzahl, sinnvoll geordnet.
-write_output("vehiclesPerType_Anzahl.csv", calcRelChanges(kombinierte_daten_Anzahl))
+# Reorder the columns based on the column order
+reshaped_data_vehicles <- reshaped_data_vehicles %>%
+  select(all_of(column_order))
 
-
-kombinierte_daten_km <- kombinierte_daten
-##Todo: Ausgabe definieren -> kmt, sinnvoll geordnet.
-write_output("vehiclesPerType_km.csv", calcRelChanges(kombinierte_daten_km))
-#head(kombinierte_daten_km)
+# Write the reordered data to a CSV file
+write.csv(reshaped_data_vehicles, "output.csv", row.names = FALSE)
 
