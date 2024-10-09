@@ -154,27 +154,34 @@ head(kombinierte_daten)
 # Group by Scenario, SizeClass, and engineType, then summarize the number of vehicles
 summarized_data_vehicles <- kombinierte_daten %>%
   group_by(Scenario, sizeClass, engineType) %>%
-  summarize(nuOfVehicles = sum(nuOfVehicles, na.rm = TRUE)) %>%
+  summarize(sumedValue = sum(nuOfVehicles, na.rm = TRUE)) %>%
   ungroup()
 
-# Spread the data to have SizeClass and engineType as columns
-reshaped_data_vehicles <- summarized_data_vehicles %>%
-  unite("SizeClass_engineType", sizeClass, engineType, sep = "_") %>%
-  spread(key = SizeClass_engineType, value = nuOfVehicles, fill = 0)
+summarized_data_km <- kombinierte_daten %>%
+  group_by(Scenario, sizeClass, engineType) %>%
+  summarize(sumedValue = sum(`SumOfTravelDistances[km]`, na.rm = TRUE)) %>%
+  ungroup()
 
-# Calculate the sum for BEV and ICEV
-reshaped_data_vehicles <- reshaped_data_vehicles %>%
-  mutate(
-    BEV_Total = rowSums(select(., contains("_BEV")), na.rm = TRUE),
-    ICEV_Total = rowSums(select(., contains("_ICEV")), na.rm = TRUE)
-  )
+# Function to reshape data and calculate sums
+reshape_and_calculate_sums <- function(data) {
+  reshaped_data <- data %>%
+    unite("SizeClass_engineType", sizeClass, engineType, sep = "_") %>%
+    spread(key = SizeClass_engineType, value = sumedValue, fill = 0) %>%
+    mutate(
+      BEV_Total = rowSums(select(., contains("_BEV")), na.rm = TRUE),
+      ICEV_Total = rowSums(select(., contains("_ICEV")), na.rm = TRUE),
+      Total = BEV_Total + ICEV_Total
+    )
+  return(reshaped_data)
+}
 
-# Calculate the total sum
-reshaped_data_vehicles <- reshaped_data_vehicles %>%
-  mutate(Total = BEV_Total + ICEV_Total)
+
+reshaped_data_vehicles <- reshape_and_calculate_sums(summarized_data_vehicles)
+reshaped_data_km <- reshape_and_calculate_sums(summarized_data_km)
 
 # View the updated reshaped data
 print(reshaped_data_vehicles)
+print(reshaped_data_km)
 
 
 #### Ausgabe:
