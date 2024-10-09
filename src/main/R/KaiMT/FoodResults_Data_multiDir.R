@@ -67,8 +67,8 @@ file_path_referenz <- file.path(referenz_ordner, "Analysis", "1_emissions", "emi
 if (file.exists(file_path_referenz)) {
   referenzdaten_org <- read.csv(file_path_referenz, sep = ";")
   
-  # Füge eine Spalte "Scenario" hinzu und setze den Namen des Referenzordners
-  referenzdaten_org$Scenario <- basename(referenz_ordner)
+  # Füge eine Spalte "ScenarioLang" hinzu und setze den Namen des Referenzordners
+  referenzdaten_org$ScenarioLang <- basename(referenz_ordner)
   
   # Speichere die Referenzdaten als erste Zeile im kombinierten DataFrame
   kombinierte_daten <- referenzdaten_org
@@ -91,8 +91,8 @@ for (subdir in subdirs) {
     
     df_emissions <- df_emissions_org # Erstmal nur eine Kopie davon in der dann gearbeitet wird.
     
-    # Füge eine Spalte "Scenario" hinzu und weise ihr den Namen des aktuellen Unterordners zu
-    df_emissions$Scenario <- basename(subdir)
+    # Füge eine Spalte "ScenarioLang" hinzu und weise ihr den Namen des aktuellen Unterordners zu
+    df_emissions$ScenarioLang <- basename(subdir)
     
     
     # Füge die Daten zum kombinierten Dataframe hinzu
@@ -108,8 +108,22 @@ for (subdir in subdirs) {
 ### Etwas aufräumen:
 # Entferne die Spalte "Run"
 kombinierte_daten <- kombinierte_daten[, !names(kombinierte_daten) %in% c("Run")]
-# Bringe die Spalte "Scenario" an die erste Stelle
-kombinierte_daten <- kombinierte_daten[, c("Scenario", setdiff(names(kombinierte_daten), "Scenario"))]
+# Bringe die Spalte "ScenarioLang" an die erste Stelle
+kombinierte_daten <- kombinierte_daten[, c("ScenarioLang", setdiff(names(kombinierte_daten), "ScenarioLang"))]
+
+# Erstelle die neue Spalte "Scenario" und initialisiere sie mit leeren Werten
+kombinierte_daten$Scenario <- ""
+
+# Setze für die Referenzzeile den Wert auf "Base"
+kombinierte_daten$Scenario[1] <- "Base Case"
+
+# Für alle anderen Zeilen: Extrahiere den Teil nach dem letzten Unterstrich aus der Spalte "ScenarioLang"
+kombinierte_daten$Scenario[-1] <- sapply(kombinierte_daten$ScenarioLang[-1], function(x) {
+  sub(".*_", "", x)  # Extrahiert den Teil nach dem letzten Unterstrich
+})
+# Bringe die Spalte "Scenario" an die zweite Stelle
+kombinierte_daten <- kombinierte_daten[, c("ScenarioLang", "Scenario", setdiff(names(kombinierte_daten), c("ScenarioLang", "Scenario")))]
+
 
 head(kombinierte_daten)
 
@@ -120,10 +134,10 @@ head(kombinierte_daten)
 numerische_spalten <- sapply(kombinierte_daten, is.numeric)
 
 # Extrahiere die Referenzdaten aus dem kombinierten DataFrame
-referenzdaten <- kombinierte_daten[kombinierte_daten$Scenario == basename(referenz_ordner), numerische_spalten]
+referenzdaten <- kombinierte_daten[kombinierte_daten$ScenarioLang == basename(referenz_ordner), numerische_spalten]
 
 # Gehe durch alle Szenarien außer dem Referenzszenario und berechne die relative Änderung
-for (i in which(kombinierte_daten$Scenario != basename(referenz_ordner))) {
+for (i in which(kombinierte_daten$ScenarioLang != basename(referenz_ordner))) {
   for (col in names(kombinierte_daten)[numerische_spalten]) {
     abs_wert <- as.numeric(kombinierte_daten[i, col])  # Sicherstellen, dass es numerisch ist
     ref_wert <- as.numeric(referenzdaten[[col]])        # Sicherstellen, dass es numerisch ist
