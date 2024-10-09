@@ -6,19 +6,6 @@
 # - ggf. Rundung der Werte
 # -aufs Jahr hochrechnen???
 
-#### Erweiterungen FZG
-# - für Anzahl Fahrzeuge nach Typ (wie schon in Ch9 der Diss)
-# - für vkm travelled nach Typ (wie schon in Ch9 der Diss)
-# -- Das muss dann Umrechnung nach ICEV und Fzg Größe enthalten. 
-# - Dazu dann immer noch Summenspalte ICEV, BEV, Gesamt
-# - Das dann mal abgleichen mit aktueller Variante in Diss
-
-
-#### Erweiterungen W2w
-# - basierend auf vkm je typ mit Faktoren je Fzg-Typ mutliplizieren
-# - Aufs Jahr hochrechnen?
-# - für die Strommixe anpassen als eigene cases.
-
 
 
 # #setwd("C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/analysis")
