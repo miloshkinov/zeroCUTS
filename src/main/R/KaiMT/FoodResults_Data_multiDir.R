@@ -2,7 +2,6 @@
 ## KMT Okt'24
 
 ####TODOS
-# - Filtern nach bestimmten Pollutants / Spalten, die dann ausgegeben werden sollen
 # - Prüfen, dass das Umwandlung in Tabelle für LaTex gut klappt, ggf. Infos anpassen
 # - ggf. Rundung der Werte
 # -aufs Jahr hochrechnen???
@@ -42,6 +41,10 @@ library(tidyverse)
 library(plotly)
 library(gridExtra)
 library(tibble)
+
+pollutants2WriteExhaust <- c("Scenario", "CO", "CO2_TOTAL", "NOx", "PM", "PM2_5", "BC_exhaust")
+pollutants2WriteNonExhaust <- c("Scenario", "PM_non_exhaust", "PM2_5_non_exhaust", "BC_non_exhaust")
+
 
 # Hauptverzeichnis, in dem sich die Unterordner befinden
 main_dir <- getwd()
@@ -154,16 +157,27 @@ calcRelChanges <- function(data){
  data <- data 
 }
 
-kombinierte_daten_g <- calcRelChanges(kombinierte_daten)
-write.csv(kombinierte_daten_g, "kombinierte_daten_Emissions_g.csv", row.names = FALSE)
+#Funktion zum Schreiben des Outputs
+write_output <- function(output_file, dataframe) {
+  cat("Erstma nur die ExhaustEmissions\n\n", file = output_file, append = TRUE)
+  write.table(dataframe %>% select(all_of(pollutants2WriteExhaust)), file = output_file, sep = ";", row.names = FALSE, col.names = TRUE, append = TRUE)
+  cat("\n\nUnd nun noch die Non-exhaustEmissions\n\n", file = output_file, append = TRUE)
+  write.table(dataframe %>% select(all_of(pollutants2WriteNonExhaust)), file = output_file, sep = ";", row.names = FALSE, col.names = TRUE, append = TRUE)
+  #Und nochmal alle Daten
+  write.table(dataframe, file = sub("\\.csv$", "_all.csv", output_file), sep = ";", row.names = FALSE, col.names = TRUE)
+}
 
-###Nun noch Umrechnung von g in kg
+
+####Berechne relative Änderungen und schreibe es raus
+kombinierte_daten_g <- kombinierte_daten
+write_output("Emissions_g.csv", calcRelChanges(kombinierte_daten_g))
+
+
+###Nun noch Umrechnung von g in kg und Ausgabe dessen
 kombinierte_daten_kg <- kombinierte_daten
 numerische_spalten <- sapply(kombinierte_daten_kg, is.numeric) # Identifiziere alle numerischen Spalten im Dataframe
 kombinierte_daten_kg[numerische_spalten] <- kombinierte_daten_kg[numerische_spalten] / 1000
 
-kombinierte_daten_kg <- calcRelChanges(kombinierte_daten_kg)
+write_output("Emissions_kg.csv", calcRelChanges(kombinierte_daten_kg))
+#head(kombinierte_daten_kg)
 
-head(kombinierte_daten_kg)
-
-write.csv(kombinierte_daten_kg, "kombinierte_daten_Emissions_kg.csv", row.names = FALSE)
