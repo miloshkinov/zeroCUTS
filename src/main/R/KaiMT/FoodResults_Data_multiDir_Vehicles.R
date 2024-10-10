@@ -173,7 +173,6 @@ reshape_and_calculate_sums <- function(data) {
   return(reshaped_data)
 }
 
-
 reshaped_data_vehicles <- reshape_and_calculate_sums(summarized_data_vehicles)
 reshaped_data_km <- reshape_and_calculate_sums(summarized_data_km)
 
@@ -181,18 +180,22 @@ reshaped_data_km <- reshape_and_calculate_sums(summarized_data_km)
 print(reshaped_data_vehicles)
 print(reshaped_data_km)
 
-####TODO; Ausgabe der kilometer_Daten
-# Dazu am besten beim output-aufbereiten auch noch Dinge als Funktionen auslagern
-
+# Round all numeric values in the reshaped_data_km data frame to whole numbers
+reshaped_data_km <- reshaped_data_km %>%
+  mutate(across(where(is.numeric), ~ round(.x, digits = 0)))
 
 #### Ausgabe:
 # Define the desired order of scenarios
 scenario_order <- c("Base Case", "noTax", "Tax25", "Tax50", "Tax100", "Tax150", "Tax200", "Tax250", "Tax300")
 
-# Reorder the rows based on the scenario order
-reshaped_data_vehicles <- reshaped_data_vehicles %>%
-  mutate(Scenario = factor(Scenario, levels = scenario_order)) %>%
-  arrange(Scenario)
+reorderRows <- function (data, order) {
+  data <- data %>%
+    mutate(Scenario = factor(Scenario, levels = order)) %>%
+    arrange(Scenario)
+}
+
+reshaped_data_vehicles <- reorderRows(reshaped_data_vehicles, scenario_order)
+reshaped_data_km <- reorderRows(reshaped_data_km, scenario_order)
 
 # Define the desired order of columns
 column_order <- c("Scenario", "7.5t_ICEV", "7.5t_BEV", "18t_ICEV", "18t_BEV", "26t_ICEV", "26t_BEV", "40t_ICEV", "40t_BEV", "ICEV_Total", "BEV_Total", "Total")
@@ -204,11 +207,5 @@ write_output_kmt <- function(output_file, dataframe) {
 }
 
 write_output_kmt("vehiclesPerType_Anzahl.csv", reshaped_data_vehicles)
-
-# Reorder the columns based on the column order
-reshaped_data_vehicles <- reshaped_data_vehicles %>%
-  select(all_of(column_order))
-
-# Write the reordered data to a CSV file
-write.csv(reshaped_data_vehicles, "output.csv", row.names = FALSE)
+write_output_kmt("vehiclesPerType_km.csv", reshaped_data_km)
 
