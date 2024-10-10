@@ -113,6 +113,7 @@ class DistanceConstraintUtils {
 					VehicleRoutingProblemSolution bestSolution = Solutions.bestOf(solutions);
 					CarrierPlan carrierPlanServices = MatsimJspritFactory.createPlan(oneShipmentCarrier, bestSolution);
 					NetworkRouter.routePlan(carrierPlanServices, netBasedCostsMatrix);
+					oneShipmentCarrier.addPlan(carrierPlanServices);
 					oneShipmentCarrier.setSelectedPlan(carrierPlanServices);
 
 					for (ScheduledTour tour : carrierPlanServices.getScheduledTours()) {

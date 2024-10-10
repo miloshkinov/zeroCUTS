@@ -23,7 +23,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import javax.management.InvalidAttributeValueException;
 
 import com.graphhopper.jsprit.core.algorithm.VehicleRoutingAlgorithm;
 import com.graphhopper.jsprit.core.algorithm.box.Jsprit;
@@ -90,12 +89,12 @@ import org.osgeo.proj4j.UnsupportedParameterException;
 public class RunFreight {
 
 	private static final Logger log = LogManager.getLogger(RunFreight.class);
-	private static final Level loggingLevel = Level.INFO; 		//Set to info to avoid all Debug-Messages, e.g. from VehicleRountingAlgorithm, but can be set to other values if needed. KMT feb/18. 
+	private static final Level loggingLevel = Level.INFO; 		//Set to info to avoid all Debug-Messages, e.g. from VehicleRoutingAlgorithm, but can be set to other values if needed. KMT feb/18.
 
-	private enum CostsModififier {av, avFix110pct, avDist110pct, avVehCapUp}
-	private final static CostsModififier costsModififier = null;
+	private enum CostsModifier {av, avFix110pct, avDist110pct, avVehCapUp}
+	private final static CostsModifier costsModifier = null;
 
-	//Beginn Namesdefinition KT Für Berlin-Szenario 
+	//Beginn Namesdefinition KT für Berlin-Szenario
 	private static final String INPUT_DIR = "scenarios/BerlinFood/";
 
 	private static final String OUTPUT_DIR = "scenarios/BerlinFood/output/Base_ServiceBased/" ;
@@ -118,7 +117,7 @@ public class RunFreight {
 
 	private static Config config;
 
-	public static void main(String[] args) throws IOException, InvalidAttributeValueException {
+	public static void main(String[] args) throws IOException {
 		LogManager.getRootLogger().atLevel(loggingLevel);
 		OutputDirectoryLogging.initLoggingWithOutputDirectory(LOG_DIR);
 
@@ -215,8 +214,8 @@ public class RunFreight {
 
 	private static void modifyVehicleTypes(CarrierVehicleTypes vehicleTypes) {
 		for (VehicleType vt : vehicleTypes.getVehicleTypes().values()) {
-			if (costsModififier != null) {
-				switch (costsModififier) {
+			if (costsModifier != null) {
+				switch (costsModifier) {
 				case av:
 					vt.getCostInformation().setCostsPerSecond(0.0);
 					break;
@@ -282,7 +281,7 @@ public class RunFreight {
 
 			VehicleRoutingAlgorithm vra = Jsprit.Builder.newInstance(vrp).setProperty(Jsprit.Parameter.THREADS, "5").buildAlgorithm();
 			vra.getAlgorithmListeners().addListener(new StopWatch(), Priority.HIGH);
-			//	        vra.getAlgorithmListeners().addListener(new AlgorithmSearchProgressChartListener(TEMP_DIR +  RUN + runIndex + "jsprit_progress.png"));
+			//	        vra.getAlgorithmListeners().addListener(new AlgorithmSearchProgressChartListener(TEMP_DIR + RUN + runIndex + "jsprit_progress.png"));
 			vra.setMaxIterations(MAX_JSPRIT_ITERATION);
 			VehicleRoutingProblemSolution solution = Solutions.bestOf(vra.searchSolutions());
 
@@ -294,6 +293,7 @@ public class RunFreight {
 
 			NetworkRouter.routePlan(newPlan,netBasedCosts) ;
 
+			carrier.addPlan(newPlan) ;
 			carrier.setSelectedPlan(newPlan) ;
 
 			//Plot der Jsprit-Lösung
@@ -311,26 +311,26 @@ public class RunFreight {
 	 * Falls nicht: log.warn und Ausgabe einer Datei: "#UnassignedServices.txt" mit den Service-Ids.
 	 * @param carriers
 	 */
-	//TODO: Auch für Shipments auslegen und umbennnen. KMT feb'19
-	//TODO: Funktionaltität in contrib vorsehen -> CarrierControlerUtils? KMT feb'19
+	//TODO: Auch für Shipments auslegen und umbenennen. KMT feb'19
+	//TODO: Funktionalität in contrib vorsehen -> CarrierControlerUtils? KMT feb'19
 	private static void checkServiceAssignment(Carriers carriers) {
 		for (Carrier c :carriers.getCarriers().values()){
 			ArrayList<CarrierService> assignedServices = new ArrayList<>();
 			ArrayList<CarrierService> multiassignedServices = new ArrayList<>();
 			ArrayList<CarrierService> unassignedServices = new ArrayList<>();
 
-			log.info("### Check service assignements of Carrier: " +c.getId());
-			//Erfasse alle einer Tour zugehörigen (-> stattfindenden) Services 
+            log.info("### Check service assignements of Carrier: {}", c.getId());
+			//Erfasse alle einer Tour zugehörigen (→ stattfindenden) Services
 			for (ScheduledTour tour : c.getSelectedPlan().getScheduledTours()){
 				for (TourElement te : tour.getTour().getTourElements()){
 					if (te instanceof  ServiceActivity){
 						CarrierService assignedService = ((ServiceActivity) te).getService();
 						if (!assignedServices.contains(assignedService)){
 							assignedServices.add(assignedService);
-							log.debug("Assigned Service: " +assignedServices.toString());
+                            log.debug("Assigned Service: {}", assignedServices);
 						} else {
 							multiassignedServices.add(assignedService);
-							log.warn("Service " + assignedService.getId().toString() + " has already been assigned to Carrier " + c.getId().toString() + " -> multiple Assignment!");
+                            log.warn("Service {} has already been assigned to Carrier {} -> multiple Assignment!", assignedService.getId().toString(), c.getId().toString());
 						}
 					}
 				}
@@ -340,9 +340,9 @@ public class RunFreight {
 			for (CarrierService service : c.getServices().values()){
 				if (!assignedServices.contains(service)){
 					unassignedServices.add(service);
-					log.warn("Service " + service.getId().toString() +" will NOT be served by Carrier " + c.getId().toString());
+                    log.warn("Service {} will NOT be served by Carrier {}", service.getId().toString(), c.getId().toString());
 				} else {
-					log.debug("Service was assigned: " +service.toString());
+                    log.debug("Service was assigned: {}", service.toString());
 				}
 			}
 
@@ -350,9 +350,9 @@ public class RunFreight {
 			if (!multiassignedServices.isEmpty()){
 				try {
 					FileWriter writer = new FileWriter(config.controller().getOutputDirectory() + "#MultiAssignedServices.txt", true);
-					writer.write("#### Multi-assigned Services of Carrier: " + c.getId().toString() + System.getProperty("line.separator"));
+					writer.write("#### Multi-assigned Services of Carrier: " + c.getId().toString() + System.lineSeparator());
 					for (CarrierService s : multiassignedServices){
-						writer.write(s.getId().toString() + System.getProperty("line.separator"));
+						writer.write(s.getId().toString() + System.lineSeparator());
 					}
 					writer.flush();
 					writer.close();
@@ -360,7 +360,7 @@ public class RunFreight {
 					e.printStackTrace();
 				} 
 			} else {
-				log.info("No service(s)of " + c.getId().toString() +" were assigned to a tour more then one times.");
+                log.info("No service(s)of {} were assigned to a tour more then one times.", c.getId().toString());
 			}
 
 
@@ -368,9 +368,9 @@ public class RunFreight {
 			if (!unassignedServices.isEmpty()){
 				try {
 					FileWriter writer = new FileWriter(config.controller().getOutputDirectory() + "#UnassignedServices.txt", true);
-					writer.write("#### Unassigned Services of Carrier: " + c.getId().toString() + System.getProperty("line.separator"));
+					writer.write("#### Unassigned Services of Carrier: " + c.getId().toString() + System.lineSeparator());
 					for (CarrierService s : unassignedServices){
-						writer.write(s.getId().toString() + System.getProperty("line.separator"));
+						writer.write(s.getId().toString() + System.lineSeparator());
 					}
 					writer.flush();
 					writer.close();
@@ -378,7 +378,7 @@ public class RunFreight {
 					e.printStackTrace();
 				} 
 			} else {
-				log.info("All service(s) of " + c.getId().toString() +" were assigned to at least one tour");
+                log.info("All service(s) of {} were assigned to at least one tour", c.getId().toString());
 			}
 
 		}//for(carriers)
@@ -460,7 +460,7 @@ public class RunFreight {
 
 	private static void writeAdditionalRunOutput(Config config, Carriers carriers) {
 		// ### some final output: ###
-		if (runMatsim){		//makes only sense, when MATSimrRun was performed KT 06.04.15
+		if (runMatsim){		//makes only sense, when MATSim run was performed KT 06.04.15
 			new WriteCarrierScoreInfos(carriers, new File(OUTPUT_DIR + "#MatsimCarrierScoreInformation.txt"));
 		}
 		new CarrierPlanWriter(carriers).write(config.controller().getOutputDirectory() + "/output_carriers.xml");
@@ -470,26 +470,26 @@ public class RunFreight {
 	}
 
 	/**
-	 * Write out the information about the datas provided for the simulation run.
+	 * Write out the information about the data provided for the simulation run.
 	 */
 	private static void writeRunInfo() {
 		File file = new File(OUTPUT_DIR + "#RunInformation.txt");
 		try {
-			FileWriter writer = new FileWriter(file);  //Neuer File (überschreibt im Zweifel den alten - der jedoch nicht existieren dürfte!
-			writer.write("System date and time writing this file: " + LocalDateTime.now() + System.getProperty("line.separator") + System.getProperty("line.separator"));
+			FileWriter writer = new FileWriter(file);  //Neuer File (überschreibt im Zweifel den alten - der jedoch nicht existieren dürfte!)
+			writer.write("System date and time writing this file: " + LocalDateTime.now() + System.lineSeparator() + System.lineSeparator());
 
-			writer.write("##Inputfiles:" +System.getProperty("line.separator"));
+			writer.write("##Inputfiles:" + System.lineSeparator());
 			writer.write("Input-Directory: " + INPUT_DIR);
-			writer.write("Net: \t \t" + NETFILE_NAME +System.getProperty("line.separator"));
-			writer.write("Carrier:  \t" + CARRIERFILE_NAME +System.getProperty("line.separator"));
-			writer.write("VehType: \t" + VEHTYPEFILE_NAME +System.getProperty("line.separator"));
+			writer.write("Net: \t \t" + NETFILE_NAME + System.lineSeparator());
+			writer.write("Carrier:  \t" + CARRIERFILE_NAME + System.lineSeparator());
+			writer.write("VehType: \t" + VEHTYPEFILE_NAME + System.lineSeparator());
 			//			writer.write("Algorithm: \t" + ALGORITHMFILE_NAME +System.getProperty("line.separator"));
 
-			writer.write(System.getProperty("line.separator"));
-			writer.write("##Run Settings:" +System.getProperty("line.separator"));
-			writer.write("runMatsim: \t \t" + runMatsim +System.getProperty("line.separator"));
-			writer.write("Last Matsim Iteration: \t" + LAST_MATSIM_ITERATION +System.getProperty("line.separator"));
-			writer.write("Max jsprit Iteration: \t" + MAX_JSPRIT_ITERATION +System.getProperty("line.separator"));
+			writer.write(System.lineSeparator());
+			writer.write("##Run Settings:" + System.lineSeparator());
+			writer.write("runMatsim: \t \t" + runMatsim + System.lineSeparator());
+			writer.write("Last Matsim Iteration: \t" + LAST_MATSIM_ITERATION + System.lineSeparator());
+			writer.write("Max jsprit Iteration: \t" + MAX_JSPRIT_ITERATION + System.lineSeparator());
 
 			writer.flush();
 			writer.close();
