@@ -14,7 +14,8 @@
 
 # #setwd("C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/analysis")
 # EFood <- FALSE
-setwd("C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_with_rangeConstraint/")
+#setwd("C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_with_rangeConstraint/")
+setwd("C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/")
 EFood <- FALSE
 
 
@@ -37,7 +38,7 @@ library(tibble)
 main_dir <- getwd()
 
 # Pfad zum spezifischen Referenzordner
-referenz_ordner <- "C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/"
+referenz_ordner <- "C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax"
 
 # Liste der Unterordner im Hauptverzeichnis
 subdirs <- list.dirs(main_dir, full.names = TRUE, recursive = FALSE)
@@ -71,9 +72,8 @@ for (subdir in subdirs) {
   # Erstelle den genauen Pfad zur gewünschten CSV-Datei
   file_path_datei <- file.path(subdir, "Analysis", "TimeDistance_perVehicleType.tsv")
   
-  
-  ## Emissions einlesen
-  if (file.exists(file_path_datei)) {
+  ## Daten einlesen
+  if (file.exists(file_path_datei) && file_path_datei != file_path_referenz) {
     df_vehTypes_org <- read_delim(file_path_datei, show_col_types = FALSE)
     
     df_vehTypes <- df_vehTypes_org # Erstmal nur eine Kopie davon in der dann gearbeitet wird.
