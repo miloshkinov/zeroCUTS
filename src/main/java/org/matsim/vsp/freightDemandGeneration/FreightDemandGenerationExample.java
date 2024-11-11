@@ -78,7 +78,7 @@ public class FreightDemandGenerationExample {
         FreightAnalyse.main(argsAnalysis);
         RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(lastFile + "/",
                 lastFile + "/Analysis_new/", "EPSG:31468");
-        freightAnalysis.runAnalysis();
+        freightAnalysis.runCarriersAnalysis();
     }
 }
 

@@ -31,6 +31,6 @@ public class StartEventbasedAnalysis {
 		}
 		log.info("Running analysis for: " + simOutputPath);
 		RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(simOutputPath, simOutputPath +"Analysis"+File.separator, null);
-		freightAnalysis.runAnalysis();
+		freightAnalysis.runCompleteAnalysis();
 	}
 }

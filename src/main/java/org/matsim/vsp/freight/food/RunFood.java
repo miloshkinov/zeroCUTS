@@ -97,7 +97,7 @@ class RunFood {
 
 		final String outputPath = controler.getControlerIO().getOutputPath();
 		RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(outputPath +"/", outputPath +"/Analysis/", config.global().getCoordinateSystem());
-		freightAnalysis.runAnalysis();
+		freightAnalysis.runCompleteAnalysis();;
 	}
 
 

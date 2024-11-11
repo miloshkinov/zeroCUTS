@@ -120,7 +120,7 @@ public class UpdateRunOutputs {
 
     var analysis = new RunFreightAnalysisEventBased(config.controller().getOutputDirectory() , config.controller().getOutputDirectory()+"Analysis", "EPSG:31468");
     try {
-      analysis.runAnalysis();
+      analysis.runCompleteAnalysis();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
