@@ -27,7 +27,7 @@ public class RunAnalyse {
 			case eventBased -> {
 				RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(runDir + "/" + runId,
 						runDir + "/EventBasedAnalysis/", "EPSG:25832");
-				freightAnalysis.runAnalysis();
+				freightAnalysis.runCompleteAnalysis();
 			}
 			case oldVersion -> {
 				if (runId != null)
