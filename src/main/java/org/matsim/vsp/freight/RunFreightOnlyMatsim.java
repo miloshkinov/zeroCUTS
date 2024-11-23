@@ -159,7 +159,7 @@ public class RunFreightOnlyMatsim {
 
 		config.vspExperimental().setVspDefaultsCheckingLevel(VspDefaultsCheckingLevel.warn);
 		config.addConfigConsistencyChecker(new VspConfigConsistencyCheckerImpl());
-		ControlerUtils.checkConfigConsistencyAndWriteToLog(config, "dump");
+		ControllerUtils.checkConfigConsistencyAndWriteToLog(config, "dump");
 
 		return config;
 	}  //End createConfig
