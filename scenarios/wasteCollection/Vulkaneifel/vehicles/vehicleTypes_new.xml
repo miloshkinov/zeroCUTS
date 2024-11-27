@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<vehicleDefinitions xmlns="http://www.matsim.org/files/dtd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.matsim.org/files/dtd http://www.matsim.org/files/dtd/vehicleDefinitions_v2.0.xsd">
+
+	<vehicleType id="diesel_vehicle">
+
+		<capacity seats="1" standingRoomInPersons="0" other="11500.0">
+
+		</capacity>
+		<maximumVelocity meterPerSecond="22.22222222222222"/>
+		<engineInformation>
+			<attributes>
+				<attribute name="fuelConsumptionPerTonnePickupWaste" class="java.lang.Double">0.5</attribute>
+				<attribute name="fuelConsumptionLitersPerMeter" class="java.lang.Double">0.0006</attribute>
+				<attribute name="HbefaTechnology" class="java.lang.String">diesel</attribute>
+			</attributes>
+		</engineInformation>
+		<costInformation fixedCostsPerDay="841.89" costsPerMeter="15.3218E-4" costsPerSecond="0.0">
+
+		</costInformation>
+		<networkMode networkMode="car"/>
+	</vehicleType>
+
+	<vehicleType id="EV_small_battery">
+
+		<capacity seats="1" standingRoomInPersons="0" other="11500.0">
+
+		</capacity>
+		<length meter="7.5"/>
+		<width meter="1.0"/>
+		<maximumVelocity meterPerSecond="22.22222222222222"/>
+		<engineInformation>
+			<attributes>
+				<attribute name="energyCapacityInKWhOrLiters" class="java.lang.Double">125.0</attribute>
+				<attribute name="energyConsumptionPerTonnePickupWaste" class="java.lang.Double">1.4</attribute>
+				<attribute name="energyConsumptionKWhPerMeter" class="java.lang.Double">0.001</attribute>
+				<attribute name="HbefaTechnology" class="java.lang.String">electricity</attribute>
+			</attributes>
+		</engineInformation>
+		<costInformation fixedCostsPerDay="1001.42" costsPerMeter="4.915E-4" costsPerSecond="0.0">
+
+		</costInformation>
+		<passengerCarEquivalents pce="1.0"/>
+		<networkMode networkMode="car"/>
+		<flowEfficiencyFactor factor="1.0"/>
+	</vehicleType>
+	
+	<vehicleType id="EV_medium_battery">
+
+		<capacity seats="1" standingRoomInPersons="0" other="10500.0">
+
+		</capacity>
+		<length meter="7.5"/>
+		<width meter="1.0"/>
+		<maximumVelocity meterPerSecond="22.22222222222222"/>
+		<engineInformation>
+			<attributes>
+				<attribute name="energyCapacityInKWhOrLiters" class="java.lang.Double">310.0</attribute>
+				<attribute name="energyConsumptionPerTonnePickupWaste" class="java.lang.Double">1.4</attribute>
+				<attribute name="energyConsumptionKWhPerMeter" class="java.lang.Double">0.001</attribute>
+				<attribute name="HbefaTechnology" class="java.lang.String">electricity</attribute>
+			</attributes>
+		</engineInformation>
+		<costInformation fixedCostsPerDay="1037.27" costsPerMeter="4.915E-4" costsPerSecond="0.0">
+
+		</costInformation>
+		<passengerCarEquivalents pce="1.0"/>
+		<networkMode networkMode="car"/>
+		<flowEfficiencyFactor factor="1.0"/>
+	</vehicleType>
+		
+
+</vehicleDefinitions>
