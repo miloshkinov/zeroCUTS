@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.application.options.ShpOptions;
 import org.matsim.freight.carriers.Carrier;
 import org.matsim.freight.carriers.CarrierCapabilities.FleetSize;
 import org.matsim.freight.carriers.CarrierPlanWriter;
@@ -155,9 +156,9 @@ public class Run_Abfall {
 
 		Map<Id<Link>, ? extends Link> allLinks = scenario.getNetwork().getLinks();
 		HashMap<String, Id<Link>> garbageDumps = AbfallUtils.createDumpMap();
+		ShpOptions shpOptions = new ShpOptions(shapeFileLocation, null, null);
+		List<SimpleFeature> districtsWithGarbage = shpOptions.readFeatures();
 
-		Collection<SimpleFeature> districtsWithGarbage = ShapeFileReader
-				.getAllFeatures(shapeFileLocation);
 		AbfallUtils.createMapWithLinksInDistricts(districtsWithGarbage, allLinks);
 
 		switch (scenarioWahl) {
