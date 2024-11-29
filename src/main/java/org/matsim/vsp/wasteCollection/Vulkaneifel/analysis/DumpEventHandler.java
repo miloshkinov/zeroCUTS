@@ -45,7 +45,7 @@ public class DumpEventHandler implements ActivityStartEventHandler, ActivityEndE
 
             if (counter == 618) {
                 End.forEach((key, value) -> System.out.println(key + "   " + value + " Dump_End_time"));
-                System.out.println("");
+                System.out.println();
                 counter++;
                 /*for(String key: Start2.keySet()){
                     int starttime = Start2.get(key);
@@ -64,7 +64,6 @@ public class DumpEventHandler implements ActivityStartEventHandler, ActivityEndE
                     if (End2.containsKey(activityEndEvent.getPersonId().toString() + "_2nd_Dump")) {
                         End.put(activityEndEvent.getPersonId().toString() + "_2nd_Dump", time);
                         End2.put(activityEndEvent.getPersonId().toString() + "_2nd_Dump", (int) activityEndEvent.getTime());
-                    } else {
                     }
                 } else {
                     End.put(activityEndEvent.getPersonId().toString(), time);

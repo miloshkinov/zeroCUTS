@@ -83,12 +83,7 @@ public class RunAbfall {
 
         AbfallUtils.createCarriers(carriers, jspritIterations);
 
-
-        //choose one FreightVehicles option
-
-        //createFreightVehicles(scenario,carrierVehicleTypes); //all vehicletypes available
-        createFreightVehiclesSingleType(scenario,carrierVehicleTypes, choosenVehicleType); // just one type
-//        createFreightVehicles_OnlyEVs(scenario,carrierVehicleTypes); //only EVs
+        createFreightVehiclesSingleType(scenario, vehicleFleet); // just one type
 
         Population population = PopulationUtils.readPopulation(planPath);
         for (Schedule schedule : schedules){
