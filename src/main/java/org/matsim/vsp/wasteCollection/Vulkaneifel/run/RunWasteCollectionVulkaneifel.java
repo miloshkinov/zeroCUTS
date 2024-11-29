@@ -1,12 +1,14 @@
 package org.matsim.vsp.wasteCollection.Vulkaneifel.run;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.geotools.api.feature.simple.SimpleFeature;
-import org.locationtech.jts.geom.Geometry;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Population;
+import org.matsim.application.MATSimAppCommand;
 import org.matsim.application.options.ShpOptions;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -21,57 +23,78 @@ import org.matsim.freight.carriers.*;
 import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
 import org.matsim.freight.carriers.controler.CarrierModule;
 import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
+import picocli.CommandLine;
 
 
-import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import static org.matsim.vsp.wasteCollection.Vulkaneifel.run.AbfallUtils.*;
 
 
-public class RunAbfall {
+/**
+ * @Author Philip_Cuong_Minh_Nguyen (Bachelor thesis), modified by Ricardo Ewert
+ */
+public class RunWasteCollectionVulkaneifel implements MATSimAppCommand {
 
-    public static void main(String[] args) throws IOException {
+    static final Logger log = LogManager.getLogger(RunWasteCollectionVulkaneifel.class);
 
-        String planPath = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/vulkaneifel/v1.1/input/vulkaneifel-v1.1-25pct.plans.xml.gz";
+    enum VehicleFleet {
+        diesel_vehicle,
+        EV_small_battery,
+        EV_medium_battery,
+        EVMix,
+        MixAll
+    }
 
+    @CommandLine.Option(names = "--planInputFile", description = "Path to the plans input file",
+            defaultValue = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/vulkaneifel/v1.2/input/vulkaneifel-v1.2-25pct.plans-initial.xml.gz")
+    private String planPath;
+
+    @CommandLine.Option(names = "--outputFolder", description = "Path to the output folder",
+            defaultValue = "output/WasteCollectionVulkaneifel/")
+    private String output;
+
+    @CommandLine.Option(names = "--vehicleFleet", description = "Set the possible vehicle fleet. Options: diesel_vehicle, EV_small_battery, EV_medium_battery, EVMix, MixAll",
+            defaultValue = "diesel_vehicle")
+    private VehicleFleet vehicleFleet;
+
+    @CommandLine.Option(names = "--jspritIterations", description = "Number of jsprit iterations",
+            defaultValue = "1")
+    private int jspritIterations;
+
+    @CommandLine.Option(names = "--weekday", description = "Weekday for waste collection: Mo, Di, Mi, Do, Fr", required = true, defaultValue = "Mo")
+    private String weekday;
+
+    @CommandLine.Option(names = "--weekRhythm", description = "Week rhythm for waste collection (even (G) or odd (U) week)", required = true, defaultValue = "G")
+    private String weekRhythm;
+
+    public static void main(String[] args) {
+        System.exit(new CommandLine(new RunWasteCollectionVulkaneifel()).execute(args));
+    }
+
+    @Override
+    public Integer call() throws Exception {
 
         String shapeFilePath = "scenarios/wasteCollection/Vulkaneifel/Shp_files_for_Vulkaneifel/Vulkaneifel_ALL_Gemeinde.shp";
         ShpOptions shpOptions = new ShpOptions(shapeFilePath, null, null);
         List<SimpleFeature> features = shpOptions.readFeatures();
-//        Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(shapeFilePath);
+        ShpOptions.Index shpIndex = shpOptions.createIndex("GEN");
         String csvFilePath = "scenarios/wasteCollection/Vulkaneifel/Abfalltermine_Vulkaneifel_BA.csv";
-        List<Schedule> schedules = readCsvFile(csvFilePath); // Abfallsammlungtermine der jeweiligen Gemeinden und Städten
+        List<Schedule> schedules = readCsvFile(csvFilePath); // Abfallsammlungstermine der jeweiligen Gemeinden und Städten
         for (Schedule schedule : schedules) {
-            System.out.println("Name: " + schedule.getName() + ", Day: " + schedule.getDay() + ", Week: " + schedule.getWeek());
+            log.info("Name: {}, Day: {}, Week: {}", schedule.getName(), schedule.getDay(), schedule.getWeek());
         }
 
 
-        int volume = 52; // Müllmenge pro Haushalt in Kg
-        int jspritIterations = 1; //jspritIteration default is 1 (MUST BE AT LEAST 1)
-        int Gemeinde = 0;
-        int totalcounter = 0;
-        /*
-        Mi G 2447 Shipments Birresborn, Densborn, Gerolstein, Kopp, Mürlenbach
-        Fr G 2268 Shipments Dohm-Lammersdorf, Hillesheim, Jünkerath, Kerschenbach, Lissendorf, Oberbettingen, Schüller, Stadtkyll
-        Do U 2231 Shipments Darscheid, Daun, Hörscheid
-        */
-        String day = "Mo"; // Mo Di Mi Do Fr
-        String KW = "G";   // U or G
-        String[] VehicleTypes = {"EV_small_battery","diesel_vehicle","EV_medium_battery"};
-        String choosenVehicleType = VehicleTypes[1];
-//        String choosenVehicleType ="EVMix";
+        int volumePer4Persons = 52; // Müllmenge pro Haushalt (4 Personen) in Kg; analog zu dem 25% Szenario
+        int GemeindeWithCollection = 0;
+        int totalCounter = 0;
 
+        String Output_suffix = "/" + weekday + "_" + weekRhythm + "_"+vehicleFleet + "_"+ "Iterations_"+ jspritIterations ;
+        output = output + Output_suffix;
 
-        String output = "output/WasteCollectionVulkaneifel/test_EVMix";
-        //String Output_suffix = "/" + day + "_" + KW + "/"+ "testV3Iteration_"+ jspritIterations + "_" +choosenVehicleType;
-        String Output_suffix = "/" + day + "_" + KW + "/"+ "Iterations_"+ jspritIterations + "_V4"+choosenVehicleType; //
-        String output_type = output + Output_suffix;
-        //String output_type = output;
-
-        Config config = AbfallUtils.prepareConfig(output_type);
+        Config config = AbfallUtils.prepareConfig(output);
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
         FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);
@@ -87,26 +110,18 @@ public class RunAbfall {
 
         Population population = PopulationUtils.readPopulation(planPath);
         for (Schedule schedule : schedules){
-            if(schedule.getDay().equals(day) & schedule.getWeek().equals(KW)) {
-                System.out.println("Name: " + schedule.getName());
-                Gemeinde++;
+            if(schedule.getDay().equals(weekday) & schedule.getWeek().equals(weekRhythm)) {
+                log.info("Waste collection for {} on {} in week {}", schedule.getName(), weekday, weekRhythm);
+                log.info("Name: {}", schedule.getName());
+                GemeindeWithCollection++;
 
-                var geometries = features.stream()
-                        .filter(simpleFeature -> simpleFeature.getAttribute("GEN").equals(schedule.getName()))
-                        .map(simpleFeature -> (Geometry) simpleFeature.getDefaultGeometry())
-                        .toList();
-                var gemeindeGeomtries = geometries.getFirst();
-
-               // createJobswithsphapes(scenario,gemeindeGeomtries, population, volume, choosenVehicleType);
-               //totalcounter = createJobswithsphapes_V2(scenario,gemeindeGeomtries, population, volume, choosenVehicleType, totalcounter);
-             //  totalcounter = createJobswithsphapes_V3(scenario,gemeindeGeomtries, population, volume, choosenVehicleType, totalcounter);
-
-                totalcounter = createJobswithsphapes_V4(scenario,gemeindeGeomtries, population, volume, totalcounter);
-            } else {System.out.println(schedule.getName() + " not in " + day + " and KW "+ KW);}
+                createJobs(scenario, shpIndex, schedule.getName(), population, volumePer4Persons, totalCounter);
+            } else {
+                log.info("{} not in {} and KW {}", schedule.getName(), weekday, weekRhythm);}
         }
-        System.out.println("Gemeinde: " + Gemeinde );
-        System.out.println("Households: " + totalcounter );
-        CarriersUtils.writeCarriers(carriers, output_type + "/output_carriersNoSolution.xml.gz");
+        log.info("GemeindeWithCollection: {}", GemeindeWithCollection);
+        log.info("Counted Households: {}", totalCounter);
+        CarriersUtils.writeCarriers(carriers, output + "/output_carriersNoSolution.xml.gz");
 
         try {
             CarriersUtils.runJsprit(scenario);
@@ -122,22 +137,23 @@ public class RunAbfall {
             Thread.currentThread().interrupt();
         }
 
-        Controller controler = ControllerUtils.createController(scenario);
-        controler.addOverridingModule(new CarrierModule());
-        controler.addOverridingModule(new AbstractModule() {
+        Controller controller = ControllerUtils.createController(scenario);
+        controller.addOverridingModule(new CarrierModule());
+        controller.addOverridingModule(new AbstractModule() {
             @Override public void install() {
                 bind(CarrierScoringFunctionFactory.class).toInstance(new CarrierScoringFunctionFactory_KeepScore());
             }
         });
 
-        controler.run();
+        controller.run();
 
         // kAnalysis
-        System.out.println("Starting Analysis");
-        RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(output_type +"/", output_type +"/Analysis_new/", config.global().getCoordinateSystem());
+        log.info("Starting Analysis");
+        RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(output +"/", output +"/Analysis_new/", config.global().getCoordinateSystem());
         freightAnalysis.runCompleteAnalysis();
-        System.out.println("Finished Analysis");
+        log.info("Finished Analysis");
 
+        return 0;
     }
 
     private static class CarrierScoringFunctionFactory_KeepScore implements CarrierScoringFunctionFactory {

@@ -2,16 +2,19 @@ package org.matsim.vsp.wasteCollection.Vulkaneifel.run;
 import com.opencsv.exceptions.CsvException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.locationtech.jts.geom.Geometry;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.*;
+import org.matsim.application.options.ShpOptions;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.utils.geometry.geotools.MGC;
+import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.freight.carriers.*;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
@@ -33,16 +36,11 @@ public class AbfallUtils {
     static String linkDepotPlaidt = "5574439310007f";
     static String linkDepotHetzerath = "3118011660035f";
 
-    static String existingCarriersPath;
     static String carrierVehicleTypesFilePath = "scenarios/wasteCollection/Vulkaneifel/vehicles/vehicleTypes_new.xml";
-    static String networkPath = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/vulkaneifel/v1.1/input/vulkaneifel-v1.1-network.xml.gz";
-    static int jspritIterations; //die Jsprit müssen immer min 1 sein, sonst wird keine Route berechnet
+    static String networkPath = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/vulkaneifel/v1.2/input/vulkaneifel-v1.2-network.xml.gz";
 
-
-
-    public static Config prepareConfig(String output) { //planpath removed, because its not needed
+    static Config prepareConfig(String output) {
         Config config = ConfigUtils.createConfig();
-        //config.plans().setInputFile(planPath);
         config.global().setCoordinateSystem("EPSG:25832");
         config.controller().setOutputDirectory(output);
         config.controller().setLastIteration(0); //only one MATSim iteration
@@ -61,87 +59,33 @@ public class AbfallUtils {
         return config;
     }
 
-    public static void createCarriers(Carriers carriers, int jspritIterations) {
-        Carrier carrierShipments = CarriersUtils.createCarrier(Id.create("carrierShipments", Carrier.class));
-        carriers.addCarrier(carrierShipments);
+    static void createCarriers(Carriers carriers, int jspritIterations) {
+        Carrier carrier = CarriersUtils.createCarrier(Id.create("eifelWasteCollection", Carrier.class));
 
-        for (Carrier thisCarrier : carriers.getCarriers().values()) {
-            log.info("Set jsprit iterations to: {} for carrier: {}", jspritIterations, thisCarrier.getId().toString());
-            CarriersUtils.setJspritIterations(thisCarrier, jspritIterations);
-        }
+        log.info("Set jsprit iterations to: {} for carrier: {}", jspritIterations, carrier.getId().toString());
+        CarriersUtils.setJspritIterations(carrier, jspritIterations);
+        carriers.addCarrier(carrier);
     }
 
-
-     void createFreightVehicles(Scenario scenario, CarrierVehicleTypes carrierVehicleTypes) {
+    static void createFreightVehiclesSingleType(Scenario scenario, RunWasteCollectionVulkaneifel.VehicleFleet vehicleFleet) {
         CarrierCapabilities carrierCapabilities = CarrierCapabilities.Builder.newInstance().setFleetSize(
-                CarrierCapabilities.FleetSize.INFINITE).build(); //Finite nur die Anzahl die vorher angibt, INFINITE optimale anzahl
-
-        List<String> vehicleDepots = List.of(linkDepotPruem,linkDepotBitburg, linkDepotHetzerath, linkDepotNickenich, linkDepotPlaidt); // List of starting Depots of the vehicles
-        for (Carrier thisCarrier : CarriersUtils.addOrGetCarriers(scenario).getCarriers().values()) {
-            for (String singleDepot : vehicleDepots) {
-                int vehicleStartTime = 6 * 3600; //in Sekunden
-                int vehicleEndTime = (int) (15 * 3600); //in Sekunden
-                for (VehicleType thisVehicleType : carrierVehicleTypes.getVehicleTypes().values()) {
-                        VehicleType thisType = carrierVehicleTypes.getVehicleTypes().get(thisVehicleType.getId());
-
-                        CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder.newInstance(
-                                Id.create(thisCarrier.getId().toString() + "_" + (carrierCapabilities.getCarrierVehicles().size() + 1), Vehicle.class),
-                                Id.createLinkId(singleDepot), thisType).setEarliestStart(vehicleStartTime).setLatestEnd(vehicleEndTime).build();
-                        carrierCapabilities.getCarrierVehicles().put(newCarrierVehicle.getId(), newCarrierVehicle);
-                        if (!carrierCapabilities.getVehicleTypes().contains(thisType))
-                            carrierCapabilities.getVehicleTypes().add(thisType);
-
-                }
-            }
-            thisCarrier.setCarrierCapabilities(carrierCapabilities);
+                CarrierCapabilities.FleetSize.INFINITE).build();
+        String[] possibleVehicleTypes;
+        switch (vehicleFleet) {
+            case diesel_vehicle -> possibleVehicleTypes = new String[]{"diesel_vehicle"};
+            case EV_small_battery -> possibleVehicleTypes = new String[]{"EV_small_battery"};
+            case EV_medium_battery -> possibleVehicleTypes = new String[]{"EV_medium_battery"};
+            case EVMix -> possibleVehicleTypes = new String[]{"EV_small_battery", "EV_medium_battery"};
+            case MixAll -> possibleVehicleTypes = new String[]{"EV_small_battery", "EV_medium_battery", "diesel_vehicle"};
+            default -> throw new IllegalStateException("Unexpected value: " + vehicleFleet);
         }
-    }
-    // not most elegant method but it works ;)
-    static void createFreightVehicles_OnlyEVs(Scenario scenario, CarrierVehicleTypes carrierVehicleTypes) {
-        CarrierCapabilities carrierCapabilities = CarrierCapabilities.Builder.newInstance().setFleetSize(
-                CarrierCapabilities.FleetSize.INFINITE).build(); //Finite nur die Anzahl die vorher angibt, INFINITE optimale anzahl
-
-        Id<VehicleType> vehicleTypeId = Id.create("diesel_vehicle", VehicleType.class);
-        VehicleType dieselType = carrierVehicleTypes.getVehicleTypes().get(vehicleTypeId);
-
-
-        List<String> vehicleDepots = List.of(linkDepotPruem); // List of starting Depots of the vehicles
-        for (Carrier thisCarrier : CarriersUtils.addOrGetCarriers(scenario).getCarriers().values()) {
-            for (String singleDepot : vehicleDepots) {
-                int vehicleStartTime = 6 * 3600; //in Sekunden
-                int vehicleEndTime = (int) (15 * 3600); //in Sekunden
-                for (VehicleType thisVehicleType : carrierVehicleTypes.getVehicleTypes().values()) {
-                    VehicleType thisType = carrierVehicleTypes.getVehicleTypes().get(thisVehicleType.getId());
-                    if(thisType.equals(dieselType)) {
-                        // skip
-                    }else{
-                        CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder.newInstance(
-                                Id.create(thisCarrier.getId().toString() + "_" + (carrierCapabilities.getCarrierVehicles().size() + 1), Vehicle.class),
-                                Id.createLinkId(singleDepot), thisType).setEarliestStart(vehicleStartTime).setLatestEnd(vehicleEndTime).build();
-                        carrierCapabilities.getCarrierVehicles().put(newCarrierVehicle.getId(), newCarrierVehicle);
-                        if (!carrierCapabilities.getVehicleTypes().contains(thisType))
-                            carrierCapabilities.getVehicleTypes().add(thisType);
-                    }
-                }
-            }
-            thisCarrier.setCarrierCapabilities(carrierCapabilities);
-        }
-    }
-
-
-    public static void createFreightVehiclesSingleType(Scenario scenario, CarrierVehicleTypes carrierVehicleTypes, String choosentype) {
-        CarrierCapabilities carrierCapabilities = CarrierCapabilities.Builder.newInstance().setFleetSize(
-                CarrierCapabilities.FleetSize.INFINITE).build(); //Finite nur die Anzahl die vorher angibt, INFINITE optimale anzahl
-
-        Map<Id<VehicleType>, VehicleType> thisVehicleType = carrierVehicleTypes.getVehicleTypes();
-
-        Id<VehicleType> vehicleTypeId = Id.create(choosentype, VehicleType.class);
-        VehicleType thisType = thisVehicleType.get(vehicleTypeId);
-        List<String> vehicleDepots = List.of(linkDepotPruem); // List of starting Depots of the vehicles
-        for (Carrier thisCarrier : CarriersUtils.addOrGetCarriers(scenario).getCarriers().values()) {
-            for (String singleDepot : vehicleDepots) {
-                int vehicleStartTime = 6 * 3600; //in Sekunden
-                int vehicleEndTime = (int) (15 * 3600);  //in Sekunden
+        for (String possibleVehicleType : possibleVehicleTypes){
+            VehicleType thisType = CarriersUtils.getCarrierVehicleTypes(scenario).getVehicleTypes().get(Id.create(possibleVehicleType, VehicleType.class));
+            List<String> vehicleDepots = List.of(linkDepotPruem); // List of starting Depots of the vehicles
+            for (Carrier thisCarrier : CarriersUtils.addOrGetCarriers(scenario).getCarriers().values()) {
+                for (String singleDepot : vehicleDepots) {
+                    int vehicleStartTime = 6 * 3600; //in Sekunden
+                    int vehicleEndTime = 15 * 3600;  //in Sekunden
 
 
                     CarrierVehicle newCarrierVehicle = CarrierVehicle.Builder.newInstance(
@@ -155,36 +99,13 @@ public class AbfallUtils {
             }
         }
 
-            for (Person person :population.getPersons().values()) {
-                for (PlanElement planElement : person.getSelectedPlan().getPlanElements()) {
-                    if (planElement instanceof Activity activity) {
-                        if (activity.getType().contains("home")) {
-                            var coord = activity.getCoord();
-                            var geotoolsPoint = MGC.coord2Point(coord);
-
-                            if (gemeindegeometry.contains(geotoolsPoint)) {
-                                counter++;
-                                System.out.println("PersonID: " + person.getId().toString() + " counter: " + counter + " LinkID: " + activity.getLinkId().toString());
-                                Id<Link> demandLinkId = activity.getLinkId(); //Ort der Sammlung des Mülls
-                                CarrierShipment thisShipment = CarrierShipment.Builder.newInstance(Id.create("idNewShipment_"+activity.getLinkId().toString(),CarrierShipment.class), demandLinkId, Id.createLinkId(destinationLink),
-                                        volume).setPickupServiceTime(pickupServiceTime).setPickupTimeWindow(pickupTimeWindow).setDeliveryServiceTime(deliveryServiceTime).setDeliveryTimeWindow(deliveryTimeWindow).build();
-                                CarriersUtils.addShipment(carrierShipments, thisShipment);
-
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        } else{
-            int shipment_amount = payload_EV_small_diesel/volume;
-            double deliveryServiceTime = 3600/(double)shipment_amount;
+    }
 
 
     // V4 for scenario with both EVs
-    public static int createJobswithsphapes_V4(Scenario scenario, Geometry gemeindegeometry, Population population, int volume, int counter) {
+    static void  createJobs(Scenario scenario, ShpOptions.Index shpIndex, String gemeindeName, Population population, int volumePer4Persons, int counter) {
 
-        Carrier carrierShipments = CarriersUtils.addOrGetCarriers(scenario).getCarriers().get(Id.create("carrierShipments", Carrier.class));
+        Carrier carrier = CarriersUtils.addOrGetCarriers(scenario).getCarriers().values().iterator().next(); //because we only have one carrier
         Set<Id<Person>> processedPersons = new HashSet<>();
         String destinationLink = "370587200013f"; //Mülldeponie EVZ Walsdorf
         //int volume = 200; // Müllmenge pro Haushalt in L
@@ -197,10 +118,13 @@ public class AbfallUtils {
         TimeWindow deliveryTimeWindow = TimeWindow.newInstance(6 * 3600, 15 * 3600);
 
         //int counter = 0;
-        int shipment_amount = payload / volume;
+        int payload = 11000; //average payload
+        int shipment_amount = payload / volumePer4Persons;
         double deliveryServiceTime = (60*45) / (double) shipment_amount; // changed to 45min breaks, 17.0.... AVG of both times for EV medium and EV small vehicles 16.29, 17.91, => 17.1; different deliverytimes result inconsistent results,
         //double deliveryServiceTime = 17.1 ;
-
+        Network subnetwork = NetworkUtils.createNetwork();
+        TransportModeNetworkFilter filter = new TransportModeNetworkFilter(scenario.getNetwork());
+        filter.filter(subnetwork, Collections.singleton("car"));
         for (Person person : population.getPersons().values()) {
             if (processedPersons.contains(person.getId())) {
                 continue; // Skip if the person has already been processed
@@ -208,35 +132,36 @@ public class AbfallUtils {
             for (PlanElement planElement : person.getSelectedPlan().getPlanElements()) {
                 if (planElement instanceof Activity activity) {
                     if (activity.getType().contains("home")) {
-                        var coord = activity.getCoord();
-                        var geotoolsPoint = MGC.coord2Point(coord);
+                        Coord coord = activity.getCoord();
 
-                        if (gemeindegeometry.contains(geotoolsPoint)) {
+                        if (Objects.equals(shpIndex.query(coord), gemeindeName)) {
 
-                            log.info("PersonID: " + person.getId().toString() + " counter: " + counter + " LinkID: " + activity.getLinkId().toString());
-                            Id<Link> demandLinkId = activity.getLinkId(); //Ort der Sammlung des Mülls
+//                            log.info("PersonID: " + person.getId().toString() + " counter: " + counter + " LinkID: " + activity.getLinkId().toString());
+                            Id<Link> demandLinkId = NetworkUtils.getNearestLinkExactly(subnetwork, coord).getId(); //Ort der Sammlung des Mülls
 
-                            if (carrierShipments.getShipments().containsKey(Id.create("idNewShipment_" + activity.getLinkId().toString(), CarrierShipment.class))) {
+                            if (carrier.getShipments().containsKey(Id.create("wasteCollection_" + demandLinkId.toString(), CarrierShipment.class))) {
 
-                                CarrierShipment oldShipment = carrierShipments.getShipments().get(Id.create("idNewShipment_" + activity.getLinkId().toString(), CarrierShipment.class));
+                                CarrierShipment oldShipment = carrier.getShipments().get(Id.create("wasteCollection_" + demandLinkId.toString(), CarrierShipment.class));
                                 double oldPickupServiceTime = oldShipment.getPickupServiceTime();
                                 double oldDeliveryServiceTime = oldShipment.getDeliveryServiceTime();
-                                int oldvolume = oldShipment.getSize();
+                                int oldVolume = oldShipment.getSize();
 
-                                oldPickupServiceTime = oldPickupServiceTime + pickupServiceTime + pickupTimebetweenShipments;
-                                oldDeliveryServiceTime = oldDeliveryServiceTime + deliveryServiceTime;
-                                oldvolume = oldvolume + volume;
-                                CarrierShipment thisShipment = CarrierShipment.Builder.newInstance(Id.create("idNewShipment_" + activity.getLinkId().toString(), CarrierShipment.class), demandLinkId, Id.createLinkId(destinationLink),
-                                        oldvolume).setPickupServiceTime(oldPickupServiceTime).setPickupTimeWindow(pickupTimeWindow).setDeliveryServiceTime(oldDeliveryServiceTime).setDeliveryTimeWindow(deliveryTimeWindow).build();
-                                CarriersUtils.addShipment(carrierShipments, thisShipment);
+                                double newPickupServiceTime = oldPickupServiceTime + pickupServiceTime + pickupTimeBetweenShipments;
+                                double newDeliveryServiceTime = oldDeliveryServiceTime + deliveryServiceTime;
+                                int newVolume = oldVolume + volumePer4Persons;
+                                CarrierShipment thisShipment = CarrierShipment.Builder.newInstance(Id.create("wasteCollection_" + demandLinkId.toString(), CarrierShipment.class), demandLinkId, Id.createLinkId(destinationLink),
+                                        newVolume).setPickupServiceTime(newPickupServiceTime).setPickupTimeWindow(pickupTimeWindow).setDeliveryServiceTime(newDeliveryServiceTime).setDeliveryTimeWindow(deliveryTimeWindow).build();
+                                CarriersUtils.addShipment(carrier, thisShipment);
 
-                                log.info("created----" + "PersonID: " + person.getId().toString() + " counter: " + counter + " LinkID: " + activity.getLinkId().toString() + "_multiple");
+                                log.info("created----PersonID: {} counter: {} LinkID: {}_multiple", person.getId().toString(), counter,
+                                        demandLinkId.toString());
 
                             } else {
-                                log.info("created----" + "PersonID: " + person.getId().toString() + " counter: " + counter + " LinkID: " + activity.getLinkId().toString());
-                                CarrierShipment thisShipment = CarrierShipment.Builder.newInstance(Id.create("idNewShipment_" + activity.getLinkId().toString(), CarrierShipment.class), demandLinkId, Id.createLinkId(destinationLink),
-                                        volume).setPickupServiceTime(pickupServiceTime).setPickupTimeWindow(pickupTimeWindow).setDeliveryServiceTime(deliveryServiceTime).setDeliveryTimeWindow(deliveryTimeWindow).build();
-                                CarriersUtils.addShipment(carrierShipments, thisShipment);
+                                log.info("created----PersonID: {} counter: {} LinkID: {}", person.getId().toString(), counter,
+                                        demandLinkId.toString());
+                                CarrierShipment thisShipment = CarrierShipment.Builder.newInstance(Id.create("wasteCollection_" + demandLinkId.toString(), CarrierShipment.class), demandLinkId, Id.createLinkId(destinationLink),
+                                        volumePer4Persons).setPickupServiceTime(pickupServiceTime).setPickupTimeWindow(pickupTimeWindow).setDeliveryServiceTime(deliveryServiceTime).setDeliveryTimeWindow(deliveryTimeWindow).build();
+                                CarriersUtils.addShipment(carrier, thisShipment);
                             }
                             processedPersons.add(person.getId());
                             counter++;
@@ -247,75 +172,7 @@ public class AbfallUtils {
             }
         }
 
-                            if (gemeindegeometry.contains(geotoolsPoint)) {
-                                counter++;
-                                log.info("PersonID: " + person.getId().toString() + " counter: " + counter + " LinkID: " + activity.getLinkId().toString());
-                                Id<Link> demandLinkId = activity.getLinkId(); //Ort der Sammlung des Mülls
-
-
-                                if(carrierShipments.getShipments().containsKey(Id.create("idNewShipment_" + activity.getLinkId().toString(), CarrierShipment.class))) {
-                                    CarrierShipment oldShipment = carrierShipments.getShipments().get(Id.create("idNewShipment_" + activity.getLinkId().toString(), CarrierShipment.class));
-                                    double oldPickupServiceTime = oldShipment.getPickupServiceTime();
-                                    double oldDeliveryServiceTime = oldShipment.getDeliveryServiceTime();
-                                    int oldvolume = oldShipment.getSize();
-
-                                    oldPickupServiceTime = oldPickupServiceTime+ pickupServiceTime + pickupTimebetweenShipments;
-                                    oldDeliveryServiceTime = oldDeliveryServiceTime + deliveryServiceTime;
-                                    oldvolume = oldvolume + volume;
-                                    CarrierShipment thisShipment = CarrierShipment.Builder.newInstance(Id.create("idNewShipment_" + activity.getLinkId().toString(), CarrierShipment.class), demandLinkId, Id.createLinkId(destinationLink),
-                                            oldvolume).setPickupServiceTime(oldPickupServiceTime).setPickupTimeWindow(pickupTimeWindow).setDeliveryServiceTime(oldDeliveryServiceTime).setDeliveryTimeWindow(deliveryTimeWindow).build();
-                                    CarriersUtils.addShipment(carrierShipments, thisShipment);
-
-                                    log.info("created----" + "PersonID: " + person.getId().toString()+ " LinkID: " + activity.getLinkId().toString() + " ");
-                                }else{
-
-                                    log.info("created----" + "PersonID: " + person.getId().toString() + " counter: " + counter + " LinkID: " + activity.getLinkId().toString());
-                                    CarrierShipment thisShipment = CarrierShipment.Builder.newInstance(Id.create("idNewShipment_"+activity.getLinkId().toString(),CarrierShipment.class), demandLinkId, Id.createLinkId(destinationLink),
-                                            volume).setPickupServiceTime(pickupServiceTime).setPickupTimeWindow(pickupTimeWindow).setDeliveryServiceTime(deliveryServiceTime).setDeliveryTimeWindow(deliveryTimeWindow).build();
-                                    CarriersUtils.addShipment(carrierShipments, thisShipment);
-                                }
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        } else{
-            int shipment_amount = payload_EV_small_diesel/volume;
-            double deliveryServiceTime = 3600/(double)shipment_amount;
-
-            for (Person person :population.getPersons().values()) {
-                for (PlanElement planElement : person.getSelectedPlan().getPlanElements()) {
-                    if (planElement instanceof Activity activity) {
-                        if (activity.getType().contains("home")) {
-                            var coord = activity.getCoord();
-                            var geotoolsPoint = MGC.coord2Point(coord);
-
-                            if (gemeindegeometry.contains(geotoolsPoint)) {
-                                counter++;
-                                log.info("PersonID: " + person.getId().toString() + " counter: " + counter + " LinkID: " + activity.getLinkId().toString());
-                                Id<Link> demandLinkId = activity.getLinkId(); //Ort der Sammlung des Mülls
-
-                                if(carrierShipments.getShipments().containsKey(Id.create("idNewShipment_" + activity.getLinkId().toString(), CarrierShipment.class))) {
-                                    CarrierShipment oldShipment = carrierShipments.getShipments().get(Id.create("idNewShipment_" + activity.getLinkId().toString(), CarrierShipment.class));
-                                    double oldPickupServiceTime = oldShipment.getPickupServiceTime();
-                                    double oldDeliveryServiceTime = oldShipment.getDeliveryServiceTime();
-                                    int oldvolume = oldShipment.getSize();
-
-                                    oldPickupServiceTime = oldPickupServiceTime+ pickupServiceTime + pickupTimebetweenShipments;
-                                    oldDeliveryServiceTime = oldDeliveryServiceTime + deliveryServiceTime;
-                                    oldvolume = oldvolume + volume;
-                                    CarrierShipment thisShipment = CarrierShipment.Builder.newInstance(Id.create("idNewShipment_" + activity.getLinkId().toString(), CarrierShipment.class), demandLinkId, Id.createLinkId(destinationLink),
-                                            oldvolume).setPickupServiceTime(oldPickupServiceTime).setPickupTimeWindow(pickupTimeWindow).setDeliveryServiceTime(oldDeliveryServiceTime).setDeliveryTimeWindow(deliveryTimeWindow).build();
-                                    CarriersUtils.addShipment(carrierShipments, thisShipment);
-
-                                    log.info("created----" + "PersonID: " + person.getId().toString()+ " LinkID: " + activity.getLinkId().toString() + "_multiple");
-                                }else{
-                                    log.info("created----" + "PersonID: " + person.getId().toString() + " counter: " + counter + " LinkID: " + activity.getLinkId().toString());
-                                    CarrierShipment thisShipment = CarrierShipment.Builder.newInstance(Id.create("idNewShipment_"+activity.getLinkId().toString(),CarrierShipment.class), demandLinkId, Id.createLinkId(destinationLink),
-                                            volume).setPickupServiceTime(pickupServiceTime).setPickupTimeWindow(pickupTimeWindow).setDeliveryServiceTime(deliveryServiceTime).setDeliveryTimeWindow(deliveryTimeWindow).build();
-                                    CarriersUtils.addShipment(carrierShipments, thisShipment);
-                                }
+    }
 
     public static List<Schedule> readCsvFile(String filePath) {
         List<Schedule> schedules = new ArrayList<>();
