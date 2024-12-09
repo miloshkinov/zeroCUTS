@@ -20,7 +20,7 @@ import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.ScheduledTour;
 import org.matsim.freight.carriers.Tour;
 import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
-import org.matsim.freight.carriers.controler.CarrierModule;
+import org.matsim.freight.carriers.controller.CarrierModule;
 
 /**
  * Diese Klasse soll den Output von "alten" runs derart updaten,
