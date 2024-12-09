@@ -71,7 +71,7 @@ public class AddAdditionalBEVTrucksToCarriers {
 				VehicleUtils.copyFromTo(vehicleType_new, vehicleType);
 
 				CarrierVehicle additionalCarrierVehicle =
-						CarrierVehicle.Builder.newInstance(vehicleId2, carrierVehicle.getLocation(), vehicleType_new)
+						CarrierVehicle.Builder.newInstance(vehicleId2, carrierVehicle.getLinkId(), vehicleType_new)
 								.setEarliestStart(carrierVehicle.getEarliestStartTime())
 								.setLatestEnd(carrierVehicle.getLatestEndTime())
 								.build();
