@@ -12,9 +12,9 @@ import org.matsim.application.options.ShpOptions;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
+import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.freight.carriers.*;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
@@ -37,10 +37,10 @@ public class AbfallUtils {
     static String linkDepotHetzerath = "3118011660035f";
 
     static String carrierVehicleTypesFilePath = "scenarios/wasteCollection/Vulkaneifel/vehicles/vehicleTypes_new.xml";
-    static String networkPath = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/vulkaneifel/v1.2/input/vulkaneifel-v1.2-network.xml.gz";
 
-    static Config prepareConfig(String output) {
+    static Config prepareConfig(String output, String networkPath) {
         Config config = ConfigUtils.createConfig();
+        config.routing().setNetworkRouteConsistencyCheck(RoutingConfigGroup.NetworkRouteConsistencyCheck.disable);
         config.global().setCoordinateSystem("EPSG:25832");
         config.controller().setOutputDirectory(output);
         config.controller().setLastIteration(0); //only one MATSim iteration
@@ -103,7 +103,7 @@ public class AbfallUtils {
 
 
     // V4 for scenario with both EVs
-    static void  createJobs(Scenario scenario, ShpOptions.Index shpIndex, String gemeindeName, Population population, int volumePer4Persons, int counter) {
+    static void  createJobs(Scenario scenario, Network subnetworkCar, ShpOptions.Index shpIndex, String gemeindeName, Population population, int volumePer4Persons, int counter) {
 
         Carrier carrier = CarriersUtils.addOrGetCarriers(scenario).getCarriers().values().iterator().next(); //because we only have one carrier
         Set<Id<Person>> processedPersons = new HashSet<>();
@@ -122,9 +122,7 @@ public class AbfallUtils {
         int shipment_amount = payload / volumePer4Persons;
         double deliveryServiceTime = (60*45) / (double) shipment_amount; // changed to 45min breaks, 17.0.... AVG of both times for EV medium and EV small vehicles 16.29, 17.91, => 17.1; different deliverytimes result inconsistent results,
         //double deliveryServiceTime = 17.1 ;
-        Network subnetwork = NetworkUtils.createNetwork();
-        TransportModeNetworkFilter filter = new TransportModeNetworkFilter(scenario.getNetwork());
-        filter.filter(subnetwork, Collections.singleton("car"));
+
         for (Person person : population.getPersons().values()) {
             if (processedPersons.contains(person.getId())) {
                 continue; // Skip if the person has already been processed
@@ -137,7 +135,7 @@ public class AbfallUtils {
                         if (Objects.equals(shpIndex.query(coord), gemeindeName)) {
 
 //                            log.info("PersonID: " + person.getId().toString() + " counter: " + counter + " LinkID: " + activity.getLinkId().toString());
-                            Id<Link> demandLinkId = NetworkUtils.getNearestLinkExactly(subnetwork, coord).getId(); //Ort der Sammlung des Mülls
+                            Id<Link> demandLinkId = NetworkUtils.getNearestLinkExactly(subnetworkCar, coord).getId(); //Ort der Sammlung des Mülls
 
                             if (carrier.getShipments().containsKey(Id.create("wasteCollection_" + demandLinkId.toString(), CarrierShipment.class))) {
 

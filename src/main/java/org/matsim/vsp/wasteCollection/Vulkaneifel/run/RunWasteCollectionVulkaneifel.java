@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.Event;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Population;
@@ -15,6 +16,8 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controller;
 import org.matsim.core.controler.ControllerUtils;
+import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
@@ -26,6 +29,7 @@ import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
 import picocli.CommandLine;
 
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -69,10 +73,15 @@ public class RunWasteCollectionVulkaneifel implements MATSimAppCommand {
     @CommandLine.Option(names = "--weekRhythm", description = "Week rhythm for waste collection (even (G) or odd (U) week)", required = true, defaultValue = "G")
     private String weekRhythm;
 
+    @CommandLine.Option(names ="--network", description = "Path to the network file",
+            defaultValue = "scenarios/wasteCollection/Vulkaneifel/vulkaneifel_network_reduced.xml.gz")
+    private String networkPath;
+
     public static void main(String[] args) {
         System.exit(new CommandLine(new RunWasteCollectionVulkaneifel()).execute(args));
     }
-
+    // scenarios/wasteCollection/Vulkaneifel/vulkaneifel_network_reduced.xml.gz
+    // https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/vulkaneifel/v1.2/input/vulkaneifel-v1.2-network.xml.gz
     @Override
     public Integer call() throws Exception {
 
@@ -94,7 +103,7 @@ public class RunWasteCollectionVulkaneifel implements MATSimAppCommand {
         String Output_suffix = "/" + weekday + "_" + weekRhythm + "_"+vehicleFleet + "_"+ "Iterations_"+ jspritIterations ;
         output = output + Output_suffix;
 
-        Config config = AbfallUtils.prepareConfig(output);
+        Config config = AbfallUtils.prepareConfig(output, networkPath);
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
         FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);
@@ -109,13 +118,16 @@ public class RunWasteCollectionVulkaneifel implements MATSimAppCommand {
         createFreightVehiclesSingleType(scenario, vehicleFleet); // just one type
 
         Population population = PopulationUtils.readPopulation(planPath);
+        Network subnetworkCar = NetworkUtils.createNetwork();
+        TransportModeNetworkFilter filter = new TransportModeNetworkFilter(scenario.getNetwork());
+        filter.filter(subnetworkCar, Collections.singleton("car"));
         for (Schedule schedule : schedules){
             if(schedule.getDay().equals(weekday) & schedule.getWeek().equals(weekRhythm)) {
                 log.info("Waste collection for {} on {} in week {}", schedule.getName(), weekday, weekRhythm);
                 log.info("Name: {}", schedule.getName());
                 GemeindeWithCollection++;
 
-                createJobs(scenario, shpIndex, schedule.getName(), population, volumePer4Persons, totalCounter);
+                createJobs(scenario, subnetworkCar, shpIndex, schedule.getName(), population, volumePer4Persons, totalCounter);
             } else {
                 log.info("{} not in {} and KW {}", schedule.getName(), weekday, weekRhythm);}
         }
@@ -136,7 +148,6 @@ public class RunWasteCollectionVulkaneifel implements MATSimAppCommand {
             // Wiederherstellung des unterbrochenen Status
             Thread.currentThread().interrupt();
         }
-
         Controller controller = ControllerUtils.createController(scenario);
         controller.addOverridingModule(new CarrierModule());
         controller.addOverridingModule(new AbstractModule() {
@@ -147,7 +158,7 @@ public class RunWasteCollectionVulkaneifel implements MATSimAppCommand {
 
         controller.run();
 
-        // kAnalysis
+        // Analysis
         log.info("Starting Analysis");
         RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(output +"/", output +"/Analysis_new/", config.global().getCoordinateSystem());
         freightAnalysis.runCompleteAnalysis();
