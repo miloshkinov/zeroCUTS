@@ -9,7 +9,6 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.freight.carriers.Carrier;
 import org.matsim.freight.carriers.CarrierCapabilities;
 import org.matsim.freight.carriers.CarrierVehicle;
-import org.matsim.freight.carriers.CarrierVehicleTypeLoader;
 import org.matsim.freight.carriers.CarrierVehicleTypes;
 import org.matsim.freight.carriers.Carriers;
 import org.matsim.vehicles.Vehicle;
@@ -113,8 +112,5 @@ public class AbfallChessboardUtils {
 				.addType(carrierVehicleTypes.getVehicleTypes().values().iterator().next()).addVehicle(vehicleDepot).setFleetSize(fleetSize).build();
 
 		carrierChessboard.setCarrierCapabilities(carrierCapabilities);
-
-		// Fahrzeugtypen den Anbietern zuordenen
-		new CarrierVehicleTypeLoader(carriers).loadVehicleTypes(carrierVehicleTypes);
 	}
 }

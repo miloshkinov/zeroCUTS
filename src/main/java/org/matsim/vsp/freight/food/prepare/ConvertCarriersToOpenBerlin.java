@@ -57,7 +57,8 @@ class ConvertCarriersToOpenBerlin {
 
 		someChecks(oldCarriers, newCarriers);
 
-		new CarrierPlanXmlWriterV2(newCarriers).write(outputNewCarriers);
+		new CarrierPlanWriter(newCarriers).write(outputNewCarriers);
+//		new CarrierPlanXmlWriterV2(newCarriers).write(outputNewCarriers);
 
 		log.info("#### Done ####");
 	}
@@ -81,7 +82,7 @@ class ConvertCarriersToOpenBerlin {
 		newCarrier.getCarrierCapabilities().setFleetSize(cc.getFleetSize());
 		for (CarrierVehicle carrierVehicle: cc.getCarrierVehicles().values()) {
 			Id<Link> newLinkId;
-			newLinkId = getNewLinkId(oldNetwork, newNetworkFiltered, carrierVehicle.getLocation());
+			newLinkId = getNewLinkId(oldNetwork, newNetworkFiltered, carrierVehicle.getLinkId());
 			//Adapt VehicleId to new Location
 			String oldVehicleString = carrierVehicle.getId().toString();
 			Id<Vehicle> newVehicleId = Id.createVehicleId(oldVehicleString.substring(0,oldVehicleString.lastIndexOf("_")+1)+newLinkId.toString());

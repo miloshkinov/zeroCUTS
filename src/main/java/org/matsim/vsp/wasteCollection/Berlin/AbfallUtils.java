@@ -32,7 +32,7 @@ import org.matsim.freight.carriers.Tour.Delivery;
 import org.matsim.freight.carriers.Tour.Leg;
 import org.matsim.freight.carriers.Tour.Pickup;
 import org.matsim.freight.carriers.Tour.TourElement;
-import org.matsim.freight.carriers.controler.CarrierModule;
+import org.matsim.freight.carriers.controller.CarrierModule;
 import org.matsim.freight.carriers.jsprit.MatsimJspritFactory;
 import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts;
 import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts.Builder;
@@ -615,7 +615,7 @@ class AbfallUtils {
 						scenario.getConfig().controller().getOutputDirectory() + "/jsprit_CarrierPlans_Test01.png",
 						"bestSolution");
 		}
-		new CarrierPlanXmlWriterV2(carriers)
+		new CarrierPlanWriter(carriers)
 				.write(scenario.getConfig().controller().getOutputDirectory() + "/jsprit_CarrierPlans.xml");
 
 	}
