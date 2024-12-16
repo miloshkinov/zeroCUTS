@@ -25,11 +25,11 @@ public class RunVulkaneifelWasteAnalysis implements MATSimAppCommand {
 
 
     @CommandLine.Option(names = "--resultsFolder", description = "Path to the results folder",
-            defaultValue = "output/WasteCollectionVulkaneifel/250_it/")
+            defaultValue = "output/WasteCollectionVulkaneifel/250it_newConstraint/")
     private Path resultsFolder;
 
     @CommandLine.Option(names = "--outputFolder", description = "Path to the output folder",
-            defaultValue = "output/WasteCollectionVulkaneifel/250_it/Analysis/")
+            defaultValue = "output/WasteCollectionVulkaneifel/250it_newConstraint/Analysis/")
     private Path outputFolder;
 
     public static void main(String[] args) {
@@ -156,14 +156,7 @@ public class RunVulkaneifelWasteAnalysis implements MATSimAppCommand {
                 headersWritten.add(writer); // Mark this writer as having the header written
             }
             List<String> recordList = new ArrayList<>(List.of(weekday, weekRhythm, vehicleFleet, String.valueOf(iterations)));
-            if (parse.getHeaderNames().contains("load state during tour")) {
-                double maxLoad = Double.parseDouble(record.get("maxLoad"));
-                double capacity = Double.parseDouble(record.get("capacity"));
-                double maxLoadPercentage = Math.round(maxLoad / capacity * 10000)/100.0;
-                recordList.addAll(List.of(record.get("vehicleId"), String.valueOf(capacity) , String.valueOf(maxLoadPercentage), record.get("load state during tour")));
-            }
-            else
-                recordList.addAll(record.stream().toList());
+            recordList.addAll(record.stream().toList());
             JOIN.appendTo(writer, recordList);
             writer.newLine();
         }
