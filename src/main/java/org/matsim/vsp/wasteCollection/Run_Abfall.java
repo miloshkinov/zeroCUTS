@@ -167,7 +167,7 @@ public class Run_Abfall {
 				AbfallChessboardUtils.createShipmentsForChessboardI(carrierMap, kgGarbageToCollect, allLinks,
 						volumeDustbinInLiters, secondsServiceTimePerDustbin, scenario, carriers);
 				FleetSize fleetSize = FleetSize.INFINITE;
-				AbfallChessboardUtils.createCarriersForChessboard(carriers, fleetSize, carrierVehicleTypes);
+				AbfallChessboardUtils.createCarriersForChessboard(fleetSize, carrierVehicleTypes);
 			}
 			case chessboardGarbagePerMeterToCollect -> {
 				double kgGarbagePerMeterToCollect = 0.2;
@@ -175,7 +175,7 @@ public class Run_Abfall {
 				AbfallChessboardUtils.createShipmentsForChessboardII(carrierMap, kgGarbagePerMeterToCollect, allLinks,
 						volumeDustbinInLiters, secondsServiceTimePerDustbin, scenario, carriers);
 				FleetSize fleetSize2 = FleetSize.INFINITE;
-				AbfallChessboardUtils.createCarriersForChessboard(carriers, fleetSize2, carrierVehicleTypes2);
+				AbfallChessboardUtils.createCarriersForChessboard(fleetSize2, carrierVehicleTypes2);
 			}
 			case berlinSelectedDistricts -> {
 				// day input: MO or DI or MI or DO or FR
