@@ -14,7 +14,6 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.freight.carriers.Carrier;
 import org.matsim.freight.carriers.CarrierPlan;
-import org.matsim.freight.carriers.CarrierPlanWriter;
 import org.matsim.freight.carriers.CarriersUtils;
 import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.ScheduledTour;

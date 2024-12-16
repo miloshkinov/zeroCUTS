@@ -15,9 +15,10 @@
 				<attribute name="fuelType" class="java.lang.String">diesel</attribute>
 			</attributes>
 		</engineInformation>
-		<costInformation fixedCostsPerDay="982.98" costsPerMeter="8.46E-4" costsPerSecond="0.0">
+		<costInformation fixedCostsPerDay="947.32" costsPerMeter="10.3218E-4" costsPerSecond="0.0">
 
 		</costInformation>
+		<networkMode networkMode="car"/>
 	</vehicleType>
 
 	<vehicleType id="EV_small_battery">
@@ -36,7 +37,7 @@
 				<attribute name="fuelType" class="java.lang.String">electricity</attribute>
 			</attributes>
 		</engineInformation>
-		<costInformation fixedCostsPerDay="1198.06" costsPerMeter="1.53E-4" costsPerSecond="0.0">
+		<costInformation fixedCostsPerDay="1095.36" costsPerMeter="1.665E-4" costsPerSecond="0.0">
 
 		</costInformation>
 		<passengerCarEquivalents pce="1.0"/>
@@ -60,7 +61,7 @@
 				<attribute name="fuelType" class="java.lang.String">electricity</attribute>
 			</attributes>
 		</engineInformation>
-		<costInformation fixedCostsPerDay="1262.17" costsPerMeter="1.53E-4" costsPerSecond="0.0">
+		<costInformation fixedCostsPerDay="1095.36" costsPerMeter="1.665E-4" costsPerSecond="0.0">
 
 		</costInformation>
 		<passengerCarEquivalents pce="1.0"/>
