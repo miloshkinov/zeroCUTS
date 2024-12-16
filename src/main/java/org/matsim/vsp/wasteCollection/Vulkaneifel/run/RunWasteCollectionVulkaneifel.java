@@ -56,21 +56,21 @@ public class RunWasteCollectionVulkaneifel implements MATSimAppCommand {
     private String planPath;
 
     @CommandLine.Option(names = "--outputFolder", description = "Path to the output folder",
-            defaultValue = "output/WasteCollectionVulkaneifel/")
+            defaultValue = "output/WasteCollectionVulkaneifel/TestNewConstraint")
     private String output;
 
     @CommandLine.Option(names = "--vehicleFleet", description = "Set the possible vehicle fleet. Options: diesel_vehicle, EV_small_battery, EV_medium_battery, EVMix, MixAll",
-            defaultValue = "diesel_vehicle")
+            defaultValue = "EV_small_battery")
     private VehicleFleet vehicleFleet;
 
     @CommandLine.Option(names = "--jspritIterations", description = "Number of jsprit iterations",
             defaultValue = "1")
     private int jspritIterations;
 
-    @CommandLine.Option(names = "--weekday", description = "Weekday for waste collection: Mo, Di, Mi, Do, Fr", required = true, defaultValue = "Mo")
+    @CommandLine.Option(names = "--weekday", description = "Weekday for waste collection: Mo, Di, Mi, Do, Fr", required = true, defaultValue = "Mi")
     private String weekday;
 
-    @CommandLine.Option(names = "--weekRhythm", description = "Week rhythm for waste collection (even (G) or odd (U) week)", required = true, defaultValue = "G")
+    @CommandLine.Option(names = "--weekRhythm", description = "Week rhythm for waste collection (even (G) or odd (U) week)", required = true, defaultValue = "U")
     private String weekRhythm;
 
     @CommandLine.Option(names ="--network", description = "Path to the network file",

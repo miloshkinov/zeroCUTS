@@ -16,7 +16,7 @@ public class RunFreightAnalysisForMultipleRuns {
 
     public static void main(String[] args) throws IOException {
 
-        Path folderWithDifferentRuns = Path.of("output/WasteCollectionVulkaneifel/TestNewConstraint/");
+        Path folderWithDifferentRuns = Path.of("output/WasteCollectionVulkaneifel/250it_newConstraint/");
         String globalCrs = "EPSG:25832";
 
         boolean reRunAllAnalysis = false;
