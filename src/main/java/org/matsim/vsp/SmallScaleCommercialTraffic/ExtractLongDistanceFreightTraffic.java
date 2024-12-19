@@ -59,14 +59,15 @@ public class ExtractLongDistanceFreightTraffic {
 				"--input-crs", inputCRS,
 				"--target-crs", targetCRS,
 				"--shp-crs", shpCRS,
-				"--cut-on-boundary"
+				"--cut-on-boundary",
+				"--tripType", "TRANSIT"
 				);
 		Population population = PopulationUtils.readPopulation(outputPath.toString() + "/extracted-population.xml.gz");
 		for (Person person : population.getPersons().values()) {
 			PopulationUtils.putSubpopulation(person, "longDistanceFreight");
 		}
 		PopulationUtils.sampleDown(population, samplePopulationTo/inputPopulationSample);
-		PopulationUtils.writePopulation(population, outputPath.toString() + "/berlin_longDistanceFreight_"+(int)(samplePopulationTo*100)+"pct.xml.gz");
-		assert (new File (outputPath.toString() + "/extracted-population.xml.gz").delete());
+		PopulationUtils.writePopulation(population, outputPath + "/berlin_longDistanceFreight_"+(int)(samplePopulationTo*100)+"pct.xml.gz");
+		assert (new File (outputPath + "/extracted-population.xml.gz").delete());
 	}
 }
