@@ -31,7 +31,7 @@
 		<maximumVelocity meterPerSecond="22.22222222222222"/>
 		<engineInformation>
 			<attributes>
-				<attribute name="energyCapacityInKWhOrLiters" class="java.lang.Double">125.0</attribute>
+				<attribute name="energyCapacityInKWhOrLiters" class="java.lang.Double">122.8</attribute> <!-- Original capacity of 155 is reduced by the consumption of 2 full collected capacities -->
 				<attribute name="energyConsumptionPerTonnePickupWaste" class="java.lang.Double">1.4</attribute>
 				<attribute name="energyConsumptionKWhPerMeter" class="java.lang.Double">0.001</attribute>
 				<attribute name="HbefaTechnology" class="java.lang.String">electricity</attribute>
@@ -55,7 +55,7 @@
 		<maximumVelocity meterPerSecond="22.22222222222222"/>
 		<engineInformation>
 			<attributes>
-				<attribute name="energyCapacityInKWhOrLiters" class="java.lang.Double">310.0</attribute>
+				<attribute name="energyCapacityInKWhOrLiters" class="java.lang.Double">280.6</attribute> <!-- Original capacity of 310 is reduced by the consumption of 2 full collected capacities -->
 				<attribute name="energyConsumptionPerTonnePickupWaste" class="java.lang.Double">1.4</attribute>
 				<attribute name="energyConsumptionKWhPerMeter" class="java.lang.Double">0.001</attribute>
 				<attribute name="HbefaTechnology" class="java.lang.String">electricity</attribute>

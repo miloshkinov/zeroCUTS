@@ -77,6 +77,10 @@ public class RunWasteCollectionVulkaneifel implements MATSimAppCommand {
             defaultValue = "scenarios/wasteCollection/Vulkaneifel/vulkaneifel_network_reduced.xml.gz")
     private String networkPath;
 
+    @CommandLine.Option(names = "--vehicleTypesFile", description = "Path to the vehicle types file",
+            defaultValue = "scenarios/wasteCollection/vehicleTypes.xml")
+    static String vehicleTypesFilePath ;
+
     public static void main(String[] args) {
         System.exit(new CommandLine(new RunWasteCollectionVulkaneifel()).execute(args));
     }
@@ -103,7 +107,7 @@ public class RunWasteCollectionVulkaneifel implements MATSimAppCommand {
         String Output_suffix = "/" + weekday + "_" + weekRhythm + "_"+vehicleFleet + "_"+ "Iterations_"+ jspritIterations ;
         output = output + Output_suffix;
 
-        Config config = AbfallUtils.prepareConfig(output, networkPath);
+        Config config = AbfallUtils.prepareConfig(output, networkPath, vehicleTypesFilePath);
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
         FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);

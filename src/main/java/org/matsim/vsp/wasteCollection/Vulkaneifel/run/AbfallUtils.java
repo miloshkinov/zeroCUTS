@@ -36,9 +36,7 @@ public class AbfallUtils {
     static String linkDepotPlaidt = "5574439310007f";
     static String linkDepotHetzerath = "3118011660035f";
 
-    static String carrierVehicleTypesFilePath = "scenarios/wasteCollection/Vulkaneifel/vehicles/vehicleTypes_new.xml";
-
-    static Config prepareConfig(String output, String networkPath) {
+    static Config prepareConfig(String output, String networkPath, String vehicleTypesFilePath) {
         Config config = ConfigUtils.createConfig();
         config.routing().setNetworkRouteConsistencyCheck(RoutingConfigGroup.NetworkRouteConsistencyCheck.disable);
         config.global().setCoordinateSystem("EPSG:25832");
@@ -47,8 +45,8 @@ public class AbfallUtils {
         config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.overwriteExistingFiles);
 
         FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);
-        log.info("Read carrier vehicle types from: {}", carrierVehicleTypesFilePath);
-        freightCarriersConfigGroup.setCarriersVehicleTypesFile(carrierVehicleTypesFilePath);
+        log.info("Read carrier vehicle types from: {}", vehicleTypesFilePath);
+        freightCarriersConfigGroup.setCarriersVehicleTypesFile(vehicleTypesFilePath);
 
         log.info("Read network from: {}", networkPath);
         config.network().setInputFile(networkPath);

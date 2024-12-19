@@ -34,7 +34,7 @@ public class Run_Abfall {
 	private static final String original_Chessboard = "https://raw.githubusercontent.com/matsim-org/matsim/master/examples/scenarios/freight-chessboard-9x9/grid9x9.xml";
 	private static final String berlin = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.2-1pct/output-berlin-v5.2-1pct/berlin-v5.2-1pct.output_network.xml.gz";
 	private static final String berlinDistrictsWithGarbageInformations = "scenarios/wasteCollection/Berlin/garbageInput/districtsWithGarbageInformations.shp";
-	private static final String inputVehicleTypes = "scenarios/wasteCollection/Berlin/vehicleTypes.xml";
+	private static final String inputVehicleTypes = "scenarios/wasteCollection/vehicleTypes.xml";
 	private static final String inputCarriersWithDieselVehicle = "scenarios/wasteCollection/Berlin/carriers_diesel_vehicle.xml";
 	private static final String inputCarriersWithMediumBatteryVehicle = "scenarios/wasteCollection/Berlin/carriers_medium_EV.xml";
 	private static final String inputCarriersWithSmallBatteryVehicle = "scenarios/wasteCollection/Berlin/carriers_small_EV.xml";
