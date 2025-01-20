@@ -19,17 +19,10 @@
  * *********************************************************************** */
 package org.matsim.vsp.freightDemandGeneration;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 
-import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
 import org.matsim.freightDemandGeneration.FreightDemandGeneration;
-import org.matsim.vsp.freightAnalysis.FreightAnalyse;
 
 public class FreightDemandGenerationExample {
 
@@ -67,18 +60,6 @@ public class FreightDemandGenerationExample {
                 "--populationCRS", "DHDN_GK4",
                 "--defaultJspritIterations", "3"
         );
-
-        List<File> fileData = new ArrayList<>();
-        for (File file : Objects.requireNonNull(output.toFile().listFiles())) {
-            fileData.add(file);
-        }
-        Collections.sort(fileData);
-        File lastFile = fileData.get(fileData.size() - 1);
-        String[] argsAnalysis = {lastFile.toString(), "true"};
-        FreightAnalyse.main(argsAnalysis);
-        RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(lastFile + "/",
-                lastFile + "/Analysis_new/", "EPSG:31468");
-        freightAnalysis.runCarriersAnalysis();
     }
 }
 

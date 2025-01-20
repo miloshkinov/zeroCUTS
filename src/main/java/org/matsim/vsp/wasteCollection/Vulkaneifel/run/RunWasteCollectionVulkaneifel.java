@@ -23,7 +23,6 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.freight.carriers.*;
-import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
 import org.matsim.freight.carriers.controller.CarrierModule;
 import org.matsim.freight.carriers.controller.CarrierScoringFunctionFactory;
 import picocli.CommandLine;
@@ -161,12 +160,6 @@ public class RunWasteCollectionVulkaneifel implements MATSimAppCommand {
         });
 
         controller.run();
-
-        // Analysis
-        log.info("Starting Analysis");
-        RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(output +"/", output +"/Analysis_new/", config.global().getCoordinateSystem());
-        freightAnalysis.runCompleteAnalysis();
-        log.info("Finished Analysis");
 
         return 0;
     }

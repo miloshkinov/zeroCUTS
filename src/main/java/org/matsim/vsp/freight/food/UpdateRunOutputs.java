@@ -18,7 +18,6 @@ import org.matsim.freight.carriers.CarriersUtils;
 import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.ScheduledTour;
 import org.matsim.freight.carriers.Tour;
-import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
 import org.matsim.freight.carriers.controller.CarrierModule;
 
 /**
@@ -113,16 +112,8 @@ public class UpdateRunOutputs {
     final Controler controler = new Controler( scenario ) ;
     controler.addOverridingModule(new CarrierModule() );
 
-
     // ## Start of the MATSim-Run: ##
     controler.run();
-
-    var analysis = new RunFreightAnalysisEventBased(config.controller().getOutputDirectory() , config.controller().getOutputDirectory()+"Analysis", "EPSG:31468");
-    try {
-      analysis.runCompleteAnalysis();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
 }
