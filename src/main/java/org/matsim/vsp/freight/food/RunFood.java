@@ -28,7 +28,6 @@ import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.application.MATSimAppCommand;
 import org.matsim.freight.carriers.FreightCarriersConfigGroup;
-import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
 import org.matsim.freight.carriers.Carrier;
 import org.matsim.freight.carriers.CarriersUtils;
 import org.matsim.freight.carriers.controller.CarrierModule;
@@ -42,12 +41,6 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
-import org.matsim.freight.carriers.Carrier;
-import org.matsim.freight.carriers.CarriersUtils;
-import org.matsim.freight.carriers.FreightCarriersConfigGroup;
-import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
-import org.matsim.freight.carriers.controller.CarrierModule;
-import org.matsim.freight.carriers.controller.CarrierScoringFunctionFactory;
 import org.matsim.vehicles.EngineInformation;
 import org.matsim.vehicles.VehicleUtils;
 import picocli.CommandLine;
@@ -120,11 +113,6 @@ class RunFood implements MATSimAppCommand {
 		controler.getConfig().vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.warn);
 		controler.run();
 
-		final String outputPath = controler.getControlerIO().getOutputPath();
-		RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(outputPath + "/", outputPath + "/Analysis/",
-				config.global().getCoordinateSystem());
-		freightAnalysis.runCompleteAnalysis();
-
 		return 0;
 	}
 
@@ -147,7 +135,7 @@ class RunFood implements MATSimAppCommand {
 				energieCostsPerMeter = energyConsumptionKWhPerMeter * energyCostsEurPerKWh;
 
 			} else if (engineType.equals("diesel")) {
-				double fuelConsumptionLitersPerMeter = VehicleUtils.getFuelConsumption(vehicleType);
+				double fuelConsumptionLitersPerMeter = VehicleUtils.getFuelConsumptionLitersPerMeter(vehicleType.getEngineInformation());
 				energieCostsPerMeter = fuelConsumptionLitersPerMeter * fuelCostsEurPerL;
 
 			} else
