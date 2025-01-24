@@ -91,7 +91,7 @@ public class CommercialAnalysis implements MATSimAppCommand {
 		}
 	}
 
-	public Integer call() throws Exception {
+	public Integer call() {
 		final String eventsFile = globFile(runDirectory, runId, "output_events");
 		File dir = new File(analysisOutputDirectory);
 		if (!dir.exists()) {
