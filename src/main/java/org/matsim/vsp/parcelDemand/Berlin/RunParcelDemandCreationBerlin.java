@@ -82,14 +82,14 @@ public class RunParcelDemandCreationBerlin implements MATSimAppCommand {
             selectedPopulationSamplingOption = "noPopulationSampling";
             selectedSolution = "runJspritAndMATSim";
             vehicleFilePath = Path.of("scenarios/parcelDemand/DHL_vehicleTypes.xml");
-            carrierCSVLocation = Path.of("scenarios/parcelDemand/Berlin/DHL_CarrierCSV_Berlin_small.csv");
-            demandCSVLocation = Path.of("scenarios/parcelDemand/Berlin/DHL_DemandCSV_Berlin_small.csv");
-            shapeFilePath = Path.of("scenarios/parcelDemand/Berlin/PLZ_Gebiete_Berlin/PLZ_Gebiete_Berlin.shp");
-            populationLocation = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.3/input/berlin-v6.3-1pct.plans.xml.gz";
-//				populationLocation = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.3/input/berlin-only-v6.3-100pct.plans_NOT-fully-calibrated.xml.gz";
+            carrierCSVLocation = Path.of("scenarios/parcelDemand/Berlin/DHL_CarrierCSV_Berlin_Liefergebiete.csv");
+            demandCSVLocation = Path.of("scenarios/parcelDemand/Berlin/DHL_DemandCSV_Berlin_Liefergebiete.csv");
+            shapeFilePath = Path.of("scenarios/parcelDemand/Berlin/PLZ_Gebiete_Berlin/PLZ_Gebiete_Berlin_2.shp");
+//            populationLocation = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.3/input/berlin-v6.3-1pct.plans.xml.gz";
+            populationLocation = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.3/input/berlin-only-v6.3-100pct.plans_NOT-fully-calibrated.xml.gz";
             network = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.3/input/berlin-v6.3-network.xml.gz";
             networkCRS = "EPSG:25832";
-            shapeCategory = "plz";
+            shapeCategory = "Gebiet";
             defaultJspritIterations = 3;
         }
         new FreightDemandGeneration(demandGenerationSpecificationForParcelDelivery).execute(
