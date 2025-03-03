@@ -111,7 +111,7 @@ class DistanceConstraintUtils {
 					algorithm.setMaxIterations(25);
 					Collection<VehicleRoutingProblemSolution> solutions = algorithm.searchSolutions();
 					VehicleRoutingProblemSolution bestSolution = Solutions.bestOf(solutions);
-					CarrierPlan carrierPlanServices = MatsimJspritFactory.createPlan(oneShipmentCarrier, bestSolution);
+					CarrierPlan carrierPlanServices = MatsimJspritFactory.createPlan(bestSolution);
 					NetworkRouter.routePlan(carrierPlanServices, netBasedCostsMatrix);
 					oneShipmentCarrier.addPlan(carrierPlanServices);
 					oneShipmentCarrier.setSelectedPlan(carrierPlanServices);
