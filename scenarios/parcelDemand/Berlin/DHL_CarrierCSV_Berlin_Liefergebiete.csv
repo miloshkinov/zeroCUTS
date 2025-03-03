@@ -1,0 +1,17 @@
+carrierName	vehicleTypes	numberOfDepots	selectedVehicleDepots	areaOfAdditionalDepots	fixedNumberOfVehiclePerTypeAndLocation	fleetSize	vehicleStartTime	vehicleEndTime	jspritIterations
+dhl_1	dhl_vehicle	1		1		infinite	28800	57600	3
+dhl_2	dhl_vehicle	1		2		infinite	28800	57600	3
+dhl_3	dhl_vehicle	1		3		infinite	28800	57600	3
+dhl_4	dhl_vehicle	1		4		infinite	28800	57600	3
+dhl_5	dhl_vehicle	1		5		infinite	28800	57600	3
+dhl_6	dhl_vehicle	1		6		infinite	28800	57600	3
+dhl_7	dhl_vehicle	1		7		infinite	28800	57600	3
+dhl_8	dhl_vehicle	1		8		infinite	28800	57600	3
+dhl_9	dhl_vehicle	1		9		infinite	28800	57600	3
+dhl_10	dhl_vehicle	1		10		infinite	28800	57600	3
+dhl_11	dhl_vehicle	1		11		infinite	28800	57600	3
+dhl_12	dhl_vehicle	1		12		infinite	28800	57600	3
+dhl_13	dhl_vehicle	1		13		infinite	28800	57600	3
+dhl_14	dhl_vehicle	1		14		infinite	28800	57600	3
+dhl_15	dhl_vehicle	1		15		infinite	28800	57600	3
+dhl_16	dhl_vehicle	1		16		infinite	28800	57600	3
