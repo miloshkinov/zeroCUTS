@@ -556,7 +556,7 @@ public class TestRunDistanceConstraint {
 			VehicleRoutingProblemSolution bestSolution = Solutions.bestOf(solutions);
 
 			// Routing bestPlan to Network
-			CarrierPlan carrierPlanServices = MatsimJspritFactory.createPlan(singleCarrier, bestSolution);
+			CarrierPlan carrierPlanServices = MatsimJspritFactory.createPlan(bestSolution);
 			NetworkRouter.routePlan(carrierPlanServices, netBasedCosts);
 			singleCarrier.addPlan(carrierPlanServices);
 			singleCarrier.setSelectedPlan(carrierPlanServices);

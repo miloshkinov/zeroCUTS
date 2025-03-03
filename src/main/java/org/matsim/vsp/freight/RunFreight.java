@@ -285,7 +285,7 @@ public class RunFreight {
 			//			VehicleRoutingAlgorithm algorithm = VehicleRoutingAlgorithms.readAndCreateAlgorithm(vrp, IOUtils.getUrlFromFileOrResource(ALGORITHMFILE));
 			//			algorithm.setMaxIterations(MAX_JSPRIT_ITERATION);
 			//			VehicleRoutingProblemSolution solution = Solutions.bestOf(algorithm.searchSolutions());
-			CarrierPlan newPlan = MatsimJspritFactory.createPlan(carrier, solution) ;
+			CarrierPlan newPlan = MatsimJspritFactory.createPlan(solution) ;
 
 			NetworkRouter.routePlan(newPlan,netBasedCosts) ;
 

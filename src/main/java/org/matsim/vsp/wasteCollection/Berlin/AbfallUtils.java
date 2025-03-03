@@ -604,7 +604,7 @@ class AbfallUtils {
 			costsJsprit = costsJsprit + bestSolution.getCost();
 
 			// Routing bestPlan to Network
-			CarrierPlan carrierPlanServices = MatsimJspritFactory.createPlan(singleCarrier, bestSolution);
+			CarrierPlan carrierPlanServices = MatsimJspritFactory.createPlan(bestSolution);
 			NetworkRouter.routePlan(carrierPlanServices, netBasedCosts);
 			singleCarrier.getPlans().add(carrierPlanServices);
 			singleCarrier.setSelectedPlan(carrierPlanServices);
