@@ -94,7 +94,6 @@ public class RunVulkaneifelWasteAnalysis implements MATSimAppCommand {
             }
 
             for (File file : files) {
-                String fileName = file.getName();
                 if (file.getName().contains("Carrier_stats")) {
                     try {
                         sumAnalysisFile(writerCarrier, weekday, weekRhythm, vehicleFleet, iterations, file);
