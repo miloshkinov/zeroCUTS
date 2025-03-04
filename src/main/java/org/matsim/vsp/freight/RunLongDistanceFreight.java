@@ -15,6 +15,7 @@ import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.simwrapper.SimWrapperConfigGroup;
 import org.matsim.simwrapper.SimWrapperModule;
+import org.matsim.vsp.analysis.RunLongDistanceAnalysis;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
@@ -45,7 +46,6 @@ public class RunLongDistanceFreight implements MATSimAppCommand {
     public static void main(String[] args) {
         System.exit(new CommandLine(new RunLongDistanceFreight()).execute(args));
     }
-
 
     @Override
     public Integer call() {
@@ -86,7 +86,6 @@ public class RunLongDistanceFreight implements MATSimAppCommand {
             );
         }
 
-
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
         createActivityParams(scenario);
@@ -105,6 +104,9 @@ public class RunLongDistanceFreight implements MATSimAppCommand {
         controller.addOverridingModule(new SimWrapperModule());
 
         controller.run();
+
+        RunLongDistanceAnalysis runLongDistanceAnalysis = RunLongDistanceAnalysis.createRunLongDistanceAnalysis(outputDirectory);
+        runLongDistanceAnalysis.call();
 
         return 0;
     }
