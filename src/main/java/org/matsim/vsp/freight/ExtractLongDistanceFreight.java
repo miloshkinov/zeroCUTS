@@ -9,7 +9,7 @@ public class ExtractLongDistanceFreight {
 
     public static void main(String[] args) throws Exception {
 
-        String longDistanceFreightPopulationName = "output/german_freight.25pct.plans_GER_only.xml.gz";
+        String longDistanceFreightPopulationName = "output/longDistancePlans/german_freight.25pct.plans_GER_only.xml.gz";
 
         List<String> argumentsForFreightTransitTraffic = new ArrayList<>();
         argumentsForFreightTransitTraffic.add("../public-svn/matsim/scenarios/countries/de/german-wide-freight/v2/german_freight.25pct.plans.xml.gz");
