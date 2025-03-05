@@ -25,9 +25,9 @@ public class ExtractLongDistanceFreight {
         argumentsForFreightTransitTraffic.add("EPSG:25832");
         argumentsForFreightTransitTraffic.add("--shp-crs");
         argumentsForFreightTransitTraffic.add("EPSG:31467");
-        argumentsForFreightTransitTraffic.add("--tripType");
+        argumentsForFreightTransitTraffic.add("--geographicalTripType");
         argumentsForFreightTransitTraffic.add("ALL");
-        argumentsForFreightTransitTraffic.add("--LegMode");
+        argumentsForFreightTransitTraffic.add("--legMode");
         argumentsForFreightTransitTraffic.add("car");
         argumentsForFreightTransitTraffic.add("--cut-on-boundary");
 
