@@ -13,7 +13,9 @@ import org.matsim.core.controler.ControllerUtils;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.simwrapper.SimWrapperConfigGroup;
 import org.matsim.simwrapper.SimWrapperModule;
+import org.matsim.vsp.analysis.RunLongDistanceAnalysis;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
@@ -38,10 +40,12 @@ public class RunLongDistanceFreight implements MATSimAppCommand {
     @CommandLine.Option(names ="--endTime", description = "End time of the simulation", defaultValue = "1")
     private static int endTime;
 
+    @CommandLine.Option(names = "--sampleSize", description = "Sample size for the simulation", defaultValue = "1")
+    private static double sampleSize;
+
     public static void main(String[] args) {
         System.exit(new CommandLine(new RunLongDistanceFreight()).execute(args));
     }
-
 
     @Override
     public Integer call() {
@@ -63,6 +67,9 @@ public class RunLongDistanceFreight implements MATSimAppCommand {
         config.qsim().setEndTime(endTime * 3600);
         config.global().setCoordinateSystem("EPSG:25832");
 
+        SimWrapperConfigGroup simWrapperConfigGroup = ConfigUtils.addOrGetModule(config, SimWrapperConfigGroup.class);
+        simWrapperConfigGroup.setSampleSize(sampleSize);
+
         for (String subpopulation : List.of("longDistanceFreight")) {
             config.replanning().addStrategySettings(
                     new ReplanningConfigGroup.StrategySettings()
@@ -78,7 +85,6 @@ public class RunLongDistanceFreight implements MATSimAppCommand {
                             .setSubpopulation(subpopulation)
             );
         }
-
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
@@ -98,6 +104,9 @@ public class RunLongDistanceFreight implements MATSimAppCommand {
         controller.addOverridingModule(new SimWrapperModule());
 
         controller.run();
+
+        RunLongDistanceAnalysis runLongDistanceAnalysis = RunLongDistanceAnalysis.createRunLongDistanceAnalysis(outputDirectory);
+        runLongDistanceAnalysis.call();
 
         return 0;
     }
