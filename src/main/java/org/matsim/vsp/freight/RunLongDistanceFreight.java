@@ -68,7 +68,7 @@ public class RunLongDistanceFreight implements MATSimAppCommand {
         config.global().setCoordinateSystem("EPSG:25832");
 
         SimWrapperConfigGroup simWrapperConfigGroup = ConfigUtils.addOrGetModule(config, SimWrapperConfigGroup.class);
-        simWrapperConfigGroup.sampleSize = sampleSize;
+        simWrapperConfigGroup.setSampleSize(sampleSize);
 
         for (String subpopulation : List.of("longDistanceFreight")) {
             config.replanning().addStrategySettings(
