@@ -1,6 +1,6 @@
 package org.matsim.vsp.freight;
 
-import org.matsim.application.prepare.freight.tripExtraction.ExtractRelevantFreightTrips;
+import org.matsim.application.prepare.longDistanceFreightGER.tripExtraction.ExtractRelevantFreightTrips;
 
 import java.util.ArrayList;
 import java.util.List;

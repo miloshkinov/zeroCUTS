@@ -1,9 +1,9 @@
 package org.matsim.vsp.parcelDemand.Berlin;
 
 import org.matsim.application.MATSimAppCommand;
-import org.matsim.freightDemandGeneration.DemandGenerationSpecification;
-import org.matsim.freightDemandGeneration.DemandGenerationSpecificationForParcelDelivery;
-import org.matsim.freightDemandGeneration.FreightDemandGeneration;
+import org.matsim.commercialDemandGenerationBasic.BasicCommercialDemandGeneration;
+import org.matsim.commercialDemandGenerationBasic.DemandGenerationSpecification;
+import org.matsim.commercialDemandGenerationBasic.DemandGenerationSpecificationForParcelDelivery;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
@@ -92,7 +92,7 @@ public class RunParcelDemandCreationBerlin implements MATSimAppCommand {
             shapeCategory = "Gebiet";
             defaultJspritIterations = 3;
         }
-        new FreightDemandGeneration(demandGenerationSpecificationForParcelDelivery).execute(
+        new BasicCommercialDemandGeneration(demandGenerationSpecificationForParcelDelivery).execute(
                 "--output", output.toString(),
                 "--carrierOption", selectedCarrierInputOption,
                 "--demandOption", selectedDemandGenerationOption,

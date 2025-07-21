@@ -24,7 +24,7 @@ import java.nio.file.Path;
 
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
-import org.matsim.application.prepare.freight.tripExtraction.ExtractRelevantFreightTrips;
+import org.matsim.application.prepare.longDistanceFreightGER.tripExtraction.ExtractRelevantFreightTrips;
 import org.matsim.core.population.PopulationUtils;
 
 /** Extracts the long distance freight traffic for Berlin/Brandenburg and samples the population to the required sample size.

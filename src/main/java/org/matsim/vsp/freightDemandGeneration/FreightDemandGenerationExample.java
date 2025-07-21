@@ -19,10 +19,10 @@
  * *********************************************************************** */
 package org.matsim.vsp.freightDemandGeneration;
 
+import org.matsim.commercialDemandGenerationBasic.BasicCommercialDemandGeneration;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import org.matsim.freightDemandGeneration.FreightDemandGeneration;
 
 public class FreightDemandGenerationExample {
 
@@ -36,7 +36,7 @@ public class FreightDemandGenerationExample {
         Path population = Path.of("../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-1pct/input/berlin-v5.5-1pct.plans.xml.gz");
         Path shapeFilePath = Path.of("../public-svn/matsim/scenarios/countries/de/freight-demand-generation/input_example/shp/Berlin_Ortsteile.shp");
         String shapeCategory = "Ortsteil";
-        new FreightDemandGeneration().execute(
+        new BasicCommercialDemandGeneration().execute(
                 "--output", output.toString(),
                 "--carrierOption", "createCarriersFromCSV",
                 "--demandOption", "createDemandFromCSV",
