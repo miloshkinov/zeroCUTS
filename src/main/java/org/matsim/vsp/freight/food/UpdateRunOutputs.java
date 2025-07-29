@@ -1,6 +1,7 @@
 package org.matsim.vsp.freight.food;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,7 +19,9 @@ import org.matsim.freight.carriers.CarriersUtils;
 import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.ScheduledTour;
 import org.matsim.freight.carriers.Tour;
+import org.matsim.freight.carriers.analysis.CarriersAnalysis;
 import org.matsim.freight.carriers.controller.CarrierModule;
+import org.matsim.vsp.emissions.RunFoodEmissions2024;
 
 /**
  * Diese Klasse soll den Output von "alten" runs derart updaten,
@@ -29,36 +32,49 @@ import org.matsim.freight.carriers.controller.CarrierModule;
 public class UpdateRunOutputs {
 
   public static void main(String[] args) throws InterruptedException, ExecutionException {
+
+    // Path to public repo:
+//    final String pathToRunDir = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/freight/";
+//    var listOfRuns = List.of(
+//        "foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/",
+//        "foodRetailing_wo_rangeConstraint/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/",
+//        "foodRetailing_wo_rangeConstraint/72_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax25/",
+//        "foodRetailing_wo_rangeConstraint/73_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax50/",
+//        "foodRetailing_wo_rangeConstraint/74_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax100/",
+//        "foodRetailing_wo_rangeConstraint/75_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax150/",
+//        "foodRetailing_wo_rangeConstraint/76_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax200/",
+//        "foodRetailing_wo_rangeConstraint/77_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax250/",
+//        "foodRetailing_wo_rangeConstraint/78_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax300/",
+//        //nun Runs mit ReichweitenConstraint
+//        "foodRetailing_with_rangeConstraint/21_ICEVBEV_NwCE_BVWP_10000it_DC_noTax/",
+//        "foodRetailing_with_rangeConstraint/22_ICEVBEV_NwCE_BVWP_10000it_DC_Tax25/",
+//        "foodRetailing_with_rangeConstraint/23_ICEVBEV_NwCE_BVWP_10000it_DC_Tax50/",
+//        "foodRetailing_with_rangeConstraint/24_ICEVBEV_NwCE_BVWP_10000it_DC_Tax100/",
+//        "foodRetailing_with_rangeConstraint/25_ICEVBEV_NwCE_BVWP_10000it_DC_Tax150/",
+//        "foodRetailing_with_rangeConstraint/26_ICEVBEV_NwCE_BVWP_10000it_DC_Tax200/",
+//        "foodRetailing_with_rangeConstraint/27_ICEVBEV_NwCE_BVWP_10000it_DC_Tax250/",
+//        "foodRetailing_with_rangeConstraint/28_ICEVBEV_NwCE_BVWP_10000it_DC_Tax300/"
+//    )   ;
+
+
+    // Update EFoods2020::
+    final String pathToRunDir = "/Users/kturner/git-and-svn/runs-svn/zeroCUTS/Food_ETrucks/";
     var listOfRuns = List.of(
-        "foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/",
-        "foodRetailing_wo_rangeConstraint/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/",
-        "foodRetailing_wo_rangeConstraint/72_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax25/",
-        "foodRetailing_wo_rangeConstraint/73_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax50/",
-        "foodRetailing_wo_rangeConstraint/74_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax100/",
-        "foodRetailing_wo_rangeConstraint/75_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax150/",
-        "foodRetailing_wo_rangeConstraint/76_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax200/",
-        "foodRetailing_wo_rangeConstraint/77_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax250/",
-        "foodRetailing_wo_rangeConstraint/78_ICEVBEV_NwCE_BVWP_10000it_DCoff_Tax300/",
-        //nun Runs mit ReichweitenConstraint
-        "foodRetailing_with_rangeConstraint/21_ICEVBEV_NwCE_BVWP_10000it_DC_noTax/",
-        "foodRetailing_with_rangeConstraint/22_ICEVBEV_NwCE_BVWP_10000it_DC_Tax25/",
-        "foodRetailing_with_rangeConstraint/23_ICEVBEV_NwCE_BVWP_10000it_DC_Tax50/",
-        "foodRetailing_with_rangeConstraint/24_ICEVBEV_NwCE_BVWP_10000it_DC_Tax100/",
-        "foodRetailing_with_rangeConstraint/25_ICEVBEV_NwCE_BVWP_10000it_DC_Tax150/",
-        "foodRetailing_with_rangeConstraint/26_ICEVBEV_NwCE_BVWP_10000it_DC_Tax200/",
-        "foodRetailing_with_rangeConstraint/27_ICEVBEV_NwCE_BVWP_10000it_DC_Tax250/",
-        "foodRetailing_with_rangeConstraint/28_ICEVBEV_NwCE_BVWP_10000it_DC_Tax300/"
+        "I-Base_NwCE_BVWP_Pickup_10000it/",
+        "II_E100_NwCE_BVWP_Pickup_10000it/",
+        "III_E160_NwCE_BVWP_Pickup_10000it/"
     )   ;
+
+
     for (String runDir : listOfRuns) {
-        run(args, runDir);
+        run(args, pathToRunDir + runDir);
     }
   }
+
   public static void run( String[] args, String runDir )
       throws InterruptedException, ExecutionException {
 
-    // Path to public repo:
-    String pathToInput = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/projects/freight/" + runDir;
-    // ### config stuff: ###
+      // ### config stuff: ###
     Config config;
     if ( args==null || args.length==0 || args[0]==null ){
       config = ConfigUtils.createConfig();
@@ -69,8 +85,8 @@ public class UpdateRunOutputs {
       config.global().setCoordinateSystem("EPSG:31468");
 
       FreightCarriersConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightCarriersConfigGroup.class );
-      freightConfigGroup.setCarriersFile(  pathToInput + "output_carriers.xml.gz" );
-      freightConfigGroup.setCarriersVehicleTypesFile( pathToInput + "output_vehicleTypes.xml.gz" );
+      freightConfigGroup.setCarriersFile(  runDir + "output_carriers.xml.gz" );
+      freightConfigGroup.setCarriersVehicleTypesFile( runDir + "output_vehicleTypes.xml.gz" );
     } else {
       config = ConfigUtils.loadConfig( args, new FreightCarriersConfigGroup() );
     }
@@ -114,6 +130,18 @@ public class UpdateRunOutputs {
 
     // ## Start of the MATSim-Run: ##
     controler.run();
+
+    var carriersAnalysis = new CarriersAnalysis(config.controller().getOutputDirectory() , config.controller().getOutputDirectory()+"Analysis", "EPSG:31468");
+      carriersAnalysis.runCarrierAnalysis();
+
+      String[] arguments = new String[1];
+    arguments[0] = config.controller().getOutputDirectory();
+    try {
+      RunFoodEmissions2024.main(arguments);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
   }
 
 }
