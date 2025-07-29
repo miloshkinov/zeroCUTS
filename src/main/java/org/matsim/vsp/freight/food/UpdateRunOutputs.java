@@ -19,7 +19,7 @@ import org.matsim.freight.carriers.CarriersUtils;
 import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.ScheduledTour;
 import org.matsim.freight.carriers.Tour;
-import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
+import org.matsim.freight.carriers.analysis.CarriersAnalysis;
 import org.matsim.freight.carriers.controller.CarrierModule;
 import org.matsim.vsp.emissions.RunFoodEmissions2024;
 
@@ -74,8 +74,7 @@ public class UpdateRunOutputs {
   public static void run( String[] args, String runDir )
       throws InterruptedException, ExecutionException {
 
-    String pathToInput = runDir;
-    // ### config stuff: ###
+      // ### config stuff: ###
     Config config;
     if ( args==null || args.length==0 || args[0]==null ){
       config = ConfigUtils.createConfig();
@@ -86,8 +85,8 @@ public class UpdateRunOutputs {
       config.global().setCoordinateSystem("EPSG:31468");
 
       FreightCarriersConfigGroup freightConfigGroup = ConfigUtils.addOrGetModule( config, FreightCarriersConfigGroup.class );
-      freightConfigGroup.setCarriersFile(  pathToInput + "output_carriers.xml.gz" );
-      freightConfigGroup.setCarriersVehicleTypesFile( pathToInput + "output_vehicleTypes.xml.gz" );
+      freightConfigGroup.setCarriersFile(  runDir + "output_carriers.xml.gz" );
+      freightConfigGroup.setCarriersVehicleTypesFile( runDir + "output_vehicleTypes.xml.gz" );
     } else {
       config = ConfigUtils.loadConfig( args, new FreightCarriersConfigGroup() );
     }
@@ -132,14 +131,10 @@ public class UpdateRunOutputs {
     // ## Start of the MATSim-Run: ##
     controler.run();
 
-    var freightAnalysis = new RunFreightAnalysisEventBased(config.controller().getOutputDirectory() , config.controller().getOutputDirectory()+"Analysis", "EPSG:31468");
-    try {
-      freightAnalysis.runAnalysis();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    var carriersAnalysis = new CarriersAnalysis(config.controller().getOutputDirectory() , config.controller().getOutputDirectory()+"Analysis", "EPSG:31468");
+      carriersAnalysis.runCarrierAnalysis();
 
-    String[] arguments = new String[1];
+      String[] arguments = new String[1];
     arguments[0] = config.controller().getOutputDirectory();
     try {
       RunFoodEmissions2024.main(arguments);
