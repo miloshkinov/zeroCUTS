@@ -24,7 +24,7 @@ import java.nio.file.Path;
 
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
-import org.matsim.application.prepare.freight.tripExtraction.ExtractRelevantFreightTrips;
+import org.matsim.application.prepare.longDistanceFreightGER.tripExtraction.ExtractRelevantFreightTrips;
 import org.matsim.core.population.PopulationUtils;
 
 /** Extracts the long distance freight traffic for Berlin/Brandenburg and samples the population to the required sample size.
@@ -59,14 +59,15 @@ public class ExtractLongDistanceFreightTraffic {
 				"--input-crs", inputCRS,
 				"--target-crs", targetCRS,
 				"--shp-crs", shpCRS,
-				"--cut-on-boundary"
+				"--cut-on-boundary",
+				"--tripType", "TRANSIT"
 				);
 		Population population = PopulationUtils.readPopulation(outputPath.toString() + "/extracted-population.xml.gz");
 		for (Person person : population.getPersons().values()) {
 			PopulationUtils.putSubpopulation(person, "longDistanceFreight");
 		}
 		PopulationUtils.sampleDown(population, samplePopulationTo/inputPopulationSample);
-		PopulationUtils.writePopulation(population, outputPath.toString() + "/berlin_longDistanceFreight_"+(int)(samplePopulationTo*100)+"pct.xml.gz");
-		assert (new File (outputPath.toString() + "/extracted-population.xml.gz").delete());
+		PopulationUtils.writePopulation(population, outputPath + "/berlin_longDistanceFreight_"+(int)(samplePopulationTo*100)+"pct.xml.gz");
+		assert (new File (outputPath + "/extracted-population.xml.gz").delete());
 	}
 }

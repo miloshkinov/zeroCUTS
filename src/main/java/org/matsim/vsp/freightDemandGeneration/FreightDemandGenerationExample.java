@@ -19,17 +19,10 @@
  * *********************************************************************** */
 package org.matsim.vsp.freightDemandGeneration;
 
-import java.io.File;
+import org.matsim.commercialDemandGenerationBasic.BasicCommercialDemandGeneration;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 
-import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
-import org.matsim.freightDemandGeneration.FreightDemandGeneration;
-import org.matsim.vsp.freightAnalysis.FreightAnalyse;
 
 public class FreightDemandGenerationExample {
 
@@ -43,7 +36,7 @@ public class FreightDemandGenerationExample {
         Path population = Path.of("../public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-1pct/input/berlin-v5.5-1pct.plans.xml.gz");
         Path shapeFilePath = Path.of("../public-svn/matsim/scenarios/countries/de/freight-demand-generation/input_example/shp/Berlin_Ortsteile.shp");
         String shapeCategory = "Ortsteil";
-        new FreightDemandGeneration().execute(
+        new BasicCommercialDemandGeneration().execute(
                 "--output", output.toString(),
                 "--carrierOption", "createCarriersFromCSV",
                 "--demandOption", "createDemandFromCSV",
@@ -67,18 +60,6 @@ public class FreightDemandGenerationExample {
                 "--populationCRS", "DHDN_GK4",
                 "--defaultJspritIterations", "3"
         );
-
-        List<File> fileData = new ArrayList<>();
-        for (File file : Objects.requireNonNull(output.toFile().listFiles())) {
-            fileData.add(file);
-        }
-        Collections.sort(fileData);
-        File lastFile = fileData.get(fileData.size() - 1);
-        String[] argsAnalysis = {lastFile.toString(), "true"};
-        FreightAnalyse.main(argsAnalysis);
-        RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(lastFile + "/",
-                lastFile + "/Analysis_new/", "EPSG:31468");
-        freightAnalysis.runAnalysis();
     }
 }
 

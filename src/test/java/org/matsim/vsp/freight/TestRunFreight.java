@@ -47,7 +47,7 @@ public class TestRunFreight {
 		try {
 			RunFreight.main(null);
 		} catch ( Exception ee ) {
-			LogManager.getLogger(this.getClass()).fatal("there was an exception: \n" + ee ) ;
+            LogManager.getLogger(this.getClass()).fatal("there was an exception: \n{}", String.valueOf(ee));
 			// if one catches an exception, then one needs to explicitly fail the test:
 			Assertions.fail();
 		}

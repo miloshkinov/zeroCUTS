@@ -1,6 +1,6 @@
 package org.matsim.vsp.freightAnalysis;
 
-import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
+import org.matsim.freight.carriers.analysis.CarriersAnalysis;
 
 import java.io.IOException;
 
@@ -25,9 +25,8 @@ public class RunAnalyse {
 		FreightAnalysisVersion slectedFreightAnalysisVersion = FreightAnalysisVersion.eventBased;
 		switch (slectedFreightAnalysisVersion) {
 			case eventBased -> {
-				RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(runDir + "/" + runId,
-						runDir + "/EventBasedAnalysis/", "EPSG:25832");
-				freightAnalysis.runAnalysis();
+				CarriersAnalysis freightAnalysis = new CarriersAnalysis(runDir);
+				freightAnalysis.runCarrierAnalysis(CarriersAnalysis.CarrierAnalysisType.carriersAndEvents);
 			}
 			case oldVersion -> {
 				if (runId != null)

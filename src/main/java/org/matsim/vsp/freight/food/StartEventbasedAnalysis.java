@@ -2,7 +2,7 @@ package org.matsim.vsp.freight.food;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
+import org.matsim.freight.carriers.analysis.CarriersAnalysis;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +18,7 @@ public class StartEventbasedAnalysis {
 		String simOutputPath;
 
 		if ( args.length==0 ) {
-			simOutputPath = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/Food_LCA-based/output/01_LCA_ICEV_10000it_noTax";
+			simOutputPath = "C:\\git-and-svn\\shared-svn\\projects\\freight\\studies\\UpdateEventsfromEarlierStudies\\foodRetailing_wo_rangeConstraint\\71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax";
 		} else {
 			for (String arg : args) {
 				log.info( arg );
@@ -29,8 +29,8 @@ public class StartEventbasedAnalysis {
 		if (!simOutputPath.endsWith(File.separator)) {
 			simOutputPath = simOutputPath + File.separator;
 		}
-		log.info("Running analysis for: " + simOutputPath);
-		RunFreightAnalysisEventBased freightAnalysis = new RunFreightAnalysisEventBased(simOutputPath, simOutputPath +"Analysis"+File.separator, null);
-		freightAnalysis.runAnalysis();
+        log.info("Running analysis for: {}", simOutputPath);
+		CarriersAnalysis freightAnalysis = new CarriersAnalysis(simOutputPath);
+		freightAnalysis.runCarrierAnalysis(CarriersAnalysis.CarrierAnalysisType.carriersAndEvents);
 	}
 }

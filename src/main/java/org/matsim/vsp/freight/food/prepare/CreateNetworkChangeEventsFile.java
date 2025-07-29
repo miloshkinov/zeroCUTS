@@ -43,9 +43,9 @@ public class CreateNetworkChangeEventsFile {
 
     private static final int ENDTIME = 36 * 3600;
     private static final int TIMESTEP = 15 * 60;
-    private static final String NETWORKFILE = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/input/berlin-v5.5-network.xml.gz";
-    private static final String SIMULATION_EVENTS_FILE = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v5.5-10pct/output-berlinv5.5/berlin-v5.5.3-10pct.output_events.xml.gz";
-    private static final String CHANGE_EVENTS_FILE = "output/networkChangeEvents_V5.5-10pct.xml.gz";
+    private static final String NETWORKFILE = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.0/output/berlin-v6.0-10pct/006.output_network.xml.gz";
+    private static final String SIMULATION_EVENTS_FILE = "https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/berlin/berlin-v6.0/output/berlin-v6.0-10pct/006.output_events.xml.gz";
+    private static final String CHANGE_EVENTS_FILE = "output/networkChangeEvents_Berlin_V6.0-10pct.xml.gz";
     private static final double MINIMUMFREESPEED = 1.39; //5 km/h
 
 

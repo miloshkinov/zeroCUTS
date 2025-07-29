@@ -25,10 +25,10 @@ import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.*;
-import org.matsim.freight.carriers.controler.CarrierControlerUtils;
-import org.matsim.freight.carriers.controler.CarrierModule;
-import org.matsim.freight.carriers.controler.CarrierScoringFunctionFactory;
-import org.matsim.freight.carriers.controler.CarrierStrategyManager;
+import org.matsim.freight.carriers.controller.CarrierControllerUtils;
+import org.matsim.freight.carriers.controller.CarrierModule;
+import org.matsim.freight.carriers.controller.CarrierScoringFunctionFactory;
+import org.matsim.freight.carriers.controller.CarrierStrategyManager;
 import org.matsim.freight.carriers.CarriersUtils;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -159,7 +159,7 @@ public class RunFreightOnlyMatsim {
 
 		config.vspExperimental().setVspDefaultsCheckingLevel(VspDefaultsCheckingLevel.warn);
 		config.addConfigConsistencyChecker(new VspConfigConsistencyCheckerImpl());
-		ControlerUtils.checkConfigConsistencyAndWriteToLog(config, "dump");
+		ControllerUtils.checkConfigConsistencyAndWriteToLog(config, "dump");
 
 		return config;
 	}  //End createConfig
@@ -249,7 +249,7 @@ public class RunFreightOnlyMatsim {
 	//Benötigt, da listener kein "Null" als StrategyFactory mehr erlaubt, KT 17.04.2015
 	//Da keine Strategy notwendig, hier zunächst eine "leere" Factory
 	private static CarrierStrategyManager createMyStrategymanager() {
-		return CarrierControlerUtils.createDefaultCarrierStrategyManager();
+		return CarrierControllerUtils.createDefaultCarrierStrategyManager();
 	}
 
 

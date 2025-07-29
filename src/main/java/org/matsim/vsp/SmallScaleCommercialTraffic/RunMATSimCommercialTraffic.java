@@ -20,6 +20,7 @@
 package org.matsim.vsp.SmallScaleCommercialTraffic;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import com.google.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -53,7 +54,6 @@ import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
 import picocli.CommandLine;
 
-import javax.inject.Inject;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;

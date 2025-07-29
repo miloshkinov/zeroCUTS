@@ -15,13 +15,12 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.freight.carriers.Carrier;
 import org.matsim.freight.carriers.CarrierPlan;
-import org.matsim.freight.carriers.CarrierPlanWriter;
 import org.matsim.freight.carriers.CarriersUtils;
 import org.matsim.freight.carriers.FreightCarriersConfigGroup;
 import org.matsim.freight.carriers.ScheduledTour;
 import org.matsim.freight.carriers.Tour;
 import org.matsim.freight.carriers.analysis.RunFreightAnalysisEventBased;
-import org.matsim.freight.carriers.controler.CarrierModule;
+import org.matsim.freight.carriers.controller.CarrierModule;
 import org.matsim.vsp.emissions.RunFoodEmissions2024;
 
 /**
@@ -129,7 +128,6 @@ public class UpdateRunOutputs {
     // ## MATSim configuration:  ##
     final Controler controler = new Controler( scenario ) ;
     controler.addOverridingModule(new CarrierModule() );
-
 
     // ## Start of the MATSim-Run: ##
     controler.run();
