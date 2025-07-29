@@ -36,7 +36,7 @@ public class RunEmissionEventsAnalysis2024 {
   public static void main(String[] args) throws IOException {
 
 //    // Update EFoods2020::
-//    final String pathToRunDir = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/";
+//    final String pathToRunDir = "../shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/Food_ETrucks/";
 //    var listOfRuns = List.of(
 //        "Base_NwCE_BVWP_Pickup_10000it/",
 //        "CaseA_E160_NwCE_BVWP_Pickup_10000it/",
@@ -44,7 +44,7 @@ public class RunEmissionEventsAnalysis2024 {
 //    )   ;
 
 
-        final String pathToRunDir = "/Users/kturner/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/";
+        final String pathToRunDir = "../shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/";
     var listOfRuns = List.of(
         "foodRetailing_wo_rangeConstraint/71_ICEVBEV_NwCE_BVWP_10000it_DCoff_noTax/",
         "foodRetailing_wo_rangeConstraint/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/",
