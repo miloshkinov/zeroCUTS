@@ -1,0 +1,2 @@
+carrierName	vehicleTypes	numberOfDepots	selectedVehicleDepots	areaOfAdditionalDepots	fixedNumberOfVehiclePerTypeAndLocation	fleetSize	vehicleStartTime	vehicleEndTime	jspritIterations
+dhl_12	dhl_vehicle	1		12		infinite	28800	57600	3

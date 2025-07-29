@@ -46,26 +46,26 @@ create_vehicle_categories <- function(data) {
     mutate(vehicleCategory = ifelse(vehicleTypeId %in% c("light8t", "light8t_frozen"), yes = "light8t",
                                     no = ifelse(vehicleTypeId %in% c("light8t_electro_Mitsubishi", "light8t_electro_Quantron", "light8t_frozen_electro_Mitsubishi", "light8t_frozen_electro_Quantron"), yes = "light8t_electro",
                                                 no = ifelse(vehicleTypeId %in% c("medium18t", "medium18t_frozen"), yes = "medium18t",
-                                                            no = ifelse(vehicleTypeId %in% c("medium18t_electro_Renault", "medium18t_electro_Volvo"), yes = "medium18t_electro", 
-                                                                        no = ifelse(vehicleTypeId %in% c("heavy26t", "heavy26t_frozen"), yes = "heavy26t", 
-                                                                                    no = ifelse(vehicleTypeId %in% c("heavy26t_electro_Daimler", "heavy26t_electro_Renault", "heavy26t_frozen_electro_Daimler", "heavy26t_frozen_electro_Renault"), yes = "heavy26t_electro", 
-                                                                                                no = ifelse(vehicleTypeId %in% c("heavy40t_electro_Daimler", "heavy40t_electro_Scania", "heavy40t_frozen_electro_Daimler", "heavy40t_frozen_electro_Scania"), yes = "heavy40t_electro", 
-                                                                                                            no = ifelse(vehicleTypeId %in% c("heavy40t", "heavy40t_frozen"), yes = "heavy40t", 
+                                                            no = ifelse(vehicleTypeId %in% c("medium18t_electro_Renault", "medium18t_electro_Volvo"), yes = "medium18t_electro",
+                                                                        no = ifelse(vehicleTypeId %in% c("heavy26t", "heavy26t_frozen"), yes = "heavy26t",
+                                                                                    no = ifelse(vehicleTypeId %in% c("heavy26t_electro_Daimler", "heavy26t_electro_Renault", "heavy26t_frozen_electro_Daimler", "heavy26t_frozen_electro_Renault"), yes = "heavy26t_electro",
+                                                                                                no = ifelse(vehicleTypeId %in% c("heavy40t_electro_Daimler", "heavy40t_electro_Scania", "heavy40t_frozen_electro_Daimler", "heavy40t_frozen_electro_Scania"), yes = "heavy40t_electro",
+                                                                                                            no = ifelse(vehicleTypeId %in% c("heavy40t", "heavy40t_frozen"), yes = "heavy40t",
                                                                                                                         no = as.character(vehicleTypeId))))))))))
   # Add a category for the sum of all vehicle types
   data <- data %>%
     mutate(sum = ifelse(vehicleCategory %in% c("light8t", "light8t_electro","medium18t", "medium18t_electro",
-                                                           "heavy26t", "heavy26t_electro", "heavy40t", "heavy40t_electro"), 
-                                    yes = "Sum", no = as.character(vehicleCategory)))
-  
+                                               "heavy26t", "heavy26t_electro", "heavy40t", "heavy40t_electro"),
+                        yes = "Sum", no = as.character(vehicleCategory)))
+
 }
 # Read data for the base case
-df <- read.delim("run3_Base_100it/Analysis/TimeDistance_perVehicleType.tsv")
-df_tours <- read.delim("run3_Base_100it/Analysis/TimeDistance_perVehicle.tsv")
+df <- read.delim("Base_10000/Analysis/TimeDistance_perVehicleType.tsv")
+df_tours <- read.delim("Base_10000/Analysis/TimeDistance_perVehicle.tsv")
 
 # Read data for the policy case
-df_policy <- read.delim("run2_EV_100it/Analysis/TimeDistance_perVehicleType.tsv")
-df_tours_policy <- read.delim("run2_EV_100it/Analysis/TimeDistance_perVehicle.tsv")
+df_policy <- read.delim("EV_only_10000/Analysis/TimeDistance_perVehicleType.tsv")
+df_tours_policy <- read.delim("EV_only_10000/Analysis/TimeDistance_perVehicle.tsv")
 
 #add categories
 df <- create_vehicle_categories(df)
@@ -75,7 +75,7 @@ df_tours_policy <- create_vehicle_categories(df_tours_policy)
 
 # Specify the desired order of vehicleTypeId
 desired_order <- c("light8t", "light8t_electro","medium18t", "medium18t_electro",
-                   "heavy26t", "heavy26t_electro", "heavy40t", "heavy40t_electro", "Sum")
+                   "heavy26t", "heavy26t_electro", "heavy40t", "heavy40t_electro")
 
 # Convert 'vehicleTypeId' to a factor with the desired order for both base and policy cases
 df$vehicleCategory <- factor(df$vehicleCategory, levels = desired_order)
@@ -100,16 +100,29 @@ combined_bar_plot_costs <- create_bar_plot_costs(df, df_policy, 'Total Costs by 
 combined_bar_plot_distances <- create_bar_plot_distances(df, df_policy, 'Total Traveled Distances by Vehicle Type')
 
 # 4. Box Plot for Traveled Distances by Vehicle Type (Interactive)
-box_plot_distances <- plot_ly(data = df_tours, x = ~vehicleCategory, y = ~travelDistance.km., 
+box_plot_distances <- plot_ly(data = df_tours, x = ~vehicleCategory, y = ~travelDistance.km.,
                               type = 'box', boxpoints = "all", jitter = 0.0, pointpos = -0.0, colors = ) %>%
   layout(xaxis = list(title = 'Vehicle Type'), yaxis = list(title = 'Traveled Distances (km)'))
-box_plot_distances_policy <- plot_ly(data = df_tours_policy, x = ~vehicleCategory, y = ~travelDistance.km., 
-                              type = 'box', boxpoints = "all", jitter = 0.0, pointpos = -0.0) %>%
+box_plot_distances_policy <- plot_ly(data = df_tours_policy, x = ~vehicleCategory, y = ~travelDistance.km.,
+                                     type = 'box', boxpoints = "all", jitter = 0.0, pointpos = -0.0) %>%
   layout(xaxis = list(title = 'Vehicle Type'), yaxis = list(title = 'Traveled Distances (km)'))
 
-# Display the combined bar plot
+# Merge the base case and policy case data frames
+combined_df_tours <- bind_rows(
+  mutate(df_tours, Case = "Base"),
+  mutate(df_tours_policy, Case = "Policy")
+)
+
+# Create a box plot for traveled distances by vehicle type for both cases
+combined_box_plot_distances <- plot_ly(data = combined_df_tours, x = ~vehicleCategory, y = ~travelDistance.km., color = ~Case,
+                                       type = 'box', boxpoints = "all", jitter = 0.0, pointpos = -0.0, colors = "Set1") %>%
+  layout(xaxis = list(title = 'Vehicle Type'), yaxis = list(title = 'Traveled Distances (km)'),
+         title = 'Box Plot of Traveled Distances by Vehicle Type - Base vs. Policy') %>%
+  layout(font = list(size = 16))
+
 print(combined_bar_plot_vehicles)
 print(combined_bar_plot_costs)
 print(combined_bar_plot_distances)
 print(box_plot_distances %>% layout(title = 'Box Plot of Traveled Distances by Vehicle Type - Base'))
 print(box_plot_distances_policy %>% layout(title = 'Box Plot of Traveled Distances by Vehicle Type - EV'))
+print(combined_box_plot_distances)

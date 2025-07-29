@@ -53,12 +53,12 @@ public class FreightAnalyse {
 
 	private void run() {
 
-//			File configFile = new File(RUN_DIR + "output_config.xml");
-////			File configFile = new File(RUN_DIR + "output_config.xml.gz");
-//			File populationFile = new File(RUN_DIR + "output_plans.xml.gz");
+//		File configFile = new File(RUN_DIR + "output_config.xml");
+//		File configFile = new File(RUN_DIR + "output_config.xml.gz");
+//		File populationFile = new File(RUN_DIR + "output_plans.xml.gz");
 //		File networkFile = new File(RUN_DIR + "output_network.xml.gz");
 //		File carrierFile = new File(RUN_DIR + "output_carriers.xml.gz");
-////		File vehicleTypeFile = new File(RUN_DIR + "output_carriersVehicleTypes.xml.gz");
+//		File vehicleTypeFile = new File(RUN_DIR + "output_carriersVehicleTypes.xml.gz");
 //		File vehicleFile = new File(RUN_DIR + "output_allVehicles.xml.gz");
 		Config config = ConfigUtils.createConfig();
 		config.vehicles().setVehiclesFile(RUN_DIR + runId + "output_allVehicles.xml.gz");
