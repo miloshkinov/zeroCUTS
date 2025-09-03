@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<carriers xmlns="http://www.matsim.org/files/dtd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.matsim.org/files/dtd http://www.matsim.org/files/dtd/carriersDefinitions_v2.1.xsd">
+		<carrier id="Carrier_Chessboard">
+			<capabilities fleetSize="INFINITE">
+				<vehicles>
+					<vehicle id="TruckChessboard" depotLinkId="j(0,7)R" typeId="EV_small_battery" earliestStart="06:00:00" latestEnd="14:00:00"/>
+				</vehicles>
+			</capabilities>
+
+		</carrier>
+
+
+	</carriers>

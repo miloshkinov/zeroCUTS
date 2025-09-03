@@ -38,6 +38,7 @@ public class Run_Abfall {
 	private static final String inputCarriersWithDieselVehicle = "scenarios/wasteCollection/Berlin/carriers_diesel_vehicle.xml";
 	private static final String inputCarriersWithMediumBatteryVehicle = "scenarios/wasteCollection/Berlin/carriers_medium_EV.xml";
 	private static final String inputCarriersWithSmallBatteryVehicle = "scenarios/wasteCollection/Berlin/carriers_small_EV.xml";
+	private static final String inputCarriersFromInputFile = "scenarios/wasteCollection/Berlin/carriers_chessboard.xml";
 
 	private enum netzwerkAuswahl {
 		originalChessboard, berlinNetwork
@@ -64,7 +65,7 @@ public class Run_Abfall {
 		 * name of the scenario shows you the needed network.
 		 */
 
-		netzwerkAuswahl netzwerkWahl = netzwerkAuswahl.berlinNetwork;
+		netzwerkAuswahl netzwerkWahl = netzwerkAuswahl.originalChessboard;
 		scenarioAuswahl scenarioWahl;
 		carrierChoice chosenCarrier;
 		int jspritIterations;
@@ -83,17 +84,17 @@ public class Run_Abfall {
 		}
 		if (args.length == 0) {
 			chosenCarrier = carrierChoice.carriersWithDieselVehicle;
-			scenarioWahl = scenarioAuswahl.berlinSelectedDistricts;
+			scenarioWahl = scenarioAuswahl.chessboardTotalGarbageToCollect;
 			shapeFileLocation = berlinDistrictsWithGarbageInformations;
 			oneCarrierForOneDistrict = true;
-			jspritIterations = 100;
+			jspritIterations = 1;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
-			outputLocation = "output/wasteCollectionBerlin/Scenario1";
+			outputLocation = "output/wasteCollectionBerlin/FullScenarioTest";
 			day = "MO";
 			networkChangeEventsFileLocation = "";
 		} else {
-			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay;
+			scenarioWahl = scenarioAuswahl.chessboardTotalGarbageToCollect;
 			jspritIterations = Integer.parseInt(args[0]);
 			volumeDustbinInLiters = Double.parseDouble(args[1]); // in liter
 			secondsServiceTimePerDustbin = Double.parseDouble(args[2]);
@@ -104,7 +105,7 @@ public class Run_Abfall {
 			carriersFileLocation = args[7];
 			shapeFileLocation = args[8];
 			oneCarrierForOneDistrict = Boolean.parseBoolean(args[9]);
-			chosenCarrier = carrierChoice.carriersFromInputFile;
+			chosenCarrier = carrierChoice.carriersWithDieselVehicle;
 		}
 		LogManager.getRootLogger().atLevel(Level.INFO);
 
@@ -113,7 +114,7 @@ public class Run_Abfall {
 
 		switch (netzwerkWahl) {
 			case originalChessboard -> {
-				config.controller().setOutputDirectory("output/original_Chessboard/04_Distances");
+				config.controller().setOutputDirectory("output/original_Chessboard/withVRPSplitv1");
 				config.network().setInputFile(original_Chessboard);
 			}
 			case berlinNetwork -> {
@@ -141,7 +142,9 @@ public class Run_Abfall {
 			vehicleTypesFileLocation =  inputVehicleTypes;
 			carriersFileLocation = inputCarriersWithMediumBatteryVehicle;
 			break;
-		case carriersFromInputFile:			
+		case carriersFromInputFile:
+			vehicleTypesFileLocation =  inputVehicleTypes;
+			carriersFileLocation = inputCarriersFromInputFile;
 			break;
 		default:
 			throw new RuntimeException("no carriers selected.");
@@ -160,6 +163,8 @@ public class Run_Abfall {
 		List<SimpleFeature> districtsWithGarbage = shpOptions.readFeatures();
 
 		AbfallUtils.createMapWithLinksInDistricts(districtsWithGarbage, allLinks);
+
+		carriers.getCarriers().clear();
 
 		switch (scenarioWahl) {
 			case chessboardTotalGarbageToCollect -> {
@@ -212,6 +217,12 @@ public class Run_Abfall {
 							carrierMap, allLinks, volumeDustbinInLiters, secondsServiceTimePerDustbin, oneCarrierForOneDistrict);
 			default -> throw new RuntimeException("no scenario selected.");
 		}
+
+		//-----------------RUN THE RANDOM SPLIT------------------------
+		System.out.println("RANDOM SPLIT: ");
+		int numberOfCarriers = 2;
+		VrpSplitUtils.createRandomCarriers(scenario, numberOfCarriers, jspritIterations);
+
 		/*
 		 * This xml output gives a summary with information about the created shipments,
 		 * so that you can already have this information, while jsprit and matsim are
@@ -220,7 +231,7 @@ public class Run_Abfall {
 		AbfallUtils.outputSummaryShipments(scenario, day, carrierMap);
 		// jsprit
 
-		AbfallUtils.solveWithJsprit(scenario, carriers, carrierMap, jspritIterations);
+		AbfallUtils.solveWithJsprit(scenario, carriers, carrierMap, jspritIterations, numberOfCarriers);
 
 		// final Controler controler = new Controler(scenario);
 		Controler controler = AbfallUtils.prepareController(scenario);
@@ -234,8 +245,8 @@ public class Run_Abfall {
 		new CarrierPlanWriter(carriers)
 				.write(scenario.getConfig().controller().getOutputDirectory() + "/output_CarrierPlans.xml");
 
-		AbfallUtils.outputSummary(districtsWithGarbage, scenario, carrierMap, day, volumeDustbinInLiters,
-				secondsServiceTimePerDustbin);
-		AbfallUtils.createResultFile(scenario, carriers);
+//		AbfallUtils.outputSummary(districtsWithGarbage, scenario, carrierMap, day, volumeDustbinInLiters,
+//				secondsServiceTimePerDustbin);
+//		AbfallUtils.createResultFile(scenario, carriers);
 	}
 }

@@ -573,7 +573,7 @@ class AbfallUtils {
 	 * @param
 	 */
 	static void solveWithJsprit(Scenario scenario, Carriers carriers, HashMap<String, Carrier> carrierMap,
-			int jspritIteration) {
+			int jspritIteration, int numberOfCarriers) { //ADDED NUMBER OF CARRIERS VARIABLE BECAUSE I STOPPED USING THE CARRIERMAP
 
 		int carrierCount = 1;
 		CarrierVehicleTypes vehicleTypes = (CarrierVehicleTypes) scenario.getScenarioElement("carrierVehicleTypes");
@@ -583,7 +583,8 @@ class AbfallUtils {
 		final NetworkBasedTransportCosts netBasedCosts = netBuilder.build();
 		netBuilder.setTimeSliceWidth(1800);
 
-		for (Carrier singleCarrier : carrierMap.values()) {
+		//I changed this to loop through the carriers and not the carriermap
+		for (Carrier singleCarrier : carriers.getCarriers().values()) {
 			if (singleCarrier.getShipments().isEmpty()) {
 				log.warn("Carrier " + singleCarrier.getId() + " has no shipments to collect!");
 				continue;
@@ -597,8 +598,9 @@ class AbfallUtils {
 
 			// get the algorithm out-of-the-box, search solution and get the best one.
 			VehicleRoutingAlgorithm algorithm = new SchrimpfFactory().createAlgorithm(problem);
-			log.info("Creating solution for carrier " + carrierCount + " of " + carrierMap.size() + " Carriers");
+			log.info("Creating solution for carrier " + carrierCount + " of " + numberOfCarriers + " Carriers");
 			algorithm.setMaxIterations(jspritIterations = jspritIteration);
+			System.out.println("ANZAHL JSPRIT ITERATIONEN: " +  jspritIteration);
 			Collection<VehicleRoutingProblemSolution> solutions = algorithm.searchSolutions();
 			VehicleRoutingProblemSolution bestSolution = Solutions.bestOf(solutions);
 			costsJsprit = costsJsprit + bestSolution.getCost();
@@ -610,10 +612,10 @@ class AbfallUtils {
 			singleCarrier.setSelectedPlan(carrierPlanServices);
 			noPickup = noPickup + bestSolution.getUnassignedJobs().size();
 			carrierCount++;
-			if (singleCarrier.getId() == Id.create("Carrier_Chessboard", Carrier.class))
-				new Plotter(problem, bestSolution).plot(
-						scenario.getConfig().controller().getOutputDirectory() + "/jsprit_CarrierPlans_Test01.png",
-						"bestSolution");
+//			if (singleCarrier.getId() == Id.create("Carrier_Chessboard", Carrier.class))
+//				new Plotter(problem, bestSolution).plot(
+//						scenario.getConfig().controller().getOutputDirectory() + "/jsprit_CarrierPlans_Test01.png",
+//						"bestSolution");
 		}
 		new CarrierPlanWriter(carriers)
 				.write(scenario.getConfig().controller().getOutputDirectory() + "/jsprit_CarrierPlans.xml");
