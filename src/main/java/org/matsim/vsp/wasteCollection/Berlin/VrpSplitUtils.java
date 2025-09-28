@@ -174,7 +174,7 @@ public class VrpSplitUtils {
             for (CarrierShipment shipment : singleCarrier.getShipments().values()) {
 
                 //Retrieve Pickup Node Id
-                System.out.println("SHIPMENT ID: " + shipment.getId() + "SHIPMENT START LINK ID: " + shipment.getPickupLinkId());
+                //System.out.println("SHIPMENT ID: " + shipment.getId() + "SHIPMENT START LINK ID: " + shipment.getPickupLinkId());
                 List<Id<Link>> linkIds = List.of(shipment.getPickupLinkId());
                 Id<Node> nodeId = NetworkUtils.getLinks(network,linkIds).get(0).getToNode().getId();
 
@@ -231,7 +231,7 @@ public class VrpSplitUtils {
             for (CarrierShipment shipment : singleCarrier.getShipments().values()) {
 
                 //Retrieve Pickup Node Id
-                System.out.println("SHIPMENT ID: " + shipment.getId() + " ,SHIPMENT START LINK ID: " + shipment.getPickupLinkId());
+                //System.out.println("SHIPMENT ID: " + shipment.getId() + " ,SHIPMENT START LINK ID: " + shipment.getPickupLinkId());
                 List<Id<Link>> linkIds = List.of(shipment.getPickupLinkId());
                 Id<Node> nodeId = NetworkUtils.getLinks(network,linkIds).get(0).getToNode().getId();
 
@@ -252,6 +252,10 @@ public class VrpSplitUtils {
                     }
                 }
                 //Assign to Carrier
+                if (minDistance == 0){
+                    System.out.println("THIS IS A SEED " +  seedNumber);
+                    shipment.getAttributes().putAttribute("seed", "seed" + seedNumber);
+                }
                 shipment.getAttributes().putAttribute("carrier", "newCarrier" + seedNumber);
                 System.out.println("SHIPMENT " + shipment.getId().toString() + " ADDED TO CARRIER " + seedNumber);
                 CarriersUtils.addShipment(newCarriers.getCarriers().get(Id.create("Carrier" + seedNumber, Carrier.class)), shipment);
@@ -267,95 +271,24 @@ public class VrpSplitUtils {
         //create xml facilities file to visualise results
         createXMLFacilities(network, carriers);
 
-        System.out.println("Random VRP Splitting complete");
-
-//
-//		//for xml
-//		Id<ActivityFacility> facilityId = Id.create(firstSeed.getId(), ActivityFacility.class);
-//		ActivityFacility facility = facilities.getFactory().createActivityFacility(facilityId, firstSeedCoord);
-//		facility.getAttributes().putAttribute("carrier", "seed1");
-//		facility.addActivityOption(new ActivityOptionImpl("delivery"));
-//		facilities.addActivityFacility(facility);
-//
-//		//Find second Seed
-//		for (CarrierService service : carrier.getServices().values()) {
-//
-//			//Dont check seed twice
-//			if(service.getId() == firstSeed.getId()){
-//				continue;
-//			}
-//
-//			List<Id<Link>> linkIds = List.of(service.getServiceLinkId());
-//			Id<Node> nodeId = NetworkUtils.getLinks(network,linkIds).get(0).getToNode().getId();
-//			final Coord coord =  NetworkUtils.getNodes(network, nodeId.toString()).get(0).getCoord();
-//			//coords.add(coord);
-//			double addedDistance = NetworkUtils.getEuclideanDistance(depotCoord, coord)+NetworkUtils.getEuclideanDistance(firstSeedCoord, coord);
-//			if (addedDistance > maxDistance) {
-//				maxDistance = addedDistance;
-//				seedServiceId = service.getId().toString();
-//				secondSeedCoord = coord;
-//			}
-//		}
-//
-//		//Add second Seed
-//		CarrierService secondSeed = CarriersUtils.getService(carrier, Id.create(seedServiceId, CarrierService.class));
-//		secondSeed.getAttributes().putAttribute("carrier", "newCarrier2");
-//		CarriersUtils.addService(newCarrier2, secondSeed);
-//		System.out.println("SERVICE "+ secondSeed.getId().toString() + " ADDED TO CARRIER 2");
-//
-//		//for xml
-//		facilityId = Id.create(secondSeed.getId(), ActivityFacility.class);
-//		facility = facilities.getFactory().createActivityFacility(facilityId, secondSeedCoord);
-//		facility.getAttributes().putAttribute("carrier", "seed2");
-//		facilities.addActivityFacility(facility);
-//
-//		//Assign all other services based on closeness
-//		for (CarrierService service : carrier.getServices().values()) {
-//
-//			//Dont check seed twice
-//			if(service.getId() == firstSeed.getId() || service.getId() == secondSeed.getId()){
-//				continue;
-//			}
-//			List<Id<Link>> linkIds = List.of(service.getServiceLinkId());
-//			Id<Node> nodeId = NetworkUtils.getLinks(network,linkIds).get(0).getToNode().getId();
-//			final Coord coord =  NetworkUtils.getNodes(network, nodeId.toString()).get(0).getCoord();
-//			double distanceApart = NetworkUtils.getEuclideanDistance(coord, firstSeedCoord) - NetworkUtils.getEuclideanDistance(coord, secondSeedCoord);
-//
-//			//for xml file
-//			facilityId = Id.create(service.getId(), ActivityFacility.class);
-//			facility = facilities.getFactory().createActivityFacility(facilityId, coord);
-//
-//			//see which seed the service is closest to
-//			if (distanceApart <= 0) {
-//				service.getAttributes().putAttribute("carrier", "newCarrier1");
-//				CarriersUtils.addService(newCarrier1, service);
-//				facility.getAttributes().putAttribute("carrier", "newCarrier1");
-//				System.out.println("SERVICE "+ service.getId().toString() + " ADDED TO CARRIER 1");
-//			}else{
-//				service.getAttributes().putAttribute("carrier", "newCarrier2");
-//				CarriersUtils.addService(newCarrier2, service);
-//				facility.getAttributes().putAttribute("carrier", "newCarrier2");
-//				System.out.println("SERVICE "+ service.getId().toString() + " ADDED TO CARRIER 2");
-//			}
-//
-//			//for xml
-//			facilities.addActivityFacility(facility);
-//		}
+        System.out.println("Geocluster VRP Splitting complete");
     }
 
     private static List<Coord> findGeoSeeds(Carrier carrier, Network network, int numberOfCarriers) {
 
         //List to track coords that will be returned
         List<Coord> seedCoords = new ArrayList<>();
+        List<Id<CarrierShipment>> seedCoordIds = new ArrayList<>();
 
         //Get Depot Coord THIS NEEDS TO BE IMPROVED
         Id<Node> depotNodeId = NetworkUtils.getLinks(network, linkHaselhorstDepot).get(0).getFromNode().getId();
         Coord depotCoord =  NetworkUtils.getNodes(network, depotNodeId.toString()).get(0).getCoord();
 
-        //Variables to track the max distances
+        //Variables to track the max distances and coefficient to encourage clustering
 		double maxDistance = 0;
         Coord seedCoord = null;
         Id<CarrierShipment> seedId = null;
+        double clusterCoefficient = 2.0; //PLAY AROUND WITH THIS
 
         //loop for amount of seeds required
         for (int i = 0; i < numberOfCarriers; i++) {
@@ -372,7 +305,12 @@ public class VrpSplitUtils {
                 double distance = NetworkUtils.getEuclideanDistance(depotCoord, shipmentCoord);
                 if (seedCoords != null) {
                     for (int j = 0; j < seedCoords.size(); j++) {
-                        distance += NetworkUtils.getEuclideanDistance(seedCoords.get(j), shipmentCoord);
+                        //To avoid picking same seed twice
+                        if (seedCoordIds.get(j) == shipment.getId()){
+                            distance = 0;
+                            break;
+                        }
+                        distance += NetworkUtils.getEuclideanDistance(seedCoords.get(j), shipmentCoord)*clusterCoefficient;
                     }
                 }
 
@@ -380,10 +318,13 @@ public class VrpSplitUtils {
                 if (distance>maxDistance) {
                     maxDistance = distance;
                     seedCoord = shipmentCoord;
+                    seedId = shipment.getId();
                 }
             }
             //Save Seed and reset max Distance
+            System.out.println("Seed " + (i+1) + " found at Coord " + seedCoord.toString() + " with ID: " + seedId.toString());
             seedCoords.add(seedCoord);
+            seedCoordIds.add(seedId);
             maxDistance = 0;
         }
 
@@ -438,7 +379,7 @@ public class VrpSplitUtils {
             for (CarrierShipment shipment : carrier.getShipments().values()) {
 
                 //Retrieve Pickup Node Id
-                System.out.println("SHIPMENT ID: " + shipment.getId() + "SHIPMENT START LINK ID: " + shipment.getPickupLinkId());
+                //System.out.println("SHIPMENT ID: " + shipment.getId() + "SHIPMENT START LINK ID: " + shipment.getPickupLinkId());
                 List<Id<Link>> linkIds = List.of(shipment.getPickupLinkId());
                 Id<Node> nodeId = NetworkUtils.getLinks(network,linkIds).get(0).getToNode().getId();
 
@@ -446,7 +387,10 @@ public class VrpSplitUtils {
                 final Coord coord =  NetworkUtils.getNodes(network, nodeId.toString()).get(0).getCoord();
                 final Id<ActivityFacility> facilityId = Id.create(shipment.getId(), ActivityFacility.class);
                 ActivityFacility facility = facilities.getFactory().createActivityFacility(facilityId, coord);
-                facility.getAttributes().putAttribute("carrier", "newCarrier" + shipment.getAttributes().getAttribute("carrier").toString());
+                facility.getAttributes().putAttribute("carrier", shipment.getAttributes().getAttribute("carrier").toString());
+                if (shipment.getAttributes().getAttribute("seed") != null) {
+                    facility.getAttributes().putAttribute("seed", shipment.getAttributes().getAttribute("seed").toString());
+                }
 
                 //add activity to xml
                 facility.addActivityOption(new ActivityOptionImpl("delivery"));

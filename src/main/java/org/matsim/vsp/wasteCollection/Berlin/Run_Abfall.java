@@ -87,7 +87,7 @@ public class Run_Abfall {
 			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay; //and this
 			shapeFileLocation = berlinDistrictsWithGarbageInformations;
 			oneCarrierForOneDistrict = true;
-			jspritIterations = 1;
+			jspritIterations = 10;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
 			outputLocation = "output/wasteCollectionBerlin/Test_1CarrierSplitInto3Geo";
@@ -225,7 +225,7 @@ public class Run_Abfall {
 		carriers.addCarrier(carrier);
 
 		//-----------------RUN THE SPLIT------------------------
-		System.out.println("RANDOM SPLIT: ");
+		//System.out.println("VRP SPLIT: ");
 		int numberOfCarriers = 3;
 		VrpSplitUtils.creatGeoSeedCarriers(scenario, numberOfCarriers, jspritIterations);
 		//TESTING
