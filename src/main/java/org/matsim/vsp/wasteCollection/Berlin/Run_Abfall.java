@@ -65,7 +65,7 @@ public class Run_Abfall {
 		 * name of the scenario shows you the needed network.
 		 */
 
-		netzwerkAuswahl netzwerkWahl = netzwerkAuswahl.originalChessboard;
+		netzwerkAuswahl netzwerkWahl = netzwerkAuswahl.berlinNetwork;
 		scenarioAuswahl scenarioWahl;
 		carrierChoice chosenCarrier;
 		int jspritIterations;
@@ -83,14 +83,14 @@ public class Run_Abfall {
 			log.info(arg);
 		}
 		if (args.length == 0) {
-			chosenCarrier = carrierChoice.carriersWithDieselVehicle;
-			scenarioWahl = scenarioAuswahl.chessboardTotalGarbageToCollect;
+			chosenCarrier = carrierChoice.carriersWithDieselVehicle;        //Change this when switching between chessboard and berlin
+			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay; //and this
 			shapeFileLocation = berlinDistrictsWithGarbageInformations;
 			oneCarrierForOneDistrict = true;
 			jspritIterations = 1;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
-			outputLocation = "output/wasteCollectionBerlin/FullScenarioTest";
+			outputLocation = "output/wasteCollectionBerlin/Test_1CarrierSplitInto3Geo";
 			day = "MO";
 			networkChangeEventsFileLocation = "";
 		} else {
@@ -218,10 +218,20 @@ public class Run_Abfall {
 			default -> throw new RuntimeException("no scenario selected.");
 		}
 
-		//-----------------RUN THE RANDOM SPLIT------------------------
+		//-----------------TEST A SINGLE CARRIER------------------------
+		System.out.println("TESTING ONE CARRIER: ");
+		var carrier = carriers.getCarriers().get(Id.create("Carrier Haselhorst", Carrier.class));
+		carriers.getCarriers().clear();
+		carriers.addCarrier(carrier);
+
+		//-----------------RUN THE SPLIT------------------------
 		System.out.println("RANDOM SPLIT: ");
-		int numberOfCarriers = 2;
-		VrpSplitUtils.createRandomCarriers(scenario, numberOfCarriers, jspritIterations);
+		int numberOfCarriers = 3;
+		VrpSplitUtils.creatGeoSeedCarriers(scenario, numberOfCarriers, jspritIterations);
+		//TESTING
+		for (Carrier singleCarrier : carriers.getCarriers().values()) {
+			System.out.println(singleCarrier.getId().toString());
+		}
 
 		/*
 		 * This xml output gives a summary with information about the created shipments,
@@ -229,8 +239,8 @@ public class Run_Abfall {
 		 * still running.
 		 */
 		AbfallUtils.outputSummaryShipments(scenario, day, carrierMap);
-		// jsprit
 
+		// jsprit
 		AbfallUtils.solveWithJsprit(scenario, carriers, carrierMap, jspritIterations, numberOfCarriers);
 
 		// final Controler controler = new Controler(scenario);
