@@ -29,6 +29,7 @@ public class VrpSplitUtils {
         //Get initial capabilities and remove initial carrier
         Carriers carriers = CarriersUtils.getCarriers(scenario);
         var carrier = carriers.getCarriers().get(Id.create("Carrier_Chessboard", Carrier.class)); //<--- THIS and the following lines NEEDS CHANGING!
+        String carrierName = carrier.getId().toString();
         //Making the vehicle, ASK IF THIS IS OKAY, NO THIS NEEDS TO BE IMPROVED FOR ALL CASES?
         String vehicleName = "Split Vehicle";
         double earliestStartingTime = 6 * 3600;
@@ -43,7 +44,7 @@ public class VrpSplitUtils {
 
         //Set up the desired number of carriers
         for (int i = 1; i <= numberOfCarriers; i++){
-            Carrier newCarrier = createSingleCarrier(i, numberOfIterations, carrierVehicle);
+            Carrier newCarrier = createSingleCarrier(carrierName, numberOfIterations, carrierVehicle, i);
             carriers.addCarrier(newCarrier);
             System.out.println(carriers.getCarriers().size() + " carriers created");
         }
@@ -160,12 +161,13 @@ public class VrpSplitUtils {
         //Loop through all carriers
         for (Carrier singleCarrier : carriers.getCarriers().values()) {
 
-            //Get Carrier Vehicle NEEDS TO BE FIXED FOR CARRIERS WITH MORE THAN 1 VEHICLE!!!!!
+            //Get Carrier Vehicle and Name NEEDS TO BE FIXED FOR CARRIERS WITH MORE THAN 1 VEHICLE!!!!!
             CarrierVehicle carrierVehicle = singleCarrier.getCarrierCapabilities().getCarrierVehicles().values().iterator().next();
+            String carrierName = singleCarrier.getId().toString();
 
             //Set up the desired number of new carriers
             for (int i = 1; i <= numberOfCarriers; i++){
-                Carrier newCarrier = createSingleCarrier(i, numberOfIterations, carrierVehicle);
+                Carrier newCarrier = createSingleCarrier(carrierName, numberOfIterations, carrierVehicle, i);
                 newCarriers.addCarrier(newCarrier);
                 System.out.println(newCarriers.getCarriers().size() + " carriers created");
             }
@@ -185,9 +187,9 @@ public class VrpSplitUtils {
                 long coinFlip = randomSeed.nextInt(numberOfCarriers) + 1;
                 for (int i = 1; i <= numberOfCarriers; i++){
                     if (coinFlip == i) {
-                        shipment.getAttributes().putAttribute("carrier", "newCarrier" + i);
-                        CarriersUtils.addShipment(newCarriers.getCarriers().get(Id.create("Carrier" + i, Carrier.class)), shipment);
-                        System.out.println("SHIPMENT " + shipment.getId().toString() + " ADDED TO CARRIER " + i);
+                        shipment.getAttributes().putAttribute("carrier", carrierName + i);
+                        CarriersUtils.addShipment(newCarriers.getCarriers().get(Id.create(carrierName + i, Carrier.class)), shipment);
+                        System.out.println("SHIPMENT " + shipment.getId().toString() + " ADDED TO  " + carrierName + i);
                     }
                 }
             }
@@ -214,15 +216,16 @@ public class VrpSplitUtils {
         //Loop through all carriers
         for (Carrier singleCarrier : carriers.getCarriers().values()) {
 
-            //Get Carrier Vehicle NEEDS TO BE FIXED FOR CARRIERS WITH MORE THAN 1 VEHICLE!!!!!
+            //Get Carrier Vehicle and name NEEDS TO BE FIXED FOR CARRIERS WITH MORE THAN 1 VEHICLE!!!!!
             CarrierVehicle carrierVehicle = singleCarrier.getCarrierCapabilities().getCarrierVehicles().values().iterator().next();
+            String carrierName = singleCarrier.getId().toString();
 
             //Determine the Seeds
             List<Coord> geoSeedCoords = findGeoSeeds(singleCarrier, network, numberOfCarriers);
 
             //Set up the desired number of new carriers
             for (int i = 1; i <= numberOfCarriers; i++) {
-                Carrier newCarrier = createSingleCarrier(i, numberOfIterations, carrierVehicle);
+                Carrier newCarrier = createSingleCarrier(carrierName, numberOfIterations, carrierVehicle, i);
                 newCarriers.addCarrier(newCarrier);
                 System.out.println(newCarriers.getCarriers().size() + " carriers created");
             }
@@ -256,9 +259,9 @@ public class VrpSplitUtils {
                     System.out.println("THIS IS A SEED " +  seedNumber);
                     shipment.getAttributes().putAttribute("seed", "seed" + seedNumber);
                 }
-                shipment.getAttributes().putAttribute("carrier", "newCarrier" + seedNumber);
-                System.out.println("SHIPMENT " + shipment.getId().toString() + " ADDED TO CARRIER " + seedNumber);
-                CarriersUtils.addShipment(newCarriers.getCarriers().get(Id.create("Carrier" + seedNumber, Carrier.class)), shipment);
+                shipment.getAttributes().putAttribute("carrier", carrierName + seedNumber);
+                System.out.println("SHIPMENT " + shipment.getId().toString() + " ADDED TO " + carrierName + seedNumber);
+                CarriersUtils.addShipment(newCarriers.getCarriers().get(Id.create(carrierName + seedNumber, Carrier.class)), shipment);
 
             }
         }
@@ -333,8 +336,8 @@ public class VrpSplitUtils {
     }
 
     //Create a basic carrier
-    private static Carrier createSingleCarrier(int carrierNumber, int numberOfIterations, CarrierVehicle carrierVehicle) {
-        Carrier newCarrier = CarriersUtils.createCarrier(Id.create("Carrier" + carrierNumber, Carrier.class));
+    private static Carrier createSingleCarrier(String carrierName, int numberOfIterations, CarrierVehicle carrierVehicle, int carrierNumber) {
+        Carrier newCarrier = CarriersUtils.createCarrier(Id.create(carrierName + carrierNumber, Carrier.class));
         CarriersUtils.addCarrierVehicle(newCarrier, carrierVehicle);
         CarriersUtils.setJspritIterations(newCarrier, numberOfIterations);
 
@@ -345,7 +348,7 @@ public class VrpSplitUtils {
     private static void createXMLFacilities(Network network, Carriers carriers) {
 
         //Facilities and network setup
-        final String FILENAME_EXPORT_FACILITIES = "input/facilitiesHaselhorstGeoSplit.xml";  //THINK OF HOW TO MAKE THIS EASIER AND LESS MANUAL
+        final String FILENAME_EXPORT_FACILITIES = "input/facilities2CarriersGeoSplit.xml";  //THINK OF HOW TO MAKE THIS EASIER AND LESS MANUAL
         ActivityFacilities facilities = FacilitiesUtils.createActivityFacilities("facilities");
 
         //----ADDING DEPOT AND DROPOFF TO XML----

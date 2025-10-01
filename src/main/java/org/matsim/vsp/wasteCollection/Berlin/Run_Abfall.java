@@ -90,7 +90,7 @@ public class Run_Abfall {
 			jspritIterations = 10;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
-			outputLocation = "output/wasteCollectionBerlin/Test_1CarrierSplitInto3Geo";
+			outputLocation = "output/wasteCollectionBerlin/Test_2CarrierSplitInto6Geo";
 			day = "MO";
 			networkChangeEventsFileLocation = "";
 		} else {
@@ -157,6 +157,11 @@ public class Run_Abfall {
 		Carriers carriers = CarriersUtils.addOrGetCarriers(scenario);
 		HashMap<String, Carrier> carrierMap = AbfallUtils.createCarrier(carriers);
 
+		//TESTING
+		for (Carrier singleCarrier : carriers.getCarriers().values()) {
+			System.out.println(singleCarrier.getId().toString());
+		}
+
 		Map<Id<Link>, ? extends Link> allLinks = scenario.getNetwork().getLinks();
 		HashMap<String, Id<Link>> garbageDumps = AbfallUtils.createDumpMap();
 		ShpOptions shpOptions = new ShpOptions(shapeFileLocation, null, null);
@@ -218,11 +223,18 @@ public class Run_Abfall {
 			default -> throw new RuntimeException("no scenario selected.");
 		}
 
+		//TESTING
+		for (Carrier singleCarrier : carriers.getCarriers().values()) {
+			System.out.println(singleCarrier.getId().toString());
+		}
+
 		//-----------------TEST A SINGLE CARRIER------------------------
 		System.out.println("TESTING ONE CARRIER: ");
-		var carrier = carriers.getCarriers().get(Id.create("Carrier Haselhorst", Carrier.class));
+		var carrier1 = carriers.getCarriers().get(Id.create("Carrier Haselhorst", Carrier.class));
+		var carrier2 = carriers.getCarriers().get(Id.create("Carrier Wilhelmstadt", Carrier.class));
 		carriers.getCarriers().clear();
-		carriers.addCarrier(carrier);
+		carriers.addCarrier(carrier1);
+		carriers.addCarrier(carrier2);
 
 		//-----------------RUN THE SPLIT------------------------
 		//System.out.println("VRP SPLIT: ");

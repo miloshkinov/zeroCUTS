@@ -99,6 +99,8 @@ class AbfallUtils {
 	static HashMap<String, Carrier> createCarrier(Carriers carriers) {
 		HashMap<String, Carrier> carrierMap = new HashMap<String, Carrier>();
 
+		//DOES IT MAKE SENSE TO CHANGE THIS
+
 		carrierMap.put("Nordring", carriers.getCarriers().get(Id.create("BSR_Nordring", Carrier.class)));
 		carrierMap.put("MalmoeerStr", carriers.getCarriers().get(Id.create("BSR_MalmoeerStr", Carrier.class)));
 		carrierMap.put("Forckenbeck", carriers.getCarriers().get(Id.create("BSR_Forckenbeck", Carrier.class)));
@@ -598,7 +600,7 @@ class AbfallUtils {
 
 			// get the algorithm out-of-the-box, search solution and get the best one.
 			VehicleRoutingAlgorithm algorithm = new SchrimpfFactory().createAlgorithm(problem);
-			log.info("Creating solution for carrier " + carrierCount + " of " + numberOfCarriers + " Carriers");
+			log.info("Creating solution for carrier " + carrierCount + " of " + (numberOfCarriers*carriers.getCarriers().size()) + " Carriers"); //WILL HAVE TO CHANGE THE NUMBER OF CARRIERS LOG IF I MAKE THE NUMBER OF CARRIERS VARIABLE
 			algorithm.setMaxIterations(jspritIterations = jspritIteration);
 			System.out.println("ANZAHL JSPRIT ITERATIONEN: " +  jspritIteration);
 			Collection<VehicleRoutingProblemSolution> solutions = algorithm.searchSolutions();
