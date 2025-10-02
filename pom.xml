@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.tu-berlin</groupId>
 	<artifactId>zeroCUTS</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1-split</version>
 
 	<name>zeroCUTS project</name>
 	<description>zeroCUTS project</description>
@@ -19,6 +19,16 @@
 		<!--        <version>2026.0-SNAPSHOT</version>-->
 		<relativePath/>
 	</parent>
+
+	<properties>
+
+		<!-- Don't modify this, change the parent version instead! -->
+		<matsim.version>${project.parent.version}</matsim.version>
+
+		<main.class>org.matsim.vsp.wasteCollection.Berlin.Run_Abfall</main.class>
+
+		<maven.compiler.release>21</maven.compiler.release>
+	</properties>
 
 	<repositories>
 
@@ -161,7 +171,7 @@
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
 									<manifestEntries>
 										<!--suppress UnresolvedMavenProperty -->
-										<Main-Class>${mainClass}</Main-Class>
+										<Main-Class>${main.class}</Main-Class>
 										<Specification-Vendor>org.matsim</Specification-Vendor>
 										<Implementation-Vendor>org.matsim</Implementation-Vendor>
 										<Implementation-Version>${project.version}</Implementation-Version>

@@ -338,8 +338,11 @@ public class VrpSplitUtils {
     //Create a basic carrier
     private static Carrier createSingleCarrier(String carrierName, int numberOfIterations, CarrierVehicle carrierVehicle, int carrierNumber) {
         Carrier newCarrier = CarriersUtils.createCarrier(Id.create(carrierName + carrierNumber, Carrier.class));
-        CarriersUtils.addCarrierVehicle(newCarrier, carrierVehicle);
+        //CarriersUtils.addCarrierVehicle(newCarrier, carrierVehicle);
         CarriersUtils.setJspritIterations(newCarrier, numberOfIterations);
+        CarrierCapabilities carrierCapabilities = CarrierCapabilities.Builder.newInstance()  //IS THERE BETTER WAY TO DO THIS OR IS IT ALWAYS INFINITE
+                .addVehicle(carrierVehicle).setFleetSize(CarrierCapabilities.FleetSize.INFINITE).build();
+        newCarrier.setCarrierCapabilities(carrierCapabilities);
 
         return newCarrier;
     }
@@ -348,7 +351,7 @@ public class VrpSplitUtils {
     private static void createXMLFacilities(Network network, Carriers carriers) {
 
         //Facilities and network setup
-        final String FILENAME_EXPORT_FACILITIES = "input/facilities2CarriersGeoSplit.xml";  //THINK OF HOW TO MAKE THIS EASIER AND LESS MANUAL
+        final String FILENAME_EXPORT_FACILITIES = "input/split_test.xml";  //THINK OF HOW TO MAKE THIS EASIER AND LESS MANUAL
         ActivityFacilities facilities = FacilitiesUtils.createActivityFacilities("facilities");
 
         //----ADDING DEPOT AND DROPOFF TO XML----
