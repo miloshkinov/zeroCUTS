@@ -253,7 +253,8 @@ public class Run_Abfall {
 		AbfallUtils.outputSummaryShipments(scenario, day, carrierMap);
 
 		// jsprit
-		AbfallUtils.solveWithJsprit(scenario, carriers, carrierMap, jspritIterations, numberOfCarriers);
+        CarriersUtils.runJsprit(scenario);
+//		AbfallUtils.solveWithJsprit(scenario, carriers, carrierMap, jspritIterations, numberOfCarriers);
 
 		// final Controler controler = new Controler(scenario);
 		Controler controler = AbfallUtils.prepareController(scenario);
