@@ -283,7 +283,7 @@ public class VrpSplitUtils {
         List<Coord> seedCoords = new ArrayList<>();
         List<Id<CarrierShipment>> seedCoordIds = new ArrayList<>();
 
-        //Get Depot Coord THIS NEEDS TO BE IMPROVED
+        //Get Depot Coord THIS NEEDS TO BE IMPROVED!!!!!!!!!
         Id<Node> depotNodeId = NetworkUtils.getLinks(network, linkHaselhorstDepot).get(0).getFromNode().getId();
         Coord depotCoord =  NetworkUtils.getNodes(network, depotNodeId.toString()).get(0).getCoord();
 
@@ -333,6 +333,114 @@ public class VrpSplitUtils {
 
         //return arraylist
         return seedCoords;
+    }
+
+    static void creatClusterCarriers (Scenario scenario, int numberOfCarriers, int numberOfIterations) {
+
+        //Get network and initial carriers and create a new set
+        Network network = scenario.getNetwork();
+        Carriers carriers = CarriersUtils.getCarriers(scenario);
+        Carriers newCarriers = new Carriers();
+
+        //Loop through all carriers
+        for (Carrier singleCarrier : carriers.getCarriers().values()) {
+
+            //Get Carrier Vehicle and name NEEDS TO BE FIXED FOR CARRIERS WITH MORE THAN 1 VEHICLE!!!!!
+            CarrierVehicle carrierVehicle = singleCarrier.getCarrierCapabilities().getCarrierVehicles().values().iterator().next();
+            String carrierName = singleCarrier.getId().toString();
+
+            //Determine the Seeds
+            List<Coord> geoSeedCoords = findGeoSeeds(singleCarrier, network, numberOfCarriers);
+
+            //Set up the desired number of new carriers
+            for (int i = 1; i <= numberOfCarriers; i++) {
+                Carrier newCarrier = createSingleCarrier(carrierName, numberOfIterations, carrierVehicle, i);
+                newCarriers.addCarrier(newCarrier);
+                System.out.println(newCarriers.getCarriers().size() + " carriers created");
+            }
+
+            //Get Clusters
+            List<List<CarrierShipment>> clusters = findKClusters(singleCarrier, network, numberOfCarriers);
+
+            //loop through all shipments
+            for (CarrierShipment shipment : singleCarrier.getShipments().values()) {
+
+                //Retrieve Pickup Node Id
+                //System.out.println("SHIPMENT ID: " + shipment.getId() + " ,SHIPMENT START LINK ID: " + shipment.getPickupLinkId());
+                List<Id<Link>> linkIds = List.of(shipment.getPickupLinkId());
+                Id<Node> nodeId = NetworkUtils.getLinks(network,linkIds).get(0).getToNode().getId();
+
+                //Retrieve Pickup Node coord
+                final Coord coord =  NetworkUtils.getNodes(network, nodeId.toString()).get(0).getCoord();
+
+                //Variables to track which carrier the shipment should be assigned to
+                double minDistance = Double.MAX_VALUE;
+                int seedNumber = 0;
+
+                //loop through all seeds
+                for (int i = 1; i <= geoSeedCoords.size(); i++) {
+                    // -1 because index starts at 0, don't change without thinking
+                    double distanceApart = NetworkUtils.getEuclideanDistance(coord, geoSeedCoords.get(i-1));
+                    if (distanceApart < minDistance) {
+                        seedNumber = i;
+                        minDistance = distanceApart;
+                    }
+                }
+                //Assign to Carrier
+                if (minDistance == 0){
+                    System.out.println("THIS IS A SEED " +  seedNumber);
+                    shipment.getAttributes().putAttribute("seed", "seed" + seedNumber);
+                }
+                shipment.getAttributes().putAttribute("carrier", carrierName + seedNumber);
+                System.out.println("SHIPMENT " + shipment.getId().toString() + " ADDED TO " + carrierName + seedNumber);
+                CarriersUtils.addShipment(newCarriers.getCarriers().get(Id.create(carrierName + seedNumber, Carrier.class)), shipment);
+
+            }
+        }
+        //Put new carriers into scenario
+        carriers.getCarriers().clear();
+        for (Carrier singleCarrier : newCarriers.getCarriers().values()) {
+            carriers.addCarrier(singleCarrier);
+        }
+
+        //create xml facilities file to visualise results
+        createXMLFacilities(network, carriers);
+
+        System.out.println("Geocluster VRP Splitting complete");
+    }
+
+    private static List<List<CarrierShipment>> findKClusters(Carrier singleCarrier, Network network, int numberOfCarriers) {
+        //The list of clusters that will be returned
+        List<List<CarrierShipment>> clusters = new ArrayList<>();
+
+        //Assign each shipment to a cluster
+        for (CarrierShipment shipment : singleCarrier.getShipments().values()){
+            List<CarrierShipment> cluster = new ArrayList<>();
+            cluster.add(shipment);
+            clusters.add(cluster);
+        }
+
+        //Loop through all Shipments until number of clusters is = number of carriers
+        while (clusters.size() > numberOfCarriers) {
+            //Variables for keeping track of shortest Link
+            double minDistance = Double.MAX_VALUE;
+            Coord fromCoord = null;
+            Coord toCoord = null;
+            CarrierShipment fromShipment = null;
+            CarrierShipment toShipment = null;
+
+            for (int i = 0; i < clusters.size(); i++) {
+                for (int j = 0; j < clusters.size(); j++) {
+                    fromShipment = clusters.get(i).get(j);
+                    List<Id<Link>> linkIds = List.of(fromShipment.getPickupLinkId());
+                    Id<Node> nodeId = NetworkUtils.getLinks(network,linkIds).get(0).getToNode().getId();
+                    fromCoord = NetworkUtils.getNodes(network, nodeId.toString()).get(0).getCoord();
+                    //NOW LOOP AGAIN
+                }
+            }
+        }
+
+        return clusters;
     }
 
     //Create a basic carrier
