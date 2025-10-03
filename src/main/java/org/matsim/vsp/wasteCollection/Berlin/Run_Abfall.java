@@ -90,7 +90,7 @@ public class Run_Abfall {
 			jspritIterations = 10;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
-			outputLocation = "output/wasteCollectionBerlin/Test_Split";
+			outputLocation = "output/wasteCollectionBerlin/Test_KClusterSplit2";
 			day = "MO";
 			networkChangeEventsFileLocation = "";
 		} else {
@@ -229,16 +229,16 @@ public class Run_Abfall {
 		}
 
 		//-----------------TEST A SINGLE CARRIER------------------------
-//		System.out.println("TESTING ONE CARRIER: ");
-//		var carrier1 = carriers.getCarriers().get(Id.create("Carrier Haselhorst", Carrier.class));
+		System.out.println("TESTING ONE CARRIER: ");
+		var carrier1 = carriers.getCarriers().get(Id.create("Carrier Haselhorst", Carrier.class));
 //		var carrier2 = carriers.getCarriers().get(Id.create("Carrier Wilhelmstadt", Carrier.class));
-//		carriers.getCarriers().clear();
-//		carriers.addCarrier(carrier1);
+		carriers.getCarriers().clear();
+		carriers.addCarrier(carrier1);
 //		carriers.addCarrier(carrier2);
 
 		//-----------------RUN THE SPLIT------------------------
 		//System.out.println("VRP SPLIT: ");
-		int numberOfCarriers = 3;
+		int numberOfCarriers = 4;
 		VrpSplitUtils.creatGeoSeedCarriers(scenario, numberOfCarriers, jspritIterations);
 		//TESTING
 		for (Carrier singleCarrier : carriers.getCarriers().values()) {
