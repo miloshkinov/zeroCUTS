@@ -1,0 +1,75 @@
+2025-10-06T14:24:17,461  WARN ControllerConfigGroup:490 setting overwriting behavior to overwriteExistingFiles
+2025-10-06T14:24:17,461  WARN ControllerConfigGroup:491 this is not recommended, as it might result in a directory containing output from several model runs
+2025-10-06T14:24:17,461  WARN ControllerConfigGroup:492 prefer the options deleteDirectoryIfExists or failIfDirectoryExists
+2025-10-06T14:24:17,461  WARN VspConfigConsistencyCheckerImpl:481 vsp should move away from facilitiesSource=FacilitiesSource.none
+2025-10-06T14:24:17,461  WARN VspConfigConsistencyCheckerImpl:168 you are insisting on config v1.  vsp default is using v2.
+2025-10-06T14:24:17,461  WARN VspConfigConsistencyCheckerImpl:308 You are not removing unnecessary plan attributes; vsp default is to do that.
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:264 found qsim.vehiclesSource=defaultVehicle; vsp should use one of the other settings or talk to kai
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:272 found qsim.usePersonIdForMissingVehicleId==true; vsp should set this to false or talk to kai
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:277 found `qsim.usingTravelTimeCheckInTeleporation==false'; vsp should try out `true' and report.
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:290  found 'qsim.trafficDynamics==queue'; vsp standard is`kinematicWaves'.
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:341 found `PlansCalcRouteConfigGroup.AccessEgressType.none'; vsp should use `accessEgressModeToLink' or some other value or talk to Kai.
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:413 You are not setting fractionOfIterationsToStartScoreMSA; vsp default is to set this to something like 0.8.  This means you have to add the following lines to your config file: 
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:415 <module name="planCalcScore">
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:416 	<param name="fractionOfIterationsToStartScoreMSA" value="0.8" />
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:417 </module>
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:433 You are setting the marginal utility of traveling with mode car to -6.0. VSP standard is to set this to zero.  Please document carefully why you are using a value different from zero, e.g. by showing distance distributions.
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:433 You are setting the marginal utility of traveling with mode pt to -6.0. VSP standard is to set this to zero.  Please document carefully why you are using a value different from zero, e.g. by showing distance distributions.
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:433 You are setting the marginal utility of traveling with mode walk to -6.0. VSP standard is to set this to zero.  Please document carefully why you are using a value different from zero, e.g. by showing distance distributions.
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:433 You are setting the marginal utility of traveling with mode other to -6.0. VSP standard is to set this to zero.  Please document carefully why you are using a value different from zero, e.g. by showing distance distributions.
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:201 You have no strategy configured that uses ChangeExpBeta. vsp default is to use ChangeExpBeta at least in one strategy.
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:208 You have not set fractionOfIterationsToDisableInnovation; vsp default is to set this to 0.8 or similar.  Add the following config lines:
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:209 <module name="strategy">
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:210 	<param name="fractionOfIterationsToDisableInnovation" value="0.8" />
+2025-10-06T14:24:17,462  WARN VspConfigConsistencyCheckerImpl:211 </module>
+2025-10-06T14:24:19,181  WARN RandomizingTimeDistanceTravelDisutilityFactory:113 There will be no routing randomness for mode=car. The randomization of the travel disutility requires the monetary distance rate to be different than zero. Continuing anyway.
+2025-10-06T14:24:19,181  WARN RandomizingTimeDistanceTravelDisutilityFactory:115 You can also set the width of the routing randomness to zero:
+2025-10-06T14:24:19,181  WARN RandomizingTimeDistanceTravelDisutilityFactory:116 		config.routing().setRoutingRandomness( 0. );
+2025-10-06T14:24:19,181  WARN RandomizingTimeDistanceTravelDisutilityFactory:117 in code, or
+2025-10-06T14:24:19,181  WARN RandomizingTimeDistanceTravelDisutilityFactory:118 	<module name="routing" >
+2025-10-06T14:24:19,181  WARN RandomizingTimeDistanceTravelDisutilityFactory:119 		<param name="routingRandomness" value="0." />
+2025-10-06T14:24:19,181  WARN RandomizingTimeDistanceTravelDisutilityFactory:120 in the xml config
+2025-10-06T14:24:19,181  WARN RandomizingTimeDistanceTravelDisutilityFactory:124 There will be no routing randomness for mode=car. The randomization of the travel disutility requires the travel time cost rate to be different than zero. Continuing anyway.
+2025-10-06T14:24:19,685  WARN NetworkRoutingProvider:137 [mode: car; routingMode: car] Using deprecated routing module without access/egress. Consider using AccessEgressNetworkRouter instead.
+2025-10-06T14:24:19,685  WARN NetworkRoutingProvider:138 This can be achieved by something like
+2025-10-06T14:24:19,685  WARN NetworkRoutingProvider:139 		config.routing().setAccessEgressType( AccessEgressType.accessEgressModeToLink );
+2025-10-06T14:24:19,685  WARN NetworkRoutingProvider:140 in code or
+2025-10-06T14:24:19,685  WARN NetworkRoutingProvider:141 	<module name="routing" >
+2025-10-06T14:24:19,685  WARN NetworkRoutingProvider:142 		<param name="accessEgressType" value="accessEgressModeToLink" />
+2025-10-06T14:24:19,685  WARN NetworkRoutingProvider:143 in the config xml.
+2025-10-06T14:24:20,152  WARN NetworkRoutingProvider:137 [mode: car; routingMode: car] Using deprecated routing module without access/egress. Consider using AccessEgressNetworkRouter instead.
+2025-10-06T14:24:20,152  WARN NetworkRoutingProvider:138 This can be achieved by something like
+2025-10-06T14:24:20,152  WARN NetworkRoutingProvider:139 		config.routing().setAccessEgressType( AccessEgressType.accessEgressModeToLink );
+2025-10-06T14:24:20,152  WARN NetworkRoutingProvider:140 in code or
+2025-10-06T14:24:20,152  WARN NetworkRoutingProvider:141 	<module name="routing" >
+2025-10-06T14:24:20,152  WARN NetworkRoutingProvider:142 		<param name="accessEgressType" value="accessEgressModeToLink" />
+2025-10-06T14:24:20,152  WARN NetworkRoutingProvider:143 in the config xml.
+2025-10-06T14:24:20,441  WARN NetworkRoutingProvider:137 [mode: car; routingMode: car] Using deprecated routing module without access/egress. Consider using AccessEgressNetworkRouter instead.
+2025-10-06T14:24:20,441  WARN NetworkRoutingProvider:138 This can be achieved by something like
+2025-10-06T14:24:20,441  WARN NetworkRoutingProvider:139 		config.routing().setAccessEgressType( AccessEgressType.accessEgressModeToLink );
+2025-10-06T14:24:20,441  WARN NetworkRoutingProvider:140 in code or
+2025-10-06T14:24:20,441  WARN NetworkRoutingProvider:141 	<module name="routing" >
+2025-10-06T14:24:20,441  WARN NetworkRoutingProvider:142 		<param name="accessEgressType" value="accessEgressModeToLink" />
+2025-10-06T14:24:20,441  WARN NetworkRoutingProvider:143 in the config xml.
+2025-10-06T14:24:20,450  WARN NetworkRoutingProvider:137 [mode: car; routingMode: car] Using deprecated routing module without access/egress. Consider using AccessEgressNetworkRouter instead.
+2025-10-06T14:24:20,450  WARN NetworkRoutingProvider:138 This can be achieved by something like
+2025-10-06T14:24:20,450  WARN NetworkRoutingProvider:139 		config.routing().setAccessEgressType( AccessEgressType.accessEgressModeToLink );
+2025-10-06T14:24:20,450  WARN NetworkRoutingProvider:140 in code or
+2025-10-06T14:24:20,450  WARN NetworkRoutingProvider:141 	<module name="routing" >
+2025-10-06T14:24:20,450  WARN NetworkRoutingProvider:142 		<param name="accessEgressType" value="accessEgressModeToLink" />
+2025-10-06T14:24:20,450  WARN NetworkRoutingProvider:143 in the config xml.
+2025-10-06T14:24:20,549  WARN QueueWithBuffer:504 Link 100061 too small: enlarge storage capacity from: 2.364373543642173 Vehicles to: 2.5085918713079165 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2025-10-06T14:24:20,549  WARN QueueWithBuffer:504 Link 100062 too small: enlarge storage capacity from: 2.364373543642173 Vehicles to: 2.5085918713079165 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2025-10-06T14:24:20,550  WARN QueueWithBuffer:504 Link 100159 too small: enlarge storage capacity from: 2.3279058035016513 Vehicles to: 2.4810996196243544 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2025-10-06T14:24:20,550  WARN QueueWithBuffer:504 Link 100160 too small: enlarge storage capacity from: 2.3279058035016513 Vehicles to: 2.4810996196243544 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2025-10-06T14:24:20,551  WARN QueueWithBuffer:504 Link 100279 too small: enlarge storage capacity from: 0.8044626111127964 Vehicles to: 1.057778804356083 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2025-10-06T14:24:20,551  WARN QueueWithBuffer:504 Link 100280 too small: enlarge storage capacity from: 0.8044626111127964 Vehicles to: 1.057778804356083 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2025-10-06T14:24:20,554  WARN QueueWithBuffer:504 Link 100766 too small: enlarge storage capacity from: 1.5677384686274727 Vehicles to: 1.8453328312273465 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2025-10-06T14:24:20,554  WARN QueueWithBuffer:504 Link 100767 too small: enlarge storage capacity from: 1.5677384686274727 Vehicles to: 1.8453328312273465 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2025-10-06T14:24:20,554  WARN QueueWithBuffer:504 Link 100840 too small: enlarge storage capacity from: 1.367826997551048 Vehicles to: 1.6554708862490988 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2025-10-06T14:24:20,554  WARN QueueWithBuffer:504 Link 100841 too small: enlarge storage capacity from: 1.367826997551048 Vehicles to: 1.6554708862490988 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2025-10-06T14:24:20,555  WARN QueueWithBuffer:504 Link 100962 too small: enlarge storage capacity from: 18.588510955649852 Vehicles to: 33.45931972016973 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2025-10-06T14:24:20,555  WARN QueueWithBuffer:507 Additional warnings of this type are suppressed.
+2025-10-06T14:24:22,175 ERROR BasicPlanAgentImpl:187 last activity of person driver agent id freight_Carrier Gesundbrunnen1_veh_TruckMalmoeerDiesel_3 has end time < infty; setting it to infty
+2025-10-06T14:24:22,175 ERROR BasicPlanAgentImpl:188  This message given only once.
+2025-10-06T14:24:27,080  WARN ModeChoiceCoverageControlerListener:194 There are no trips conducted by the analyzed population. This should only be the case for tests. If you are running a simulation run,  this should not happen. Check your population.

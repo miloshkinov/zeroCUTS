@@ -458,7 +458,7 @@ public class VrpSplitUtils {
     private static void createXMLFacilities(Network network, Carriers carriers) {
 
         //Facilities and network setup
-        final String FILENAME_EXPORT_FACILITIES = "input/Montag_GeoSeed.xml";  //THINK OF HOW TO MAKE THIS EASIER AND LESS MANUAL
+        final String FILENAME_EXPORT_FACILITIES = "input/testpresentation.xml";  //THINK OF HOW TO MAKE THIS EASIER AND LESS MANUAL
         ActivityFacilities facilities = FacilitiesUtils.createActivityFacilities("facilities");
 
         //loop through all shipments

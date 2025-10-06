@@ -1,0 +1,36 @@
+Anzahl der Abholgebiete:									20
+Abholgebiete:												[Karlshorst, Haselhorst, Wilhelmstadt, Schmargendorf, Gesundbrunnen, Neu-Hohenschoenhausen, Hellersdorf, Schoeneberg, Neukoelln, Lichtenberg, Pankow, Halensee, Friedrichshain, Maerkisches Viertel, Wilmersdorf, Wedding, Staaken, Moabit, Steglitz, Fennpfuhl]
+Wochentag:													MO
+
+Die Summe des abzuholenden Mülls beträgt: 					3123.5 t
+
+Fahrzeug: 													diesel_vehicle
+Kapazität je Fahrzeug: 										11.5 Tonnen
+
+Anzahl der Abholstellen: 									12113
+							Carrier Haselhorst:						274
+							Carrier Wilhelmstadt:						481
+							Carrier Neukoelln:						1202
+							Carrier Moabit:						750
+							Carrier Schmargendorf:						351
+							Carrier Neu-Hohenschoenhausen:						290
+							Carrier Hellersdorf:						644
+							Carrier Halensee:						78
+							Carrier Maerkisches Viertel:						134
+							Carrier Staaken:						600
+							Carrier Wilmersdorf:						1105
+							Carrier Steglitz:						891
+							Carrier Karlshorst:						490
+							Carrier Lichtenberg:						389
+							Carrier Fennpfuhl:						180
+							Carrier Wedding:						793
+							Carrier Pankow:						626
+							Carrier Schoeneberg:						1261
+							Carrier Friedrichshain:						1010
+							Carrier Gesundbrunnen:						564
+
+Anzuliefernde Menge (Soll):	MHKW Ruhleben:					1888.29 t
+							MPS Pankow:						631.81 t
+							MPS Reinickendorf:				359.21 t
+							Umladestation Gradestrasse:		244.19 t
+							MA Gruenauer Str.:				0.0 t

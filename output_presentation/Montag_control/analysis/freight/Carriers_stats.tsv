@@ -1,0 +1,21 @@
+carrierId	nuOfJspritIterations	fleetSize	nuOfPossibleVehicleTypes	nuOfPossibleVehicles	nuOfServiceLocations_planned	nuOfPickupLocations_planned	nuOfDeliveryLocations_planned	MATSimScoreSelectedPlan	jSpritScoreSelectedPlan	nuOfTours	jobType	nuOfJobs_planned	nuOfJobs_handled	noOfJobs_notHandled	demandSize_planned	demandSize_handled	jspritComputationTime
+Carrier Fennpfuhl1	100	INFINITE	1	1	0	180	1	-Infinity	-4684.44449850211	5	shipments	180	180	0	80270	80270	00:00:52
+Carrier Friedrichshain1	100	INFINITE	1	1	0	1010	1	-Infinity	-20008.4996135003	21	shipments	1010	1010	0	318140	318140	00:37:22
+Carrier Gesundbrunnen1	100	INFINITE	1	1	0	564	1	-Infinity	-7133.7414451255445	8	shipments	564	564	0	169900	169900	00:17:31
+Carrier Halensee1	100	INFINITE	1	1	0	78	1	-Infinity	-1813.2634008961704	2	shipments	78	78	0	36920	36920	00:00:10
+Carrier Haselhorst1	100	INFINITE	1	1	0	274	1	-Infinity	-2738.391082579887	3	shipments	274	274	0	37350	37350	00:05:49
+Carrier Hellersdorf1	100	INFINITE	1	1	0	644	1	-Infinity	-14086.561790728872	15	shipments	644	644	0	193930	193930	00:16:33
+Carrier Karlshorst1	100	INFINITE	1	1	0	490	1	-Infinity	-4711.837797770168	5	shipments	490	490	0	65040	65040	00:19:45
+Carrier Lichtenberg1	100	INFINITE	1	1	0	389	1	-Infinity	-7587.899716038623	8	shipments	389	389	0	97260	97260	00:05:40
+Carrier Maerkisches Viertel1	100	INFINITE	1	1	0	134	1	-Infinity	-3672.493590357086	4	shipments	134	134	0	71200	71200	00:00:24
+Carrier Moabit1	100	INFINITE	1	1	0	750	1	-Infinity	-8223.137644108154	9	shipments	750	750	0	189310	189310	00:29:45
+Carrier Neu-Hohenschoenhausen1	100	INFINITE	1	1	0	290	1	-Infinity	-7380.739228047812	8	shipments	290	290	0	134430	134430	00:01:47
+Carrier Neukoelln1	100	INFINITE	1	1	0	1202	1	-Infinity	-23302.6363868881	25	shipments	1202	1202	0	397330	397330	01:14:01
+Carrier Pankow1	100	INFINITE	1	1	0	626	1	-Infinity	-8175.530677826369	9	shipments	626	626	0	151980	151980	00:21:43
+Carrier Schmargendorf1	100	INFINITE	1	1	0	351	1	-Infinity	-2757.4048532924885	3	shipments	351	351	0	52540	52540	00:10:33
+Carrier Schoeneberg1	100	INFINITE	1	1	0	1261	1	-Infinity	-15836.46735269832	17	shipments	1261	1261	0	293880	293880	01:55:54
+Carrier Staaken1	100	INFINITE	1	1	0	600	1	-Infinity	-6518.060963251275	7	shipments	600	600	0	109460	109460	00:21:55
+Carrier Steglitz1	100	INFINITE	1	1	0	891	1	-Infinity	-9960.745774245952	11	shipments	891	891	0	179150	179150	01:00:02
+Carrier Wedding1	100	INFINITE	1	1	0	793	1	-Infinity	-11035.177371308837	12	shipments	793	793	0	206760	206760	00:34:08
+Carrier Wilhelmstadt1	100	INFINITE	1	1	0	481	1	-Infinity	-4597.69495440838	5	shipments	481	481	0	96610	96610	00:18:13
+Carrier Wilmersdorf1	100	INFINITE	1	1	0	1105	1	-Infinity	-12663.524844112117	14	shipments	1105	1105	0	242040	242040	01:26:38

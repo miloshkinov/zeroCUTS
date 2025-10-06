@@ -1,0 +1,21 @@
+carrierId	nuOfJspritIterations	fleetSize	nuOfPossibleVehicleTypes	nuOfPossibleVehicles	nuOfServiceLocations_planned	nuOfPickupLocations_planned	nuOfDeliveryLocations_planned	jobType	nuOfJobs_planned	demandSize_planned
+Carrier Fennpfuhl1	100	INFINITE	1	1	0	180	1	shipments	180	80270
+Carrier Friedrichshain1	100	INFINITE	1	1	0	1010	1	shipments	1010	318140
+Carrier Gesundbrunnen1	100	INFINITE	1	1	0	564	1	shipments	564	169900
+Carrier Halensee1	100	INFINITE	1	1	0	78	1	shipments	78	36920
+Carrier Haselhorst1	100	INFINITE	1	1	0	274	1	shipments	274	37350
+Carrier Hellersdorf1	100	INFINITE	1	1	0	644	1	shipments	644	193930
+Carrier Karlshorst1	100	INFINITE	1	1	0	490	1	shipments	490	65040
+Carrier Lichtenberg1	100	INFINITE	1	1	0	389	1	shipments	389	97260
+Carrier Maerkisches Viertel1	100	INFINITE	1	1	0	134	1	shipments	134	71200
+Carrier Moabit1	100	INFINITE	1	1	0	750	1	shipments	750	189310
+Carrier Neu-Hohenschoenhausen1	100	INFINITE	1	1	0	290	1	shipments	290	134430
+Carrier Neukoelln1	100	INFINITE	1	1	0	1202	1	shipments	1202	397330
+Carrier Pankow1	100	INFINITE	1	1	0	626	1	shipments	626	151980
+Carrier Schmargendorf1	100	INFINITE	1	1	0	351	1	shipments	351	52540
+Carrier Schoeneberg1	100	INFINITE	1	1	0	1261	1	shipments	1261	293880
+Carrier Staaken1	100	INFINITE	1	1	0	600	1	shipments	600	109460
+Carrier Steglitz1	100	INFINITE	1	1	0	891	1	shipments	891	179150
+Carrier Wedding1	100	INFINITE	1	1	0	793	1	shipments	793	206760
+Carrier Wilhelmstadt1	100	INFINITE	1	1	0	481	1	shipments	481	96610
+Carrier Wilmersdorf1	100	INFINITE	1	1	0	1105	1	shipments	1105	242040

@@ -1,0 +1,2 @@
+vehicleTypeId	nuOfVehicles	SumOfTourDuration[s]	SumOfTourDuration[h]	SumOfTravelDistances[m]	SumOfTravelDistances[km]	SumOfTravelTime[s]	SumOfTravelTime[h]	costPerSecond[EUR/s]	costPerMeter[EUR/m]	fixedCosts[EUR/veh]	varCostsTime[EUR]	varCostsDist[EUR]	fixedCosts[EUR]	totalCosts[EUR]
+diesel_vehicle	208	4029963.0	1119.4341666666667	1.1213486306789828E7	11213.486306789828	1793324.0	498.1455555555556	0.0	0.00153218	841.89	0.0	17181.07944953724	175113.12	192294.19944953723
