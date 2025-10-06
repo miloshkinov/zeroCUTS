@@ -10,7 +10,7 @@
   <groupId>de.tu-berlin</groupId>
   <artifactId>zeroCUTS</artifactId>
   <name>zeroCUTS project</name>
-  <version>0.0.1-split</version>
+  <version>0.0.1-montag_geoSeed</version>
   <description>zeroCUTS project</description>
   <build>
     <plugins>

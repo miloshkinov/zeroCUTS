@@ -87,10 +87,10 @@ public class Run_Abfall {
 			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay; //and this
 			shapeFileLocation = berlinDistrictsWithGarbageInformations;
 			oneCarrierForOneDistrict = true;
-			jspritIterations = 10;
+			jspritIterations = 100;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
-			outputLocation = "output/wasteCollectionBerlin/Test_KClusterSplit2";
+			outputLocation = "output/Montag_geoSeed";
 			day = "MO";
 			networkChangeEventsFileLocation = "";
 		} else {
@@ -229,21 +229,21 @@ public class Run_Abfall {
 		}
 
 		//-----------------TEST A SINGLE CARRIER------------------------
-		System.out.println("TESTING ONE CARRIER: ");
-		var carrier1 = carriers.getCarriers().get(Id.create("Carrier Haselhorst", Carrier.class));
-//		var carrier2 = carriers.getCarriers().get(Id.create("Carrier Wilhelmstadt", Carrier.class));
-		carriers.getCarriers().clear();
-		carriers.addCarrier(carrier1);
-//		carriers.addCarrier(carrier2);
+//		System.out.println("TESTING ONE CARRIER: ");
+//		var carrier1 = carriers.getCarriers().get(Id.create("Carrier Neukoelln", Carrier.class));
+////		var carrier2 = carriers.getCarriers().get(Id.create("Carrier Wilhelmstadt", Carrier.class));
+//		carriers.getCarriers().clear();
+//		carriers.addCarrier(carrier1);
+////		carriers.addCarrier(carrier2);
 
 		//-----------------RUN THE SPLIT------------------------
 		//System.out.println("VRP SPLIT: ");
-		int numberOfCarriers = 4;
-		VrpSplitUtils.creatGeoSeedCarriers(scenario, numberOfCarriers, jspritIterations);
-		//TESTING
-		for (Carrier singleCarrier : carriers.getCarriers().values()) {
-			System.out.println(singleCarrier.getId().toString());
-		}
+		int numberOfCarriers = 3;
+		VrpSplitUtils.createGeoSeedCarriers(scenario, numberOfCarriers, jspritIterations);
+//		//TESTING
+//		for (Carrier singleCarrier : carriers.getCarriers().values()) {
+//			System.out.println(singleCarrier.getId().toString());
+//		}
 
 		/*
 		 * This xml output gives a summary with information about the created shipments,

@@ -21,9 +21,6 @@ public class VrpSplitUtils {
     static String linkChessboardDepot = "j(0,7)R";
     static String linkChessboardDump = "j(0,9)R";
 
-    static String linkHaselhorstDepot = "27766";
-    static String linkHaselhorstDump = "142010";
-
     static void createRandomCarriersChessboard(Scenario scenario, int numberOfCarriers, int numberOfIterations) {
 
         //Get initial capabilities and remove initial carrier
@@ -183,7 +180,7 @@ public class VrpSplitUtils {
                 //Retrieve Pickup Node coord
                 final Coord coord =  NetworkUtils.getNodes(network, nodeId.toString()).get(0).getCoord();
 
-                //Randomly assign the shipment to a new carrier THINK ABOUT THIS WHEN THERE ARE MORE THAN 1 OLD CARRIERS COS OF THE NEW CARRIER NAMES!!
+                //Randomly assign the shipment to a new carrier
                 long coinFlip = randomSeed.nextInt(numberOfCarriers) + 1;
                 for (int i = 1; i <= numberOfCarriers; i++){
                     if (coinFlip == i) {
@@ -206,7 +203,7 @@ public class VrpSplitUtils {
         System.out.println("Random VRP Splitting complete");
     }
 
-    static void creatGeoSeedCarriers (Scenario scenario, int numberOfCarriers, int numberOfIterations) {
+    static void createGeoSeedCarriers (Scenario scenario, int numberOfCarriers, int numberOfIterations) {
 
         //Get network and initial carriers and create a new set
         Network network = scenario.getNetwork();
@@ -221,7 +218,7 @@ public class VrpSplitUtils {
             String carrierName = singleCarrier.getId().toString();
 
             //Determine the Seeds
-            List<Coord> geoSeedCoords = findGeoSeeds(singleCarrier, network, numberOfCarriers);
+            List<Coord> geoSeedCoords = findGeoSeeds(singleCarrier, network, numberOfCarriers, carrierVehicle);
 
             //Set up the desired number of new carriers
             for (int i = 1; i <= numberOfCarriers; i++) {
@@ -274,24 +271,24 @@ public class VrpSplitUtils {
         //create xml facilities file to visualise results
         createXMLFacilities(network, carriers);
 
-        System.out.println("Geocluster VRP Splitting complete");
+        System.out.println("Seed Cluster VRP Splitting complete");
     }
 
-    private static List<Coord> findGeoSeeds(Carrier carrier, Network network, int numberOfCarriers) {
+    private static List<Coord> findGeoSeeds(Carrier carrier, Network network, int numberOfCarriers, CarrierVehicle carrierVehicle) {
 
         //List to track coords that will be returned
         List<Coord> seedCoords = new ArrayList<>();
         List<Id<CarrierShipment>> seedCoordIds = new ArrayList<>();
 
-        //Get Depot Coord THIS NEEDS TO BE IMPROVED!!!!!!!!!
-        Id<Node> depotNodeId = NetworkUtils.getLinks(network, linkHaselhorstDepot).get(0).getFromNode().getId();
+        //Get Depot Coord DISCUSS WHAT TO DO WHEN MULTIPLE VEHICLES AND/OR MULTIPLE DEPOTS!!!!!!!!!
+        Id<Node> depotNodeId = NetworkUtils.getLinks(network, carrierVehicle.getLinkId().toString()).get(0).getToNode().getId();
         Coord depotCoord =  NetworkUtils.getNodes(network, depotNodeId.toString()).get(0).getCoord();
 
         //Variables to track the max distances and coefficient to encourage clustering
 		double maxDistance = 0;
         Coord seedCoord = null;
         Id<CarrierShipment> seedId = null;
-        double clusterCoefficient = 2.0; //PLAY AROUND WITH THIS
+        double clusterCoefficient = 2.0; //PLAY AROUND WITH THIS!!!!!!!!!!!
 
         //loop for amount of seeds required
         for (int i = 0; i < numberOfCarriers; i++) {
@@ -335,7 +332,7 @@ public class VrpSplitUtils {
         return seedCoords;
     }
 
-    static void creatClusterCarriers (Scenario scenario, int numberOfCarriers, int numberOfIterations) {
+    static void createClusterCarriers (Scenario scenario, int numberOfCarriers, int numberOfIterations) {
 
         //Get network and initial carriers and create a new set
         Network network = scenario.getNetwork();
@@ -349,8 +346,6 @@ public class VrpSplitUtils {
             CarrierVehicle carrierVehicle = singleCarrier.getCarrierCapabilities().getCarrierVehicles().values().iterator().next();
             String carrierName = singleCarrier.getId().toString();
 
-            //Determine the Seeds
-            List<Coord> geoSeedCoords = findGeoSeeds(singleCarrier, network, numberOfCarriers);
 
             //Set up the desired number of new carriers
             for (int i = 1; i <= numberOfCarriers; i++) {
@@ -452,48 +447,52 @@ public class VrpSplitUtils {
         Carrier newCarrier = CarriersUtils.createCarrier(Id.create(carrierName + carrierNumber, Carrier.class));
         //CarriersUtils.addCarrierVehicle(newCarrier, carrierVehicle);
         CarriersUtils.setJspritIterations(newCarrier, numberOfIterations);
-        CarrierCapabilities carrierCapabilities = CarrierCapabilities.Builder.newInstance()  //IS THERE BETTER WAY TO DO THIS OR IS IT ALWAYS INFINITE
+        CarrierCapabilities carrierCapabilities = CarrierCapabilities.Builder.newInstance()  //LOOP THROUGH ALL VEHICLE TYPES TO FIX THIS
                 .addVehicle(carrierVehicle).setFleetSize(CarrierCapabilities.FleetSize.INFINITE).build();
         newCarrier.setCarrierCapabilities(carrierCapabilities);
 
         return newCarrier;
     }
 
-    //Create XML Facilities File (IS THIS REALLY NECESSARY OR JUST A COOL FEATURE?
+    //Create XML Facilities File
     private static void createXMLFacilities(Network network, Carriers carriers) {
 
         //Facilities and network setup
-        final String FILENAME_EXPORT_FACILITIES = "input/KClusterSplit_test2.xml";  //THINK OF HOW TO MAKE THIS EASIER AND LESS MANUAL
+        final String FILENAME_EXPORT_FACILITIES = "input/Montag_GeoSeed.xml";  //THINK OF HOW TO MAKE THIS EASIER AND LESS MANUAL
         ActivityFacilities facilities = FacilitiesUtils.createActivityFacilities("facilities");
-
-        //----ADDING DEPOT AND DROPOFF TO XML----
-        //getting LinkIds
-        List<Id<Link>> depotLinkIds = List.of(Id.createLinkId(linkHaselhorstDepot));         //IMPROVE THIS FOR ALL CASES!! COULD PUT INTO THE CARRIER FOR LOOP
-        List<Id<Link>> dumpLinkIds = List.of(Id.createLinkId(linkHaselhorstDump));           //IMPROVE THIS FOR ALL CASES!!
-        //Getting node Ids from linkIds
-        Id<Node> depotNodeId = NetworkUtils.getLinks(network,depotLinkIds).get(0).getToNode().getId();
-        Id<Node> dumpNodeId = NetworkUtils.getLinks(network,dumpLinkIds).get(0).getToNode().getId();
-        //Geting the node coords
-        final Coord depotCoord =  NetworkUtils.getNodes(network, depotNodeId.toString()).get(0).getCoord();
-        final Coord dumpCoord =  NetworkUtils.getNodes(network, dumpNodeId.toString()).get(0).getCoord();
-        //Creating a facility ID
-        final Id<ActivityFacility> depotFacilityId = Id.create("depot", ActivityFacility.class);
-        final Id<ActivityFacility> dumpFacilityId = Id.create("dump", ActivityFacility.class);
-        //Creating the facilities
-        ActivityFacility depotFacility = facilities.getFactory().createActivityFacility(depotFacilityId, depotCoord);
-        ActivityFacility dumpFacility = facilities.getFactory().createActivityFacility(dumpFacilityId, dumpCoord);
-        //Adding the activity option
-        depotFacility.addActivityOption(new ActivityOptionImpl("depot"));
-        dumpFacility.addActivityOption(new ActivityOptionImpl("dump"));
-        //Putting the carrier attribute to view in Via later
-        depotFacility.getAttributes().putAttribute("carrier", "depot");
-        dumpFacility.getAttributes().putAttribute("carrier", "dump");
-        //adding the facilities to the secanrio
-        facilities.addActivityFacility(depotFacility);
-        facilities.addActivityFacility(dumpFacility);
 
         //loop through all shipments
         for (Carrier carrier : carriers.getCarriers().values()) {
+            //----ADDING DEPOT AND DROPOFF TO XML----
+            String carrierName = carrier.getId().toString();
+            //getting LinkIds  FIX IN CASE MULTIPLE DEPOTS OR DUMPS
+            CarrierVehicle carrierVehicle = carrier.getCarrierCapabilities().getCarrierVehicles().values().iterator().next();
+            List<Id<Link>> depotLinkIds = List.of(Id.createLinkId(carrierVehicle.getLinkId()));
+            CarrierShipment firstShipment = carrier.getShipments().values().iterator().next();
+            List<Id<Link>> dumpLinkIds = List.of(firstShipment.getDeliveryLinkId());
+            //Getting node Ids from linkIds
+            Id<Node> depotNodeId = NetworkUtils.getLinks(network,depotLinkIds).get(0).getToNode().getId();
+            Id<Node> dumpNodeId = NetworkUtils.getLinks(network,dumpLinkIds).get(0).getToNode().getId();
+            //Geting the node coords
+            final Coord depotCoord =  NetworkUtils.getNodes(network, depotNodeId.toString()).get(0).getCoord();
+            final Coord dumpCoord =  NetworkUtils.getNodes(network, dumpNodeId.toString()).get(0).getCoord();
+            //Creating a facility ID
+            final Id<ActivityFacility> depotFacilityId = Id.create("depot_" + carrierName, ActivityFacility.class);
+            final Id<ActivityFacility> dumpFacilityId = Id.create("dump_" + carrierName, ActivityFacility.class);
+            //Creating the facilities
+            ActivityFacility depotFacility = facilities.getFactory().createActivityFacility(depotFacilityId, depotCoord);
+            ActivityFacility dumpFacility = facilities.getFactory().createActivityFacility(dumpFacilityId, dumpCoord);
+            //Adding the activity option
+            depotFacility.addActivityOption(new ActivityOptionImpl("depot"));
+            dumpFacility.addActivityOption(new ActivityOptionImpl("dump"));
+            //Putting the carrier attribute to view in Via later
+            depotFacility.getAttributes().putAttribute("carrier", "depot_" + carrierName);
+            dumpFacility.getAttributes().putAttribute("carrier", "dump_" + carrierName);
+            //Adding the facilities to the scenario
+            facilities.addActivityFacility(depotFacility);
+            facilities.addActivityFacility(dumpFacility);
+
+            //Add all Shipments
             for (CarrierShipment shipment : carrier.getShipments().values()) {
 
                 //Retrieve Pickup Node Id
