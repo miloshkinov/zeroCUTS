@@ -16,6 +16,8 @@ import org.matsim.vehicles.VehicleType;
 
 import java.util.*;
 
+import static org.matsim.vsp.freight.CarrierScoringFunctionFactoryImpl_KT.scenario;
+
 public class VrpSplitUtils {
 
     static String linkChessboardDepot = "j(0,7)R";
@@ -145,10 +147,7 @@ public class VrpSplitUtils {
         System.out.println("done");
     }
 
-    static void createRandomCarriers(Scenario scenario, int numberOfCarriers, int numberOfIterations, String runName) {
-
-        //picking a random seed
-        Random randomSeed = new Random(1);
+    static void splitCarriers(Scenario scenario, Run_Abfall.clusteringStrategy clusterStrategy , int numberOfCarriers, int numberOfIterations, String runName) {
 
         //Get network and initial carriers and create a new set
         Network network = scenario.getNetwork();
@@ -163,34 +162,41 @@ public class VrpSplitUtils {
             String carrierName = singleCarrier.getId().toString();
 
             //Set up the desired number of new carriers
-            for (int i = 1; i <= numberOfCarriers; i++){
+            for (int i = 1; i <= numberOfCarriers; i++) {
                 Carrier newCarrier = createSingleCarrier(carrierName, numberOfIterations, carrierVehicle, i);
                 newCarriers.addCarrier(newCarrier);
                 System.out.println(newCarriers.getCarriers().size() + " carriers created");
             }
 
-            //loop through all shipments
-            for (CarrierShipment shipment : singleCarrier.getShipments().values()) {
+            //Get Clusters
+            List<List<CarrierShipment>> clusters;
+            switch (clusterStrategy) {
+                case random -> {
+                    clusters = findRandomClusters(singleCarrier, network, numberOfCarriers);
+                }
+                case seeding -> {
+                    clusters = findSeedingClusters(singleCarrier, network, numberOfCarriers, carrierVehicle);
+                }
+                case kClusters -> {
+                    clusters = findKClusters(singleCarrier, network, numberOfCarriers);
+                }
+                case null, default -> {
+                    System.out.println("No Clustering Strategy Defined! Exit");
+                    return;
+                }
+            }
 
-                //Retrieve Pickup Node Id
-                //System.out.println("SHIPMENT ID: " + shipment.getId() + "SHIPMENT START LINK ID: " + shipment.getPickupLinkId());
-                List<Id<Link>> linkIds = List.of(shipment.getPickupLinkId());
-                Id<Node> nodeId = NetworkUtils.getLinks(network,linkIds).get(0).getToNode().getId();
-
-                //Retrieve Pickup Node coord
-                final Coord coord =  NetworkUtils.getNodes(network, nodeId.toString()).get(0).getCoord();
-
-                //Randomly assign the shipment to a new carrier
-                long coinFlip = randomSeed.nextInt(numberOfCarriers) + 1;
-                for (int i = 1; i <= numberOfCarriers; i++){
-                    if (coinFlip == i) {
-                        shipment.getAttributes().putAttribute("carrier", carrierName + i);
-                        CarriersUtils.addShipment(newCarriers.getCarriers().get(Id.create(carrierName + i, Carrier.class)), shipment);
-                        System.out.println("SHIPMENT " + shipment.getId().toString() + " ADDED TO  " + carrierName + i);
-                    }
+            //loop through all clusters and assign to carrier
+            for (int i = 0; i < clusters.size(); i++) {
+                for (int j = 0; j < clusters.get(i).size(); j++) {
+                    CarrierShipment shipment = clusters.get(i).get(j);
+                    shipment.getAttributes().putAttribute("carrier", carrierName + (i + 1));
+                    System.out.println("SHIPMENT " + shipment.getId().toString() + " ADDED TO " + carrierName + (i + 1));
+                    CarriersUtils.addShipment(newCarriers.getCarriers().get(Id.create(carrierName + (i + 1), Carrier.class)), shipment);
                 }
             }
         }
+
         //Put new carriers into scenario
         carriers.getCarriers().clear();
         for (Carrier singleCarrier : newCarriers.getCarriers().values()) {
@@ -200,7 +206,26 @@ public class VrpSplitUtils {
         //create xml facilities file to visualise results
         createXMLFacilities(network, carriers, runName);
 
-        System.out.println("Random VRP Splitting complete");
+        System.out.println(clusterStrategy.toString() + " VRP Splitting complete");
+    }
+
+    private static List<List<CarrierShipment>> findRandomClusters(Carrier singleCarrier, Network network, int numberOfCarriers) {
+        //The list of clusters that will be returned
+        List<List<CarrierShipment>> clusters = new ArrayList<>();
+        //picking a random seed
+        Random randomSeed = new Random(1);
+        //loop through all shipments
+        for (CarrierShipment shipment : singleCarrier.getShipments().values()) {
+
+            //Randomly assign the shipment to a new carrier
+            long coinFlip = randomSeed.nextInt(numberOfCarriers);
+            for (int i = 1; i <= numberOfCarriers; i++){
+                if (coinFlip == i) {
+                    clusters.get(i).add(shipment);
+                }
+            }
+        }
+        return clusters;
     }
 
     static void createGeoSeedCarriers (Scenario scenario, int numberOfCarriers, int numberOfIterations, String runName) {
@@ -274,7 +299,9 @@ public class VrpSplitUtils {
         System.out.println("Seed Cluster VRP Splitting complete");
     }
 
-    private static List<Coord> findGeoSeeds(Carrier carrier, Network network, int numberOfCarriers, CarrierVehicle carrierVehicle) {
+    private static List<List<CarrierShipment>> findSeedingClusters(Carrier carrier, Network network, int numberOfCarriers, CarrierVehicle carrierVehicle) {
+        //The list of clusters that will be returned
+        List<List<CarrierShipment>> clusters = new ArrayList<>();
 
         //List to track coords that will be returned
         List<Coord> seedCoords = new ArrayList<>();
@@ -328,56 +355,7 @@ public class VrpSplitUtils {
             maxDistance = 0;
         }
 
-        //return arraylist
-        return seedCoords;
-    }
-
-    static void createClusterCarriers (Scenario scenario, int numberOfCarriers, int numberOfIterations, String runName) {
-
-        //Get network and initial carriers and create a new set
-        Network network = scenario.getNetwork();
-        Carriers carriers = CarriersUtils.getCarriers(scenario);
-        Carriers newCarriers = new Carriers();
-
-        //Loop through all carriers
-        for (Carrier singleCarrier : carriers.getCarriers().values()) {
-
-            //Get Carrier Vehicle and name NEEDS TO BE FIXED FOR CARRIERS WITH MORE THAN 1 VEHICLE!!!!!
-            CarrierVehicle carrierVehicle = singleCarrier.getCarrierCapabilities().getCarrierVehicles().values().iterator().next();
-            String carrierName = singleCarrier.getId().toString();
-
-
-            //Set up the desired number of new carriers
-            for (int i = 1; i <= numberOfCarriers; i++) {
-                Carrier newCarrier = createSingleCarrier(carrierName, numberOfIterations, carrierVehicle, i);
-                newCarriers.addCarrier(newCarrier);
-                System.out.println(newCarriers.getCarriers().size() + " carriers created");
-            }
-
-            //Get Clusters
-            List<List<CarrierShipment>> clusters = findKClusters(singleCarrier, network, numberOfCarriers);
-
-            //loop through all clusters and assign to carrier
-            for (int i = 0; i < clusters.size(); i++) {
-                for (int j = 0; j < clusters.get(i).size(); j++) {
-                    CarrierShipment shipment = clusters.get(i).get(j);
-                    shipment.getAttributes().putAttribute("carrier", carrierName + (i + 1));
-                    System.out.println("SHIPMENT " + shipment.getId().toString() + " ADDED TO " + carrierName + (i + 1));
-                    CarriersUtils.addShipment(newCarriers.getCarriers().get(Id.create(carrierName + (i + 1), Carrier.class)), shipment);
-                }
-            }
-
-        }
-        //Put new carriers into scenario
-        carriers.getCarriers().clear();
-        for (Carrier singleCarrier : newCarriers.getCarriers().values()) {
-            carriers.addCarrier(singleCarrier);
-        }
-
-        //create xml facilities file to visualise results
-        createXMLFacilities(network, carriers, runName);
-
-        System.out.println("Kcluster VRP Splitting complete");
+        return clusters;
     }
 
     private static List<List<CarrierShipment>> findKClusters(Carrier singleCarrier, Network network, int numberOfCarriers) {

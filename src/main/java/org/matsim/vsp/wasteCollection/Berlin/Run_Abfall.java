@@ -56,6 +56,10 @@ public class Run_Abfall {
 		carriersFromInputFile
 	}
 
+    public enum clusteringStrategy{
+        random, seeding, kClusters
+    }
+
 	public static void main(String[] args) throws Exception {
 
 		/*
@@ -68,6 +72,7 @@ public class Run_Abfall {
 		netzwerkAuswahl netzwerkWahl = netzwerkAuswahl.berlinNetwork;
 		scenarioAuswahl scenarioWahl;
 		carrierChoice chosenCarrier;
+        clusteringStrategy clusterStrategy;
 		int jspritIterations;
 		double volumeDustbinInLiters;
 		double secondsServiceTimePerDustbin;
@@ -88,9 +93,10 @@ public class Run_Abfall {
 			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay; //and this
 			shapeFileLocation = berlinDistrictsWithGarbageInformations;
 			oneCarrierForOneDistrict = true;
-			jspritIterations = 100;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
+            jspritIterations = 10;
+            clusterStrategy = clusteringStrategy.random;
             runName = "NameTest";
 			outputLocation = "output/" + runName;
 			day = "MO";
@@ -241,7 +247,7 @@ public class Run_Abfall {
 		//-----------------RUN THE SPLIT------------------------
 		//System.out.println("VRP SPLIT: ");
 		int numberOfCarriers = 3;
-		VrpSplitUtils.createGeoSeedCarriers(scenario, numberOfCarriers, jspritIterations, runName);
+		VrpSplitUtils.splitCarriers(scenario, clusterStrategy, numberOfCarriers, jspritIterations, runName);
 //		//TESTING
 //		for (Carrier singleCarrier : carriers.getCarriers().values()) {
 //			System.out.println(singleCarrier.getId().toString());
