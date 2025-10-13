@@ -145,7 +145,7 @@ public class VrpSplitUtils {
         System.out.println("done");
     }
 
-    static void createRandomCarriers(Scenario scenario, int numberOfCarriers, int numberOfIterations) {
+    static void createRandomCarriers(Scenario scenario, int numberOfCarriers, int numberOfIterations, String runName) {
 
         //picking a random seed
         Random randomSeed = new Random(1);
@@ -198,12 +198,12 @@ public class VrpSplitUtils {
         }
 
         //create xml facilities file to visualise results
-        createXMLFacilities(network, carriers);
+        createXMLFacilities(network, carriers, runName);
 
         System.out.println("Random VRP Splitting complete");
     }
 
-    static void createGeoSeedCarriers (Scenario scenario, int numberOfCarriers, int numberOfIterations) {
+    static void createGeoSeedCarriers (Scenario scenario, int numberOfCarriers, int numberOfIterations, String runName) {
 
         //Get network and initial carriers and create a new set
         Network network = scenario.getNetwork();
@@ -269,7 +269,7 @@ public class VrpSplitUtils {
         }
 
         //create xml facilities file to visualise results
-        createXMLFacilities(network, carriers);
+        createXMLFacilities(network, carriers, runName);
 
         System.out.println("Seed Cluster VRP Splitting complete");
     }
@@ -332,7 +332,7 @@ public class VrpSplitUtils {
         return seedCoords;
     }
 
-    static void createClusterCarriers (Scenario scenario, int numberOfCarriers, int numberOfIterations) {
+    static void createClusterCarriers (Scenario scenario, int numberOfCarriers, int numberOfIterations, String runName) {
 
         //Get network and initial carriers and create a new set
         Network network = scenario.getNetwork();
@@ -375,7 +375,7 @@ public class VrpSplitUtils {
         }
 
         //create xml facilities file to visualise results
-        createXMLFacilities(network, carriers);
+        createXMLFacilities(network, carriers, runName);
 
         System.out.println("Kcluster VRP Splitting complete");
     }
@@ -455,10 +455,10 @@ public class VrpSplitUtils {
     }
 
     //Create XML Facilities File
-    private static void createXMLFacilities(Network network, Carriers carriers) {
+    private static void createXMLFacilities(Network network, Carriers carriers, String runName) {
 
         //Facilities and network setup
-        final String FILENAME_EXPORT_FACILITIES = "input/testpresentation.xml";  //THINK OF HOW TO MAKE THIS EASIER AND LESS MANUAL
+        final String FILENAME_EXPORT_FACILITIES = "input/" + runName + ".xml";
         ActivityFacilities facilities = FacilitiesUtils.createActivityFacilities("facilities");
 
         //loop through all shipments

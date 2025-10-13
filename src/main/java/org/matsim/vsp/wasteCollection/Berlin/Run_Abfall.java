@@ -71,6 +71,7 @@ public class Run_Abfall {
 		int jspritIterations;
 		double volumeDustbinInLiters;
 		double secondsServiceTimePerDustbin;
+        String runName;
 		String outputLocation;
 		String day;
 		String networkChangeEventsFileLocation;
@@ -90,7 +91,8 @@ public class Run_Abfall {
 			jspritIterations = 100;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
-			outputLocation = "output/testpresentation";
+            runName = "NameTest";
+			outputLocation = "output/" + runName;
 			day = "MO";
 			networkChangeEventsFileLocation = "";
 		} else {
@@ -239,7 +241,7 @@ public class Run_Abfall {
 		//-----------------RUN THE SPLIT------------------------
 		//System.out.println("VRP SPLIT: ");
 		int numberOfCarriers = 3;
-		VrpSplitUtils.createGeoSeedCarriers(scenario, numberOfCarriers, jspritIterations);
+		VrpSplitUtils.createGeoSeedCarriers(scenario, numberOfCarriers, jspritIterations, runName);
 //		//TESTING
 //		for (Carrier singleCarrier : carriers.getCarriers().values()) {
 //			System.out.println(singleCarrier.getId().toString());
