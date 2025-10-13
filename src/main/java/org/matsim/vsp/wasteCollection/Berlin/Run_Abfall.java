@@ -72,7 +72,7 @@ public class Run_Abfall {
 		netzwerkAuswahl netzwerkWahl = netzwerkAuswahl.berlinNetwork;
 		scenarioAuswahl scenarioWahl;
 		carrierChoice chosenCarrier;
-        clusteringStrategy clusterStrategy;
+        clusteringStrategy clusterStrategy = null;
 		int jspritIterations;
 		double volumeDustbinInLiters;
 		double secondsServiceTimePerDustbin;
@@ -84,6 +84,7 @@ public class Run_Abfall {
 		String vehicleTypesFileLocation = null;
 		String shapeFileLocation;
 		boolean oneCarrierForOneDistrict;
+		boolean testOneCarrier = false;
 
 		for (String arg : args) {
 			log.info(arg);
@@ -95,12 +96,13 @@ public class Run_Abfall {
 			oneCarrierForOneDistrict = true;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
-            jspritIterations = 10;
-            clusterStrategy = clusteringStrategy.random;
-            runName = "NameTest";
-			outputLocation = "output/" + runName;
+            jspritIterations = 1;
+            clusterStrategy = clusteringStrategy.kClusters;
+            runName = "1CarrierModularKClusters";
+			outputLocation = "output/test_modular/" + runName;
 			day = "MO";
 			networkChangeEventsFileLocation = "";
+			testOneCarrier = true;
 		} else {
 			scenarioWahl = scenarioAuswahl.chessboardTotalGarbageToCollect;
 			jspritIterations = Integer.parseInt(args[0]);
@@ -237,13 +239,14 @@ public class Run_Abfall {
 		}
 
 		//-----------------TEST A SINGLE CARRIER------------------------
-		System.out.println("TESTING ONE CARRIER: ");
-		var carrier1 = carriers.getCarriers().get(Id.create("Carrier Haselhorst", Carrier.class));
-//		var carrier2 = carriers.getCarriers().get(Id.create("Carrier Wilhelmstadt", Carrier.class));
-		carriers.getCarriers().clear();
-		carriers.addCarrier(carrier1);
-//		carriers.addCarrier(carrier2);
-
+		if(testOneCarrier) {
+			System.out.println("TESTING ONE CARRIER: ");
+			var carrier1 = carriers.getCarriers().get(Id.create("Carrier Haselhorst", Carrier.class));
+//			var carrier2 = carriers.getCarriers().get(Id.create("Carrier Wilhelmstadt", Carrier.class));
+			carriers.getCarriers().clear();
+			carriers.addCarrier(carrier1);
+//			carriers.addCarrier(carrier2);
+		}
 		//-----------------RUN THE SPLIT------------------------
 		//System.out.println("VRP SPLIT: ");
 		int numberOfCarriers = 3;
