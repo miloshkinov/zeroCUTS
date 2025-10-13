@@ -71,7 +71,7 @@ public class Run_Abfall {
 		int jspritIterations;
 		double volumeDustbinInLiters;
 		double secondsServiceTimePerDustbin;
-        String runName;
+        String runName = null;
 		String outputLocation;
 		String day;
 		String networkChangeEventsFileLocation;
