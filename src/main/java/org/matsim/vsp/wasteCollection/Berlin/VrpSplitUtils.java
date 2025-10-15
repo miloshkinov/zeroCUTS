@@ -148,7 +148,8 @@ public class VrpSplitUtils {
         System.out.println("done");
     }
 
-    static void splitCarriers(Scenario scenario, Run_Abfall.clusteringStrategy clusterStrategy , int numberOfCarriers, int numberOfIterations, String runName) {
+    static void splitCarriers(Scenario scenario, Run_Abfall.clusteringStrategy clusterStrategy , int numberOfShipmentsPerCarrier, int numberOfIterations, String runName) {
+        System.out.println("Begin " + clusterStrategy.toString() + " VRP Splitting");
 
         //Get network and initial carriers and create a new set
         Network network = scenario.getNetwork();
@@ -163,11 +164,7 @@ public class VrpSplitUtils {
             String carrierName = singleCarrier.getId().toString();
 
             //Set up the desired number of new carriers
-            for (int i = 1; i <= numberOfCarriers; i++) {
-                Carrier newCarrier = createSingleCarrier(carrierName, numberOfIterations, carrierVehicle, i);
-                newCarriers.addCarrier(newCarrier);
-                System.out.println(newCarriers.getCarriers().size() + " carriers created");
-            }
+            int numberOfCarriers = estimateNumberOfCarriers(numberOfShipmentsPerCarrier, singleCarrier);
 
             //Get Clusters
             List<List<CarrierShipment>> clusters;
@@ -189,7 +186,12 @@ public class VrpSplitUtils {
 
             //loop through all clusters and assign to carrier
             for (int i = 0; i < clusters.size(); i++) {
+                //create new carrier for the cluster
+                Carrier newCarrier = createSingleCarrier(carrierName, numberOfIterations, carrierVehicle, i+1);
+                newCarriers.addCarrier(newCarrier);
+
                 for (int j = 0; j < clusters.get(i).size(); j++) {
+                    //assign all shipments from cluster to carrier
                     CarrierShipment shipment = clusters.get(i).get(j);
                     shipment.getAttributes().putAttribute("carrier", carrierName + (i + 1));
                     System.out.println("SHIPMENT " + shipment.getId().toString() + " ADDED TO " + carrierName + (i + 1));
@@ -221,12 +223,8 @@ public class VrpSplitUtils {
         for (CarrierShipment shipment : singleCarrier.getShipments().values()) {
 
             //Randomly assign the shipment to a new carrier
-            long coinFlip = randomSeed.nextInt(numberOfCarriers);
-            for (int i = 0; i < numberOfCarriers; i++){
-                if (coinFlip == i) {
-                    clusters.get(i).add(shipment);
-                }
-            }
+            int coinFlip = randomSeed.nextInt(numberOfCarriers);
+            clusters.get(coinFlip).add(shipment);
         }
         return clusters;
     }
@@ -388,6 +386,17 @@ public class VrpSplitUtils {
         }
 
         return clusters;
+    }
+
+    //Determine number of new carriers
+    private static int estimateNumberOfCarriers(int numberOfShipmentsPerCarrier, Carrier carrier) {
+        int noOfCarriers = 0;
+        //Float so that the round function works
+        float noOfShipments = carrier.getShipments().size();
+        System.out.println("NO OF SHIPMENTS: " + noOfShipments + " / NO OF SHIPMENTS PER CARRIER: " + numberOfShipmentsPerCarrier);
+        noOfCarriers = Math.round(noOfShipments/numberOfShipmentsPerCarrier);
+        System.out.println("NO OF CARRIERS: " + noOfCarriers);
+        return noOfCarriers;
     }
 
     //Create a basic carrier

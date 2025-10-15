@@ -74,6 +74,7 @@ public class Run_Abfall {
 		carrierChoice chosenCarrier;
         clusteringStrategy clusterStrategy = null;
 		int jspritIterations;
+		int numberOfShipmentsPerCarrier = 1;
 		double volumeDustbinInLiters;
 		double secondsServiceTimePerDustbin;
         String runName = null;
@@ -97,9 +98,10 @@ public class Run_Abfall {
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
             jspritIterations = 1;
+			numberOfShipmentsPerCarrier = 150;
             clusterStrategy = clusteringStrategy.kClusters;
-            runName = "1CarrierModularKClusters";
-			outputLocation = "output/test_modular/" + runName;
+            runName = "1CarrierRandom";
+			outputLocation = "output/test_maxJobsSplit/" + runName;
 			day = "MO";
 			networkChangeEventsFileLocation = "";
 			testOneCarrier = true;
@@ -249,8 +251,7 @@ public class Run_Abfall {
 		}
 		//-----------------RUN THE SPLIT------------------------
 		//System.out.println("VRP SPLIT: ");
-		int numberOfCarriers = 3;
-		VrpSplitUtils.splitCarriers(scenario, clusterStrategy, numberOfCarriers, jspritIterations, runName);
+		VrpSplitUtils.splitCarriers(scenario, clusterStrategy, numberOfShipmentsPerCarrier, jspritIterations, runName);
 //		//TESTING
 //		for (Carrier singleCarrier : carriers.getCarriers().values()) {
 //			System.out.println(singleCarrier.getId().toString());

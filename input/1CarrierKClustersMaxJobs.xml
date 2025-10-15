@@ -1,0 +1,1951 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE facilities SYSTEM "http://www.matsim.org/files/dtd/facilities_v1.dtd">
+
+<facilities name="facilities">
+	<facility id="Shipment_10137" x="4583705.982342406" y="5824491.617111615">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_101920" x="4583257.773369254" y="5824103.308412556">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_101924" x="4583095.160635405" y="5824146.682727698">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104367" x="4583687.302500459" y="5823582.323668457">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104489" x="4582383.159758542" y="5823636.319939001">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104491" x="4582389.490281832" y="5823571.013608066">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104531" x="4583535.627993809" y="5825424.040463646">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104533" x="4583568.867479612" y="5825487.783815774">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104537" x="4583602.119880789" y="5825551.11581882">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104540" x="4583610.022271383" y="5825657.635221542">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104542" x="4583621.820833874" y="5825618.613135558">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104544" x="4583624.831524957" y="5825592.4746940695">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104550" x="4583469.7747176215" y="5825297.500144628">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104552" x="4583418.559663297" y="5825340.959787766">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104554" x="4583502.584674745" y="5825360.278451401">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104618" x="4583262.106142937" y="5825412.202823475">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104619" x="4583348.973580504" y="5825755.08326734">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_104631" x="4583332.26510462" y="5825807.3232074985">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_105197" x="4582698.30614096" y="5823443.565068879">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_105211" x="4582790.007757827" y="5823575.371819264">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_105213" x="4583048.993665798" y="5823789.795492151">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_105684" x="4582398.80607108" y="5823543.700683009">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_105692" x="4582790.007757827" y="5823575.371819264">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_114933" x="4584515.339037806" y="5824170.978737362">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_115295" x="4584357.949339589" y="5824477.836623502">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_115297" x="4584424.5744314" y="5824486.163654356">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_119703" x="4583344.762639317" y="5824747.288451581">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_119782" x="4583348.973580504" y="5825755.08326734">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_119783" x="4583333.377212973" y="5825722.851290319">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_119784" x="4583321.7394582955" y="5825697.164624017">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_119785" x="4583303.835837243" y="5825659.773510213">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_119786" x="4583280.771595039" y="5825592.743504781">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_119787" x="4583264.427433724" y="5825525.438337657">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_119788" x="4583251.330663069" y="5825455.038555303">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_119789" x="4583243.585641492" y="5825415.794706781">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_119790" x="4583236.188831657" y="5825381.999553261">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_119791" x="4583343.776947613" y="5824786.472876393">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_120626" x="4582115.173901312" y="5823523.056111838">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_120657" x="4582220.400221479" y="5823491.51891458">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_121776" x="4584705.073205842" y="5824186.599535561">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_123203" x="4583243.896218772" y="5825304.54066303">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_123346" x="4583754.2832801305" y="5823777.437416252">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_123347" x="4583773.030954261" y="5823813.731363748">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_124059" x="4583336.244488978" y="5825824.609665354">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_124060" x="4583220.263481905" y="5825850.362718725">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_124063" x="4583332.26510462" y="5825807.3232074985">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_124064" x="4583369.443463273" y="5825796.692167556">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_128025" x="4584763.582954508" y="5823504.380018235">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_129720" x="4583528.581679109" y="5824641.464550196">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_129722" x="4583558.174067877" y="5824853.302071295">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_129724" x="4583600.206298631" y="5824669.655495946">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_129729" x="4583251.330663069" y="5825455.038555303">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_129735" x="4583264.427433724" y="5825525.438337657">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_129737" x="4583339.876688731" y="5825692.119586519">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_129741" x="4583231.874544834" y="5824960.051412656">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_129747" x="4583621.820833874" y="5825618.613135558">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_129864" x="4584652.02606488" y="5823455.803718059">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131178" x="4583499.184260876" y="5824365.074452844">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131180" x="4583492.4490335835" y="5824305.990886467">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131182" x="4583540.438358841" y="5824123.269082851">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131184" x="4583565.625948807" y="5824018.3384961">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131186" x="4583568.624415245" y="5823908.198890368">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131188" x="4583672.481906172" y="5823804.377643421">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131218" x="4584113.169852504" y="5824237.317117754">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131220" x="4583724.3819336835" y="5824064.568956187">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131222" x="4583724.3819336835" y="5824064.568956187">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131224" x="4583659.614190654" y="5824280.872340257">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131225" x="4583679.97200522" y="5824274.864612885">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131234" x="4584024.553175282" y="5824474.365579813">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131238" x="4583705.860035351" y="5823877.284185277">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131241" x="4583678.0432052445" y="5824187.56940034">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_131243" x="4583659.614190654" y="5824280.872340257">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_134339" x="4584282.915963874" y="5824066.110385125">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_134349" x="4584337.869529261" y="5824090.90866499">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_134351" x="4584593.587532534" y="5824198.051831077">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_134368" x="4584219.807813671" y="5824037.599674616">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_13495" x="4583602.119880789" y="5825551.11581882">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_13497" x="4583568.867479612" y="5825487.783815774">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_13499" x="4583535.627993809" y="5825424.040463646">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_13501" x="4583502.584674745" y="5825360.278451401">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_13503" x="4583469.7747176215" y="5825297.500144628">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_13505" x="4583425.5334023" y="5825214.347924686">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_136256" x="4583600.453531345" y="5824677.829425067">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_137520" x="4583730.565457161" y="5823901.692346756">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_138227" x="4584307.38054086" y="5824290.397663651">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_142609" x="4584205.125559065" y="5824031.125379003">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_142610" x="4584050.178504587" y="5824416.02549559">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_142611" x="4584024.553175282" y="5824474.365579813">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_142612" x="4583961.219991494" y="5824592.219155489">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_142613" x="4583957.12487472" y="5824606.284585274">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_1461" x="4584763.582954508" y="5823504.380018235">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_1466" x="4584719.07730804" y="5823535.654826335">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_1474" x="4584766.5309444545" y="5823529.340954879">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_151788" x="4583698.353888235" y="5823687.438547821">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_151790" x="4583621.2714633" y="5824362.181832434">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_151791" x="4583690.801793395" y="5823645.648521608">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154255" x="4583724.717495849" y="5823780.872229249">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154256" x="4584076.500028888" y="5823598.291820926">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154257" x="4584569.691389972" y="5823518.515488809">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154258" x="4584703.365534399" y="5823508.592209302">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154294" x="4583744.21959279" y="5823644.401974581">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154295" x="4583709.839050431" y="5823630.892075818">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154339" x="4584757.582222818" y="5823603.314912414">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154340" x="4584768.952422973" y="5823645.139492449">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154342" x="4583317.151475585" y="5825272.284038823">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154346" x="4583802.467132632" y="5824970.037921266">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154352" x="4583502.325945423" y="5825684.146512765">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154354" x="4583502.325945423" y="5825684.146512765">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154356" x="4583494.258532941" y="5825650.027807931">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154358" x="4583476.932291632" y="5825580.824056606">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154360" x="4583460.60352121" y="5825513.963642836">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154362" x="4583444.060552067" y="5825446.1090471335">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154364" x="4583427.943412184" y="5825378.317434102">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154366" x="4583418.559663297" y="5825340.959787766">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154368" x="4583411.6823952645" y="5825312.571435284">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154370" x="4583392.4849583" y="5825232.784600759">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154392" x="4583236.188831657" y="5825381.999553261">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154694" x="4583715.733187271" y="5823673.588756951">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154695" x="4583701.982639635" y="5823782.097667842">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154696" x="4583497.980815016" y="5824557.0753212">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154698" x="4583393.1755291065" y="5825804.865349221">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154699" x="4583464.013938263" y="5825773.148687905">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154702" x="4583715.733187271" y="5823673.588756951">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154703" x="4583721.372881678" y="5823706.942710703">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154704" x="4583520.071657536" y="5825759.334569869">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154706" x="4583437.754714901" y="5824640.328265094">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154707" x="4583363.19744672" y="5824755.660585629">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_154714" x="4583709.9257930685" y="5823522.1386056235">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_157038" x="4583570.733927285" y="5823487.317498948">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_157047" x="4583524.8382429425" y="5823492.311573539">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160571" x="4582698.30614096" y="5823443.565068879">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160572" x="4582450.5264534075" y="5823523.957421745">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160573" x="4582403.348721836" y="5823525.801643881">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160574" x="4582226.064187445" y="5823505.037090324">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160575" x="4583478.618863669" y="5823480.460318114">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160790" x="4583258.91753961" y="5824500.693069037">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160792" x="4583499.184260876" y="5824365.074452844">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160826" x="4583225.300971534" y="5824381.805969896">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160828" x="4583184.500528244" y="5824227.92574936">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160830" x="4583229.984267714" y="5824401.296902391">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160832" x="4583306.422003117" y="5824357.440382049">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160834" x="4583385.234465257" y="5824334.806547427">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160836" x="4583464.120598908" y="5824312.275390809">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160838" x="4583492.4490335835" y="5824305.990886467">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160846" x="4583248.945800633" y="5824374.772679206">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160850" x="4583266.930310786" y="5824197.359800788">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160852" x="4583340.871021194" y="5824176.033683042">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160854" x="4583419.715342087" y="5824153.701389114">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160856" x="4583540.438358841" y="5824123.269082851">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_160862" x="4583261.512588104" y="5824199.115353954">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_17528" x="4583262.106142937" y="5825412.202823475">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_17530" x="4583353.53337217" y="5825720.345007401">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_17531" x="4583367.438806648" y="5825747.8957530605">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_17532" x="4583388.418349045" y="5825791.038278646">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_17533" x="4583227.210589447" y="5825329.879187051">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_17735" x="4583631.131140707" y="5824342.293196641">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_1856" x="4582691.653899769" y="5823429.562163972">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_1861" x="4582452.720337208" y="5823506.5086335465">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_1862" x="4582620.026829469" y="5823457.704521988">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_1913" x="4584705.759637993" y="5824096.276651706">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_1941" x="4584767.333921999" y="5823673.572044874">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_1947" x="4584761.011213567" y="5823720.900626268">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_19471" x="4584212.291549717" y="5824034.287162807">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_19473" x="4584219.807813671" y="5824037.599674616">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_19550" x="4584480.729147634" y="5824155.355649164">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_19552" x="4584368.656168834" y="5824104.773044487">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_19588" x="4584719.07730804" y="5823535.654826335">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_19589" x="4584496.620537782" y="5823554.196705414">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_21185" x="4583844.412611325" y="5823770.319578737">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_21186" x="4583835.381689462" y="5823763.475670221">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_21187" x="4584300.545247798" y="5823871.731471248">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_21189" x="4583705.860035351" y="5823877.284185277">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_30904" x="4583709.9257930685" y="5823522.1386056235">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_337" x="4584700.305087077" y="5824175.47567988">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_34959" x="4583446.657194123" y="5825782.5585518135">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_357" x="4583724.717495849" y="5823780.872229249">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_363" x="4583709.839050431" y="5823630.892075818">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_372" x="4583572.263574854" y="5823507.456169557">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_37822" x="4583393.1755291065" y="5825804.865349221">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_37825" x="4583369.443463273" y="5825796.692167556">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_37830" x="4583388.418349045" y="5825791.038278646">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_37833" x="4583374.969728416" y="5825811.567442444">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_384" x="4583702.743461677" y="5823771.726017819">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_40026" x="4583343.776947613" y="5824786.472876393">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_41856" x="4583672.481906172" y="5823804.377643421">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_41904" x="4583674.495772258" y="5823608.57298227">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_4237" x="4583686.983681101" y="5823552.911760578">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_4268" x="4583724.709706823" y="5823771.400138124">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_44956" x="4583609.637144816" y="5824955.444725947">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_47813" x="4584464.480176875" y="5823790.6984141115">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_47829" x="4584384.8582142545" y="5823790.150007067">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_47831" x="4584472.012393972" y="5823739.9622063385">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49780" x="4583610.022271383" y="5825657.635221542">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49782" x="4583363.19744672" y="5824755.660585629">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49784" x="4583280.771595039" y="5825592.743504781">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49786" x="4583586.331280364" y="5825742.400637531">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49788" x="4583266.930310786" y="5824197.359800788">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49816" x="4583237.1226092195" y="5824378.534165362">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49858" x="4584736.860540563" y="5824244.126097904">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49859" x="4584125.072839281" y="5824242.407772615">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49860" x="4584713.905051981" y="5824178.159550326">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49862" x="4584700.305087077" y="5824175.47567988">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49864" x="4584698.4498124765" y="5824095.961043239">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49865" x="4584713.905051981" y="5824178.159550326">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49870" x="4584622.102509855" y="5824200.74816647">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49871" x="4584705.073205842" y="5824186.599535561">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_49873" x="4584747.8183908425" y="5824531.281175426">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_54595" x="4583255.587756464" y="5825378.222226979">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_58181" x="4584262.481760273" y="5823928.50962182">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_58183" x="4584385.647553159" y="5823983.866444414">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_58191" x="4583754.2832801305" y="5823777.437416252">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_58195" x="4584337.869529261" y="5824090.90866499">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_58197" x="4584310.623358648" y="5824267.179746488">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_58199" x="4584307.38054086" y="5824290.397663651">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_58218" x="4584492.225455316" y="5824113.59216806">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_58219" x="4584385.647553159" y="5823983.866444414">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_59" x="4583688.299302423" y="5823618.9262536">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_62261" x="4584736.860540563" y="5824244.126097904">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_64706" x="4582365.068648393" y="5823689.107314749">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_69466" x="4584704.1390169775" y="5824080.899736652">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_69579" x="4583844.412611325" y="5823770.319578737">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_69588" x="4584388.126359286" y="5823823.018797266">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_69590" x="4584211.502542507" y="5823748.166218034">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_69592" x="4583855.6502387" y="5823754.495271542">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_69598" x="4583855.6502387" y="5823754.495271542">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_69754" x="4583121.676448838" y="5824001.291549903">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_69952" x="4583194.18520191" y="5825757.103203325">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_70984" x="4583284.275094547" y="5824095.555818438">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_72204" x="4584153.734152434" y="5823878.6794367395">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_72206" x="4584211.502542507" y="5823748.166218034">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_72544" x="4584310.623358648" y="5824267.179746488">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_72548" x="4584458.568742748" y="5824285.889748726">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_72549" x="4584424.5744314" y="5824486.163654356">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_72554" x="4584281.557115927" y="5824467.695131069">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_72560" x="4584050.178504587" y="5824416.02549559">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_7331" x="4584754.237630528" y="5823531.053856615">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_7332" x="4584704.1390169775" y="5824080.899736652">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_79943" x="4584262.481760273" y="5823928.50962182">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_79947" x="4584006.101349" y="5824466.1910139695">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_79948" x="4584033.569624099" y="5824409.184714179">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_79949" x="4584113.169852504" y="5824237.317117754">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_79950" x="4583961.219991494" y="5824592.219155489">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_84402" x="4584543.743490967" y="5824080.611076065">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_85463" x="4584374.334557562" y="5824350.296905067">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_89190" x="4584106.167099499" y="5823984.7479366865">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_89192" x="4583773.030954261" y="5823813.731363748">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_90346" x="4584754.237630528" y="5823531.053856615">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_90351" x="4583914.140651207" y="5823659.886628764">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_91656" x="4583248.32032282" y="5824203.154073663">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_92530" x="4583255.587756464" y="5825378.222226979">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_92535" x="4583344.762639317" y="5824747.288451581">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_92693" x="4583340.871021194" y="5824176.033683042">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_92704" x="4583419.715342087" y="5824153.701389114">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_93119" x="4583571.730327229" y="5824454.842738062">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_93120" x="4583497.980815016" y="5824557.0753212">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_93122" x="4583561.447464873" y="5824445.072912066">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_93127" x="4583701.982639635" y="5823782.097667842">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_93130" x="4583561.447464873" y="5824445.072912066">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_93132" x="4583631.131140707" y="5824342.293196641">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_93151" x="4582452.720337208" y="5823506.5086335465">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_93153" x="4583724.709706823" y="5823771.400138124">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_93154" x="4583702.743461677" y="5823771.726017819">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_93163" x="4582450.5264534075" y="5823523.957421745">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_93265" x="4583233.859481353" y="5824415.231186859">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_94810" x="4584125.072839281" y="5824242.407772615">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_95467" x="4583688.299302423" y="5823618.9262536">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_96465" x="4583317.151475585" y="5825272.284038823">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_96467" x="4583392.4849583" y="5825232.784600759">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_96469" x="4583425.5334023" y="5825214.347924686">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_98612" x="4583600.206298631" y="5824669.655495946">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_98614" x="4583600.453531345" y="5824677.829425067">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_98616" x="4583558.174067877" y="5824853.302071295">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_98618" x="4583600.83575821" y="5824876.046038721">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="Shipment_98620" x="4583672.219066585" y="5824888.35094871">
+		<activity type="delivery">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="depot_Carrier Haselhorst1" x="4589107.80755886" y="5817005.310083307">
+		<activity type="depot">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">depot_Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="depot_Carrier Haselhorst2" x="4589107.80755886" y="5817005.310083307">
+		<activity type="depot">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">depot_Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+	<facility id="dump_Carrier Haselhorst1" x="4584055.871737776" y="5822489.35077752">
+		<activity type="dump">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">dump_Carrier Haselhorst1</attribute>
+		</attributes>
+	</facility>
+	<facility id="dump_Carrier Haselhorst2" x="4584055.871737776" y="5822489.35077752">
+		<activity type="dump">
+		</activity>
+		<attributes>
+			<attribute name="carrier" class="java.lang.String">dump_Carrier Haselhorst2</attribute>
+		</attributes>
+	</facility>
+</facilities>
