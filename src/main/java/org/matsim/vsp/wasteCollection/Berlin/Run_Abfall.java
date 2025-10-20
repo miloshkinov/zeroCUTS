@@ -94,17 +94,17 @@ public class Run_Abfall {
 			chosenCarrier = carrierChoice.carriersWithDieselVehicle;        //Change this when switching between chessboard and berlin
 			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay; //and this
 			shapeFileLocation = berlinDistrictsWithGarbageInformations;
-			oneCarrierForOneDistrict = true;
+			oneCarrierForOneDistrict = false;
+			testOneCarrier = false;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
             jspritIterations = 1;
-			numberOfShipmentsPerCarrier = 150;
+			numberOfShipmentsPerCarrier = 200;
             clusterStrategy = clusteringStrategy.kClusters;
-            runName = "1CarrierRandom";
-			outputLocation = "output/test_maxJobsSplit/" + runName;
+            runName = "test_maxJobsSplit/AllCarrierskClusterMaxJobs";
+			outputLocation = "output/" + runName;
 			day = "MO";
 			networkChangeEventsFileLocation = "";
-			testOneCarrier = true;
 		} else {
 			scenarioWahl = scenarioAuswahl.chessboardTotalGarbageToCollect;
 			jspritIterations = Integer.parseInt(args[0]);
@@ -243,11 +243,11 @@ public class Run_Abfall {
 		//-----------------TEST A SINGLE CARRIER------------------------
 		if(testOneCarrier) {
 			System.out.println("TESTING ONE CARRIER: ");
-			var carrier1 = carriers.getCarriers().get(Id.create("Carrier Haselhorst", Carrier.class));
-//			var carrier2 = carriers.getCarriers().get(Id.create("Carrier Wilhelmstadt", Carrier.class));
+//			var carrier1 = carriers.getCarriers().get(Id.create("Carrier Haselhorst", Carrier.class));
+			var carrier2 = carriers.getCarriers().get(Id.create("Carrier Wilhelmstadt", Carrier.class));
 			carriers.getCarriers().clear();
-			carriers.addCarrier(carrier1);
-//			carriers.addCarrier(carrier2);
+//			carriers.addCarrier(carrier1);
+			carriers.addCarrier(carrier2);
 		}
 		//-----------------RUN THE SPLIT------------------------
 		//System.out.println("VRP SPLIT: ");
