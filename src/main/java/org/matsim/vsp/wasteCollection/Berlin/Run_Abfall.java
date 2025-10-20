@@ -56,10 +56,6 @@ public class Run_Abfall {
 		carriersFromInputFile
 	}
 
-    public enum clusteringStrategy{
-        random, seeding, kClusters
-    }
-
 	public static void main(String[] args) throws Exception {
 
 		/*
@@ -72,7 +68,7 @@ public class Run_Abfall {
 		netzwerkAuswahl netzwerkWahl = netzwerkAuswahl.berlinNetwork;
 		scenarioAuswahl scenarioWahl;
 		carrierChoice chosenCarrier;
-        clusteringStrategy clusterStrategy = null;
+        VrpSplitUtils.clusteringStrategy clusterStrategy = null;
 		int jspritIterations;
 		int numberOfShipmentsPerCarrier = 1;
 		double volumeDustbinInLiters;
@@ -94,14 +90,14 @@ public class Run_Abfall {
 			chosenCarrier = carrierChoice.carriersWithDieselVehicle;        //Change this when switching between chessboard and berlin
 			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay; //and this
 			shapeFileLocation = berlinDistrictsWithGarbageInformations;
-			oneCarrierForOneDistrict = false;
-			testOneCarrier = false;
+			oneCarrierForOneDistrict = true;
+			testOneCarrier = true;
 			volumeDustbinInLiters = 1100; // in liter
 			secondsServiceTimePerDustbin = 41;
-            jspritIterations = 1;
-			numberOfShipmentsPerCarrier = 200;
-            clusterStrategy = clusteringStrategy.kClusters;
-            runName = "test_maxJobsSplit/AllCarrierskClusterMaxJobs";
+            jspritIterations = 10;
+			numberOfShipmentsPerCarrier = 50;
+            clusterStrategy = VrpSplitUtils.clusteringStrategy.kClusters;
+            runName = "test_scoreVerlauf/1CarrierkClusterscoreVerlauf";
 			outputLocation = "output/" + runName;
 			day = "MO";
 			networkChangeEventsFileLocation = "";
