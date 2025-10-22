@@ -1,6 +1,5 @@
 package org.matsim.vsp.wasteCollection.Berlin;
 
-import com.graphhopper.jsprit.core.problem.job.Shipment;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -8,12 +7,15 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.facilities.*;
 import org.matsim.freight.carriers.*;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -26,7 +28,7 @@ import static java.lang.Math.abs;
 public class VrpSplitUtils {
 
     public enum clusteringStrategy {
-        random, seeding, kClusters
+        random, seeding, kClusters, METIS
     }
 
     static String linkChessboardDepot = "j(0,7)R";
@@ -156,7 +158,7 @@ public class VrpSplitUtils {
         System.out.println("done");
     }
 
-    static void splitCarriers(Scenario scenario, clusteringStrategy clusterStrategy , int numberOfShipmentsPerCarrier, int numberOfIterations, String runName) {
+    static void splitCarriers(Scenario scenario, clusteringStrategy clusterStrategy , int numberOfShipmentsPerCarrier, int numberOfIterations, String runName) throws IOException, InterruptedException {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss,SSS");
         System.out.println(fmt.format(LocalDateTime.now()) + " Begin " + clusterStrategy.toString() + " VRP Splitting");
 
@@ -186,6 +188,9 @@ public class VrpSplitUtils {
                 }
                 case kClusters -> {
                     clusters = findKClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
+                }
+                case METIS -> {
+                    clusters = findMETISClusters(singleCarrier, network, numberOfCarriers);
                 }
                 case null, default -> {
                     System.out.println("No Clustering Strategy Defined! Exit");
@@ -403,6 +408,70 @@ public class VrpSplitUtils {
         return index;
     }
 
+    private static List<List<CarrierShipment>> findMETISClusters(Carrier singleCarrier, Network network, int numberOfCarriers) throws IOException, InterruptedException {
+
+        //The list of clusters that will be returned
+        List<List<CarrierShipment>> clusters = new ArrayList<>();
+        List<CarrierShipment> shipments = new ArrayList<>(singleCarrier.getShipments().values());
+        for (int i = 0; i < numberOfCarriers; i++) {
+            clusters.add(new ArrayList<>());
+        }
+
+        //Write the Graph files
+        try (PrintWriter pw = new PrintWriter("input/METIS_Graphs/graphTest_" + singleCarrier.getId().toString() + ".txt")) {
+            //File header set up
+            int n = shipments.size();
+            int m = n*(n-1)/2; // number of undirected edges
+            pw.println(n + " " + m + " 1"); // "1" means weighted
+
+            //Write to METIS style
+            int above1000 = 0;
+            int below0 = 0;
+            for (int i = 0; i < singleCarrier.getShipments().size(); i++) {
+                Coord fromShipment = network.getLinks().get(shipments.get(i).getPickupLinkId()).getCoord();
+                StringBuilder line = new StringBuilder();
+                //We loop from the counter onward because edges shouldn't be added twice
+                for (int j = 0; j < singleCarrier.getShipments().size(); j++) {
+                    //Don't map to same Shipment
+                    if (i == j) {
+                        continue;
+                    }
+                    Coord toShipment = network.getLinks().get(shipments.get(j).getPickupLinkId()).getCoord();
+                    int weight = (int) (10000 / NetworkUtils.getEuclideanDistance(fromShipment, toShipment));
+                    //That is the upper bound of METIS Edge weights
+                    if (weight > 1000) {
+                        weight = 999;
+                        above1000++;
+                    }
+                    //That is the lower bound of METIS Edge weights
+                    if (weight == 0) {
+                        weight = 1;
+                        below0++;
+                    }
+                    //J+1 because index starts at 1 in METIS
+                    line.append(j+1).append(" ").append(weight).append(" ");
+                }
+                pw.println(line.toString().trim());
+            }
+            System.out.println("This many above " + above1000 + " and below " + below0  );
+        }
+
+        //Run METIS
+        ProcessBuilder pb = new ProcessBuilder("wsl", "gpmetis", "/mnt/c/Users/Milo/Desktop/UniZeug/AbfallGit/input/METIS_Graphs/graphTest_" + singleCarrier.getId().toString() + ".txt", "" + numberOfCarriers);
+        Process process = pb.start();
+        process.waitFor();
+
+        //Read the Results
+        int shipmentCounter = 0;
+        try (Scanner sc = new Scanner(new File("input/METIS_Graphs/graphTest_" + singleCarrier.getId().toString() + ".txt.part." + numberOfCarriers))) {
+            while (sc.hasNextInt()) {
+                clusters.get(sc.nextInt()).add(shipments.get(shipmentCounter));
+                shipmentCounter++;
+            }
+        }
+
+        return clusters;
+    }
 
     //Determine number of new carriers
     private static int estimateNumberOfCarriers(int numberOfShipmentsPerCarrier, Carrier carrier) {
