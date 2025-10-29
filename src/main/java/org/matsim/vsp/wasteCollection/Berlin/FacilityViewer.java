@@ -109,7 +109,7 @@ public class FacilityViewer extends JPanel {
 
     // You can call this main() directly to test manually
     public static void main(String[] args) {
-        showViewer("input/test_Metis/Metis_setup.xml");
+        showViewer("input/test_centroidClusters/Mo.xml");
     }
 }
 

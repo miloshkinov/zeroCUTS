@@ -96,13 +96,13 @@ public class Run_Abfall {
 			secondsServiceTimePerDustbin = 41;
             jspritIterations = 1;
 			numberOfShipmentsPerCarrier = 300;
-            clusterStrategy = VrpSplitUtils.clusteringStrategy.METIS;
-            runName = "test_Metis/Metis_setup";
+            clusterStrategy = VrpSplitUtils.clusteringStrategy.centroidClusters;
+            runName = "test_centroidClusters/Mo";
 			outputLocation = "output/" + runName;
 			day = "MO";
 			networkChangeEventsFileLocation = "";
 		} else {
-			scenarioWahl = scenarioAuswahl.chessboardTotalGarbageToCollect;
+			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay;
 			jspritIterations = Integer.parseInt(args[0]);
 			volumeDustbinInLiters = Double.parseDouble(args[1]); // in liter
 			secondsServiceTimePerDustbin = Double.parseDouble(args[2]);

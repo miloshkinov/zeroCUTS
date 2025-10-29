@@ -13,7 +13,6 @@ import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
@@ -28,7 +27,7 @@ import static java.lang.Math.abs;
 public class VrpSplitUtils {
 
     public enum clusteringStrategy {
-        random, seeding, kClusters, METIS
+        random, seeding, kClusters, centroidClusters, METIS
     }
 
     static String linkChessboardDepot = "j(0,7)R";
@@ -189,6 +188,9 @@ public class VrpSplitUtils {
                 case kClusters -> {
                     clusters = findKClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
                 }
+                case centroidClusters -> {
+                    clusters = findCentroidClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
+                }
                 case METIS -> {
                     clusters = findMETISClusters(singleCarrier, network, numberOfCarriers);
                 }
@@ -337,15 +339,15 @@ public class VrpSplitUtils {
 
         //The list of clusters that will be returned
         List<List<CarrierShipment>> clusters = new ArrayList<>();
+        List<CarrierShipment> shipments = new ArrayList<>(singleCarrier.getShipments().values());
+        int numberOfShipments = shipments.size();
 
         //Assign each shipment to a cluster CAN I PUT THIS FURTHER DOWN
-        for (CarrierShipment shipment : singleCarrier.getShipments().values()){
+        for (CarrierShipment shipment : shipments){
             List<CarrierShipment> cluster = new ArrayList<>();
             cluster.add(shipment);
             clusters.add(cluster);
         }
-        List<CarrierShipment> shipments = new ArrayList<>(singleCarrier.getShipments().values());
-        int n = shipments.size();
 
         //Precompute coordinates
         Map<CarrierShipment, Coord> coords = new HashMap<>();
@@ -355,8 +357,8 @@ public class VrpSplitUtils {
 
         //Precompute all edge distances
         List<Edge> edges = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
-            for (int j = i + 1; j < n; j++) {
+        for (int i = 0; i < numberOfShipments; i++) {
+            for (int j = i + 1; j < numberOfShipments; j++) {
                 CarrierShipment a = shipments.get(i);
                 CarrierShipment b = shipments.get(j);
                 double dist = NetworkUtils.getEuclideanDistance(coords.get(a), coords.get(b));
@@ -367,10 +369,10 @@ public class VrpSplitUtils {
         //Sort edges by increasing distance
         edges.sort(Comparator.comparingDouble(Edge::distance));
 
-        //Merge clusters from shortest edge until desired number of clusters is reached
-        for (Edge e : edges) {
-            CarrierShipment a = e.a();
-            CarrierShipment b = e.b();
+        //Merge clusters from nearest edge until desired number of clusters is reached
+        for (Edge edge : edges) {
+            CarrierShipment a = edge.a();
+            CarrierShipment b = edge.b();
             int aIndex = getClusterIndex(a, clusters);
             int bIndex = getClusterIndex(b, clusters);
             //check if clusters are too large
@@ -395,6 +397,66 @@ public class VrpSplitUtils {
         return clusters;
     }
 
+    private static List<List<CarrierShipment>> findCentroidClusters(Carrier singleCarrier, Network network, int numberOfCarriers, int numberOfShipmentsPerCarrier) {
+
+        List<CarrierShipment> shipments = new ArrayList<>(singleCarrier.getShipments().values());
+        int numberOfShipments = shipments.size();
+
+        // Precompute coordinates
+        Map<CarrierShipment, Coord> coords = new HashMap<>();
+        for (CarrierShipment shipment : shipments) {
+            coords.put(shipment, network.getLinks().get(shipment.getPickupLinkId()).getCoord());
+        }
+
+        // Initialize each shipment as its own cluster
+        List<List<CarrierShipment>> clusters = new ArrayList<>();
+        for (CarrierShipment shipment : shipments) {
+            clusters.add(new ArrayList<>(List.of(shipment)));
+        }
+
+        // Keep merging until we have the target number of clusters
+        while (clusters.size() > numberOfCarriers) {
+            double minDistance = Double.MAX_VALUE;
+            int aIndex = -1, bIndex = -1;
+
+            // Find the two clusters with the smallest distance between centroids
+            for (int i = 0; i < clusters.size(); i++) {
+                Coord centroidA = computeCentroid(coords, clusters.get(i));
+                for (int j = i + 1; j < clusters.size(); j++) {
+                    Coord centroidB = computeCentroid(coords, clusters.get(j));
+                    double distanceApart = NetworkUtils.getEuclideanDistance(centroidA, centroidB);
+
+                    //check if clusters are too large
+                    if (clusters.get(i).size() + clusters.get(j).size() > numberOfShipments / numberOfCarriers + 1) {
+                        continue;
+                    }
+
+                    //Save Index of the clusters
+                    if (distanceApart < minDistance) {
+                        minDistance = distanceApart;
+                        aIndex = i;
+                        bIndex = j;
+                    }
+                }
+            }
+
+            //Merge the higher index into the lower
+            if (aIndex < bIndex) {
+                clusters.get(aIndex).addAll(clusters.get(bIndex));
+                clusters.remove(bIndex);
+            } else if (aIndex > bIndex) {
+                clusters.get(bIndex).addAll(clusters.get(aIndex));
+                clusters.remove(aIndex);
+            } else {
+                // No valid merge found (e.g., size constraints prevent it)
+                System.out.println("No merges found!");
+                break;
+            }
+        }
+
+        return clusters;
+    }
+
     //returns which cluster the shipment is in
     private static int getClusterIndex(CarrierShipment a, List<List<CarrierShipment>> clusters) {
         int index = 0;
@@ -406,6 +468,18 @@ public class VrpSplitUtils {
             }
         }
         return index;
+    }
+
+    //Computes the centroid of a cluster
+    private static Coord computeCentroid (Map<CarrierShipment, Coord> coords, List<CarrierShipment> cluster) {
+        double sumX = 0.0, sumY = 0.0;
+        for (CarrierShipment s : cluster) {
+            Coord c = coords.get(s);
+            sumX += c.getX();
+            sumY += c.getY();
+        }
+        int size = cluster.size();
+        return new Coord(sumX / size, sumY / size);
     }
 
     private static List<List<CarrierShipment>> findMETISClusters(Carrier singleCarrier, Network network, int numberOfCarriers) throws IOException, InterruptedException {
