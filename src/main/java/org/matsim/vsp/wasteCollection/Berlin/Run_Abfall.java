@@ -96,8 +96,8 @@ public class Run_Abfall {
 			secondsServiceTimePerDustbin = 41;
             jspritIterations = 1;
 			numberOfShipmentsPerCarrier = 300;
-            clusterStrategy = VrpSplitUtils.clusteringStrategy.centroidClusters;
-            runName = "test_centroidClusters/Mo";
+            clusterStrategy = VrpSplitUtils.clusteringStrategy.seeding;
+            runName = "tune_seeding/minSpacingv4";
 			outputLocation = "output/" + runName;
 			day = "MO";
 			networkChangeEventsFileLocation = "";

@@ -1,4 +1,5 @@
 package org.matsim.vsp.wasteCollection.Berlin;
+
 import org.w3c.dom.*;
 import javax.xml.parsers.*;
 import javax.swing.*;
@@ -12,10 +13,12 @@ public class FacilityViewer extends JPanel {
     private static class Facility {
         double x, y;
         String carrier;
-        Facility(double x, double y, String carrier) {
+        boolean hasSeed;
+        Facility(double x, double y, String carrier, boolean hasSeed) {
             this.x = x;
             this.y = y;
             this.carrier = carrier;
+            this.hasSeed = hasSeed;
         }
     }
 
@@ -37,6 +40,8 @@ public class FacilityViewer extends JPanel {
         if (facilities.isEmpty()) return;
 
         Graphics2D g2 = (Graphics2D) g;
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
         double minX = facilities.stream().mapToDouble(f -> f.x).min().orElse(0);
         double maxX = facilities.stream().mapToDouble(f -> f.x).max().orElse(1);
         double minY = facilities.stream().mapToDouble(f -> f.y).min().orElse(0);
@@ -46,25 +51,47 @@ public class FacilityViewer extends JPanel {
         int height = getHeight();
         int margin = 40;
 
+        // --- Draw normal facilities first ---
         for (Facility f : facilities) {
+            if (f.hasSeed) continue; // skip seed for now
             double normX = (f.x - minX) / (maxX - minX);
             double normY = (f.y - minY) / (maxY - minY);
             int drawX = (int) (margin + normX * (width - 2 * margin));
-            int drawY = (int) (height - margin - normY * (height - 2 * margin)); // flip Y for screen coords
+            int drawY = (int) (height - margin - normY * (height - 2 * margin));
 
             g2.setColor(carrierColors.get(f.carrier));
             g2.fillOval(drawX - 5, drawY - 5, 10, 10);
         }
 
-        // Optional legend
-        int y = 5;
+        // --- Draw seed facilities last (on top) ---
+        for (Facility f : facilities) {
+            if (!f.hasSeed) continue;
+            double normX = (f.x - minX) / (maxX - minX);
+            double normY = (f.y - minY) / (maxY - minY);
+            int drawX = (int) (margin + normX * (width - 2 * margin));
+            int drawY = (int) (height - margin - normY * (height - 2 * margin));
+
+            g2.setColor(carrierColors.get(f.carrier));
+            g2.fillOval(drawX - 5, drawY - 5, 10, 10);
+
+            // yellow highlight
+            g2.setColor(Color.RED);
+            g2.setStroke(new BasicStroke(4f));
+            g2.drawOval(drawX - 7, drawY - 7, 14, 14);
+        }
+
+        // --- Optional legend ---
+        int y = 20;
         for (Map.Entry<String, Color> entry : carrierColors.entrySet()) {
             g2.setColor(entry.getValue());
             g2.fillRect(10, y, 10, 10);
             g2.setColor(Color.BLACK);
-            g2.drawString(entry.getKey(), 25, y + 9);
-            y += 10;
+            g2.drawString(entry.getKey(), 25, y + 10);
+            y += 15;
         }
+        g2.setColor(Color.RED);
+        g2.drawString("= has seed", 25, y + 10);
+        g2.fillOval(10, y, 10, 10);
     }
 
     public static List<Facility> parseFacilities(File xmlFile) throws Exception {
@@ -81,15 +108,19 @@ public class FacilityViewer extends JPanel {
             double y = Double.parseDouble(fEl.getAttribute("y"));
 
             String carrier = "unknown";
+            boolean hasSeed = false;
+
             NodeList attrs = fEl.getElementsByTagName("attribute");
             for (int j = 0; j < attrs.getLength(); j++) {
                 Element attr = (Element) attrs.item(j);
-                if ("carrier".equals(attr.getAttribute("name"))) {
+                String name = attr.getAttribute("name");
+                if ("carrier".equals(name)) {
                     carrier = attr.getTextContent().trim();
-                    break;
+                } else if ("seed".equals(name)) {
+                    hasSeed = true;
                 }
             }
-            list.add(new Facility(x, y, carrier));
+            list.add(new Facility(x, y, carrier, hasSeed));
         }
         return list;
     }
@@ -109,7 +140,7 @@ public class FacilityViewer extends JPanel {
 
     // You can call this main() directly to test manually
     public static void main(String[] args) {
-        showViewer("input/test_centroidClusters/Mo.xml");
+        showViewer("input/tune_seeding/minSpacingv3.xml");
     }
 }
 
