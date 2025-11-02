@@ -97,7 +97,7 @@ public class Run_Abfall {
             jspritIterations = 1;
 			numberOfShipmentsPerCarrier = 300;
             clusterStrategy = VrpSplitUtils.clusteringStrategy.seeding;
-            runName = "tune_seeding/minSpacingv4";
+            runName = "tune_seeding/greedy3";
 			outputLocation = "output/" + runName;
 			day = "MO";
 			networkChangeEventsFileLocation = "";

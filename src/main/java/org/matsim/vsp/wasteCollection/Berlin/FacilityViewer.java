@@ -140,7 +140,7 @@ public class FacilityViewer extends JPanel {
 
     // You can call this main() directly to test manually
     public static void main(String[] args) {
-        showViewer("input/tune_seeding/minSpacingv3.xml");
+        showViewer("input/tune_seeding/minSpacingv4.xml");
     }
 }
 

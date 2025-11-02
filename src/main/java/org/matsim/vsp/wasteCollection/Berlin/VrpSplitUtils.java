@@ -180,7 +180,7 @@ public class VrpSplitUtils {
                     clusters = findRandomClusters(singleCarrier, numberOfCarriers, numberOfShipmentsPerCarrier);
                 }
                 case seeding -> {
-                    clusters = findSeedingClusters(singleCarrier, network, numberOfCarriers, carrierVehicle, numberOfShipmentsPerCarrier);
+                    clusters = findSeedingClusters2(singleCarrier, network, numberOfCarriers, carrierVehicle, numberOfShipmentsPerCarrier);
                 }
                 case kClusters -> {
                     clusters = findKClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
@@ -361,85 +361,94 @@ public class VrpSplitUtils {
         List<Id<CarrierShipment>> seedCoordIds = new ArrayList<>();
         List<CarrierShipment> shipments = new ArrayList<>(singleCarrier.getShipments().values());
 
+        //Precompute coordinates
+        Map<CarrierShipment, Coord> coords = new HashMap<>();
+        for (CarrierShipment shipment : shipments) {
+            coords.put(shipment, network.getLinks().get(shipment.getPickupLinkId()).getCoord());
+        }
+
         //Get Depot Coord
         Coord depotCoord =  network.getLinks().get(carrierVehicle.getLinkId()).getCoord();
 
         //Variables to track the max distances and coefficient to encourage spread out clustering
-        double maxDistance = 0;
         Coord seedCoord = null;
         Id<CarrierShipment> seedId = null;
-        double clusterCoefficient = 2.0; //PLAY AROUND WITH THIS!!!!!!!!!!!
+        int seedNumber = 0;
+        int numberOfShipmentsEven = (shipments.size()/numberOfCarriers) + 1;
 
         //Loop for amount of seeds required
         for (int i = 0; i < numberOfCarriers; i++) {
 
-            //Create new cluster for each seed
+            //Create new cluster for each seed and reset maxDistance
             clusters.add(new ArrayList<>());
+            double maxDistance = 0;
+
+            //Update the shipments still left
+            shipments = new ArrayList<>(singleCarrier.getShipments().values());
 
             //Find seed
             for (CarrierShipment shipment : shipments) {
 
-                //Get Coord of Shipment
-                final Coord shipmentCoord = network.getLinks().get(shipment.getPickupLinkId()).getCoord();
+                //Check if this shipment is already a seed
+                if (seedCoordIds.contains(shipment.getId())) {
+                    continue;
+                }
 
-                //Calculate Distance to depot and all other seeds
-                double distance = NetworkUtils.getEuclideanDistance(depotCoord, shipmentCoord);
-                if (seedCoords != null) {
-                    for (int j = 0; j < seedCoords.size(); j++) {
-                        //To avoid picking same seed twice
-                        if (seedCoordIds.get(j) == shipment.getId()){
-                            distance = 0;
-                            break;
-                        }
-                        distance += NetworkUtils.getEuclideanDistance(seedCoords.get(j), shipmentCoord)*clusterCoefficient;
+                //Calculate Distance to depot if finding first seed REDO COMMENTS AND NAMING IN THIS SECTION
+                //double distance = Double.MAX_VALUE;
+                double distance = 0;
+                if(seedCoords.isEmpty()) {
+                    distance = NetworkUtils.getEuclideanDistance(depotCoord, coords.get(shipment));
+                } else {
+
+                    //Otherwise the distance to all other seeds
+                    for (Coord coord : seedCoords) {
+                        //distance = Math.min(distance, NetworkUtils.getEuclideanDistance(coord, coords.get(shipment)));
+                        distance += NetworkUtils.getEuclideanDistance(coord, coords.get(shipment));
                     }
                 }
 
                 //Check if it is the new max distance
                 if (distance>maxDistance) {
                     maxDistance = distance;
-                    seedCoord = shipmentCoord;
+                    seedCoord = coords.get(shipment);
                     seedId = shipment.getId();
                 }
             }
-            //Greedily assign
 
-            //Save Seed and reset max distance
-            System.out.println("Seed " + (i+1) + " found at Coord " + seedCoord.toString() + " with ID: " + seedId.toString());
+            //Save seed
+            System.out.println("Seed " + (i+1) + " found at Coord " + seedCoord + " with ID: " + seedId);
             seedCoords.add(seedCoord);
             seedCoordIds.add(seedId);
-            maxDistance = 0;
-        }
 
-        //loop through all shipments to assign to seeds
-        for (CarrierShipment shipment : shipments) {
-            //Skip if Shipment is already a seed
-            for (int i = 0; i < seedCoordIds.size(); i++) {
-                if (seedCoordIds.get(i) == shipment.getId()){
-                    System.out.println("THIS IS A SEED " +  (i + 1));
-                    shipment.getAttributes().putAttribute("seed", "seed" + (i + 1));
-                }
+            //Calculate edge distances
+            List<Edge> edges = new ArrayList<>();
+            CarrierShipment fromSeed = singleCarrier.getShipments().get(seedId);
+            for (int j = 0; j < singleCarrier.getShipments().size(); j++) {
+                CarrierShipment toShipment = shipments.get(j);
+                double dist = NetworkUtils.getEuclideanDistance(coords.get(fromSeed), coords.get(toShipment));
+                edges.add(new Edge(fromSeed, toShipment, dist));
             }
 
-            //Retrieve Pickup Node coord
-            final Coord coord =  network.getLinks().get(shipment.getPickupLinkId()).getCoord();
+            //Sort edges by increasing distance
+            edges.sort(Comparator.comparingDouble(Edge::distance));
 
-            //Variables to track which carrier the shipment should be assigned to
-            double minDistance = Double.MAX_VALUE;
-            int seedNumber = 0;
-
-            //loop through all seeds
-            for (int i = 0; i < seedCoords.size(); i++) {
-                double distanceApart = NetworkUtils.getEuclideanDistance(coord, seedCoords.get(i));
-                //Assign seed if cluster isn't too large
-                if ((distanceApart < minDistance) && (clusters.get(i).size() < numberOfShipmentsPerCarrier)) {
-                    seedNumber = i;
-                    minDistance = distanceApart;
+            //Assign nearest Shipments to cluster
+            int counter = 0;
+            int remainingShipments = singleCarrier.getShipments().size();
+            while (clusters.get(seedNumber).size() < numberOfShipmentsPerCarrier) {
+                if (counter < remainingShipments) {
+                    CarrierShipment shipmentToBeClustered = edges.get(counter).b;
+                    clusters.get(seedNumber).add(shipmentToBeClustered);
+                    singleCarrier.getShipments().remove(shipmentToBeClustered.getId());
+                    counter++;
+                } else {
+                    break;
                 }
             }
-            //Assign to Carrier
-            clusters.get(seedNumber).add(shipment);
+            seedNumber++;
         }
+
         return clusters;
     }
 
