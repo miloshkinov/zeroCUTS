@@ -3,9 +3,9 @@
 #SBATCH --output=montag_kClsuters.log              # logfile of the run
 #SBATCH --nodes=1                      # Run on a single computer
 #SBATCH --ntasks=1                     # Run a single task        
-#SBATCH --cpus-per-task=48             # Number of CPU cores per task
-#SBATCH --mem=60G                     # Job memory request
-#SBATCH --time=24:00:00                # Time limit hrs:min:sec
+#SBATCH --cpus-per-task=60             # Number of CPU cores per task
+#SBATCH --mem=64G                     # Job memory request
+#SBATCH --time=96:00:00                # Time limit hrs:min:sec
 #SBATCH --mail-type=BEGIN,END,FAIL     # Send email on begin, end, and fail
 #SBATCH --mail-user=milo.bennett@tu-berlin.de   # Your email address
 
@@ -13,6 +13,6 @@
 module load java/21
 
 
-java -Xmx55G -jar zeroCUTS-0.0.1-montag_kClusters.jar
+java -Xmx64G -jar zeroCUTS-0.0.1-montag_kClusters.jar
 
 chmod 770 -R .

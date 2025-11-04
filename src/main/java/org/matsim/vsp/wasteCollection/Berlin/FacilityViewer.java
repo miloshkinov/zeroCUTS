@@ -23,7 +23,7 @@ public class FacilityViewer extends JPanel {
     }
 
     private final List<Facility> facilities;
-    private final Map<String, Color> carrierColors = new HashMap<>();
+    private final Map<String, Color> carrierColors = new TreeMap<>();
 
     public FacilityViewer(List<Facility> facilities) {
         this.facilities = facilities;
@@ -49,14 +49,14 @@ public class FacilityViewer extends JPanel {
 
         int width = getWidth();
         int height = getHeight();
-        int margin = 40;
+        int margin = 50;
 
         // --- Draw normal facilities first ---
         for (Facility f : facilities) {
             if (f.hasSeed) continue; // skip seed for now
             double normX = (f.x - minX) / (maxX - minX);
             double normY = (f.y - minY) / (maxY - minY);
-            int drawX = (int) (margin + normX * (width - 2 * margin));
+            int drawX = (int) (3*margin + normX * (width - 4 * margin));
             int drawY = (int) (height - margin - normY * (height - 2 * margin));
 
             g2.setColor(carrierColors.get(f.carrier));
@@ -74,7 +74,7 @@ public class FacilityViewer extends JPanel {
             g2.setColor(carrierColors.get(f.carrier));
             g2.fillOval(drawX - 5, drawY - 5, 10, 10);
 
-            // yellow highlight
+            // red highlight
             g2.setColor(Color.RED);
             g2.setStroke(new BasicStroke(4f));
             g2.drawOval(drawX - 7, drawY - 7, 14, 14);
@@ -87,7 +87,7 @@ public class FacilityViewer extends JPanel {
             g2.fillRect(10, y, 10, 10);
             g2.setColor(Color.BLACK);
             g2.drawString(entry.getKey(), 25, y + 10);
-            y += 15;
+            y += 12;
         }
         g2.setColor(Color.RED);
         g2.drawString("= has seed", 25, y + 10);
@@ -140,7 +140,7 @@ public class FacilityViewer extends JPanel {
 
     // You can call this main() directly to test manually
     public static void main(String[] args) {
-        showViewer("input/tune_seeding/minSpacingv4.xml");
+        showViewer("input/tune_seeding/greedy3.xml");
     }
 }
 

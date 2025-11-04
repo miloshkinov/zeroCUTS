@@ -64,28 +64,28 @@ public class VrpSplitUtils {
         //----ADDING DEPOT AND DUMP TO XML----
         //getting LinkIds
         List<Id<Link>> depotLinkIds = List.of(carrierVehicle.getLinkId());
-        List<Id<Link>> dumpLinkIds = List.of(Id.createLinkId(linkChessboardDump)); //IMPROVE THIS FOR ALL CASES!!
+        List<Id<Link>> dropOffLinkIds = List.of(Id.createLinkId(linkChessboardDump)); //IMPROVE THIS FOR ALL CASES!!
         //Getting node Ids from linkIds
         Id<Node> depotNodeId = NetworkUtils.getLinks(network,depotLinkIds).get(0).getToNode().getId();
-        Id<Node> dumpNodeId = NetworkUtils.getLinks(network,dumpLinkIds).get(0).getToNode().getId();
+        Id<Node> dropOffNodeId = NetworkUtils.getLinks(network,dropOffLinkIds).get(0).getToNode().getId();
         //Geting the node coords
         final Coord depotCoord =  NetworkUtils.getNodes(network, depotNodeId.toString()).get(0).getCoord();
-        final Coord dumpCoord =  NetworkUtils.getNodes(network, dumpNodeId.toString()).get(0).getCoord();
+        final Coord dropOffCoord =  NetworkUtils.getNodes(network, dropOffNodeId.toString()).get(0).getCoord();
         //Creating a facility ID
         final Id<ActivityFacility> depotFacilityId = Id.create("depot", ActivityFacility.class);
-        final Id<ActivityFacility> dumpFacilityId = Id.create("dump", ActivityFacility.class);
+        final Id<ActivityFacility> dropOffFacilityId = Id.create("dropOff", ActivityFacility.class);
         //Creating the facilities
         ActivityFacility depotFacility = facilities.getFactory().createActivityFacility(depotFacilityId, depotCoord);
-        ActivityFacility dumpFacility = facilities.getFactory().createActivityFacility(dumpFacilityId, dumpCoord);
+        ActivityFacility dropOffFacility = facilities.getFactory().createActivityFacility(dropOffFacilityId, dropOffCoord);
         //Adding the activity option
         depotFacility.addActivityOption(new ActivityOptionImpl("depot"));
-        dumpFacility.addActivityOption(new ActivityOptionImpl("dump"));
+        dropOffFacility.addActivityOption(new ActivityOptionImpl("dropOff"));
         //Putting the carrier attribute to view in Via later
         depotFacility.getAttributes().putAttribute("carrier", "depot");
-        dumpFacility.getAttributes().putAttribute("carrier", "dump");
+        dropOffFacility.getAttributes().putAttribute("carrier", "dropOff");
         //adding the facilities to the secanrio
         facilities.addActivityFacility(depotFacility);
-        facilities.addActivityFacility(dumpFacility);
+        facilities.addActivityFacility(dropOffFacility);
 
         //--------RANDOM AND POPULATE FACILITIES XML---------
         //picking a random seed
@@ -163,6 +163,11 @@ public class VrpSplitUtils {
         Carriers carriers = CarriersUtils.getCarriers(scenario);
         Carriers newCarriers = new Carriers();
 
+        //Setup activities for xml
+        Boolean beforeSplit = true;
+        ActivityFacilities facilities = FacilitiesUtils.createActivityFacilities("facilities");
+        createXMLFacilities(network, carriers, runName, beforeSplit, facilities);
+
         //Loop through all carriers
         for (Carrier singleCarrier : carriers.getCarriers().values()) {
 
@@ -180,7 +185,7 @@ public class VrpSplitUtils {
                     clusters = findRandomClusters(singleCarrier, numberOfCarriers, numberOfShipmentsPerCarrier);
                 }
                 case seeding -> {
-                    clusters = findSeedingClusters2(singleCarrier, network, numberOfCarriers, carrierVehicle, numberOfShipmentsPerCarrier);
+                    clusters = findSeedingClusters(singleCarrier, network, numberOfCarriers, carrierVehicle, numberOfShipmentsPerCarrier);
                 }
                 case kClusters -> {
                     clusters = findKClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
@@ -221,9 +226,9 @@ public class VrpSplitUtils {
             carriers.addCarrier(singleCarrier);
         }
 
-        //create xml facilities file to visualise results
-        createXMLFacilities(network, carriers, runName);
-        //Timestamp for when finished
+        //Timestamp for when finished and create xml facilities file to visualise results
+        beforeSplit = false;
+        createXMLFacilities(network, carriers, runName, beforeSplit, facilities);
         System.out.println(fmt.format(LocalDateTime.now()) + " " + clusterStrategy + " VRP Splitting complete");
     }
 
@@ -326,7 +331,7 @@ public class VrpSplitUtils {
                 }
             }
 
-            //Skip rest if shipment is a seed
+            //Skip if shipment is a seed
             if (isSeed) {
                 continue;
             }
@@ -420,6 +425,7 @@ public class VrpSplitUtils {
             System.out.println("Seed " + (i+1) + " found at Coord " + seedCoord + " with ID: " + seedId);
             seedCoords.add(seedCoord);
             seedCoordIds.add(seedId);
+            singleCarrier.getShipments().get(seedId).getAttributes().putAttribute("seed", "seed" + (i + 1));
 
             //Calculate edge distances
             List<Edge> edges = new ArrayList<>();
@@ -566,7 +572,95 @@ public class VrpSplitUtils {
         return clusters;
     }
 
-    //returns which cluster the shipment is in
+    private static List<List<CarrierShipment>> findMETISClusters(Carrier singleCarrier, Network network, int numberOfCarriers) throws IOException, InterruptedException {
+
+        //The list of clusters that will be returned
+        List<List<CarrierShipment>> clusters = new ArrayList<>();
+        List<CarrierShipment> shipments = new ArrayList<>(singleCarrier.getShipments().values());
+        for (int i = 0; i < numberOfCarriers; i++) {
+            clusters.add(new ArrayList<>());
+        }
+
+        //Precompute coordinates
+        Map<CarrierShipment, Coord> coords = new HashMap<>();
+        for (CarrierShipment shipment : shipments) {
+            coords.put(shipment, network.getLinks().get(shipment.getPickupLinkId()).getCoord());
+        }
+
+        //Find min and max distances
+        List<Edge> edges = new ArrayList<>();
+        for (int i = 0; i < shipments.size(); i++) {
+            for (int j = i + 1; j < shipments.size(); j++) {
+                CarrierShipment a = shipments.get(i);
+                CarrierShipment b = shipments.get(j);
+                double dist = NetworkUtils.getEuclideanDistance(coords.get(a), coords.get(b));
+                edges.add(new Edge(a, b, dist));
+            }
+        }
+
+        edges.sort(Comparator.comparingDouble(Edge::distance));
+        int minDistance = (int) edges.getFirst().distance;
+        int maxDistance = (int) edges.getLast().distance;
+
+        //Write the Graph files
+        try (PrintWriter pw = new PrintWriter("input/METIS_Graphs/Fr_" + singleCarrier.getId().toString() + ".txt")) {
+            //File header set up
+            int n = shipments.size();
+            int m = n*(n-1)/2; // number of undirected edges
+            pw.println(n + " " + m + " 1"); // "1" means weighted
+
+            //Write to METIS style
+            int above1000 = 0;
+            int below0 = 0;
+            for (int i = 0; i < singleCarrier.getShipments().size(); i++) {
+                Coord fromShipment = network.getLinks().get(shipments.get(i).getPickupLinkId()).getCoord();
+                StringBuilder line = new StringBuilder();
+                for (int j = 0; j < singleCarrier.getShipments().size(); j++) {
+                    //Don't map to same Shipment
+                    if (i == j) {
+                        continue;
+                    }
+                    Coord toShipment = network.getLinks().get(shipments.get(j).getPickupLinkId()).getCoord();
+                    //This normalises the distances to weights
+//                    int distance = (int) NetworkUtils.getEuclideanDistance(fromShipment, toShipment);
+//                    int weight = (int) 1 + (1000 - 1)*(maxDistance - distance)/(maxDistance - minDistance);
+                    int weight = (int) (10000/NetworkUtils.getEuclideanDistance(fromShipment, toShipment));
+                    //That is the upper bound of METIS Edge weights
+                    if (weight > 1000) {
+                        weight = 1000;
+                        above1000++;
+                    }
+                    //That is the lower bound of METIS Edge weights
+                    if (weight == 0) {
+                        weight = 1;
+                        below0++;
+                    }
+                    //J+1 because index starts at 1 in METIS
+                    line.append(j+1).append(" ").append(weight).append(" ");
+                }
+                pw.println(line.toString().trim());
+            }
+            System.out.println("This many above " + above1000 + " and below " + below0  );
+        }
+
+        //Run METIS
+        ProcessBuilder pb = new ProcessBuilder("wsl", "gpmetis -niter=200 -ncuts=40 -ufactor=200", "/mnt/c/Users/Milo/Desktop/UniZeug/AbfallGit/input/METIS_Graphs/Fr_" + singleCarrier.getId().toString() + ".txt", "" + numberOfCarriers);
+        Process process = pb.start();
+        process.waitFor();
+
+        //Read the Results
+        int shipmentCounter = 0;
+        try (Scanner scanner = new Scanner(new File("input/METIS_Graphs/Fr_" + singleCarrier.getId().toString() + ".txt.part." + numberOfCarriers))) {
+            while (scanner.hasNextInt()) {
+                clusters.get(scanner.nextInt()).add(shipments.get(shipmentCounter));
+                shipmentCounter++;
+            }
+        }
+
+        return clusters;
+    }
+
+    //Returns which cluster the shipment is in
     private static int getClusterIndex(CarrierShipment a, List<List<CarrierShipment>> clusters) {
         int index = 0;
         for (int i = 0; i < clusters.size(); i++) {
@@ -589,71 +683,6 @@ public class VrpSplitUtils {
         }
         int size = cluster.size();
         return new Coord(sumX / size, sumY / size);
-    }
-
-    private static List<List<CarrierShipment>> findMETISClusters(Carrier singleCarrier, Network network, int numberOfCarriers) throws IOException, InterruptedException {
-
-        //The list of clusters that will be returned
-        List<List<CarrierShipment>> clusters = new ArrayList<>();
-        List<CarrierShipment> shipments = new ArrayList<>(singleCarrier.getShipments().values());
-        for (int i = 0; i < numberOfCarriers; i++) {
-            clusters.add(new ArrayList<>());
-        }
-
-        //Write the Graph files
-        try (PrintWriter pw = new PrintWriter("input/METIS_Graphs/graphTest_" + singleCarrier.getId().toString() + ".txt")) {
-            //File header set up
-            int n = shipments.size();
-            int m = n*(n-1)/2; // number of undirected edges
-            pw.println(n + " " + m + " 1"); // "1" means weighted
-
-            //Write to METIS style
-            int above1000 = 0;
-            int below0 = 0;
-            for (int i = 0; i < singleCarrier.getShipments().size(); i++) {
-                Coord fromShipment = network.getLinks().get(shipments.get(i).getPickupLinkId()).getCoord();
-                StringBuilder line = new StringBuilder();
-                //We loop from the counter onward because edges shouldn't be added twice
-                for (int j = 0; j < singleCarrier.getShipments().size(); j++) {
-                    //Don't map to same Shipment
-                    if (i == j) {
-                        continue;
-                    }
-                    Coord toShipment = network.getLinks().get(shipments.get(j).getPickupLinkId()).getCoord();
-                    int weight = (int) (10000 / NetworkUtils.getEuclideanDistance(fromShipment, toShipment));
-                    //That is the upper bound of METIS Edge weights
-                    if (weight > 1000) {
-                        weight = 999;
-                        above1000++;
-                    }
-                    //That is the lower bound of METIS Edge weights
-                    if (weight == 0) {
-                        weight = 1;
-                        below0++;
-                    }
-                    //J+1 because index starts at 1 in METIS
-                    line.append(j+1).append(" ").append(weight).append(" ");
-                }
-                pw.println(line.toString().trim());
-            }
-            System.out.println("This many above " + above1000 + " and below " + below0  );
-        }
-
-        //Run METIS
-        ProcessBuilder pb = new ProcessBuilder("wsl", "gpmetis", "/mnt/c/Users/Milo/Desktop/UniZeug/AbfallGit/input/METIS_Graphs/graphTest_" + singleCarrier.getId().toString() + ".txt", "" + numberOfCarriers);
-        Process process = pb.start();
-        process.waitFor();
-
-        //Read the Results
-        int shipmentCounter = 0;
-        try (Scanner sc = new Scanner(new File("input/METIS_Graphs/graphTest_" + singleCarrier.getId().toString() + ".txt.part." + numberOfCarriers))) {
-            while (sc.hasNextInt()) {
-                clusters.get(sc.nextInt()).add(shipments.get(shipmentCounter));
-                shipmentCounter++;
-            }
-        }
-
-        return clusters;
     }
 
     //Determine number of new carriers
@@ -680,64 +709,63 @@ public class VrpSplitUtils {
     }
 
     //Create XML Facilities File
-    private static void createXMLFacilities(Network network, Carriers carriers, String runName) {
+    private static void createXMLFacilities(Network network, Carriers carriers, String runName, Boolean beforeSplit, ActivityFacilities facilities) {
 
-        //Facilities and network setup
-        final String FILENAME_EXPORT_FACILITIES = "input/" + runName + ".xml";
-        ActivityFacilities facilities = FacilitiesUtils.createActivityFacilities("facilities");
-
-        //loop through all shipments
-        for (Carrier carrier : carriers.getCarriers().values()) {
-            //----ADDING DEPOT AND DROPOFF TO XML----
-            String carrierName = carrier.getId().toString();
-            //getting LinkIds
-            CarrierVehicle carrierVehicle = carrier.getCarrierCapabilities().getCarrierVehicles().values().iterator().next();
-            CarrierShipment firstShipment = carrier.getShipments().values().iterator().next();
-            //Getting the node coords
-            final Coord depotCoord =  network.getLinks().get(carrierVehicle.getLinkId()).getCoord();
-            final Coord dumpCoord =  network.getLinks().get(firstShipment.getDeliveryLinkId()).getCoord();
-            //Creating a facility ID
-            final Id<ActivityFacility> depotFacilityId = Id.create("depot_" + carrierName, ActivityFacility.class);
-            final Id<ActivityFacility> dumpFacilityId = Id.create("dump_" + carrierName, ActivityFacility.class);
-            //Creating the facilities
-            ActivityFacility depotFacility = facilities.getFactory().createActivityFacility(depotFacilityId, depotCoord);
-            ActivityFacility dumpFacility = facilities.getFactory().createActivityFacility(dumpFacilityId, dumpCoord);
-            //Adding the activity option
-            depotFacility.addActivityOption(new ActivityOptionImpl("depot"));
-            dumpFacility.addActivityOption(new ActivityOptionImpl("dump"));
-            //Putting the carrier attribute to view in Via later
-            depotFacility.getAttributes().putAttribute("carrier", "depot_" + carrierName);
-            dumpFacility.getAttributes().putAttribute("carrier", "dump_" + carrierName);
-            //Adding the facilities to the scenario
-            facilities.addActivityFacility(depotFacility);
-            facilities.addActivityFacility(dumpFacility);
-
-            //Add all Shipments
-            for (CarrierShipment shipment : carrier.getShipments().values()) {
-
-                //Retrieve Pickup Node Id
-                List<Id<Link>> linkIds = List.of(shipment.getPickupLinkId());
-
-                //Retrieve Pickup Node coord and create activityfacility
-                final Coord coord = network.getLinks().get(shipment.getPickupLinkId()).getCoord();
-                final Id<ActivityFacility> facilityId = Id.create(shipment.getId(), ActivityFacility.class);
-                ActivityFacility facility = facilities.getFactory().createActivityFacility(facilityId, coord);
-                facility.getAttributes().putAttribute("carrier", shipment.getAttributes().getAttribute("carrier").toString());
-                if (shipment.getAttributes().getAttribute("seed") != null) {
-                    facility.getAttributes().putAttribute("seed", shipment.getAttributes().getAttribute("seed").toString());
-                }
-
-                //add activity to xml
-                facility.addActivityOption(new ActivityOptionImpl("delivery"));
-                facilities.addActivityFacility(facility);
+        if (beforeSplit) {
+            //Loop through all old carriers
+            for (Carrier carrier : carriers.getCarriers().values()) {
+                //Add Depot and Dropoff to xml
+                String carrierName = carrier.getId().toString();
+                //Getting LinkIds
+                CarrierVehicle carrierVehicle = carrier.getCarrierCapabilities().getCarrierVehicles().values().iterator().next();
+                CarrierShipment firstShipment = carrier.getShipments().values().iterator().next();
+                //Getting the node coords
+                final Coord depotCoord = network.getLinks().get(carrierVehicle.getLinkId()).getCoord();
+                final Coord dropOffCoord = network.getLinks().get(firstShipment.getDeliveryLinkId()).getCoord();
+                //Creating a facility ID
+                final Id<ActivityFacility> depotFacilityId = Id.create("depot_" + carrierName, ActivityFacility.class);
+                final Id<ActivityFacility> dropOffFacilityId = Id.create("dropOff_" + carrierName, ActivityFacility.class);
+                //Creating the facilities
+                ActivityFacility depotFacility = facilities.getFactory().createActivityFacility(depotFacilityId, depotCoord);
+                ActivityFacility dropOffFacility = facilities.getFactory().createActivityFacility(dropOffFacilityId, dropOffCoord);
+                //Adding the activity option
+                depotFacility.addActivityOption(new ActivityOptionImpl("depot"));
+                dropOffFacility.addActivityOption(new ActivityOptionImpl("dropOff"));
+                //Putting the carrier attribute to view in Via later
+                depotFacility.getAttributes().putAttribute("carrier", "depot_" + carrierName);
+                dropOffFacility.getAttributes().putAttribute("carrier", "dropOff_" + carrierName);
+                //Adding the facilities to the scenario
+                facilities.addActivityFacility(depotFacility);
+                facilities.addActivityFacility(dropOffFacility);
             }
+        } else {
+            //Loop through all new carriers
+            for (Carrier carrier : carriers.getCarriers().values()) {
+
+                //Add all Shipments
+                for (CarrierShipment shipment : carrier.getShipments().values()) {
+
+                    //Retrieve Pickup Node coord and create activityfacility
+                    final Coord coord = network.getLinks().get(shipment.getPickupLinkId()).getCoord();
+                    final Id<ActivityFacility> facilityId = Id.create(shipment.getId(), ActivityFacility.class);
+                    ActivityFacility facility = facilities.getFactory().createActivityFacility(facilityId, coord);
+                    facility.getAttributes().putAttribute("carrier", shipment.getAttributes().getAttribute("carrier").toString());
+                    if (shipment.getAttributes().getAttribute("seed") != null) {
+                        facility.getAttributes().putAttribute("seed", shipment.getAttributes().getAttribute("seed").toString());
+                    }
+
+                    //Add activity to xml
+                    facility.addActivityOption(new ActivityOptionImpl("delivery"));
+                    facilities.addActivityFacility(facility);
+                }
+            }
+
+            //Write the xml
+            final String FILENAME_EXPORT_FACILITIES = "input/" + runName + ".xml";
+            new FacilitiesWriter(facilities).writeV1(FILENAME_EXPORT_FACILITIES);
+            System.out.println("write facilities to " + FILENAME_EXPORT_FACILITIES);
+            System.out.println("done");
         }
-
-        //write the xml
-        new FacilitiesWriter(facilities).writeV1(FILENAME_EXPORT_FACILITIES);
-        System.out.println("write facilities to " + FILENAME_EXPORT_FACILITIES);
-        System.out.println("done");
     }
-
 }
 

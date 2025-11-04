@@ -97,9 +97,9 @@ public class Run_Abfall {
             jspritIterations = 1;
 			numberOfShipmentsPerCarrier = 300;
             clusterStrategy = VrpSplitUtils.clusteringStrategy.seeding;
-            runName = "tune_seeding/greedy3";
+            runName = "tune_seeding/Mi";
 			outputLocation = "output/" + runName;
-			day = "MO";
+			day = "MI";
 			networkChangeEventsFileLocation = "";
 		} else {
 			scenarioWahl = scenarioAuswahl.berlinCollectedGarbageForOneDay;
