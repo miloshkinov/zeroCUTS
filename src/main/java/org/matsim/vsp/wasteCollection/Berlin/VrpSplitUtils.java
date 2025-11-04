@@ -22,7 +22,7 @@ import java.util.*;
 public class VrpSplitUtils {
 
     public enum clusteringStrategy {
-        random, seeding, kClusters, centroidClusters, METIS
+        none, random, seeding, kClusters, centroidClusters, METIS
     }
 
     static String linkChessboardDepot = "j(0,7)R";
@@ -153,7 +153,7 @@ public class VrpSplitUtils {
         System.out.println("done");
     }
 
-    static void splitCarriers(Scenario scenario, clusteringStrategy clusterStrategy , int numberOfShipmentsPerCarrier, int numberOfIterations, String runName) throws IOException, InterruptedException {
+    static void splitCarriers(Scenario scenario, clusteringStrategy clusterStrategy , int numberOfShipmentsPerCarrier, int numberOfIterations, String outputLocation) throws IOException, InterruptedException {
         //Log message to check how long the clustering takes
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss,SSS");
         System.out.println(fmt.format(LocalDateTime.now()) + " Begin " + clusterStrategy + " VRP Splitting");
@@ -166,7 +166,7 @@ public class VrpSplitUtils {
         //Setup activities for xml
         Boolean beforeSplit = true;
         ActivityFacilities facilities = FacilitiesUtils.createActivityFacilities("facilities");
-        createXMLFacilities(network, carriers, runName, beforeSplit, facilities);
+        createXMLFacilities(network, carriers, outputLocation, beforeSplit, facilities);
 
         //Loop through all carriers
         for (Carrier singleCarrier : carriers.getCarriers().values()) {
@@ -181,6 +181,9 @@ public class VrpSplitUtils {
             //Get Clusters
             List<List<CarrierShipment>> clusters;
             switch (clusterStrategy) {
+                case none -> {
+                    return;
+                }
                 case random -> {
                     clusters = findRandomClusters(singleCarrier, numberOfCarriers, numberOfShipmentsPerCarrier);
                 }
@@ -228,7 +231,7 @@ public class VrpSplitUtils {
 
         //Timestamp for when finished and create xml facilities file to visualise results
         beforeSplit = false;
-        createXMLFacilities(network, carriers, runName, beforeSplit, facilities);
+        createXMLFacilities(network, carriers, outputLocation, beforeSplit, facilities);
         System.out.println(fmt.format(LocalDateTime.now()) + " " + clusterStrategy + " VRP Splitting complete");
     }
 
@@ -709,7 +712,7 @@ public class VrpSplitUtils {
     }
 
     //Create XML Facilities File
-    private static void createXMLFacilities(Network network, Carriers carriers, String runName, Boolean beforeSplit, ActivityFacilities facilities) {
+    private static void createXMLFacilities(Network network, Carriers carriers, String outputLocation, Boolean beforeSplit, ActivityFacilities facilities) {
 
         if (beforeSplit) {
             //Loop through all old carriers
@@ -761,7 +764,7 @@ public class VrpSplitUtils {
             }
 
             //Write the xml
-            final String FILENAME_EXPORT_FACILITIES = "input/" + runName + ".xml";
+            final String FILENAME_EXPORT_FACILITIES = outputLocation + "/facilities.xml";
             new FacilitiesWriter(facilities).writeV1(FILENAME_EXPORT_FACILITIES);
             System.out.println("write facilities to " + FILENAME_EXPORT_FACILITIES);
             System.out.println("done");
