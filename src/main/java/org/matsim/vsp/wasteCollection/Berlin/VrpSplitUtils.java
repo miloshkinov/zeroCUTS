@@ -605,55 +605,61 @@ public class VrpSplitUtils {
         int minDistance = (int) edges.getFirst().distance;
         int maxDistance = (int) edges.getLast().distance;
 
-        //Write the Graph files
-        try (PrintWriter pw = new PrintWriter("input/METIS_Graphs/Fr_" + singleCarrier.getId().toString() + ".txt")) {
-            //File header set up
-            int n = shipments.size();
-            int m = n*(n-1)/2; // number of undirected edges
-            pw.println(n + " " + m + " 1"); // "1" means weighted
+        String path = "input/METIS_Graphs/Fr_" + singleCarrier.getId() + ".txt";
+        File file = new File(path);
 
-            //Write to METIS style
-            int above1000 = 0;
-            int below0 = 0;
-            for (int i = 0; i < singleCarrier.getShipments().size(); i++) {
-                Coord fromShipment = network.getLinks().get(shipments.get(i).getPickupLinkId()).getCoord();
-                StringBuilder line = new StringBuilder();
-                for (int j = 0; j < singleCarrier.getShipments().size(); j++) {
-                    //Don't map to same Shipment
-                    if (i == j) {
-                        continue;
+        //CHANGE THIS BEFORE CLUSTER RUN
+        if (file.exists()) {
+            //Write the Graph files
+            try (PrintWriter pw = new PrintWriter(path)) {
+                //File header set up
+                int n = shipments.size();
+                int m = n*(n-1)/2; // number of undirected edges
+                pw.println(n + " " + m + " 1"); // "1" means weighted
+
+                //Write to METIS style
+                int above1000 = 0;
+                int below0 = 0;
+                for (int i = 0; i < singleCarrier.getShipments().size(); i++) {
+                    Coord fromShipment = network.getLinks().get(shipments.get(i).getPickupLinkId()).getCoord();
+                    StringBuilder line = new StringBuilder();
+                    for (int j = 0; j < singleCarrier.getShipments().size(); j++) {
+                        //Don't map to same Shipment
+                        if (i == j) {
+                            continue;
+                        }
+                        Coord toShipment = network.getLinks().get(shipments.get(j).getPickupLinkId()).getCoord();
+                        //This normalises the distances to weights
+    //                    int distance = (int) NetworkUtils.getEuclideanDistance(fromShipment, toShipment);
+    //                    int weight = (int) 1 + (1000 - 1)*(maxDistance - distance)/(maxDistance - minDistance);
+                        int weight = (int) (10000/NetworkUtils.getEuclideanDistance(fromShipment, toShipment));
+                        //That is the upper bound of METIS Edge weights
+                        if (weight > 1000) {
+                            weight = 1000;
+                            above1000++;
+                        }
+                        //That is the lower bound of METIS Edge weights
+                        if (weight == 0) {
+                            weight = 1;
+                            below0++;
+                        }
+                        //J+1 because index starts at 1 in METIS
+                        line.append(j+1).append(" ").append(weight).append(" ");
                     }
-                    Coord toShipment = network.getLinks().get(shipments.get(j).getPickupLinkId()).getCoord();
-                    //This normalises the distances to weights
-//                    int distance = (int) NetworkUtils.getEuclideanDistance(fromShipment, toShipment);
-//                    int weight = (int) 1 + (1000 - 1)*(maxDistance - distance)/(maxDistance - minDistance);
-                    int weight = (int) (10000/NetworkUtils.getEuclideanDistance(fromShipment, toShipment));
-                    //That is the upper bound of METIS Edge weights
-                    if (weight > 1000) {
-                        weight = 1000;
-                        above1000++;
-                    }
-                    //That is the lower bound of METIS Edge weights
-                    if (weight == 0) {
-                        weight = 1;
-                        below0++;
-                    }
-                    //J+1 because index starts at 1 in METIS
-                    line.append(j+1).append(" ").append(weight).append(" ");
+                    pw.println(line.toString().trim());
                 }
-                pw.println(line.toString().trim());
+                System.out.println("This many above " + above1000 + " and below " + below0);
             }
-            System.out.println("This many above " + above1000 + " and below " + below0  );
-        }
 
-        //Run METIS
-        ProcessBuilder pb = new ProcessBuilder("wsl", "gpmetis -niter=200 -ncuts=40 -ufactor=200", "/mnt/c/Users/Milo/Desktop/UniZeug/AbfallGit/input/METIS_Graphs/Fr_" + singleCarrier.getId().toString() + ".txt", "" + numberOfCarriers);
-        Process process = pb.start();
-        process.waitFor();
+            //Run METIS
+            ProcessBuilder pb = new ProcessBuilder("wsl", "gpmetis -niter=200 -ncuts=40 -ufactor=200", "/mnt/c/Users/Milo/Desktop/UniZeug/AbfallGit/" + path, "" + numberOfCarriers);
+            Process process = pb.start();
+            process.waitFor();
+        }
 
         //Read the Results
         int shipmentCounter = 0;
-        try (Scanner scanner = new Scanner(new File("input/METIS_Graphs/Fr_" + singleCarrier.getId().toString() + ".txt.part." + numberOfCarriers))) {
+        try (Scanner scanner = new Scanner(new File(path + ".part." + numberOfCarriers))) {
             while (scanner.hasNextInt()) {
                 clusters.get(scanner.nextInt()).add(shipments.get(shipmentCounter));
                 shipmentCounter++;
