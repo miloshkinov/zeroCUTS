@@ -188,7 +188,7 @@ public class VrpSplitUtils {
                     clusters = findRandomClusters(singleCarrier, numberOfCarriers, numberOfShipmentsPerCarrier);
                 }
                 case seeding -> {
-                    clusters = findSeedingClusters(singleCarrier, network, numberOfCarriers, carrierVehicle, numberOfShipmentsPerCarrier);
+                    clusters = findSeedingClusters2(singleCarrier, network, numberOfCarriers, carrierVehicle, numberOfShipmentsPerCarrier);
                 }
                 case kClusters -> {
                     clusters = findKClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
@@ -382,7 +382,6 @@ public class VrpSplitUtils {
         Coord seedCoord = null;
         Id<CarrierShipment> seedId = null;
         int seedNumber = 0;
-        int numberOfShipmentsEven = (shipments.size()/numberOfCarriers) + 1;
 
         //Loop for amount of seeds required
         for (int i = 0; i < numberOfCarriers; i++) {
@@ -402,8 +401,7 @@ public class VrpSplitUtils {
                     continue;
                 }
 
-                //Calculate Distance to depot if finding first seed REDO COMMENTS AND NAMING IN THIS SECTION
-                //double distance = Double.MAX_VALUE;
+                //Calculate Distance to depot if finding first seed otherwise the seed that is the furthest from all other seeds
                 double distance = 0;
                 if(seedCoords.isEmpty()) {
                     distance = NetworkUtils.getEuclideanDistance(depotCoord, coords.get(shipment));
@@ -411,7 +409,6 @@ public class VrpSplitUtils {
 
                     //Otherwise the distance to all other seeds
                     for (Coord coord : seedCoords) {
-                        //distance = Math.min(distance, NetworkUtils.getEuclideanDistance(coord, coords.get(shipment)));
                         distance += NetworkUtils.getEuclideanDistance(coord, coords.get(shipment));
                     }
                 }
@@ -445,6 +442,11 @@ public class VrpSplitUtils {
             //Assign nearest Shipments to cluster
             int counter = 0;
             int remainingShipments = singleCarrier.getShipments().size();
+            //Don't leave very small clusters at end
+            if (remainingShipments < numberOfShipmentsPerCarrier*1.3) {
+                //Plus one so that the else statement in the while loop below is reached
+                numberOfShipmentsPerCarrier = remainingShipments + 1;
+            }
             while (clusters.get(seedNumber).size() < numberOfShipmentsPerCarrier) {
                 if (counter < remainingShipments) {
                     CarrierShipment shipmentToBeClustered = edges.get(counter).b;
@@ -452,12 +454,12 @@ public class VrpSplitUtils {
                     singleCarrier.getShipments().remove(shipmentToBeClustered.getId());
                     counter++;
                 } else {
-                    break;
+                    //return once all shipments ar assigned
+                    return clusters;
                 }
             }
             seedNumber++;
         }
-
         return clusters;
     }
 

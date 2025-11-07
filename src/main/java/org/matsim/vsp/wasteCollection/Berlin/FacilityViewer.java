@@ -68,7 +68,7 @@ public class FacilityViewer extends JPanel {
             if (!f.hasSeed) continue;
             double normX = (f.x - minX) / (maxX - minX);
             double normY = (f.y - minY) / (maxY - minY);
-            int drawX = (int) (margin + normX * (width - 2 * margin));
+            int drawX = (int) (3*margin + normX * (width - 4 * margin));
             int drawY = (int) (height - margin - normY * (height - 2 * margin));
 
             g2.setColor(carrierColors.get(f.carrier));
@@ -90,7 +90,7 @@ public class FacilityViewer extends JPanel {
             y += 12;
         }
         g2.setColor(Color.RED);
-        g2.drawString("= has seed", 25, y + 10);
+        g2.drawString("Seeds", 25, y + 10);
         g2.fillOval(10, y, 10, 10);
     }
 
@@ -140,7 +140,7 @@ public class FacilityViewer extends JPanel {
 
     // You can call this main() directly to test manually
     public static void main(String[] args) {
-        showViewer("input/tune_seeding/greedy3.xml");
+        showViewer("output/pre_final_run_test/seeding/Fr/facilities.xml");
     }
 }
 
