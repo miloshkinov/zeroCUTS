@@ -1,5 +1,6 @@
 package org.matsim.vsp.wasteCollection.Berlin;
 
+import org.apache.commons.math.stat.clustering.Cluster;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -188,7 +189,7 @@ public class VrpSplitUtils {
                     clusters = findRandomClusters(singleCarrier, numberOfCarriers, numberOfShipmentsPerCarrier);
                 }
                 case seeding -> {
-                    clusters = findSeedingClusters2(singleCarrier, network, numberOfCarriers, carrierVehicle, numberOfShipmentsPerCarrier);
+                    clusters = findSeedingClusters(singleCarrier, network, numberOfCarriers, carrierVehicle, numberOfShipmentsPerCarrier);
                 }
                 case kClusters -> {
                     clusters = findKClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
@@ -260,108 +261,6 @@ public class VrpSplitUtils {
     }
 
     private static List<List<CarrierShipment>> findSeedingClusters(Carrier singleCarrier, Network network, int numberOfCarriers, CarrierVehicle carrierVehicle, int numberOfShipmentsPerCarrier) {
-
-        //The list of clusters that will be returned
-        List<List<CarrierShipment>> clusters = new ArrayList<>();
-        List<Coord> seedCoords = new ArrayList<>();
-        List<Id<CarrierShipment>> seedCoordIds = new ArrayList<>();
-        List<CarrierShipment> shipments = new ArrayList<>(singleCarrier.getShipments().values());
-
-        //Precompute coordinates
-        Map<CarrierShipment, Coord> coords = new HashMap<>();
-        for (CarrierShipment shipment : shipments) {
-            coords.put(shipment, network.getLinks().get(shipment.getPickupLinkId()).getCoord());
-        }
-
-        //Get Depot Coord
-        Coord depotCoord =  network.getLinks().get(carrierVehicle.getLinkId()).getCoord();
-
-        //Variables to track the max distances and coefficient to encourage spread out clustering
-        Coord seedCoord = null;
-        Id<CarrierShipment> seedId = null;
-        double clusterCoefficient = 1.0; //PLAY AROUND WITH THIS!!!!!!!!!!!
-
-        //Loop for amount of seeds required
-        for (int i = 0; i < numberOfCarriers; i++) {
-
-            //Create new cluster for each seed and reset maxDistance
-            clusters.add(new ArrayList<>());
-            double maxDistance = 0;
-
-            //Find seed
-            for (CarrierShipment shipment : shipments) {
-
-                //Check if this shipment is already a seed
-                if (seedCoordIds.contains(shipment.getId())) {
-                    continue;
-                }
-
-                //Calculate Distance to depot if finding first seed REDO COMMENTS AND NAMING IN THIS SECTION
-                double distance = Double.MAX_VALUE;
-                if(seedCoords.isEmpty()) {
-                    distance = NetworkUtils.getEuclideanDistance(depotCoord, coords.get(shipment));
-                } else {
-
-                    //Otherwise the distance to all other seeds
-                    for (Coord coord : seedCoords) {
-                        distance = Math.min(distance, NetworkUtils.getEuclideanDistance(coord, coords.get(shipment)));
-                    }
-                }
-
-                //Check if it is the new max distance
-                if (distance>maxDistance) {
-                    maxDistance = distance;
-                    seedCoord = coords.get(shipment);
-                    seedId = shipment.getId();
-                }
-            }
-            //Save seed
-            System.out.println("Seed " + (i+1) + " found at Coord " + seedCoord.toString() + " with ID: " + seedId.toString());
-            seedCoords.add(seedCoord);
-            seedCoordIds.add(seedId);
-        }
-
-        //loop through all shipments to assign to seeds
-        for (CarrierShipment shipment : shipments) {
-            //If seed add directly to cluster
-            boolean isSeed = false;
-            for (int i = 0; i < seedCoordIds.size(); i++) {
-                if (seedCoordIds.get(i) == shipment.getId()){
-                    clusters.get(i).add(shipment);
-                    isSeed = true;
-                    System.out.println("THIS IS A SEED " +  (i + 1));
-                    shipment.getAttributes().putAttribute("seed", "seed" + (i + 1));
-                }
-            }
-
-            //Skip if shipment is a seed
-            if (isSeed) {
-                continue;
-            }
-
-            //Retrieve Pickup Node coord
-            final Coord coord =  network.getLinks().get(shipment.getPickupLinkId()).getCoord();
-
-            //Variables to track which cluster the shipment should be assigned to
-            double minDistance = Double.MAX_VALUE;
-            int seedNumber = 0;
-
-            //Loop through all seeds
-            for (int i = 0; i < seedCoords.size(); i++) {
-                double distanceApart = NetworkUtils.getEuclideanDistance(coord, seedCoords.get(i));
-                //Assign seed if cluster isn't too large
-                if ((distanceApart < minDistance) && (clusters.get(i).size() < numberOfShipmentsPerCarrier)) {
-                    seedNumber = i;
-                    minDistance = distanceApart;
-                }
-            }
-            //Assign to cluster
-            clusters.get(seedNumber).add(shipment);
-        }
-        return clusters;
-    }
-
-    private static List<List<CarrierShipment>> findSeedingClusters2(Carrier singleCarrier, Network network, int numberOfCarriers, CarrierVehicle carrierVehicle, int numberOfShipmentsPerCarrier) {
 
         //The list of clusters that will be returned
         List<List<CarrierShipment>> clusters = new ArrayList<>();
@@ -454,7 +353,7 @@ public class VrpSplitUtils {
                     singleCarrier.getShipments().remove(shipmentToBeClustered.getId());
                     counter++;
                 } else {
-                    //return once all shipments ar assigned
+                    //Return once all shipments are assigned
                     return clusters;
                 }
             }
@@ -499,9 +398,14 @@ public class VrpSplitUtils {
             CarrierShipment b = edge.b();
             int aIndex = getClusterIndex(a, clusters);
             int bIndex = getClusterIndex(b, clusters);
-            //Check if the two clusters are too large
+            //Check if the two clusters are too large, allow larger merges towards the end of clustering
             if (clusters.get(aIndex).size() + clusters.get(bIndex).size() > numberOfShipmentsPerCarrier) {
-                continue;
+                if (clusters.size() > numberOfCarriers*1.5) {
+                    continue;
+                }
+                else if (clusters.get(aIndex).size() + clusters.get(bIndex).size() > numberOfShipmentsPerCarrier*1.3){
+                    continue;
+                }
             }
             //Check if in same cluster otherwise merge the higher index into the lower
             if (aIndex != bIndex) {
@@ -512,7 +416,8 @@ public class VrpSplitUtils {
                     clusters.get(bIndex).addAll(clusters.get(aIndex));
                     clusters.remove(aIndex);
                 }
-                if (clusters.size() == numberOfCarriers) {
+                boolean noSmallClusters = checkForSmallClusters(clusters, numberOfShipmentsPerCarrier);
+                if ((clusters.size() == numberOfCarriers) && noSmallClusters) {
                     break;
                 }
             }
@@ -671,6 +576,16 @@ public class VrpSplitUtils {
         return clusters;
     }
 
+    //Check remaining clusters for any that are too small
+    private static boolean checkForSmallClusters(List<List<CarrierShipment>> clusters, int numberOfShipmentsPerCarrier) {
+        for (List<CarrierShipment> cluster : clusters) {
+            if (cluster.size() < numberOfShipmentsPerCarrier*0.3) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     //Returns which cluster the shipment is in
     private static int getClusterIndex(CarrierShipment a, List<List<CarrierShipment>> clusters) {
         int index = 0;
@@ -745,6 +660,9 @@ public class VrpSplitUtils {
                 //Putting the carrier attribute to view in Via later
                 depotFacility.getAttributes().putAttribute("carrier", "depot_" + carrierName);
                 dropOffFacility.getAttributes().putAttribute("carrier", "dropOff_" + carrierName);
+                //Put attribute for later viewing
+                depotFacility.getAttributes().putAttribute("depot", "depot_" + carrierName);
+                dropOffFacility.getAttributes().putAttribute("dropOff", "dropOff_" + carrierName);
                 //Adding the facilities to the scenario
                 facilities.addActivityFacility(depotFacility);
                 facilities.addActivityFacility(dropOffFacility);

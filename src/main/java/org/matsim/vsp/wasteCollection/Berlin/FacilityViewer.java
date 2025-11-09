@@ -13,12 +13,16 @@ public class FacilityViewer extends JPanel {
     private static class Facility {
         double x, y;
         String carrier;
-        boolean hasSeed;
-        Facility(double x, double y, String carrier, boolean hasSeed) {
+        boolean isSeed;
+        boolean isDepot;
+        boolean isDropoff;
+        Facility(double x, double y, String carrier, boolean isSeed, boolean isDepot, boolean isDropoff) {
             this.x = x;
             this.y = y;
             this.carrier = carrier;
-            this.hasSeed = hasSeed;
+            this.isSeed = isSeed;
+            this.isDepot = isDepot;
+            this.isDropoff = isDropoff;
         }
     }
 
@@ -29,8 +33,8 @@ public class FacilityViewer extends JPanel {
         this.facilities = facilities;
         // Assign random colors per carrier
         Random rand = new Random();
-        for (Facility f : facilities) {
-            carrierColors.putIfAbsent(f.carrier, new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat()));
+        for (Facility facility : facilities) {
+            carrierColors.putIfAbsent(facility.carrier, new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat()));
         }
     }
 
@@ -53,11 +57,21 @@ public class FacilityViewer extends JPanel {
 
         // --- Draw normal facilities first ---
         for (Facility f : facilities) {
-            if (f.hasSeed) continue; // skip seed for now
+            if (f.isSeed) continue; // skip seed for now
             double normX = (f.x - minX) / (maxX - minX);
             double normY = (f.y - minY) / (maxY - minY);
             int drawX = (int) (3*margin + normX * (width - 4 * margin));
             int drawY = (int) (height - margin - normY * (height - 2 * margin));
+            if (f.isDepot) {
+                g2.setColor(carrierColors.get(f.carrier));
+                g2.fillRect(drawX-5, drawY-5, 15, 15);
+                continue;
+            }
+            if (f.isDropoff) {
+                g2.setColor(carrierColors.get(f.carrier));
+                g2.fillRect(drawX-5, drawY-5, 15, 15);
+                continue;
+            }
 
             g2.setColor(carrierColors.get(f.carrier));
             g2.fillOval(drawX - 5, drawY - 5, 10, 10);
@@ -65,7 +79,7 @@ public class FacilityViewer extends JPanel {
 
         // --- Draw seed facilities last (on top) ---
         for (Facility f : facilities) {
-            if (!f.hasSeed) continue;
+            if (!f.isSeed) continue;
             double normX = (f.x - minX) / (maxX - minX);
             double normY = (f.y - minY) / (maxY - minY);
             int drawX = (int) (3*margin + normX * (width - 4 * margin));
@@ -108,7 +122,9 @@ public class FacilityViewer extends JPanel {
             double y = Double.parseDouble(fEl.getAttribute("y"));
 
             String carrier = "unknown";
-            boolean hasSeed = false;
+            boolean isSeed = false;
+            boolean isDepot = false;
+            boolean isDropoff = false;
 
             NodeList attrs = fEl.getElementsByTagName("attribute");
             for (int j = 0; j < attrs.getLength(); j++) {
@@ -117,10 +133,14 @@ public class FacilityViewer extends JPanel {
                 if ("carrier".equals(name)) {
                     carrier = attr.getTextContent().trim();
                 } else if ("seed".equals(name)) {
-                    hasSeed = true;
+                    isSeed = true;
+                } else if ("depot".equals(name)) {
+                    isDepot = true;
+                } else if ("dropOff".equals(name)) {
+                    isDropoff = true;
                 }
             }
-            list.add(new Facility(x, y, carrier, hasSeed));
+            list.add(new Facility(x, y, carrier, isSeed, isDepot, isDropoff));
         }
         return list;
     }
@@ -140,7 +160,7 @@ public class FacilityViewer extends JPanel {
 
     // You can call this main() directly to test manually
     public static void main(String[] args) {
-        showViewer("output/pre_final_run_test/seeding/Fr/facilities.xml");
+        showViewer("output/pre_final_run_test/nearestLink/Mo/facilities.xml");
     }
 }
 

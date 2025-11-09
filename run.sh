@@ -1,6 +1,6 @@
 #!/bin/bash --login
-#SBATCH --job-name=montag_kClusters         # name of the run
-#SBATCH --output=montag_kClsuters.log              # logfile of the run
+#SBATCH --job-name=pre_final_run_test         # name of the run
+#SBATCH --output=pre_final_run_test.log              # logfile of the run
 #SBATCH --nodes=1                      # Run on a single computer
 #SBATCH --ntasks=1                     # Run a single task        
 #SBATCH --cpus-per-task=60             # Number of CPU cores per task
@@ -13,6 +13,6 @@
 module load java/21
 
 
-java -Xmx64G -jar zeroCUTS-0.0.1-montag_kClusters.jar
+java -Xmx64G -jar zeroCUTS-0.0.1-pre_final_run_test.jar
 
 chmod 770 -R .
