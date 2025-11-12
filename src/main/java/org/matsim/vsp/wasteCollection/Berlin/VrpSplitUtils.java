@@ -164,11 +164,6 @@ public class VrpSplitUtils {
         Carriers carriers = CarriersUtils.getCarriers(scenario);
         Carriers newCarriers = new Carriers();
 
-        //Setup activities for xml
-        Boolean beforeSplit = true;
-        ActivityFacilities facilities = FacilitiesUtils.createActivityFacilities("facilities");
-        createXMLFacilities(network, carriers, outputLocation, beforeSplit, facilities);
-
         //Loop through all carriers
         for (Carrier singleCarrier : carriers.getCarriers().values()) {
 
@@ -198,7 +193,7 @@ public class VrpSplitUtils {
                     clusters = findCentroidClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
                 }
                 case METIS -> {
-                    clusters = findMETISClusters(singleCarrier, network, numberOfCarriers);
+                    clusters = findMETISClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
                 }
                 case null, default -> {
                     System.out.println("No Clustering Strategy Defined! Exit");
@@ -231,8 +226,7 @@ public class VrpSplitUtils {
         }
 
         //Timestamp for when finished and create xml facilities file to visualise results
-        beforeSplit = false;
-        createXMLFacilities(network, carriers, outputLocation, beforeSplit, facilities);
+        createXMLFacilities(network, carriers, outputLocation);
         System.out.println(fmt.format(LocalDateTime.now()) + " " + clusterStrategy + " VRP Splitting complete");
     }
 
@@ -448,13 +442,15 @@ public class VrpSplitUtils {
             for (int i = 0; i < clusters.size(); i++) {
                 Coord centroidA = computeCentroid(coords, clusters.get(i));
                 for (int j = i + 1; j < clusters.size(); j++) {
-                    Coord centroidB = computeCentroid(coords, clusters.get(j));
-                    double distanceApart = NetworkUtils.getEuclideanDistance(centroidA, centroidB);
 
                     //Check if the two clusters are too large
                     if (clusters.get(i).size() + clusters.get(j).size() > numberOfShipmentsPerCarrier) {
                         continue;
                     }
+
+                    //Find distance between centroids
+                    Coord centroidB = computeCentroid(coords, clusters.get(j));
+                    double distanceApart = NetworkUtils.getEuclideanDistance(centroidA, centroidB);
 
                     //Save Index of the clusters
                     if (distanceApart < minDistance) {
@@ -482,7 +478,7 @@ public class VrpSplitUtils {
         return clusters;
     }
 
-    private static List<List<CarrierShipment>> findMETISClusters(Carrier singleCarrier, Network network, int numberOfCarriers) throws IOException, InterruptedException {
+    private static List<List<CarrierShipment>> findMETISClusters(Carrier singleCarrier, Network network, int numberOfCarriers, int numberOfShipmentsPercCarrier) throws IOException, InterruptedException {
 
         //The list of clusters that will be returned
         List<List<CarrierShipment>> clusters = new ArrayList<>();
@@ -497,6 +493,8 @@ public class VrpSplitUtils {
             coords.put(shipment, network.getLinks().get(shipment.getPickupLinkId()).getCoord());
         }
 
+        int totalDistance = 0;
+
         //Find min and max distances
         List<Edge> edges = new ArrayList<>();
         for (int i = 0; i < shipments.size(); i++) {
@@ -504,6 +502,7 @@ public class VrpSplitUtils {
                 CarrierShipment a = shipments.get(i);
                 CarrierShipment b = shipments.get(j);
                 double dist = NetworkUtils.getEuclideanDistance(coords.get(a), coords.get(b));
+                totalDistance += dist;
                 edges.add(new Edge(a, b, dist));
             }
         }
@@ -512,7 +511,7 @@ public class VrpSplitUtils {
         int minDistance = (int) edges.getFirst().distance;
         int maxDistance = (int) edges.getLast().distance;
 
-        String path = "input/METIS_Graphs/Fr_" + singleCarrier.getId() + ".txt";
+        String path = "input/METIS_Graphs/Do_" + singleCarrier.getId() + ".txt";
         File file = new File(path);
 
         //CHANGE THIS BEFORE CLUSTER RUN
@@ -523,6 +522,8 @@ public class VrpSplitUtils {
                 int n = shipments.size();
                 int m = n*(n-1)/2; // number of undirected edges
                 pw.println(n + " " + m + " 1"); // "1" means weighted
+                double avgDistance = (double) totalDistance / m; // median or mean of distances
+                System.out.println("min: " + minDistance + " max: " + maxDistance + " avg: " + avgDistance);
 
                 //Write to METIS style
                 int above1000 = 0;
@@ -537,16 +538,26 @@ public class VrpSplitUtils {
                         }
                         Coord toShipment = network.getLinks().get(shipments.get(j).getPickupLinkId()).getCoord();
                         //This normalises the distances to weights
-    //                    int distance = (int) NetworkUtils.getEuclideanDistance(fromShipment, toShipment);
-    //                    int weight = (int) 1 + (1000 - 1)*(maxDistance - distance)/(maxDistance - minDistance);
+                        //int distance = (int) NetworkUtils.getEuclideanDistance(fromShipment, toShipment);
+                        //int weight = (int) 1 + (1000 - 1)*(maxDistance - distance)/(maxDistance - minDistance);
                         int weight = (int) (10000/NetworkUtils.getEuclideanDistance(fromShipment, toShipment));
+
+//                        double distance = NetworkUtils.getEuclideanDistance(fromShipment, toShipment);
+//                        int maxInt = 1000;
+//                        int weight = (int)Math.max(1, Math.round(maxInt * Math.exp(-distance / (avgDistance/4))));
+
+                        // Exponential normalized weight between 1 and 1000
+//                        double expVal = Math.exp(-distance / avgDistance);
+//                        double expMin = Math.exp(-maxDistance / avgDistance);
+//                        int weight = (int) Math.round(1 + 999 * (expVal - expMin) / (1 - expMin));
+
                         //That is the upper bound of METIS Edge weights
-                        if (weight > 1000) {
+                        if (weight >= 1000) {
                             weight = 1000;
                             above1000++;
                         }
                         //That is the lower bound of METIS Edge weights
-                        if (weight == 0) {
+                        if (weight <= 1) {
                             weight = 1;
                             below0++;
                         }
@@ -559,7 +570,8 @@ public class VrpSplitUtils {
             }
 
             //Run METIS
-            ProcessBuilder pb = new ProcessBuilder("wsl", "gpmetis -niter=200 -ncuts=40 -ufactor=200", "/mnt/c/Users/Milo/Desktop/UniZeug/AbfallGit/" + path, "" + numberOfCarriers);
+            //ProcessBuilder pb = new ProcessBuilder("wsl", "gpmetis -seed=13 -niter=600 -ncuts=70 -ufactor=800 -no2hop", "/mnt/c/Users/Milo/Desktop/UniZeug/AbfallGit/" + path, "" + numberOfCarriers);
+            ProcessBuilder pb = new ProcessBuilder("wsl", "gpmetis -ufactor=1000", "/mnt/c/Users/Milo/Desktop/UniZeug/AbfallGit/" + path, "" + numberOfCarriers);
             Process process = pb.start();
             process.waitFor();
         }
@@ -573,6 +585,35 @@ public class VrpSplitUtils {
             }
         }
 
+        //Clean up because METIS produces some weird results
+        List<Coord> centroids = new ArrayList<>();
+        for (List<CarrierShipment> cluster : clusters) {
+            centroids.add(computeCentroid(coords, cluster));
+        }
+        int counter = 0;
+        for (CarrierShipment shipment : shipments) {
+            int clusterIndex = getClusterIndex(shipment, clusters);
+            Coord coord = network.getLinks().get(shipment.getPickupLinkId()).getCoord();
+            double originalDistance = NetworkUtils.getEuclideanDistance(coord, centroids.get(clusterIndex));
+            int closestCentroid = clusterIndex;
+            double closestDistance = Double.MAX_VALUE;
+            for (int i = 0; i < centroids.size(); i++) {
+                if (i == clusterIndex) continue;
+                double distance = NetworkUtils.getEuclideanDistance(coord, centroids.get(i));
+                if ((distance < 0.5*originalDistance) && (distance < closestDistance)) {
+                    closestDistance = distance;
+                    closestCentroid = i;
+                }
+            }
+
+            if((closestCentroid != clusterIndex) && clusters.get(clusterIndex).size() > numberOfShipmentsPercCarrier*0.5){
+                counter++;
+                clusters.get(clusterIndex).remove(shipment);
+                clusters.get(closestCentroid).add(shipment);
+            }
+
+        }
+        System.out.println("number of switches: " + counter);
         return clusters;
     }
 
@@ -593,6 +634,7 @@ public class VrpSplitUtils {
             for (int j = 0; j < clusters.get(i).size(); j++) {
                 if (a == clusters.get(i).get(j)) {
                     index = i;
+                    return index;
                 }
             }
         }
@@ -635,66 +677,38 @@ public class VrpSplitUtils {
     }
 
     //Create XML Facilities File
-    private static void createXMLFacilities(Network network, Carriers carriers, String outputLocation, Boolean beforeSplit, ActivityFacilities facilities) {
+    private static void createXMLFacilities(Network network, Carriers carriers, String outputLocation) {
 
-        if (beforeSplit) {
-            //Loop through all old carriers
-            for (Carrier carrier : carriers.getCarriers().values()) {
-                //Add Depot and Dropoff to xml
-                String carrierName = carrier.getId().toString();
-                //Getting LinkIds
-                CarrierVehicle carrierVehicle = carrier.getCarrierCapabilities().getCarrierVehicles().values().iterator().next();
-                CarrierShipment firstShipment = carrier.getShipments().values().iterator().next();
-                //Getting the node coords
-                final Coord depotCoord = network.getLinks().get(carrierVehicle.getLinkId()).getCoord();
-                final Coord dropOffCoord = network.getLinks().get(firstShipment.getDeliveryLinkId()).getCoord();
-                //Creating a facility ID
-                final Id<ActivityFacility> depotFacilityId = Id.create("depot_" + carrierName, ActivityFacility.class);
-                final Id<ActivityFacility> dropOffFacilityId = Id.create("dropOff_" + carrierName, ActivityFacility.class);
-                //Creating the facilities
-                ActivityFacility depotFacility = facilities.getFactory().createActivityFacility(depotFacilityId, depotCoord);
-                ActivityFacility dropOffFacility = facilities.getFactory().createActivityFacility(dropOffFacilityId, dropOffCoord);
-                //Adding the activity option
-                depotFacility.addActivityOption(new ActivityOptionImpl("depot"));
-                dropOffFacility.addActivityOption(new ActivityOptionImpl("dropOff"));
-                //Putting the carrier attribute to view in Via later
-                depotFacility.getAttributes().putAttribute("carrier", "depot_" + carrierName);
-                dropOffFacility.getAttributes().putAttribute("carrier", "dropOff_" + carrierName);
-                //Put attribute for later viewing
-                depotFacility.getAttributes().putAttribute("depot", "depot_" + carrierName);
-                dropOffFacility.getAttributes().putAttribute("dropOff", "dropOff_" + carrierName);
-                //Adding the facilities to the scenario
-                facilities.addActivityFacility(depotFacility);
-                facilities.addActivityFacility(dropOffFacility);
-            }
-        } else {
-            //Loop through all new carriers
-            for (Carrier carrier : carriers.getCarriers().values()) {
+        //Setup
+        ActivityFacilities facilities = FacilitiesUtils.createActivityFacilities("facilities");
 
-                //Add all Shipments
-                for (CarrierShipment shipment : carrier.getShipments().values()) {
+        //Loop through all new carriers
+        for (Carrier carrier : carriers.getCarriers().values()) {
 
-                    //Retrieve Pickup Node coord and create activityfacility
-                    final Coord coord = network.getLinks().get(shipment.getPickupLinkId()).getCoord();
-                    final Id<ActivityFacility> facilityId = Id.create(shipment.getId(), ActivityFacility.class);
-                    ActivityFacility facility = facilities.getFactory().createActivityFacility(facilityId, coord);
-                    facility.getAttributes().putAttribute("carrier", shipment.getAttributes().getAttribute("carrier").toString());
-                    if (shipment.getAttributes().getAttribute("seed") != null) {
-                        facility.getAttributes().putAttribute("seed", shipment.getAttributes().getAttribute("seed").toString());
-                    }
+            //Add all Shipments
+            for (CarrierShipment shipment : carrier.getShipments().values()) {
 
-                    //Add activity to xml
-                    facility.addActivityOption(new ActivityOptionImpl("delivery"));
-                    facilities.addActivityFacility(facility);
+                //Retrieve Pickup Node coord and create activityfacility
+                final Coord coord = network.getLinks().get(shipment.getPickupLinkId()).getCoord();
+                final Id<ActivityFacility> facilityId = Id.create(shipment.getId(), ActivityFacility.class);
+                ActivityFacility facility = facilities.getFactory().createActivityFacility(facilityId, coord);
+                facility.getAttributes().putAttribute("carrier", shipment.getAttributes().getAttribute("carrier").toString());
+                if (shipment.getAttributes().getAttribute("seed") != null) {
+                    facility.getAttributes().putAttribute("seed", shipment.getAttributes().getAttribute("seed").toString());
                 }
-            }
 
-            //Write the xml
-            final String FILENAME_EXPORT_FACILITIES = outputLocation + "/facilities.xml";
-            new FacilitiesWriter(facilities).writeV1(FILENAME_EXPORT_FACILITIES);
-            System.out.println("write facilities to " + FILENAME_EXPORT_FACILITIES);
-            System.out.println("done");
+                //Add activity to xml
+                facility.addActivityOption(new ActivityOptionImpl("delivery"));
+                facilities.addActivityFacility(facility);
+            }
         }
+
+        //Write the xml
+        final String FILENAME_EXPORT_FACILITIES = outputLocation + "/facilities.xml";
+        new FacilitiesWriter(facilities).writeV1(FILENAME_EXPORT_FACILITIES);
+        System.out.println("write facilities to " + FILENAME_EXPORT_FACILITIES);
+        System.out.println("done");
+
     }
 }
 

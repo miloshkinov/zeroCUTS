@@ -63,13 +63,9 @@ public class FacilityViewer extends JPanel {
             int drawX = (int) (3*margin + normX * (width - 4 * margin));
             int drawY = (int) (height - margin - normY * (height - 2 * margin));
             if (f.isDepot) {
-                g2.setColor(carrierColors.get(f.carrier));
-                g2.fillRect(drawX-5, drawY-5, 15, 15);
                 continue;
             }
             if (f.isDropoff) {
-                g2.setColor(carrierColors.get(f.carrier));
-                g2.fillRect(drawX-5, drawY-5, 15, 15);
                 continue;
             }
 
@@ -103,9 +99,9 @@ public class FacilityViewer extends JPanel {
             g2.drawString(entry.getKey(), 25, y + 10);
             y += 12;
         }
-        g2.setColor(Color.RED);
-        g2.drawString("Seeds", 25, y + 10);
-        g2.fillOval(10, y, 10, 10);
+//        g2.setColor(Color.RED);
+//        g2.drawString("Seeds", 25, y + 10);
+//        g2.fillOval(10, y, 10, 10);
     }
 
     public static List<Facility> parseFacilities(File xmlFile) throws Exception {
@@ -160,7 +156,7 @@ public class FacilityViewer extends JPanel {
 
     // You can call this main() directly to test manually
     public static void main(String[] args) {
-        showViewer("output/pre_final_run_test/nearestLink/Mo/facilities.xml");
+        showViewer("output/test_Metis/Do/facilities.xml");
     }
 }
 
