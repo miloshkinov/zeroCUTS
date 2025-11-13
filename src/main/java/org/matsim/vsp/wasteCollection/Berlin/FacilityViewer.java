@@ -156,7 +156,7 @@ public class FacilityViewer extends JPanel {
 
     // You can call this main() directly to test manually
     public static void main(String[] args) {
-        showViewer("output/test_Metis/Do/facilities.xml");
+        showViewer("output/METIS/Fr/facilities.xml");
     }
 }
 

@@ -193,7 +193,7 @@ public class VrpSplitUtils {
                     clusters = findCentroidClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
                 }
                 case METIS -> {
-                    clusters = findMETISClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
+                    clusters = findMETISClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier, outputLocation);
                 }
                 case null, default -> {
                     System.out.println("No Clustering Strategy Defined! Exit");
@@ -478,7 +478,7 @@ public class VrpSplitUtils {
         return clusters;
     }
 
-    private static List<List<CarrierShipment>> findMETISClusters(Carrier singleCarrier, Network network, int numberOfCarriers, int numberOfShipmentsPercCarrier) throws IOException, InterruptedException {
+    private static List<List<CarrierShipment>> findMETISClusters(Carrier singleCarrier, Network network, int numberOfCarriers, int numberOfShipmentsPercCarrier, String outputLocation) throws IOException, InterruptedException {
 
         //The list of clusters that will be returned
         List<List<CarrierShipment>> clusters = new ArrayList<>();
@@ -493,37 +493,19 @@ public class VrpSplitUtils {
             coords.put(shipment, network.getLinks().get(shipment.getPickupLinkId()).getCoord());
         }
 
-        int totalDistance = 0;
+        String path = "input/" + outputLocation + "/" + singleCarrier.getId() + ".txt";
 
-        //Find min and max distances
-        List<Edge> edges = new ArrayList<>();
-        for (int i = 0; i < shipments.size(); i++) {
-            for (int j = i + 1; j < shipments.size(); j++) {
-                CarrierShipment a = shipments.get(i);
-                CarrierShipment b = shipments.get(j);
-                double dist = NetworkUtils.getEuclideanDistance(coords.get(a), coords.get(b));
-                totalDistance += dist;
-                edges.add(new Edge(a, b, dist));
-            }
-        }
+        String outputPath = path + ".part." + numberOfCarriers;
+        File file = new File(outputPath);
 
-        edges.sort(Comparator.comparingDouble(Edge::distance));
-        int minDistance = (int) edges.getFirst().distance;
-        int maxDistance = (int) edges.getLast().distance;
-
-        String path = "input/METIS_Graphs/Do_" + singleCarrier.getId() + ".txt";
-        File file = new File(path);
-
-        //CHANGE THIS BEFORE CLUSTER RUN
-        if (file.exists()) {
+        //Check if file has been prepared
+        if (!file.exists()) {
             //Write the Graph files
             try (PrintWriter pw = new PrintWriter(path)) {
                 //File header set up
                 int n = shipments.size();
                 int m = n*(n-1)/2; // number of undirected edges
                 pw.println(n + " " + m + " 1"); // "1" means weighted
-                double avgDistance = (double) totalDistance / m; // median or mean of distances
-                System.out.println("min: " + minDistance + " max: " + maxDistance + " avg: " + avgDistance);
 
                 //Write to METIS style
                 int above1000 = 0;
@@ -537,19 +519,8 @@ public class VrpSplitUtils {
                             continue;
                         }
                         Coord toShipment = network.getLinks().get(shipments.get(j).getPickupLinkId()).getCoord();
-                        //This normalises the distances to weights
-                        //int distance = (int) NetworkUtils.getEuclideanDistance(fromShipment, toShipment);
-                        //int weight = (int) 1 + (1000 - 1)*(maxDistance - distance)/(maxDistance - minDistance);
+                        //This converts the distances to weights
                         int weight = (int) (10000/NetworkUtils.getEuclideanDistance(fromShipment, toShipment));
-
-//                        double distance = NetworkUtils.getEuclideanDistance(fromShipment, toShipment);
-//                        int maxInt = 1000;
-//                        int weight = (int)Math.max(1, Math.round(maxInt * Math.exp(-distance / (avgDistance/4))));
-
-                        // Exponential normalized weight between 1 and 1000
-//                        double expVal = Math.exp(-distance / avgDistance);
-//                        double expMin = Math.exp(-maxDistance / avgDistance);
-//                        int weight = (int) Math.round(1 + 999 * (expVal - expMin) / (1 - expMin));
 
                         //That is the upper bound of METIS Edge weights
                         if (weight >= 1000) {
@@ -570,7 +541,6 @@ public class VrpSplitUtils {
             }
 
             //Run METIS
-            //ProcessBuilder pb = new ProcessBuilder("wsl", "gpmetis -seed=13 -niter=600 -ncuts=70 -ufactor=800 -no2hop", "/mnt/c/Users/Milo/Desktop/UniZeug/AbfallGit/" + path, "" + numberOfCarriers);
             ProcessBuilder pb = new ProcessBuilder("wsl", "gpmetis -ufactor=1000", "/mnt/c/Users/Milo/Desktop/UniZeug/AbfallGit/" + path, "" + numberOfCarriers);
             Process process = pb.start();
             process.waitFor();
@@ -578,7 +548,7 @@ public class VrpSplitUtils {
 
         //Read the Results
         int shipmentCounter = 0;
-        try (Scanner scanner = new Scanner(new File(path + ".part." + numberOfCarriers))) {
+        try (Scanner scanner = new Scanner(new File(outputPath))) {
             while (scanner.hasNextInt()) {
                 clusters.get(scanner.nextInt()).add(shipments.get(shipmentCounter));
                 shipmentCounter++;

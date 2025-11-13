@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.tu-berlin</groupId>
 	<artifactId>zeroCUTS</artifactId>
-	<version>0.0.1-montag_kClusters</version>
+	<version>0.0.1-final_runs</version>
 
 	<name>zeroCUTS project</name>
 	<description>zeroCUTS project</description>
@@ -119,13 +119,6 @@
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
 			<scope>test</scope>
-		</dependency>
-
-		<!-- For quick viewing in IntelliJ -->
-		<dependency>
-			<groupId>org.jxmapviewer</groupId>
-			<artifactId>jxmapviewer2</artifactId>
-			<version>2.6</version>
 		</dependency>
 
 	</dependencies>
