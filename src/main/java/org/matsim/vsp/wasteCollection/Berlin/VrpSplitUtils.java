@@ -23,13 +23,13 @@ import java.util.*;
 public class VrpSplitUtils {
 
     public enum clusteringStrategy {
-        none, random, seeding, kClusters, centroidClusters, METIS
+        none, random, greedy, singleLink, centroids, METIS
     }
 
     static String linkChessboardDepot = "j(0,7)R";
     static String linkChessboardDump = "j(0,9)R";
 
-    //Data structure for the kClustering
+    //Data structure for sorting edges
     private static record Edge(CarrierShipment a, CarrierShipment b, double distance) {}
 
     static void createRandomCarriersChessboard(Scenario scenario, int numberOfCarriers, int numberOfIterations) {
@@ -178,19 +178,22 @@ public class VrpSplitUtils {
             List<List<CarrierShipment>> clusters;
             switch (clusterStrategy) {
                 case none -> {
+                    for(Carrier carrier :  carriers.getCarriers().values()) {
+                        CarriersUtils.setJspritIterations(carrier, numberOfIterations);
+                    }
                     return;
                 }
                 case random -> {
                     clusters = findRandomClusters(singleCarrier, numberOfCarriers, numberOfShipmentsPerCarrier);
                 }
-                case seeding -> {
-                    clusters = findSeedingClusters(singleCarrier, network, numberOfCarriers, carrierVehicle, numberOfShipmentsPerCarrier);
+                case greedy -> {
+                    clusters = findGreedyClusters(singleCarrier, network, numberOfCarriers, carrierVehicle, numberOfShipmentsPerCarrier);
                 }
-                case kClusters -> {
-                    clusters = findKClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
+                case singleLink -> {
+                    clusters = findSingleLinkClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
                 }
-                case centroidClusters -> {
-                    clusters = findCentroidClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
+                case centroids -> {
+                    clusters = findCentroidsClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier);
                 }
                 case METIS -> {
                     clusters = findMETISClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier, outputLocation);
@@ -254,7 +257,7 @@ public class VrpSplitUtils {
         return clusters;
     }
 
-    private static List<List<CarrierShipment>> findSeedingClusters(Carrier singleCarrier, Network network, int numberOfCarriers, CarrierVehicle carrierVehicle, int numberOfShipmentsPerCarrier) {
+    private static List<List<CarrierShipment>> findGreedyClusters(Carrier singleCarrier, Network network, int numberOfCarriers, CarrierVehicle carrierVehicle, int numberOfShipmentsPerCarrier) {
 
         //The list of clusters that will be returned
         List<List<CarrierShipment>> clusters = new ArrayList<>();
@@ -356,7 +359,7 @@ public class VrpSplitUtils {
         return clusters;
     }
 
-    private static List<List<CarrierShipment>> findKClusters(Carrier singleCarrier, Network network, int numberOfCarriers, int numberOfShipmentsPerCarrier) {
+    private static List<List<CarrierShipment>> findSingleLinkClusters(Carrier singleCarrier, Network network, int numberOfCarriers, int numberOfShipmentsPerCarrier) {
 
         //The list of clusters that will be returned
         List<List<CarrierShipment>> clusters = new ArrayList<>();
@@ -420,7 +423,7 @@ public class VrpSplitUtils {
         return clusters;
     }
 
-    private static List<List<CarrierShipment>> findCentroidClusters(Carrier singleCarrier, Network network, int numberOfCarriers, int numberOfShipmentsPerCarrier) {
+    private static List<List<CarrierShipment>> findCentroidsClusters(Carrier singleCarrier, Network network, int numberOfCarriers, int numberOfShipmentsPerCarrier) {
 
         //The list of clusters that will be returned
         List<CarrierShipment> shipments = new ArrayList<>(singleCarrier.getShipments().values());

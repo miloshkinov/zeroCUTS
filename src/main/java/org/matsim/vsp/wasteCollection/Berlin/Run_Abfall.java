@@ -82,9 +82,6 @@ import java.nio.file.Path;
 		@CommandLine.Option(names = "--secondsServiceTimePerDustbin", description = "Service time per dustbin in seconds.", defaultValue = "41")
 		private double secondsServiceTimePerDustbin;
 
-		@CommandLine.Option(names = "--numberOfShipmentsPerCarrier", description = "Number of shipments per carrier.", defaultValue = "300")
-		private int numberOfShipmentsPerCarrier;
-
 		// --- Files and paths ---
 		@CommandLine.Option(names = "--outputLocation", description = "Path to the output directory.", defaultValue = "output/")
 		private String outputLocation;
@@ -108,6 +105,9 @@ import java.nio.file.Path;
 		@CommandLine.Option(names = "--clusterStrategy", description = "Clustering strategy for VRP splitting.", required = true, defaultValue = "none")
 		private VrpSplitUtils.clusteringStrategy clusterStrategy;
 
+		@CommandLine.Option(names = "--numberOfShipmentsPerCarrier", description = "Number of shipments per carrier.", defaultValue = "300")
+		private int numberOfShipmentsPerCarrier;
+
 		@CommandLine.Option(names = "--oneCarrierForOneDistrict", description = "Use one carrier per district.", defaultValue = "false")
 		private boolean oneCarrierForOneDistrict;
 
@@ -127,6 +127,8 @@ import java.nio.file.Path;
 			log.info("Iterations: {}", jspritIterations);
 			log.info("Volume (L): {}", volumeDustbinInLiters);
 			log.info("Service time (s): {}", secondsServiceTimePerDustbin);
+			log.info("Day: {}", day);
+			log.info("Clustering Strategy: {}", clusterStrategy);
 			log.info("Shipments per carrier: {}", numberOfShipmentsPerCarrier);
 			log.info("Output: {}", outputLocation);
 
