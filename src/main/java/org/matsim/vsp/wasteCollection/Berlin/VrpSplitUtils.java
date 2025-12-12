@@ -178,9 +178,13 @@ public class VrpSplitUtils {
             List<List<CarrierShipment>> clusters;
             switch (clusterStrategy) {
                 case none -> {
-                    for(Carrier carrier :  carriers.getCarriers().values()) {
-                        CarriersUtils.setJspritIterations(carrier, numberOfIterations);
+                    for (Carrier originalCarrier : carriers.getCarriers().values()) {
+                        CarriersUtils.setJspritIterations(singleCarrier, numberOfIterations);
+                        for (CarrierShipment shipment : originalCarrier.getShipments().values()) {
+                            shipment.getAttributes().putAttribute("carrier", originalCarrier.getId().toString());
+                        }
                     }
+                    createXMLFacilities(network, carriers, outputLocation);
                     return;
                 }
                 case random -> {
@@ -248,7 +252,7 @@ public class VrpSplitUtils {
             boolean hasBeenAssigned = false;
             while (!hasBeenAssigned) {
                 int coinFlip = randomSeed.nextInt(numberOfCarriers);
-                if (clusters.get(coinFlip).size() <= numberOfShipmentsPerCarrier) {
+                if (clusters.get(coinFlip).size() < numberOfShipmentsPerCarrier) {
                     clusters.get(coinFlip).add(shipment);
                     hasBeenAssigned = true;
                 }
@@ -558,7 +562,7 @@ public class VrpSplitUtils {
             }
         }
 
-        //Clean up because METIS produces some weird results
+        //Clean up using centroids because METIS produces some weird results at times
         List<Coord> centroids = new ArrayList<>();
         for (List<CarrierShipment> cluster : clusters) {
             centroids.add(computeCentroid(coords, cluster));

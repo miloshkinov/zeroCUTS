@@ -73,7 +73,7 @@ import java.nio.file.Path;
 		private scenarioAuswahl scenarioWahl;
 
 		// --- Core simulation parameters ---
-		@CommandLine.Option(names = "--jspritIterations", description = "Number of jsprit iterations.", defaultValue = "10000")
+		@CommandLine.Option(names = "--jspritIterations", description = "Number of jsprit iterations.", defaultValue = "100")
 		private int jspritIterations;
 
 		@CommandLine.Option(names = "--volumeDustbinInLiters", description = "Volume of a dustbin in liters.", defaultValue = "1100")

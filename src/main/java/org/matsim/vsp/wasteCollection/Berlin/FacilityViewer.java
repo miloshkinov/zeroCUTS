@@ -1,9 +1,12 @@
 package org.matsim.vsp.wasteCollection.Berlin;
 
 import org.w3c.dom.*;
+
+import javax.imageio.ImageIO;
 import javax.xml.parsers.*;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -60,7 +63,7 @@ public class FacilityViewer extends JPanel {
             if (f.isSeed) continue; // skip seed for now
             double normX = (f.x - minX) / (maxX - minX);
             double normY = (f.y - minY) / (maxY - minY);
-            int drawX = (int) (3*margin + normX * (width - 4 * margin));
+            int drawX = (int) (margin + normX * (width -  2*margin));
             int drawY = (int) (height - margin - normY * (height - 2 * margin));
             if (f.isDepot) {
                 continue;
@@ -78,7 +81,7 @@ public class FacilityViewer extends JPanel {
             if (!f.isSeed) continue;
             double normX = (f.x - minX) / (maxX - minX);
             double normY = (f.y - minY) / (maxY - minY);
-            int drawX = (int) (3*margin + normX * (width - 4 * margin));
+            int drawX = (int) (margin + normX * (width -  2*margin));
             int drawY = (int) (height - margin - normY * (height - 2 * margin));
 
             g2.setColor(carrierColors.get(f.carrier));
@@ -91,14 +94,14 @@ public class FacilityViewer extends JPanel {
         }
 
         // --- Optional legend ---
-        int y = 20;
-        for (Map.Entry<String, Color> entry : carrierColors.entrySet()) {
-            g2.setColor(entry.getValue());
-            g2.fillRect(10, y, 10, 10);
-            g2.setColor(Color.BLACK);
-            g2.drawString(entry.getKey(), 25, y + 10);
-            y += 12;
-        }
+//        int y = 20;
+//        for (Map.Entry<String, Color> entry : carrierColors.entrySet()) {
+//            g2.setColor(entry.getValue());
+//            g2.fillRect(10, y, 10, 10);
+//            g2.setColor(Color.BLACK);
+//            g2.drawString(entry.getKey(), 25, y + 10);
+//            y += 12;
+//        }
 //        g2.setColor(Color.RED);
 //        g2.drawString("Seeds", 25, y + 10);
 //        g2.fillOval(10, y, 10, 10);
@@ -141,14 +144,46 @@ public class FacilityViewer extends JPanel {
         return list;
     }
 
+    public static void savePanelAsImage(JPanel panel, String filePath) {
+        int w = panel.getWidth();
+        int h = panel.getHeight();
+
+        if (w <= 0 || h <= 0) {
+            System.err.println("Panel has zero size, cannot save image.");
+            return;
+        }
+
+        BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2 = image.createGraphics();
+        panel.paint(g2);
+        g2.dispose();
+
+        try {
+            ImageIO.write(image, "png", new File(filePath));
+            System.out.println("Saved image to: " + filePath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void showViewer(String xmlPath) {
         try {
             List<Facility> facilities = parseFacilities(new File(xmlPath));
+            FacilityViewer viewer = new FacilityViewer(facilities);
+
             JFrame frame = new JFrame("Facility Viewer - " + xmlPath);
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            frame.add(new FacilityViewer(facilities));
-            frame.setSize(800, 600);
+            frame.add(viewer);
+            frame.setSize(1920, 1080);
             frame.setVisible(true);
+
+//            // Delay saving so Swing has time to paint
+//            javax.swing.Timer timer = new javax.swing.Timer(500, e -> {
+//                savePanelAsImage(viewer, "final_output/Clusters/random_Fr.png");
+//            });
+//            timer.setRepeats(false); // Only run once
+//            timer.start();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -156,7 +191,7 @@ public class FacilityViewer extends JPanel {
 
     // You can call this main() directly to test manually
     public static void main(String[] args) {
-        showViewer("output/METIS/Fr/facilities.xml");
+        showViewer("final_output/centroids/Mo/facilities.xml");
     }
 }
 
