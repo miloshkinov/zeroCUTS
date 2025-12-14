@@ -13,6 +13,7 @@ import java.util.List;
 
 public class FacilityViewer extends JPanel {
 
+    //Data structure for the facilities
     private static class Facility {
         double x, y;
         String carrier;
@@ -32,6 +33,7 @@ public class FacilityViewer extends JPanel {
     private final List<Facility> facilities;
     private final Map<String, Color> carrierColors = new TreeMap<>();
 
+
     public FacilityViewer(List<Facility> facilities) {
         this.facilities = facilities;
         // Assign random colors per carrier
@@ -41,6 +43,8 @@ public class FacilityViewer extends JPanel {
         }
     }
 
+
+    //This actually draws all the points
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -58,33 +62,33 @@ public class FacilityViewer extends JPanel {
         int height = getHeight();
         int margin = 50;
 
-        // --- Draw normal facilities first ---
-        for (Facility f : facilities) {
-            if (f.isSeed) continue; // skip seed for now
-            double normX = (f.x - minX) / (maxX - minX);
-            double normY = (f.y - minY) / (maxY - minY);
+        //Draw normal facilities first
+        for (Facility facility : facilities) {
+            if (facility.isSeed) continue; // skip seed for now
+            double normX = (facility.x - minX) / (maxX - minX);
+            double normY = (facility.y - minY) / (maxY - minY);
             int drawX = (int) (margin + normX * (width -  2*margin));
             int drawY = (int) (height - margin - normY * (height - 2 * margin));
-            if (f.isDepot) {
+            if (facility.isDepot) {
                 continue;
             }
-            if (f.isDropoff) {
+            if (facility.isDropoff) {
                 continue;
             }
 
-            g2.setColor(carrierColors.get(f.carrier));
+            g2.setColor(carrierColors.get(facility.carrier));
             g2.fillOval(drawX - 5, drawY - 5, 10, 10);
         }
 
-        // --- Draw seed facilities last (on top) ---
-        for (Facility f : facilities) {
-            if (!f.isSeed) continue;
-            double normX = (f.x - minX) / (maxX - minX);
-            double normY = (f.y - minY) / (maxY - minY);
+        //Draw seed facilities last (on top)
+        for (Facility facility : facilities) {
+            if (!facility.isSeed) continue;
+            double normX = (facility.x - minX) / (maxX - minX);
+            double normY = (facility.y - minY) / (maxY - minY);
             int drawX = (int) (margin + normX * (width -  2*margin));
             int drawY = (int) (height - margin - normY * (height - 2 * margin));
 
-            g2.setColor(carrierColors.get(f.carrier));
+            g2.setColor(carrierColors.get(facility.carrier));
             g2.fillOval(drawX - 5, drawY - 5, 10, 10);
 
             // red highlight
@@ -107,6 +111,7 @@ public class FacilityViewer extends JPanel {
 //        g2.fillOval(10, y, 10, 10);
     }
 
+    //Read in the facilities
     public static List<Facility> parseFacilities(File xmlFile) throws Exception {
         List<Facility> list = new ArrayList<>();
 
@@ -125,9 +130,9 @@ public class FacilityViewer extends JPanel {
             boolean isDepot = false;
             boolean isDropoff = false;
 
-            NodeList attrs = fEl.getElementsByTagName("attribute");
-            for (int j = 0; j < attrs.getLength(); j++) {
-                Element attr = (Element) attrs.item(j);
+            NodeList attributes = fEl.getElementsByTagName("attribute");
+            for (int j = 0; j < attributes.getLength(); j++) {
+                Element attr = (Element) attributes.item(j);
                 String name = attr.getAttribute("name");
                 if ("carrier".equals(name)) {
                     carrier = attr.getTextContent().trim();
@@ -144,6 +149,7 @@ public class FacilityViewer extends JPanel {
         return list;
     }
 
+    //This can be called to from the showViewer to save the images
     public static void savePanelAsImage(JPanel panel, String filePath) {
         int w = panel.getWidth();
         int h = panel.getHeight();
@@ -161,8 +167,8 @@ public class FacilityViewer extends JPanel {
         try {
             ImageIO.write(image, "png", new File(filePath));
             System.out.println("Saved image to: " + filePath);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
     }
 
@@ -171,21 +177,16 @@ public class FacilityViewer extends JPanel {
             List<Facility> facilities = parseFacilities(new File(xmlPath));
             FacilityViewer viewer = new FacilityViewer(facilities);
 
+            //Setup for JFrame
             JFrame frame = new JFrame("Facility Viewer - " + xmlPath);
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             frame.add(viewer);
             frame.setSize(1920, 1080);
             frame.setVisible(true);
 
-//            // Delay saving so Swing has time to paint
-//            javax.swing.Timer timer = new javax.swing.Timer(500, e -> {
-//                savePanelAsImage(viewer, "final_output/Clusters/random_Fr.png");
-//            });
-//            timer.setRepeats(false); // Only run once
-//            timer.start();
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
     }
 
