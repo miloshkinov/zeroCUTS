@@ -88,7 +88,7 @@ createPlots <- function(run) {
       )
     )
 
-
+print (
   ggplot(df_bins, aes(x = bin, y = n, fill = type)) +
     geom_col(position = "dodge", width = 0.8) +
     labs(
@@ -112,7 +112,7 @@ createPlots <- function(run) {
       legend.position = "top",
       axis.text.x = element_text(angle = 45, hjust = 1)
     )
-
+)
   print(
     ggplot(df_util_bins, aes(x = bin, y = n)) +
       geom_col(fill = "darkgreen", width = 0.8) +
