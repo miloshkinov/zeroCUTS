@@ -41,6 +41,10 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
+import org.matsim.simwrapper.SimWrapper;
+import org.matsim.simwrapper.SimWrapperConfigGroup;
+import org.matsim.simwrapper.SimWrapperModule;
+import org.matsim.simwrapper.dashboard.CarrierDashboard;
 import org.matsim.vehicles.EngineInformation;
 import org.matsim.vehicles.VehicleUtils;
 import picocli.CommandLine;
@@ -94,6 +98,7 @@ class RunFood implements MATSimAppCommand {
 
 		Config config = prepareConfig();
 		Scenario scenario = prepareScenario(config);
+		Controler controler = prepareControler(scenario);
 
 		if (calculateVariableConsumptionCosts) {
 			log.warn("We assume that the variable costs in the vehicleTypes don't contain fuel and energy costs.");
@@ -105,7 +110,6 @@ class RunFood implements MATSimAppCommand {
 			config.controller().setOutputDirectory(outputLocation);
 		}
 
-		Controler controler = prepareControler(scenario);
 
 		CarriersUtils.runJsprit(scenario);
 
@@ -193,12 +197,15 @@ class RunFood implements MATSimAppCommand {
 		Controler controller = new Controler(scenario);
 
 		controller.addOverridingModule(new CarrierModule());
-
+		SimWrapper simWrapper = SimWrapper.create(controller.getConfig());
+		simWrapper.getConfigGroup().setDefaultDashboards(SimWrapperConfigGroup.Mode.disabled);
+		simWrapper.addDashboard(new CarrierDashboard());
 		controller.addOverridingModule(new AbstractModule() {
 			@Override public void install() {
 				bind(CarrierScoringFunctionFactory.class).toInstance(new CarrierScoringFunctionFactory_KeepScore());
 			}
 		});
+		controller.addOverridingModule(new SimWrapperModule(simWrapper));
 
 		controller.getInjector();
 		return controller;
