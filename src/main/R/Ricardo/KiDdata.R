@@ -311,6 +311,7 @@ createTourDurationsAndDistances <- function(Ketten, Fahrzeug, Fahrten, filter_Wi
 
 
 ###### Durations ######
+  print(
   ggplot(data = tourSpecifications, aes(x = bins_duration, y = after_stat(count)/sum(after_stat(count))*100)) +
     geom_bar() +
     geom_text(stat='count', aes(label = round(after_stat(count)/sum(after_stat(count))*100, 1), vjust = -0.5)) +
@@ -320,9 +321,10 @@ createTourDurationsAndDistances <- function(Ketten, Fahrzeug, Fahrten, filter_Wi
           tag = paste("Mean: ", toString(result_mean_tourDuration), "min")) +
     theme(plot.margin = margin(1, 4, 1, 1, "lines"),
           plot.tag.position = c(.9,.9),
-          plot.tag = element_text(hjust =0, size=15))
+          plot.tag = element_text(hjust =0, size=15)))
 
   ###### Distances ######
+  print(
   ggplot(data = tourSpecifications, aes(x = bins_distance, y = after_stat(count)/sum(after_stat(count))*100)) +
     geom_bar() +
     geom_text(stat='count', aes(label = round(after_stat(count)/sum(after_stat(count))*100, 1), vjust = -0.5)) +
@@ -332,7 +334,7 @@ createTourDurationsAndDistances <- function(Ketten, Fahrzeug, Fahrten, filter_Wi
           tag = paste("Mean: ", toString(result_mean_tourDistance), "km")) +
     theme(plot.margin = margin(1, 4, 1, 1, "lines"),
           plot.tag.position = c(.9,.9),
-          plot.tag = element_text(hjust =0, size=15))
+          plot.tag = element_text(hjust =0, size=15)))
 }
 
 ##################### Helper functions ##########################
