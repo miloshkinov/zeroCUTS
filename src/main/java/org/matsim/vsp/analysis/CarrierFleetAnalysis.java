@@ -46,6 +46,7 @@ public class CarrierFleetAnalysis {
             writer.write("vehicle" + delimiter);
             writer.write("carrier" + delimiter);
             writer.write("vehicleType" + delimiter);
+            writer.write("linkId" + delimiter);
             writer.write("maxTourDuration" + delimiter);
             writer.write("usedForTour" + delimiter);
             writer.write("usedDuration");
@@ -57,6 +58,7 @@ public class CarrierFleetAnalysis {
                         writer.write(vehicle.getId().toString() + delimiter);
                         writer.write(carrier.getId() + delimiter);
                         writer.write(vehicle.getType().getId().toString() + delimiter);
+                        writer.write(vehicle.getLinkId().toString() + delimiter);
                         writer.write((vehicle.getLatestEndTime() - vehicle.getEarliestStartTime()) + delimiter);
                         boolean isUsedForTour = false;
                         double tourDuration = 0.0;
