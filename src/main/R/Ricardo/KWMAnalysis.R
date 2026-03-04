@@ -6,11 +6,6 @@ setwd("C:/Users/erica/shared/matsim-hannover/output/")
 run <- "smallScaleCommercialPlans"
 run <- "smallScaleCommercialPlans_newApproach2_0.2"
 run <- "smallScaleCommercialPlans_old_approach"
-run <- "smallScaleCommercialPlans"
-run <- "smallScaleCommercialPlans"
-run <- "smallScaleCommercialPlans"
-run <- "smallScaleCommercialPlans"
-run <- "smallScaleCommercialPlans"
 
 createPlots(run)
 
@@ -30,16 +25,27 @@ createPlots <- function(run) {
   # Umrechnung Sekunden -> Minuten
   df <- df %>%
     mutate(
-      usedForTour = tolower(usedForTour) == "true",  # <- FIX
+      usedForTour = tolower(usedForTour) == "true",
       max_min = maxTourDuration / 60,
       used_min = usedDuration / 60
     )
   df_long <- bind_rows(
+    # 1) Alle theoretischen Tour-Slots
     df %>%
       transmute(
         value = max_min,
-        type = "maxTourDuration"
+        type = "max_all"
       ),
+
+    # 2) Maximale Dauer nur der tatsächlich eingesetzten Fahrzeuge
+    df %>%
+      filter(usedForTour) %>%
+      transmute(
+        value = max_min,
+        type = "max_usedVehicles"
+      ),
+
+    # 3) Tatsächlich gefahrene Dauer
     df %>%
       filter(usedForTour) %>%
       transmute(
@@ -99,11 +105,13 @@ print (
     ) +
     scale_fill_manual(
       values = c(
-        "maxTourDuration" = "steelblue",
-        "usedDuration" = "darkorange"
+        "max_all" = "#0072B2",          # Blau
+        "max_usedVehicles" = "#009E73", # Grün/Türkis
+        "usedDuration" = "#D55E00"      # Orange/Rot
       ),
       labels = c(
-        "maxTourDuration" = "Maximale Dauer",
+        "max_all" = "Max Dauer (alle Fahrzeuge)",
+        "max_usedVehicles" = "Max Dauer (genutzte Fahrzeuge)",
         "usedDuration" = "Genutzte Dauer"
       )
     ) +
