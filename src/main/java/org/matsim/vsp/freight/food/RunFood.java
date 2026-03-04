@@ -198,7 +198,7 @@ class RunFood implements MATSimAppCommand {
 
 		controller.addOverridingModule(new CarrierModule());
 		SimWrapper simWrapper = SimWrapper.create(controller.getConfig());
-		simWrapper.getConfigGroup().setDefaultDashboards(SimWrapperConfigGroup.Mode.disabled);
+		simWrapper.getConfigGroup().setDefaultDashboards(SimWrapperConfigGroup.DefaultDashboardsMode.disabled);
 		simWrapper.addDashboard(new CarrierDashboard());
 		controller.addOverridingModule(new AbstractModule() {
 			@Override public void install() {
