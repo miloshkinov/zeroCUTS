@@ -195,9 +195,9 @@ import java.nio.file.Path;
 					int kgGarbageToCollect = 12 * 1000;
 					CarrierVehicleTypes carrierVehicleTypes = CarriersUtils.getCarrierVehicleTypes(scenario);
 					AbfallChessboardUtils.createShipmentsForChessboardI(carrierMap, kgGarbageToCollect, allLinks,
-							volumeDustbinInLiters, secondsServiceTimePerDustbin, scenario, carriers);
+							volumeDustbinInLiters, secondsServiceTimePerDustbin, scenario, carriers, jspritIterations);
 					FleetSize fleetSize = FleetSize.INFINITE;
-					AbfallChessboardUtils.createCarriersForChessboard(carriers, fleetSize, carrierVehicleTypes);
+					AbfallChessboardUtils.createCarriersForChessboard(fleetSize, carrierVehicleTypes);
 				}
 				case chessboardGarbagePerMeterToCollect -> {
 					double kgGarbagePerMeterToCollect = 0.2;
@@ -205,14 +205,14 @@ import java.nio.file.Path;
 					AbfallChessboardUtils.createShipmentsForChessboardII(carrierMap, kgGarbagePerMeterToCollect, allLinks,
 							volumeDustbinInLiters, secondsServiceTimePerDustbin, scenario, carriers);
 					FleetSize fleetSize2 = FleetSize.INFINITE;
-					AbfallChessboardUtils.createCarriersForChessboard(carriers, fleetSize2, carrierVehicleTypes2);
+					AbfallChessboardUtils.createCarriersForChessboard(fleetSize2, carrierVehicleTypes2);
 				}
 				case berlinSelectedDistricts -> {
 					// day input: MO or DI or MI or DO or FR
 					List<String> districtsForShipments = List.of("Malchow");
 					day = "MI";
 					AbfallUtils.createShipmentsForSelectedArea(districtsWithGarbage, districtsForShipments, day, garbageDumps,
-							scenario, carriers, carrierMap, allLinks, volumeDustbinInLiters, secondsServiceTimePerDustbin);
+							scenario, carriers, carrierMap, allLinks, volumeDustbinInLiters, secondsServiceTimePerDustbin, jspritIterations);
 				}
 				case berlinDistrictsWithInputGarbagePerMeter -> {
 					// day input: MO or DI or MI or DO or FR
@@ -222,7 +222,7 @@ import java.nio.file.Path;
 					day = "MI";
 					AbfallUtils.createShipmentsWithGarbagePerMeter(districtsWithGarbage, areasForShipmentPerMeterMap, day,
 							garbageDumps, scenario, carriers, carrierMap, allLinks, volumeDustbinInLiters,
-							secondsServiceTimePerDustbin);
+							secondsServiceTimePerDustbin, jspritIterations);
 				}
 				case berlinDistrictsWithInputTotalGarbagePerDistrict -> {
 					// day input: MO or DI or MI or DO or FR
@@ -233,12 +233,12 @@ import java.nio.file.Path;
 					day = "MI";
 					AbfallUtils.createShipmentsGarbagePerVolume(districtsWithGarbage, areasForShipmentPerVolumeMap, day,
 							garbageDumps, scenario, carriers, carrierMap, allLinks, volumeDustbinInLiters,
-							secondsServiceTimePerDustbin);
+							secondsServiceTimePerDustbin, jspritIterations);
 				}
 				case berlinCollectedGarbageForOneDay ->
 					// MO or DI or MI or DO or FR
 						AbfallUtils.createShipmentsForSelectedDay(districtsWithGarbage, day, garbageDumps, scenario, carriers,
-								carrierMap, allLinks, volumeDustbinInLiters, secondsServiceTimePerDustbin, oneCarrierForOneDistrict);
+								carrierMap, allLinks, volumeDustbinInLiters, secondsServiceTimePerDustbin, oneCarrierForOneDistrict, jspritIterations);
 				default -> throw new RuntimeException("no scenario selected.");
 			}
 
