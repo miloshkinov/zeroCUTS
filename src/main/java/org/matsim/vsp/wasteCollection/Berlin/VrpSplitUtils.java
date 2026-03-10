@@ -1,6 +1,5 @@
 package org.matsim.vsp.wasteCollection.Berlin;
 
-import org.apache.commons.math.stat.clustering.Cluster;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -12,6 +11,8 @@ import org.matsim.facilities.*;
 import org.matsim.freight.carriers.*;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +22,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class VrpSplitUtils {
+
+    private static final Logger log = LogManager.getLogger(VrpSplitUtils.class);
 
     public enum clusteringStrategy {
         none, random, greedy, singleLink, centroids, METIS
@@ -54,7 +57,7 @@ public class VrpSplitUtils {
         for (int i = 1; i <= numberOfCarriers; i++){
             Carrier newCarrier = createSingleCarrier(carrierName, numberOfIterations, carrierVehicle, i);
             carriers.addCarrier(newCarrier);
-            System.out.println(carriers.getCarriers().size() + " carriers created");
+            log.info("{} carriers created", carriers.getCarriers().size());
         }
 
         //Facilities and network setup
@@ -125,7 +128,7 @@ public class VrpSplitUtils {
         for (CarrierShipment shipment : carrier.getShipments().values()) {
 
             //Retrieve Node Id
-            System.out.println("SHIPMENT ID: " + shipment.getId() + "SHIPMENT START LINK ID: " + shipment.getPickupLinkId());
+            log.info("SHIPMENT ID: {}SHIPMENT START LINK ID: {}", shipment.getId(), shipment.getPickupLinkId());
 
             //Retrieve Node coord and create activityfacility
             final Coord coord = network.getLinks().get(shipment.getPickupLinkId()).getCoord();
@@ -139,7 +142,7 @@ public class VrpSplitUtils {
                     shipment.getAttributes().putAttribute("carrier", "newCarrier" + i);
                     CarriersUtils.addShipment(carriers.getCarriers().get(Id.create("Carrier" + i, Carrier.class)), shipment);
                     facility.getAttributes().putAttribute("carrier", "newCarrier" + i);
-                    System.out.println("SHIPMENT " + shipment.getId().toString() + " ADDED TO CARRIER " + i);
+                    log.info("SHIPMENT {} ADDED TO CARRIER {}", shipment.getId().toString(), i);
                 }
             }
 
@@ -150,14 +153,14 @@ public class VrpSplitUtils {
 
         //write the xml
         new FacilitiesWriter(facilities).writeV1(FILENAME_EXPORT_FACILITIES);
-        System.out.println("write facilities to " + FILENAME_EXPORT_FACILITIES);
-        System.out.println("done");
+        log.info("write facilities to " + FILENAME_EXPORT_FACILITIES);
+        log.info("done");
     }
 
     static void splitCarriers(Scenario scenario, clusteringStrategy clusterStrategy , int numberOfShipmentsPerCarrier, int numberOfIterations, String outputLocation) throws IOException, InterruptedException {
         //Log message to check how long the clustering takes
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss,SSS");
-        System.out.println(fmt.format(LocalDateTime.now()) + " Begin " + clusterStrategy + " VRP Splitting");
+        log.info("{} Begin {} VRP Splitting", fmt.format(LocalDateTime.now()), clusterStrategy);
 
         //Get network and initial carriers and create a new set
         Network network = scenario.getNetwork();
@@ -203,7 +206,7 @@ public class VrpSplitUtils {
                     clusters = findMETISClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier, outputLocation);
                 }
                 case null, default -> {
-                    System.out.println("No Clustering Strategy Defined! Exit");
+                    log.info("No Clustering Strategy Defined! Exit");
                     return;
                 }
             }
@@ -222,7 +225,7 @@ public class VrpSplitUtils {
                     CarriersUtils.addShipment(newCarriers.getCarriers().get(Id.create(carrierName + (i + 1), Carrier.class)), shipment);
                     numberOfShipments++;
                 }
-                System.out.println(carrierName + (i + 1) + " : " + numberOfShipments + " Shipments");
+                log.info("{}{} : {} Shipments", carrierName, i + 1, numberOfShipments);
             }
         }
 
@@ -234,7 +237,7 @@ public class VrpSplitUtils {
 
         //Timestamp for when finished and create xml facilities file to visualise results
         createXMLFacilities(network, carriers, outputLocation);
-        System.out.println(fmt.format(LocalDateTime.now()) + " " + clusterStrategy + " VRP Splitting complete");
+        log.info("{} {} VRP Splitting complete", fmt.format(LocalDateTime.now()), clusterStrategy);
     }
 
     private static List<List<CarrierShipment>> findRandomClusters(Carrier singleCarrier, int numberOfCarriers, int numberOfShipmentsPerCarrier) {
@@ -322,7 +325,7 @@ public class VrpSplitUtils {
             }
 
             //Save seed
-            System.out.println("Seed " + (i+1) + " found at Coord " + seedCoord + " with ID: " + seedId);
+            log.info("Seed {} found at Coord {} with ID: {}", i + 1, seedCoord, seedId);
             seedCoords.add(seedCoord);
             seedCoordIds.add(seedId);
             singleCarrier.getShipments().get(seedId).getAttributes().putAttribute("seed", "seed" + (i + 1));
@@ -477,7 +480,7 @@ public class VrpSplitUtils {
                 clusters.remove(aIndex);
             } else {
                 // No valid merge found (e.g., size constraints prevent it)
-                System.out.println("No further merges found!");
+                log.info("No further merges found!");
                 break;
             }
         }
@@ -544,7 +547,7 @@ public class VrpSplitUtils {
                     }
                     pw.println(line.toString().trim());
                 }
-                System.out.println("This many above " + above1000 + " and below " + below0);
+                log.info("This many above {} and below {}", above1000, below0);
             }
 
             //Run METIS
@@ -590,7 +593,7 @@ public class VrpSplitUtils {
             }
 
         }
-        System.out.println("number of switches: " + counter);
+        log.info("number of switches: {}", counter);
         return clusters;
     }
 
@@ -635,10 +638,10 @@ public class VrpSplitUtils {
         int noOfCarriers = 0;
         //Float so that the round function works
         int noOfShipments = carrier.getShipments().size();
-        System.out.println("NO OF SHIPMENTS: " + noOfShipments + " / NO OF SHIPMENTS PER CARRIER: " + numberOfShipmentsPerCarrier);
+        log.info("NO OF SHIPMENTS: {} / NO OF SHIPMENTS PER CARRIER: {}", noOfShipments, numberOfShipmentsPerCarrier);
         //Here we add 1 because the result of the division is truncated
         noOfCarriers = (noOfShipments/numberOfShipmentsPerCarrier) + 1;
-        System.out.println("NO OF CARRIERS: " + noOfCarriers);
+        log.info("NO OF CARRIERS: {}", noOfCarriers);
         return noOfCarriers;
     }
 
@@ -683,8 +686,8 @@ public class VrpSplitUtils {
         //Write the xml
         final String FILENAME_EXPORT_FACILITIES = outputLocation + "/facilities.xml";
         new FacilitiesWriter(facilities).writeV1(FILENAME_EXPORT_FACILITIES);
-        System.out.println("write facilities to " + FILENAME_EXPORT_FACILITIES);
-        System.out.println("done");
+        log.info("write facilities to {}", FILENAME_EXPORT_FACILITIES);
+        log.info("done");
 
     }
 }
