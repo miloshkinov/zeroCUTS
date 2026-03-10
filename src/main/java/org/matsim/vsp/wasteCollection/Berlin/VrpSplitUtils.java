@@ -26,7 +26,7 @@ public class VrpSplitUtils {
     private static final Logger log = LogManager.getLogger(VrpSplitUtils.class);
 
     public enum clusteringStrategy {
-        none, random, greedy, singleLink, centroids, METIS
+        random, greedy, singleLink, centroids, METIS
     }
 
     static String linkChessboardDepot = "j(0,7)R";
@@ -180,16 +180,6 @@ public class VrpSplitUtils {
             //Get Clusters
             List<List<CarrierShipment>> clusters;
             switch (clusterStrategy) {
-                case none -> {
-                    for (Carrier originalCarrier : carriers.getCarriers().values()) {
-                        CarriersUtils.setJspritIterations(singleCarrier, numberOfIterations);
-                        for (CarrierShipment shipment : originalCarrier.getShipments().values()) {
-                            shipment.getAttributes().putAttribute("carrier", originalCarrier.getId().toString());
-                        }
-                    }
-                    createXMLFacilities(network, carriers, outputLocation);
-                    return;
-                }
                 case random -> {
                     clusters = findRandomClusters(singleCarrier, numberOfCarriers, numberOfShipmentsPerCarrier);
                 }
@@ -205,7 +195,7 @@ public class VrpSplitUtils {
                 case METIS -> {
                     clusters = findMETISClusters(singleCarrier, network, numberOfCarriers, numberOfShipmentsPerCarrier, outputLocation);
                 }
-                case null, default -> {
+                default -> {
                     log.info("No Clustering Strategy Defined! Exit");
                     return;
                 }

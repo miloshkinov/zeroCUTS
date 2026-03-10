@@ -100,7 +100,7 @@ import java.nio.file.Path;
 		@CommandLine.Option(names = "--day", description = "Day of the week (MO, DI, MI, DO, FR).", required = true)
 		private String day;
 
-		@CommandLine.Option(names = "--clusterStrategy", description = "Clustering strategy for VRP splitting.", required = true, defaultValue = "none")
+		@CommandLine.Option(names = "--clusterStrategy", description = "Clustering strategy for VRP splitting.")
 		private VrpSplitUtils.clusteringStrategy clusterStrategy;
 
 		@CommandLine.Option(names = "--numberOfShipmentsPerCarrier", description = "Number of shipments per carrier.", defaultValue = "300")
@@ -243,7 +243,12 @@ import java.nio.file.Path;
 
 
 			//-----------------RUN THE SPLIT------------------------
-			VrpSplitUtils.splitCarriers(scenario, clusterStrategy, numberOfShipmentsPerCarrier, jspritIterations, outputLocation);
+			if (clusterStrategy != null) {
+				log.info("Running VRP split with strategy: {}", clusterStrategy);
+				VrpSplitUtils.splitCarriers(scenario, clusterStrategy, numberOfShipmentsPerCarrier, jspritIterations, outputLocation);
+			} else {
+				log.info("No VRP split strategy selected. Skipping VRP split.");
+			}
 
 			/*
 			 * This xml output gives a summary with information about the created shipments,
