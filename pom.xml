@@ -13,10 +13,9 @@
 	<parent>
 		<groupId>org.matsim</groupId>
 		<artifactId>matsim-all</artifactId>
-		<version>2026.0-2025w30</version>
-		<!--		<version>2026.0-2025w20</version> -->
-		<!--		    <version>2026.0-PR3904</version>-->
-		<!--        <version>2026.0-SNAPSHOT</version>-->
+		<version>2026.0-2026w10</version>
+<!--        <version>2026.0-PR4435</version>-->
+<!--		        <version>2026.0-SNAPSHOT</version>-->
 		<relativePath/>
 	</parent>
 
@@ -64,13 +63,6 @@
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>freight</artifactId>
-			<version>${project.parent.version}</version>
-		</dependency>
-		
-		<!-- This is the matsim vsp contrib: -->
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>vsp</artifactId>
 			<version>${project.parent.version}</version>
 		</dependency>
 
@@ -128,7 +120,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.14.0</version>
+				<version>3.15.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -155,9 +147,29 @@
 				</configuration>
 			</plugin>
 			<plugin>
+				<groupId>io.github.git-commit-id</groupId>
+				<artifactId>git-commit-id-maven-plugin</artifactId>
+				<version>9.0.2</version>
+				<executions>
+					<execution>
+						<id>get-the-git-infos</id>
+						<goals>
+							<goal>revision</goal>
+						</goals>
+						<phase>validate</phase>
+					</execution>
+				</executions>
+				<configuration>
+					<failOnNoGitDirectory>false</failOnNoGitDirectory>
+					<gitDescribe>
+						<tags>true</tags>
+					</gitDescribe>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.6.0</version>
+				<version>3.6.1</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -165,7 +177,7 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<outputFile>${project.basedir}/${project.build.finalName}.jar</outputFile>
+							<outputFile>${project.basedir}/${project.build.finalName}-${git.commit.id.describe}.jar</outputFile>
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -175,6 +187,8 @@
 										<Specification-Vendor>org.matsim</Specification-Vendor>
 										<Implementation-Vendor>org.matsim</Implementation-Vendor>
 										<Implementation-Version>${project.version}</Implementation-Version>
+										<!--suppress UnresolvedMavenProperty -->
+										<SCM-Revision>${git.commit.id.describe}</SCM-Revision>
 										<Multi-Release>true</Multi-Release>
 									</manifestEntries>
 								</transformer>
@@ -222,7 +236,82 @@
 					</execution>
 				</executions>
 			</plugin>
-		</plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>3.2.0</version>
+				<executions>
+					<execution>
+						<id>generate-git-changes</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
 
+								<!-- sicherstellen, dass target/ existiert -->
+								<mkdir dir="${project.build.directory}" />
+
+								<!-- Header in git-changes.txt schreiben -->
+								<!--suppress UnresolvedMavenProperty -->
+								<echo file="${project.build.directory}/git-changes.txt">
+									Build-Commit: ${git.commit.id.describe}
+
+									Uncommitted changes relative to ${git.commit.id.describe}
+									(status and diff below may be empty if working tree is clean).
+
+									== git status --short ==
+								</echo>
+
+								<!-- git status -short in temporäre Datei -->
+								<exec executable="git" dir="${basedir}"
+									  output="${project.build.directory}/git-status.tmp">
+									<arg value="status" />
+									<arg value="--short" />
+								</exec>
+
+								<!-- git diff in temporäre Datei -->
+								<exec executable="git" dir="${basedir}"
+									  output="${project.build.directory}/git-diff.tmp">
+									<arg value="diff" />
+								</exec>
+
+								<!-- Status-Ausgabe anhängen -->
+								<concat destfile="${project.build.directory}/git-changes.txt"
+										append="true">
+									<fileset file="${project.build.directory}/git-status.tmp" />
+								</concat>
+
+								<!-- Überschrift für Diff anhängen -->
+								<echo file="${project.build.directory}/git-changes.txt"
+									  append="true">
+
+									== git diff ==
+								</echo>
+
+								<!-- Diff-Ausgabe anhängen -->
+								<concat destfile="${project.build.directory}/git-changes.txt"
+										append="true">
+									<fileset file="${project.build.directory}/git-diff.tmp" />
+								</concat>
+
+							</target>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+		</plugins>
+		<resources>
+			<!-- git-changes.txt aus target ins JAR legen -->
+			<resource>
+				<directory>${project.build.directory}</directory>
+				<includes>
+					<include>git-changes.txt</include>
+				</includes>
+				<targetPath>META-INF</targetPath>
+			</resource>
+		</resources>
 	</build>
 </project>

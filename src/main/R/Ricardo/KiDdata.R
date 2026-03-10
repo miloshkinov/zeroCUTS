@@ -28,6 +28,10 @@ filter_vehicleTypes <- c()
 
 filter_Gesamtgewicht <- c("all")
 
+bins <- c(0,30,60,90,120,180,240,300,360,420,480,540,600,720,840,Inf)
+bins <- c(0,10,20,30,40,50,60,75,90,105,120,150,180,240,300,420,540,660,780,900,Inf)
+bins <- c(0,60,120,180,240,300,360,420,480,540,600,660,720,780,840,Inf)
+
 filter_Gesamtgewicht <- c(0, 2800)                                        # vehTyp1
 createStopDurations(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszweig, filter_vehicleTypes, filter_verkehrsmodell, filter_Gesamtgewicht, bins)
 filter_Gesamtgewicht <- c(2800, 3500)                                     # vehTyp2
@@ -39,13 +43,11 @@ createStopDurations(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszweig, filter_v
 filter_Gesamtgewicht <- c(12000, 100000)                                  # vehTyp5
 createStopDurations(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszweig, filter_vehicleTypes, filter_verkehrsmodell, filter_Gesamtgewicht, bins)
 
-bins <- c(0,30,60,90,120,180,240,300,360,420,480,540,600,720,840,Inf)
-bins <- c(0,10,20,30,40,50,60,75,90,105,120,150,180,240,300,420,540,660,780,900,Inf)
-bins <- c(0,60,120,180,240,300,360,420,480,540,600,660,720,780,840,Inf)
+
 
 createTourStartDistribution(Fahrten, Fahrzeug, filter_Wirtschaftszweig, filter_vehicleTypes, filter_verkehrsmodell, filter_Gesamtgewicht, bins)
 createStopDurations(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszweig, filter_vehicleTypes, filter_verkehrsmodell, filter_Gesamtgewicht, bins)
-createTourDurations(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszweig, filter_vehicleTypes, filter_verkehrsmodell, filter_Gesamtgewicht, bins)
+createTourDurationsAndDistances(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszweig, filter_vehicleTypes, filter_verkehrsmodell, filter_Gesamtgewicht, bins)
 
 ######################################           TourStartZeit            ##############################
 
@@ -212,7 +214,7 @@ createStopDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszwe
 
 ######################################           Tour-Dauern            ##############################
 
-createTourDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszweig, filter_vehicleTypes, filter_verkehrsmodell, filter_Gesamtgewicht, bins) {
+createTourDurationsAndDistances <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszweig, filter_vehicleTypes, filter_verkehrsmodell, filter_Gesamtgewicht, bins) {
 
   #Filter Fahrzwecke. Wenn in Tour min. Fahrt den Zweck "1" Transport von Gütern hat, wird die Tour zum GoodsTransport gezählt
   fahrzeug_Fahrzweck <- data.frame(K00 = integer(0), F07a = integer(0))
@@ -236,7 +238,7 @@ createTourDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszwe
     right_join(Fahrzeug, by = 'K00') %>%
     filter(T01 != -1) %>%
     filter(T07 == 1) %>%
-    select(K00, K19b, K01, T04, T01, T07, F07a, K03)
+    select(K00, K19b, K01, T04, T01, T07, F07a, K03, T05)
   
   if (!is.null(filter_vehicleTypes)){
     Ketten_TourDauer <- Ketten_TourDauer %>%
@@ -258,38 +260,42 @@ createTourDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszwe
       filter(K03 >= as.integer(filter_Gesamtgewicht[1])) %>%
       filter(K03 < as.integer(filter_Gesamtgewicht[2]))
   }
-  tourDauern <- data.frame(K00 = integer(0), K19b = character(0), tourStart = character(0), tourEnde = character(0))
-  
+  tourSpecifications <- data.frame(K00 = integer(0), K19b = character(0), tourStart = character(0), tourEnde = character(0), tourDistance = double(0))
   for(i in seq_len(nrow(Ketten_TourDauer))) {
     newRow <- Ketten_TourDauer[i,]
-    if(newRow$K00 %in% tourDauern$K00){
-      row_existing <- tourDauern[tourDauern$K00 == newRow$K00,]
+    if(newRow$K00 %in% tourSpecifications$K00){
+      row_existing <- tourSpecifications[tourSpecifications$K00 == newRow$K00,]
       newRowTourStart <- as.POSIXct(newRow$T04, format = "%H:%M")
       newRowTourEnde <- newRowTourStart + minutes(newRow$T01)
       testrow_existingtourEnde <- row_existing$tourEnde
       existingTourEnd <- as.POSIXct(row_existing$tourEnde, format = "%H:%M")
       if (newRowTourEnde > existingTourEnd){
-        tourDauern[tourDauern$K00 == newRow$K00,]$tourEnde <- format(newRowTourEnde, format = "%H:%M")
+        tourSpecifications[tourSpecifications$K00 == newRow$K00,]$tourEnde <- format(newRowTourEnde, format = "%H:%M")
       }
     }else {
       thisTourStart <- as.POSIXct(newRow$T04, format = "%H:%M")
       thisTourEnde <- thisTourStart + minutes(newRow$T01)
-      thisTourDuration <- difftime(thisTourEnde, thisTourStart, units = "mins")
-      tourDauern <- tourDauern %>%
+      thisTourDist <- newRow$T05
+      tourSpecifications <- tourSpecifications %>%
         add_row(K00 = newRow$K00,
                 K19b = newRow$K19b,
                 tourStart = format(thisTourStart, format = "%H:%M"),
-                tourEnde = format(thisTourEnde, format = "%H:%M"))
+                tourEnde = format(thisTourEnde, format = "%H:%M"),
+                tourDistance = thisTourDist)
     }
   }
-  tourDauern <- tourDauern %>%
-    mutate(tourDauer = as.integer(difftime(as.POSIXct(tourDauern$tourEnde, format = "%H:%M"),
-                                           as.POSIXct(tourDauern$tourStart, format = "%H:%M"),
+  tourSpecifications <- tourSpecifications %>%
+    mutate(tourDauer = as.integer(difftime(as.POSIXct(tourSpecifications$tourEnde, format = "%H:%M"),
+                                           as.POSIXct(tourSpecifications$tourStart, format = "%H:%M"),
                                            units = "mins")))
-  result_mean <- round(mean(tourDauern$tourDauer), digits = 2)
-  
-  tourDauern$bins <- cut(tourDauern$tourDauer,breaks = bins,include.lowest = TRUE)
-  
+  result_mean_tourDuration <- round(mean(tourSpecifications$tourDauer), digits = 2)
+  result_mean_tourDistance <- round(mean(tourSpecifications$tourDistance), digits = 2)
+
+  tourSpecifications$bins_duration <- cut(tourSpecifications$tourDauer, breaks = bins, include.lowest = TRUE)
+  bins_Distance <- c(0,10,20,30,40,50,60,75,90,105,120,150,180,240,300,420,540,660,780,900,Inf)
+
+  tourSpecifications$bins_distance <- cut(tourSpecifications$tourDistance, breaks = bins_Distance, include.lowest = TRUE)
+
   nameWirtschaftsklasse <- nameWirtschaftsklasse(filter_Wirtschaftszweig)
   nameVerkehrsmodell <- nameVerkehrsmodell(filter_verkehrsmodell)
   nameGesamtgewicht <- nameGesamtgewicht(filter_Gesamtgewicht)
@@ -303,16 +309,32 @@ createTourDurations <- function(Ketten, Fahrzeug, Fahrten, filter_Wirtschaftszwe
 #          plot.tag.position = c(.9,.9),
 #          plot.tag = element_text(hjust =0, size=15))
 
-  ggplot(data = tourDauern, aes(x = bins, y = after_stat(count)/sum(after_stat(count))*100)) +
+
+###### Durations ######
+  print(
+  ggplot(data = tourSpecifications, aes(x = bins_duration, y = after_stat(count)/sum(after_stat(count))*100)) +
     geom_bar() +
     geom_text(stat='count', aes(label = round(after_stat(count)/sum(after_stat(count))*100, 1), vjust = -0.5)) +
     labs (title = iconv(paste("Tour-Dauern WV", nameWirtschaftsklasse, nameVerkehrsmodell, nameGesamtgewicht), from = "latin1", to = "UTF-8"),
           y = "Anteil in Prozent",
           x = "Zeitintervall",
-          tag = paste("Mean: ", toString(result_mean), "min")) +
+          tag = paste("Mean: ", toString(result_mean_tourDuration), "min")) +
     theme(plot.margin = margin(1, 4, 1, 1, "lines"),
           plot.tag.position = c(.9,.9),
-          plot.tag = element_text(hjust =0, size=15))
+          plot.tag = element_text(hjust =0, size=15)))
+
+  ###### Distances ######
+  print(
+  ggplot(data = tourSpecifications, aes(x = bins_distance, y = after_stat(count)/sum(after_stat(count))*100)) +
+    geom_bar() +
+    geom_text(stat='count', aes(label = round(after_stat(count)/sum(after_stat(count))*100, 1), vjust = -0.5)) +
+    labs (title = iconv(paste("Tour-Distances WV", nameWirtschaftsklasse, nameVerkehrsmodell, nameGesamtgewicht), from = "latin1", to = "UTF-8"),
+          y = "Anteil in Prozent",
+          x = "Zeitintervall",
+          tag = paste("Mean: ", toString(result_mean_tourDistance), "km")) +
+    theme(plot.margin = margin(1, 4, 1, 1, "lines"),
+          plot.tag.position = c(.9,.9),
+          plot.tag = element_text(hjust =0, size=15)))
 }
 
 ##################### Helper functions ##########################

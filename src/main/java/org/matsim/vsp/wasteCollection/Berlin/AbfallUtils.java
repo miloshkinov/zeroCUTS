@@ -39,6 +39,7 @@ import org.matsim.freight.carriers.jsprit.NetworkBasedTransportCosts.Builder;
 import org.matsim.freight.carriers.jsprit.NetworkRouter;
 import org.matsim.vehicles.VehicleType;
 import org.geotools.api.feature.simple.SimpleFeature;
+import org.matsim.vehicles.VehicleUtils;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -93,13 +94,9 @@ class AbfallUtils {
 
 	/**
 	 * Creates a map with the 4 depots in Berlin as 4 different carrier.
-	 * 
-	 * @return
 	 */
 	static HashMap<String, Carrier> createCarrier(Carriers carriers) {
 		HashMap<String, Carrier> carrierMap = new HashMap<String, Carrier>();
-
-		//DOES IT MAKE SENSE TO CHANGE THIS
 
 		carrierMap.put("Nordring", carriers.getCarriers().get(Id.create("BSR_Nordring", Carrier.class)));
 		carrierMap.put("MalmoeerStr", carriers.getCarriers().get(Id.create("BSR_MalmoeerStr", Carrier.class)));
@@ -112,8 +109,6 @@ class AbfallUtils {
 	/**
 	 * Creates a multimap where you can find behind every district every link
 	 * containing this district.
-	 * 
-	 * @param
 	 */
 	static void createMapWithLinksInDistricts(Collection<SimpleFeature> districts,
 			Map<Id<Link>, ? extends Link> allLinks) {
@@ -146,8 +141,6 @@ class AbfallUtils {
 
 	/**
 	 * Creates a Map with the 5 dumps in Berlin.
-	 * 
-	 * @return
 	 */
 	static HashMap<String, Id<Link>> createDumpMap() {
 		HashMap<String, Id<Link>> garbageDumps = new HashMap<String, Id<Link>>();
@@ -161,11 +154,9 @@ class AbfallUtils {
 	}
 
 	/**
-	 * Deletes the existing output file and sets the number of the last iteration
-	 * 
-	 * @param config
-	 */
-	static Config prepareConfig(Config config, int lastIteration, String inputVehicleTypes, String inputCarriers) {
+     * Deletes the existing output file and sets the number of the last iteration
+     */
+	static void prepareConfig(Config config, int lastIteration, String inputVehicleTypes, String inputCarriers) {
 		config.controller().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 		new OutputDirectoryHierarchy(config.controller().getOutputDirectory(), config.controller().getRunId(),
 				config.controller().getOverwriteFileSetting(), ControllerConfigGroup.CompressionType.gzip);
@@ -182,21 +173,18 @@ class AbfallUtils {
 		freightConfigGroup.setTravelTimeSliceWidth(1800);
 		freightConfigGroup.setTimeWindowHandling(FreightCarriersConfigGroup.TimeWindowHandling.enforceBeginnings);
 
-		return config;
-	}
+    }
 
 	/**
 	 * Creates Shipments for the selected areas for the selected weekday. The needed
 	 * data is part of the read shapefile. There are informations about the volume
 	 * of garbageToCollect for every day and the dump where the garbage have to
 	 * bring to.
-	 * 
-	 * @param
 	 */
 	static void createShipmentsForSelectedArea(Collection<SimpleFeature> districtsWithGarbage,
-			List<String> districtsForShipments, String day, HashMap<String, Id<Link>> garbageDumps, Scenario scenario,
-			Carriers carriers, HashMap<String, Carrier> carrierMap, Map<Id<Link>, ? extends Link> allLinks,
-			double volumeBigDustbin, double serviceTimePerBigTrashcan) {
+                                               List<String> districtsForShipments, String day, HashMap<String, Id<Link>> garbageDumps, Scenario scenario,
+                                               Carriers carriers, HashMap<String, Carrier> carrierMap, Map<Id<Link>, ? extends Link> allLinks,
+                                               double volumeBigDustbin, double serviceTimePerBigTrashcan, int jspritIterations) {
 		Id<Link> dumpId = null;
 		double distanceWithShipments = 0;
 		int garbageToCollect = 0;
@@ -220,7 +208,7 @@ class AbfallUtils {
 												streetAlreadyInGarbageLinks = true;
 
 										}
-										if (streetAlreadyInGarbageLinks != true) {
+										if (!streetAlreadyInGarbageLinks) {
 											garbageLinks.put(link.getId(), link);
 											distanceWithShipments = distanceWithShipments + link.getLength();
 										}
@@ -237,7 +225,7 @@ class AbfallUtils {
 				}
 
 			}
-			if (garbageLinks.size() != 0) {
+			if (!garbageLinks.isEmpty()) {
 				districtsWithShipments.add(districtToCollect);
 				createShipmentsForCarrierII(garbageToCollect, volumeBigDustbin, serviceTimePerBigTrashcan,
 						distanceWithShipments, garbageLinks, scenario, carrierMap.get(depot), dumpId, carriers);
@@ -245,8 +233,10 @@ class AbfallUtils {
 			distanceWithShipments = 0;
 			garbageLinks.clear();
 		}
-		for (Carrier carrier : carrierMap.values())
-			carriers.addCarrier(carrier);
+		for (Carrier carrier : carrierMap.values()) {
+            CarriersUtils.setJspritIterations(carrier, jspritIterations);
+            carriers.addCarrier(carrier);
+        }
 
 	}
 
@@ -254,13 +244,12 @@ class AbfallUtils {
 	 * Creates Shipments for the selected areas for the selected weekday. You have
 	 * to select the areas and for every area the garbage volume per meter street.
 	 * The information about the dump is given in the shapefile.
-	 * 
-	 * @param
 	 */
 	static void createShipmentsWithGarbagePerMeter(Collection<SimpleFeature> districtsWithGarbage,
-			HashMap<String, Double> areasForShipmentPerMeterMap, String day, HashMap<String, Id<Link>> garbageDumps,
-			Scenario scenario, Carriers carriers, HashMap<String, Carrier> carrierMap,
-			Map<Id<Link>, ? extends Link> allLinks, double volumeBigDustbin, double serviceTimePerBigTrashcan) {
+                                                   HashMap<String, Double> areasForShipmentPerMeterMap, String day, HashMap<String, Id<Link>> garbageDumps,
+                                                   Scenario scenario, Carriers carriers, HashMap<String, Carrier> carrierMap,
+                                                   Map<Id<Link>, ? extends Link> allLinks, double volumeBigDustbin, double serviceTimePerBigTrashcan,
+                                                   int jspritIterations) {
 		Id<Link> dumpId = null;
 		double distanceWithShipments = 0;
 		String depot = null;
@@ -282,7 +271,7 @@ class AbfallUtils {
 												streetAlreadyInGarbageLinks = true;
 
 										}
-										if (streetAlreadyInGarbageLinks != true) {
+										if (!streetAlreadyInGarbageLinks) {
 											garbageLinks.put(link.getId(), link);
 											distanceWithShipments = distanceWithShipments + link.getLength();
 										}
@@ -300,7 +289,7 @@ class AbfallUtils {
 				}
 
 			}
-			if (garbageLinks.size() != 0)
+			if (!garbageLinks.isEmpty())
 				districtsWithShipments.add(districtToCollect);
 			double garbagePerMeterToCollect = areasForShipmentPerMeterMap.get(districtToCollect);
 			createShipmentsForCarrierI(garbagePerMeterToCollect, volumeBigDustbin, serviceTimePerBigTrashcan,
@@ -308,21 +297,22 @@ class AbfallUtils {
 			distanceWithShipments = 0;
 			garbageLinks.clear();
 		}
-		for (Carrier carrier : carrierMap.values())
-			carriers.addCarrier(carrier);
+		for (Carrier carrier : carrierMap.values()) {
+            CarriersUtils.setJspritIterations(carrier, jspritIterations);
+            carriers.addCarrier(carrier);
+        }
 	}
 
 	/**
 	 * Creates Shipments for Berlin for the selected weekday. You have to select the
 	 * areas and for every area the garbage volume which should be select in this
 	 * area. The information about the dump is given in the shapefile.
-	 * 
-	 * @param
 	 */
 	static void createShipmentsGarbagePerVolume(Collection<SimpleFeature> districtsWithGarbage,
-			HashMap<String, Integer> areasForShipmentPerVolumeMap, String day, HashMap<String, Id<Link>> garbageDumps,
-			Scenario scenario, Carriers carriers, HashMap<String, Carrier> carrierMap,
-			Map<Id<Link>, ? extends Link> allLinks, double volumeBigDustbin, double serviceTimePerBigTrashcan) {
+                                                HashMap<String, Integer> areasForShipmentPerVolumeMap, String day, HashMap<String, Id<Link>> garbageDumps,
+                                                Scenario scenario, Carriers carriers, HashMap<String, Carrier> carrierMap,
+                                                Map<Id<Link>, ? extends Link> allLinks, double volumeBigDustbin, double serviceTimePerBigTrashcan,
+                                                int jspritIterations) {
 		Id<Link> dumpId = null;
 		double distanceWithShipments = 0;
 		String depot = null;
@@ -344,7 +334,7 @@ class AbfallUtils {
 												streetAlreadyInGarbageLinks = true;
 
 										}
-										if (streetAlreadyInGarbageLinks != true) {
+										if (!streetAlreadyInGarbageLinks) {
 											garbageLinks.put(link.getId(), link);
 											distanceWithShipments = distanceWithShipments + link.getLength();
 										}
@@ -363,7 +353,7 @@ class AbfallUtils {
 				}
 
 			}
-			if (garbageLinks.size() != 0)
+			if (!garbageLinks.isEmpty())
 				districtsWithShipments.add(districtToCollect);
 			int garbageVolumeToCollect = areasForShipmentPerVolumeMap.get(districtToCollect);
 			createShipmentsForCarrierII(garbageVolumeToCollect, volumeBigDustbin, serviceTimePerBigTrashcan,
@@ -371,25 +361,25 @@ class AbfallUtils {
 			distanceWithShipments = 0;
 			garbageLinks.clear();
 		}
-		for (Carrier carrier : carrierMap.values())
-			carriers.addCarrier(carrier);
+		for (Carrier carrier : carrierMap.values()) {
+            CarriersUtils.setJspritIterations(carrier, jspritIterations);
+            carriers.addCarrier(carrier);
+        }
 	}
 
 	/**
 	 * Creates the shipments for all districts where the garbage will be picked up
 	 * at the selected day.
-	 * 
-	 * @param
 	 */
 	static void createShipmentsForSelectedDay(Collection<SimpleFeature> districtsWithGarbage, String day,
-			HashMap<String, Id<Link>> garbageDumps, Scenario scenario, Carriers carriers,
-			HashMap<String, Carrier> carrierMap, Map<Id<Link>, ? extends Link> allLinks, double volumeBigTrashcan,
-			double serviceTimePerBigDustbin, boolean oneCarrierForEachDistrict) {
+                                              HashMap<String, Id<Link>> garbageDumps, Scenario scenario, Carriers carriers,
+                                              HashMap<String, Carrier> carrierMap, Map<Id<Link>, ? extends Link> allLinks, double volumeBigTrashcan,
+                                              double serviceTimePerBigDustbin, boolean oneCarrierForEachDistrict, int jspritIterations) {
 		Id<Link> dumpId = null;
 		double distanceWithShipments = 0;
 		int garbageToCollect = 0;
 		String usedCarrier = null;
-		String district = null;
+		String district;
 		Map<Id<Link>, Link> garbageLinks = new HashMap<Id<Link>, Link>();
 		createMapEnt();
 //		carrierMap.clear();
@@ -398,7 +388,7 @@ class AbfallUtils {
 				garbageToCollect = (int) ((double) districtInformation.getAttribute(day) * 1000);
 				dumpId = garbageDumps.get(districtInformation.getAttribute(dataEnt.get(day)));
 				usedCarrier = districtInformation.getAttribute("Depot").toString();
-				if (oneCarrierForEachDistrict == true) {
+				if (oneCarrierForEachDistrict) {
 					district = districtInformation.getAttribute("Ortsteil").toString();
 					Carrier newCarrier = createSingleCarrier(usedCarrier, carrierMap, district);
 					carrierMap.put(district, newCarrier);
@@ -415,7 +405,7 @@ class AbfallUtils {
 										streetAlreadyInGarbageLinks = true;
 
 								}
-								if (streetAlreadyInGarbageLinks != true) {
+								if (!streetAlreadyInGarbageLinks) {
 									garbageLinks.put(link.getId(), link);
 									distanceWithShipments = distanceWithShipments + link.getLength();
 								}
@@ -430,7 +420,7 @@ class AbfallUtils {
 						+ " no garbage will be collected at " + day);
 			}
 
-			if (garbageLinks.size() != 0) {
+			if (!garbageLinks.isEmpty()) {
 				districtsWithShipments.add(districtInformation.getAttribute("Ortsteil").toString());
 
 				createShipmentsForCarrierII(garbageToCollect, volumeBigTrashcan, serviceTimePerBigDustbin,
@@ -440,7 +430,7 @@ class AbfallUtils {
 			distanceWithShipments = 0;
 			garbageLinks.clear();
 		}
-		if (oneCarrierForEachDistrict == true) {
+		if (oneCarrierForEachDistrict) {
 			carrierMap.remove("Nordring");
 			carrierMap.remove("MalmoeerStr");
 			carrierMap.remove("Forckenbeck");
@@ -448,6 +438,7 @@ class AbfallUtils {
 		}
 		carriers.getCarriers().clear();
 		for (Carrier carrier : carrierMap.values()) {
+            CarriersUtils.setJspritIterations(carrier, jspritIterations);
 			carriers.addCarrier(carrier);
 		}
 	}
@@ -471,9 +462,7 @@ class AbfallUtils {
 	/**
 	 * Creates a Shipment for every garbagelink and ads all shipments to myCarrier.
 	 * The volumeGarbage is in garbage per meter. So the volumeGarbage of every
-	 * shipment depends of the input garbagePerMeterToCollect.
-	 * 
-	 * @param
+	 * shipment depends on the input garbagePerMeterToCollect.
 	 */
 	static void createShipmentsForCarrierI(double garbagePerMeterToCollect, double volumeBigDustbin,
 			double serviceTimePerBigTrashcan, Map<Id<Link>, Link> garbageLinks, Scenario scenario, Carrier thisCarrier,
@@ -488,11 +477,10 @@ class AbfallUtils {
 			// double deliveryTime = ((double) volumeGarbage / capacityTruck) * 45 * 60;
 			double deliveryTime = ((double) volumeGarbage / 11000) * 45 * 60;
 			CarrierShipment shipment = CarrierShipment.Builder
-					.newInstance(Id.create("Shipment_" + link.getId(), CarrierShipment.class), link.getId(), (dumpId),
-							volumeGarbage)
-					.setPickupServiceTime(serviceTime).setPickupTimeWindow(TimeWindow.newInstance(6 * 3600, 14 * 3600))
-					.setDeliveryTimeWindow(TimeWindow.newInstance(6 * 3600, 14 * 3600))
-					.setDeliveryServiceTime(deliveryTime).build();
+                    .newInstance(Id.create("Shipment_" + link.getId(), CarrierShipment.class), link.getId(), (dumpId),
+                            volumeGarbage).setPickupDuration(serviceTime).setPickupStartingTimeWindow(
+                            TimeWindow.newInstance(6 * 3600, 14 * 3600)).setDeliveryStartingTimeWindow(
+                            TimeWindow.newInstance(6 * 3600, 14 * 3600)).setDeliveryDuration(deliveryTime).build();
 			thisCarrier.getShipments().put(shipment.getId(), shipment);
 			countingGarbage(dumpId, volumeGarbage);
 		}
@@ -502,10 +490,8 @@ class AbfallUtils {
 	/**
 	 * Creates a Shipment for every link, ads all shipments to myCarrier and ads
 	 * myCarrier to carriers. The volumeGarbage is in garbageToCollect [kg]. So the
-	 * volumeGarbage of every shipment depends of the sum of all lengths from links
+	 * volumeGarbage of every shipment depends on the sum of all lengths from links
 	 * with shipments.
-	 * 
-	 * @param
 	 */
 	static void createShipmentsForCarrierII(int garbageToCollect, double volumeBigDustbin,
 			double serviceTimePerBigTrashcan, double distanceWithShipments, Map<Id<Link>, Link> garbageLinks,
@@ -535,11 +521,10 @@ class AbfallUtils {
 //			double deliveryTime = ((double) volumeGarbage / capacityTruck) * 45 * 60;
 			double deliveryTime = ((double) volumeGarbage / 11000) * 45 * 60;
 			CarrierShipment shipment = CarrierShipment.Builder
-					.newInstance(Id.create("Shipment_" + link.getId(), CarrierShipment.class), link.getId(),
-							garbageDumpId, volumeGarbage)
-					.setPickupServiceTime(serviceTime).setPickupTimeWindow(TimeWindow.newInstance(6 * 3600, 14 * 3600))
-					.setDeliveryTimeWindow(TimeWindow.newInstance(6 * 3600, 14 * 3600))
-					.setDeliveryServiceTime(deliveryTime).build();
+                    .newInstance(Id.create("Shipment_" + link.getId(), CarrierShipment.class), link.getId(),
+                            garbageDumpId, volumeGarbage).setPickupDuration(serviceTime).setPickupStartingTimeWindow(
+                            TimeWindow.newInstance(6 * 3600, 14 * 3600)).setDeliveryStartingTimeWindow(
+                            TimeWindow.newInstance(6 * 3600, 14 * 3600)).setDeliveryDuration(deliveryTime).build();
 			thisCarrier.getShipments().put(shipment.getId(), shipment);
 			garbageCount = garbageCount + volumeGarbage;
 			countingGarbage(garbageDumpId, volumeGarbage);
@@ -551,8 +536,6 @@ class AbfallUtils {
 	/**
 	 * This method is counting the garbage for every different dump and the total
 	 * volume of garbage, which has to be collected.
-	 * 
-	 * @param
 	 */
 	private static void countingGarbage(Id<Link> garbageDumpId, int volumeGarbage) {
 		allGarbage = allGarbage + volumeGarbage;
@@ -644,54 +627,9 @@ class AbfallUtils {
 
 		return controller;
 	}
-	/**
-	 * @param scenario
-	 * @return
-	 */
-//	private static CarrierScoringFunctionFactoryImpl createMyScoringFunction2(final Scenario scenario) {
-//
-//		return new CarrierScoringFunctionFactoryImpl(scenario.getNetwork());
-//		return new CarrierScoringFunctionFactoryImpl (scenario, scenario.getConfig().controller().getOutputDirectory()) {
-//
-//			public ScoringFunction createScoringFunction(final Carrier carrier){
-//				SumScoringFunction sumSf = new SumScoringFunction() ;
-//
-//				VehicleFixCostScoring fixCost = new VehicleFixCostScoring(carrier);
-//				sumSf.addScoringFunction(fixCost);
-//
-//				LegScoring legScoring = new LegScoring(carrier);
-//				sumSf.addScoringFunction(legScoring);
-//
-//				//Score Activity w/o correction of waitingTime @ 1st Service.
-//				//			ActivityScoring actScoring = new ActivityScoring(carrier);
-//				//			sumSf.addScoringFunction(actScoring);
-//
-//				//Alternativ:
-//				//Score Activity with correction of waitingTime @ 1st Service.
-//				ActivityScoringWithCorrection actScoring = new ActivityScoringWithCorrection(carrier);
-//				sumSf.addScoringFunction(actScoring);
-//
-//				return sumSf;
-//			}
-//		};
-//	}
-
-//	/**
-//	 * @return
-//	 */
-//	private static CarrierPlanStrategyManagerFactory createMyStrategymanager() {
-//		return new CarrierPlanStrategyManagerFactory() {
-//			@Override
-//			public GenericStrategyManager<CarrierPlan, Carrier> createStrategyManager() {
-//				return null;
-//			}
-//		};
-//	}
 
 	/**
 	 * Gives an output of a .txt file with some important information
-	 *
-	 * @param
 	 */
 	static void outputSummary(Collection<SimpleFeature> districtsWithGarbage, Scenario scenario,
 			HashMap<String, Carrier> carrierMap, String day, double volumeDustbin,
@@ -769,13 +707,13 @@ class AbfallUtils {
 		double energyConsumptionPerDistance = 0;
 		double energyConsumptionPerWeight = 0;
 
-		Carriers allCarriers = (Carriers) scenario.getScenarioElement("carriers");
+		Carriers allCarriers = CarriersUtils.getCarriers(scenario);
 		Carrier testCarrier = allCarriers.getCarriers().values().iterator().next();
 		for (VehicleType usedType : testCarrier.getCarrierCapabilities().getVehicleTypes()) {
-			if (usedType.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electric")) {
+			if (VehicleUtils.getHbefaTechnology(usedType.getEngineInformation()).equals("electricity")) {
 				electricCar = true;
 				energyConsumptionPerDistance = (double) usedType.getEngineInformation().getAttributes()
-						.getAttribute("engeryConsumptionPerKm");
+						.getAttribute("energyConsumptionKWhPerMeter");
 				energyConsumptionPerWeight = 1.4;
 			}
 			capacityTruck = usedType.getCapacity().getOther();
@@ -791,18 +729,16 @@ class AbfallUtils {
 
 			for (Entry<Id<CarrierShipment>, CarrierShipment> entry : shipments.entrySet()) {
 				String shipmentId = entry.getKey().toString();
-				int shipmentSize = entry.getValue().getSize();
+				int shipmentSize = entry.getValue().getCapacityDemand();
 				shipmentSizes.put(shipmentId, shipmentSize);
 			}
 			for (ScheduledTour scheduledTour : tours) {
 				distanceTour = 0;
-				powerConsumptionTour = 0;
 				sizeTour = 0;
 				List<TourElement> elements = scheduledTour.getTour().getTourElements();
 				for (TourElement element : elements) {
-					if (element instanceof Pickup) {
-						Pickup pickupElement = (Pickup) element;
-						String pickupShipmentId = pickupElement.getShipment().getId().toString();
+					if (element instanceof Pickup pickupElement) {
+                        String pickupShipmentId = pickupElement.getShipment().getId().toString();
 						if (scheduledTour.getVehicle().getId().toString().contains("TruckForckenbeck")) {
 							sizeForckenbeck = sizeForckenbeck + (shipmentSizes.get(pickupShipmentId));
 							sizeTour = sizeTour + (shipmentSizes.get(pickupShipmentId));
@@ -824,9 +760,8 @@ class AbfallUtils {
 							sizeTour = sizeTour + (shipmentSizes.get(pickupShipmentId));
 						}
 					}
-					if (element instanceof Delivery) {
-						Delivery deliveryElement = (Delivery) element;
-						String deliveryShipmentId = deliveryElement.getShipment().getId().toString();
+					if (element instanceof Delivery deliveryElement) {
+                        String deliveryShipmentId = deliveryElement.getShipment().getId().toString();
 						if (deliveryElement.getLocation() == Id.createLinkId(linkMhkwRuhleben)) {
 							sizeRuhleben = sizeRuhleben + (shipmentSizes.get(deliveryShipmentId));
 						}
@@ -847,9 +782,8 @@ class AbfallUtils {
 							sizeChessboardDelivery = sizeChessboardDelivery + (shipmentSizes.get(deliveryShipmentId));
 						}
 					}
-					if (element instanceof Leg) {
-						Leg legElement = (Leg) element;
-						if (legElement.getRoute().getDistance() != 0)
+					if (element instanceof Leg legElement) {
+                        if (legElement.getRoute().getDistance() != 0)
 							distanceTour = distanceTour + RouteUtils.calcDistance((NetworkRoute) legElement.getRoute(),
 									0, 0, scenario.getNetwork());
 
@@ -891,16 +825,16 @@ class AbfallUtils {
 				numberVehicles = vehiclesForckenbeck + vehiclesMalmoeer + vehiclesNordring + vehiclesGradestrasse
 						+ vehiclesChessboard;
 			}
-			if (thisCarrier.getShipments().size() > 0)
+			if (!thisCarrier.getShipments().isEmpty())
 				carrierWithShipments++;
 		}
 		if (vehiclesForckenbeck > 0) {
-			maxTourForckenbeck = tourDistancesForckenbeck.get(0);
-			minTourForckenbeck = tourDistancesForckenbeck.get(0);
-			distanceToursForckenbeck = tourDistancesForckenbeck.get(0);
-			maxPowerConsumptionForckenbeck = powerConsumptionTourForckenbeck.get(0);
-			minPowerConsumptionForckenbeck = powerConsumptionTourForckenbeck.get(0);
-			powerConsumptionForckenbeck = powerConsumptionTourForckenbeck.get(0);
+			maxTourForckenbeck = tourDistancesForckenbeck.getFirst();
+			minTourForckenbeck = tourDistancesForckenbeck.getFirst();
+			distanceToursForckenbeck = tourDistancesForckenbeck.getFirst();
+			maxPowerConsumptionForckenbeck = powerConsumptionTourForckenbeck.getFirst();
+			minPowerConsumptionForckenbeck = powerConsumptionTourForckenbeck.getFirst();
+			powerConsumptionForckenbeck = powerConsumptionTourForckenbeck.getFirst();
 			for (int index = 1; index < tourDistancesForckenbeck.size(); index++) {
 				if (tourDistancesForckenbeck.get(index) > maxTourForckenbeck)
 					maxTourForckenbeck = tourDistancesForckenbeck.get(index);
@@ -917,12 +851,12 @@ class AbfallUtils {
 			averagePowerConsumptionForckenbeck = powerConsumptionForckenbeck / vehiclesForckenbeck;
 		}
 		if (vehiclesMalmoeer > 0) {
-			maxTourMalmoeerStr = tourDistancesMalmoeerStr.get(0);
-			minTourMalmoeerStr = tourDistancesMalmoeerStr.get(0);
-			distanceToursMalmoeerStr = tourDistancesMalmoeerStr.get(0);
-			maxPowerConsumptionMalmoeerStr = powerConsumptionTourMalmoeerStr.get(0);
-			minPowerConsumptionMalmoeerStr = powerConsumptionTourMalmoeerStr.get(0);
-			powerConsumptionMalmoeerStr = powerConsumptionTourMalmoeerStr.get(0);
+			maxTourMalmoeerStr = tourDistancesMalmoeerStr.getFirst();
+			minTourMalmoeerStr = tourDistancesMalmoeerStr.getFirst();
+			distanceToursMalmoeerStr = tourDistancesMalmoeerStr.getFirst();
+			maxPowerConsumptionMalmoeerStr = powerConsumptionTourMalmoeerStr.getFirst();
+			minPowerConsumptionMalmoeerStr = powerConsumptionTourMalmoeerStr.getFirst();
+			powerConsumptionMalmoeerStr = powerConsumptionTourMalmoeerStr.getFirst();
 			for (int index = 1; index < tourDistancesMalmoeerStr.size(); index++) {
 				if (tourDistancesMalmoeerStr.get(index) > maxTourMalmoeerStr)
 					maxTourMalmoeerStr = tourDistancesMalmoeerStr.get(index);
@@ -939,12 +873,12 @@ class AbfallUtils {
 			averagePowerConsumptionMalmoeerStr = powerConsumptionMalmoeerStr / vehiclesMalmoeer;
 		}
 		if (vehiclesNordring > 0) {
-			maxTourNordring = tourDistancesNordring.get(0);
-			minTourNordring = tourDistancesNordring.get(0);
-			distanceToursNordring = tourDistancesNordring.get(0);
-			maxPowerConsumptionNordring = powerConsumptionTourNordring.get(0);
-			minPowerConsumptionNordring = powerConsumptionTourNordring.get(0);
-			powerConsumptionNordring = powerConsumptionTourNordring.get(0);
+			maxTourNordring = tourDistancesNordring.getFirst();
+			minTourNordring = tourDistancesNordring.getFirst();
+			distanceToursNordring = tourDistancesNordring.getFirst();
+			maxPowerConsumptionNordring = powerConsumptionTourNordring.getFirst();
+			minPowerConsumptionNordring = powerConsumptionTourNordring.getFirst();
+			powerConsumptionNordring = powerConsumptionTourNordring.getFirst();
 			for (int index = 1; index < tourDistancesNordring.size(); index++) {
 				if (tourDistancesNordring.get(index) > maxTourNordring)
 					maxTourNordring = tourDistancesNordring.get(index);
@@ -961,12 +895,12 @@ class AbfallUtils {
 			averagePowerConsumptionNordring = powerConsumptionNordring / vehiclesNordring;
 		}
 		if (vehiclesGradestrasse > 0) {
-			maxTourGradestrasse = tourDistancesGradestrasse.get(0);
-			minTourGradestrasse = tourDistancesForckenbeck.get(0);
-			distanceToursGradestrasse = tourDistancesGradestrasse.get(0);
-			maxPowerConsumptionGradestrasse = powerConsumptionTourGradestrasse.get(0);
-			minPowerConsumptionGradestrasse = powerConsumptionTourGradestrasse.get(0);
-			powerConsumptionGradestrasse = powerConsumptionTourGradestrasse.get(0);
+			maxTourGradestrasse = tourDistancesGradestrasse.getFirst();
+			minTourGradestrasse = tourDistancesForckenbeck.getFirst();
+			distanceToursGradestrasse = tourDistancesGradestrasse.getFirst();
+			maxPowerConsumptionGradestrasse = powerConsumptionTourGradestrasse.getFirst();
+			minPowerConsumptionGradestrasse = powerConsumptionTourGradestrasse.getFirst();
+			powerConsumptionGradestrasse = powerConsumptionTourGradestrasse.getFirst();
 			for (int index = 1; index < tourDistancesGradestrasse.size(); index++) {
 				if (tourDistancesGradestrasse.get(index) > maxTourGradestrasse)
 					maxTourGradestrasse = tourDistancesGradestrasse.get(index);
@@ -1028,7 +962,7 @@ class AbfallUtils {
 					writer.write("\t\t\tFahrstrecke Durchschnitt:\t\t" + Math.round(averageTourDistanceForckenbeck)
 							+ " km\n");
 
-					if (electricCar == true) {
+					if (electricCar) {
 						writer.write("\t\t\tEnergieverbrauch Summe:\t\t\t" + powerConsumptionForckenbeck + " kwh\n");
 						writer.write("\t\t\tEnergieverbrauch Max:\t\t\t" + maxPowerConsumptionForckenbeck + " kwh\n");
 						writer.write("\t\t\tEnergieverbrauch Min:\t\t\t" + minPowerConsumptionForckenbeck + " kwh\n");
@@ -1044,7 +978,7 @@ class AbfallUtils {
 					writer.write("\t\t\tFahrstrecke Min:\t\t\t\t" + minTourMalmoeerStr + " km\n");
 					writer.write("\t\t\tFahrstrecke Durchschnitt:\t\t" + Math.round(averageTourDistanceMalmoeerStr)
 							+ " km\n");
-					if (electricCar == true) {
+					if (electricCar) {
 						writer.write("\t\t\tEnergieverbrauch Summe:\t\t\t" + powerConsumptionMalmoeerStr + " kwh\n");
 						writer.write("\t\t\tEnergieverbrauch Max:\t\t\t" + maxPowerConsumptionMalmoeerStr + " kwh\n");
 						writer.write("\t\t\tEnergieverbrauch Min:\t\t\t" + minPowerConsumptionMalmoeerStr + " kwh\n");
@@ -1060,7 +994,7 @@ class AbfallUtils {
 					writer.write("\t\t\tFahrstrecke Min:\t\t\t\t" + minTourNordring + " km\n");
 					writer.write(
 							"\t\t\tFahrstrecke Durchschnitt:\t\t" + Math.round(averageTourDistanceNordring) + " km\n");
-					if (electricCar == true) {
+					if (electricCar) {
 						writer.write("\t\t\tEnergieverbrauch Summe:\t\t\t" + powerConsumptionNordring + " kwh\n");
 						writer.write("\t\t\tEnergieverbrauch Max:\t\t\t" + maxPowerConsumptionNordring + " kwh\n");
 						writer.write("\t\t\tEnergieverbrauch Min:\t\t\t" + minPowerConsumptionNordring + " kwh\n");
@@ -1076,7 +1010,7 @@ class AbfallUtils {
 					writer.write("\t\t\tFahrstrecke Min:\t\t\t\t" + minTourGradestrasse + " km\n");
 					writer.write("\t\t\tFahrstrecke Durchschnitt:\t\t" + Math.round(averageTourDistanceGradestrasse)
 							+ " km\n");
-					if (electricCar == true) {
+					if (electricCar) {
 						writer.write("\t\t\tEnergieverbrauch Summe:\t\t\t" + powerConsumptionGradestrasse + " kwh\n");
 						writer.write("\t\t\tEnergieverbrauch Max:\t\t\t" + maxPowerConsumptionGradestrasse + " kwh\n");
 						writer.write("\t\t\tEnergieverbrauch Min:\t\t\t" + minPowerConsumptionGradestrasse + " kwh\n");
@@ -1095,14 +1029,14 @@ class AbfallUtils {
 			}
 			if (vehiclesChessboard > 0) {
 				writer.write("Gefahrene Kilometer je Fahrzeug:\t\t\t\t\t\t\t" + tourDistancesChessboard + " \n");
-				if (electricCar == true)
+				if (electricCar)
 					writer.write(
 							"Energieverbrauch in kwh je Fahrzeug:\t\t\t\t\t\t" + powerConsumptionTourChessboard + "\n");
 			}
 			writer.write(
 					"Gefahrene Strecke gesamt:\t\t\t\t\t\t\t\t\t" + (distanceToursForckenbeck + distanceToursMalmoeerStr
 							+ distanceToursNordring + distanceToursGradestrasse + tourDistanceChessboard) + " km\n\n");
-			if (electricCar == true)
+			if (electricCar)
 				writer.write("Verbrauche Energie gesamt:\t\t\t\t\t\t\t\t\t"
 						+ (powerConsumptionForckenbeck + powerConsumptionMalmoeerStr + powerConsumptionNordring
 								+ powerConsumptionGradestrasse + powerConsumptionChessboard)
@@ -1116,10 +1050,10 @@ class AbfallUtils {
 			e.printStackTrace();
 		}
 		if (noPickup == 0) {
-			System.out.println("");
+			System.out.println();
 			System.out.println("Abfaelle wurden komplett von " + numberVehicles + " Fahrzeugen eingesammelt!");
 		} else {
-			System.out.println("");
+			System.out.println();
 			System.out.println("Abfall nicht komplett eingesammelt!");
 		}
 	}
@@ -1175,12 +1109,6 @@ class AbfallUtils {
 		}
 
 	}
-
-	/**
-	 * @param scenario
-	 * @param carriers
-	 * @throws IOException
-	 */
 
 	@SuppressWarnings("null")
 	static void createResultFile(Scenario scenario, Carriers carriers) throws Exception {
@@ -1242,9 +1170,8 @@ class AbfallUtils {
 						numCollections++;
 
 					}
-					if (element instanceof Tour.Leg) {
-						Tour.Leg legElement = (Tour.Leg) element;
-						if (legElement.getRoute().getDistance() != 0)
+					if (element instanceof Leg legElement) {
+                        if (legElement.getRoute().getDistance() != 0)
 							distanceTour = distanceTour
 									+ RouteUtils.calcDistance((NetworkRoute) legElement.getRoute(), 0, 0, network);
 					}
@@ -1253,9 +1180,9 @@ class AbfallUtils {
 						scheduledTour.getVehicle().getType().getId() + "-Tour " + tourNumberCarrier,
 						Person.class);
 				personId2tourDistance.put(personId, distanceTour);
-				if (vt.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electricity")) {
+				if (VehicleUtils.getHbefaTechnology(vt.getEngineInformation()).equals("electricity")) {
 					personId2tourConsumptionkWh.put(personId, (distanceTour / 1000) * (double) vt.getEngineInformation()
-							.getAttributes().getAttribute("engeryConsumptionPerKm"));
+							.getAttributes().getAttribute("energyConsumptionKWhPerMeter"));
 				}
 				totalDistance = totalDistance + distanceTour;
 				tourNumberCarrier++;
@@ -1279,18 +1206,16 @@ class AbfallUtils {
 
 				writer.write(
 						"\t\t\tID: " + singleVehicleType.getId() + "\t\tAntrieb: "
-								+ singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
-										.toString()
+								+ VehicleUtils.getHbefaTechnology(singleVehicleType.getEngineInformation())
 								+ "\t\tKapazität: " + singleVehicleType.getCapacity().getOther() + "\t\tFixkosten:"
 								+ singleVehicleType.getCostInformation().getFixedCosts() + " €");
-				if (singleVehicleType.getEngineInformation().getAttributes().getAttribute("fuelType")
-						.equals("electricity")) {
+				if (VehicleUtils.getHbefaTechnology(singleVehicleType.getEngineInformation()).equals("electricity")) {
 					double electricityConsumptionPer100km = 0;
 					double electricityCapacityinkWh = 0;
 					electricityConsumptionPer100km = (double) singleVehicleType.getEngineInformation().getAttributes()
-							.getAttribute("engeryConsumptionPerKm");
+							.getAttribute("energyConsumptionKWhPerMeter");
 					electricityCapacityinkWh = (double) singleVehicleType.getEngineInformation().getAttributes()
-							.getAttribute("engeryCapacity");
+							.getAttribute("energyCapacityInKWhOrLiters");
 
 					writer.write("\t\tLadekapazität: " + electricityCapacityinkWh + " kWh\t\tVerbrauch: "
 							+ electricityConsumptionPer100km + " kWh/100km\t\tReichweite: "
@@ -1311,13 +1236,11 @@ class AbfallUtils {
 
 				for (VehicleType singleVehicleType : vehicleTypes.getVehicleTypes().values()) {
 
-					if (id.toString().contains(singleVehicleType.getId().toString()) && singleVehicleType
-							.getEngineInformation().getAttributes().getAttribute("fuelType").equals("electricity")) {
-
+					if (id.toString().contains(singleVehicleType.getId().toString()) && VehicleUtils.getHbefaTechnology(singleVehicleType.getEngineInformation()).equals("electricity")) {
 						electricityConsumptionPerkm = (double) singleVehicleType.getEngineInformation().getAttributes()
-								.getAttribute("engeryConsumptionPerKm");
+								.getAttribute("energyConsumptionKWhPerMeter");
 						electricityCapacityinkWh = (double) singleVehicleType.getEngineInformation().getAttributes()
-								.getAttribute("engeryCapacity");
+								.getAttribute("energyCapacityInKWhOrLiters");
 						distanceRange = (int) Math.round(electricityCapacityinkWh / electricityConsumptionPerkm);
 						consumption = (int) Math.round(personId2tourConsumptionkWh.get(id));
 
@@ -1342,7 +1265,7 @@ class AbfallUtils {
 		writer.close();
 		log.info("Output geschrieben");
 		log.info("### Done.");
-		if (toursWithOverconsumption.isEmpty() == false)
+		if (!toursWithOverconsumption.isEmpty())
 			throw new Exception("The tour(s) " + toursWithOverconsumption.toString()
 					+ " have a higher consumption then their capacity");
 

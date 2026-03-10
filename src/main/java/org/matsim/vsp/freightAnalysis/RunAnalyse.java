@@ -12,7 +12,8 @@ public class RunAnalyse {
 //		String runDir = "C:/Users/Ricardo/Desktop/Cluster/Vulkaneifel/base.completeSmallScaleCommercialTraffic_25pct_2023-09-01_60149_0.005/";
 //		String runDir = "C:/Users/Ricardo/Desktop/Cluster/Berlin/completeSmallScaleCommercialTraffic_25pct_2023-09-04_30655_0.005/";
 //		String runDir = "../matsim-berlin/output/commercialPersonTraffic/";
-		String runDir = "../matsim-berlin/output/goodsTraffic/";
+//		String runDir = "../matsim-berlin/output/goodsTraffic/";
+        String runDir = "C:/git-and-svn/shared-svn/projects/freight/studies/UpdateEventsfromEarlierStudies/foodRetailing_wo_rangeConstraint/71a_ICEV_NwCE_BVWP_10000it_DCoff_noTax/";
 		//		String runId = "tax40CV.";
 //		String networkCRS = TransformationFactory.DHDN_GK4; //Berlin
 		String networkCRS = "EPSG:25832"; //vulkaneifel

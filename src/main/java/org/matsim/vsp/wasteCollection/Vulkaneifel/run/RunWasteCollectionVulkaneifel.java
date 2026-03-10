@@ -86,7 +86,7 @@ public class RunWasteCollectionVulkaneifel implements MATSimAppCommand {
     // scenarios/wasteCollection/Vulkaneifel/vulkaneifel_network_reduced.xml.gz
     // https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/vulkaneifel/v1.2/input/vulkaneifel-v1.2-network.xml.gz
     @Override
-    public Integer call() throws Exception {
+    public Integer call() {
 
         String shapeFilePath = "scenarios/wasteCollection/Vulkaneifel/Shp_files_for_Vulkaneifel/Vulkaneifel_ALL_Gemeinde.shp";
         ShpOptions shpOptions = new ShpOptions(shapeFilePath, null, null);
@@ -112,7 +112,7 @@ public class RunWasteCollectionVulkaneifel implements MATSimAppCommand {
         FreightCarriersConfigGroup freightCarriersConfigGroup = ConfigUtils.addOrGetModule(config, FreightCarriersConfigGroup.class);
         freightCarriersConfigGroup.setUseDistanceConstraintForTourPlanning(FreightCarriersConfigGroup.UseDistanceConstraintForTourPlanning.basedOnEnergyConsumption);
 
-        CarrierVehicleTypes carrierVehicleTypes = CarriersUtils.getCarrierVehicleTypes(scenario);
+        CarrierVehicleTypes carrierVehicleTypes = CarriersUtils.getOrAddCarrierVehicleTypes(scenario);
         new CarrierVehicleTypeReader( carrierVehicleTypes ).readURL( IOUtils.extendUrl(scenario.getConfig().getContext(), freightCarriersConfigGroup.getCarriersVehicleTypesFile()) );
         Carriers carriers = CarriersUtils.addOrGetCarriers(scenario);
 
